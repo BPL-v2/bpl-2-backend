@@ -1,4 +1,4 @@
-package gggmodel
+package client
 
 type Realm string
 
