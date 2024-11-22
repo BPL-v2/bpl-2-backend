@@ -6,8 +6,13 @@ import (
 )
 
 func SetRoutes(r *gin.Engine, db *gorm.DB) {
-	eventRoutes := GetEventRoutes(db)
-	for _, route := range eventRoutes {
+	routes := make([]gin.RouteInfo, 0)
+	routes = append(routes, setupEventController(db)...)
+	routes = append(routes, setupTeamController(db)...)
+	routes = append(routes, setupConditionController(db)...)
+	routes = append(routes, setupScoringCategoryController(db)...)
+	routes = append(routes, setupObjectiveController(db)...)
+	for _, route := range routes {
 		r.Handle(route.Method, route.Path, route.HandlerFunc)
 	}
 }
