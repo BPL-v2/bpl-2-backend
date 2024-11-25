@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -63,7 +64,7 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(200, Map(event.Teams, toTeamResponse))
+		c.JSON(200, utils.Map(event.Teams, toTeamResponse))
 	}
 }
 

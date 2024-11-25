@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -162,9 +163,9 @@ func toCategoryResponse(category *repository.ScoringCategory) CategoryResponse {
 		ID:             category.ID,
 		Name:           category.Name,
 		Inheritance:    category.Inheritance,
-		SubCategories:  Map(category.SubCategories, toCategoryResponse),
-		Objectives:     Map(category.Objectives, toObjectiveResponse),
-		ScoringMethods: Map(category.ScoringMethods, toScoringMethodResponse),
+		SubCategories:  utils.Map(category.SubCategories, toCategoryResponse),
+		Objectives:     utils.Map(category.Objectives, toObjectiveResponse),
+		ScoringMethods: utils.Map(category.ScoringMethods, toScoringMethodResponse),
 	}
 }
 

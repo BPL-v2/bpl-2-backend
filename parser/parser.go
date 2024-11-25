@@ -378,3 +378,80 @@ func ValidateConditions(conditions []*dbModel.Condition) error {
 	}
 	return nil
 }
+
+type ObjectiveChecker struct {
+	ObjectiveId int
+	Function    checkerFun
+}
+
+type CheckResult struct {
+	ObjectiveId int
+	Number      int
+}
+
+type ItemChecker struct {
+	Funcmap map[dbModel.ItemField]map[string][]*ObjectiveChecker
+}
+
+func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
+	funcMap := map[dbModel.ItemField]map[string][]*ObjectiveChecker{
+		dbModel.BASE_TYPE: make(map[string][]*ObjectiveChecker),
+		dbModel.NAME:      make(map[string][]*ObjectiveChecker),
+	}
+	fmt.Println(objectives)
+
+	for _, objective := range objectives {
+		discriminators, conditions, err := GetDiscriminators(objective.Conditions)
+		if err != nil {
+			return nil, err
+		}
+		fn, err := AndComparator(conditions)
+		if err != nil {
+			return nil, err
+		}
+		for _, discriminator := range discriminators {
+			if valueToChecker, ok := funcMap[discriminator.field]; ok {
+				valueToChecker[discriminator.value] = append(
+					valueToChecker[discriminator.value],
+					&ObjectiveChecker{
+						ObjectiveId: objective.ID,
+						Function:    fn,
+					})
+			} else {
+				return nil, fmt.Errorf("invalid discriminator field")
+			}
+
+		}
+	}
+
+	return &ItemChecker{
+		Funcmap: funcMap,
+	}, nil
+}
+
+func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResult {
+	if checkers, ok := ic.Funcmap[dbModel.BASE_TYPE][item.BaseType]; ok {
+		return applyCheckers(checkers, item)
+	}
+	if checkers, ok := ic.Funcmap[dbModel.NAME][item.Name]; ok {
+		return applyCheckers(checkers, item)
+	}
+	return make([]*CheckResult, 0)
+}
+
+func applyCheckers(checkers []*ObjectiveChecker, item *clientModel.Item) []*CheckResult {
+	results := make([]*CheckResult, 0)
+	for _, checker := range checkers {
+		if checker.Function(item) {
+			number := 1
+			if item.StackSize != nil {
+				number = *item.StackSize
+			}
+			results = append(results, &CheckResult{
+				ObjectiveId: checker.ObjectiveId,
+				Number:      number,
+			})
+		}
+	}
+	return results
+}
