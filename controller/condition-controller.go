@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -49,7 +50,7 @@ func (e *ConditionController) getObjectiveConditionsHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(200, Map(conditions, toConditionResponse))
+		c.JSON(200, utils.Map(conditions, toConditionResponse))
 	}
 }
 

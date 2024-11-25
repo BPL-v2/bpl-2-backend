@@ -59,7 +59,19 @@ func (r *ObjectiveRepository) DeleteObjective(objectiveId int) error {
 
 func (r *ObjectiveRepository) GetObjectivesByCategoryId(categoryId int) ([]*Objective, error) {
 	var objectives []*Objective
+
 	result := r.DB.Preload("Conditions").Find(&objectives, "category_id = ?", categoryId)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return objectives, nil
+}
+
+func (r *ObjectiveRepository) GetObjectivesByCategoryIds(categoryIds []int) ([]*Objective, error) {
+	var objectives []*Objective
+
+	result := r.DB.Preload("Conditions").Find(&objectives, "category_id IN ?", categoryIds)
+
 	if result.Error != nil {
 		return nil, result.Error
 	}

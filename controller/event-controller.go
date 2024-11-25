@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, Map(events, toEventResponse))
+		c.JSON(200, utils.Map(events, toEventResponse))
 	}
 }
 

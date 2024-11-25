@@ -44,7 +44,7 @@ func InitDB() (*gorm.DB, error) {
 			TablePrefix:   "bpl2.",
 			SingularTable: false,
 		},
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		return nil, err

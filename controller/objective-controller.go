@@ -1,8 +1,11 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -26,6 +29,7 @@ func setupObjectiveController(db *gorm.DB) []gin.RouteInfo {
 		{Method: "POST", Path: "", HandlerFunc: e.createObjectiveHandler()},
 		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteObjectiveHandler()},
 		{Method: "PATCH", Path: "/:objective_id", HandlerFunc: e.updateObjectiveHandler()},
+		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler()},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -125,7 +129,34 @@ func (e *ObjectiveController) getCategoryObjectivesHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(200, Map(objectives, toObjectiveResponse))
+		c.JSON(200, utils.Map(objectives, toObjectiveResponse))
+	}
+}
+
+func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		category_id, err := strconv.Atoi(c.Param("category_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		parser, err := e.service.GetParser(category_id)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "Category not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
+			return
+		}
+		fmt.Println(parser)
+		item := client.Item{
+			BaseType: c.Query("baseType"),
+			Name:     c.Query("name"),
+		}
+
+		c.JSON(200, parser.CheckForCompletions(&item))
 	}
 }
 
@@ -161,7 +192,7 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 		Name:           e.Name,
 		RequiredNumber: e.RequiredNumber,
 		ObjectiveType:  e.ObjectiveType,
-		Conditions:     Map(e.Conditions, func(c ConditionCreate) *repository.Condition { return c.toModel() }),
+		Conditions:     utils.Map(e.Conditions, func(c ConditionCreate) *repository.Condition { return c.toModel() }),
 		ValidFrom:      &e.ValidFrom,
 		ValidTo:        &e.ValidTo,
 	}
@@ -186,6 +217,6 @@ func toObjectiveResponse(objective *repository.Objective) ObjectiveResponse {
 		ObjectiveType:  objective.ObjectiveType,
 		ValidFrom:      *objective.ValidFrom,
 		ValidTo:        *objective.ValidTo,
-		Contitions:     Map(objective.Conditions, toConditionResponse),
+		Contitions:     utils.Map(objective.Conditions, toConditionResponse),
 	}
 }

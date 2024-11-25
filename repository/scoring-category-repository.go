@@ -56,7 +56,7 @@ func (r *ScoringCategoryRepository) GetRulesForEvent(eventId int) (*ScoringCateg
 
 func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int) (*ScoringCategory, error) {
 	// First get all ids of the categories involved in the tree structure and their parent ids
-	relations, err := r.getTreeStructure(categoryId)
+	relations, err := r.GetTreeStructure(categoryId)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ type CategoryRelation struct {
 	ParentID int
 }
 
-func (r *ScoringCategoryRepository) getTreeStructure(parentID int) ([]CategoryRelation, error) {
+func (r *ScoringCategoryRepository) GetTreeStructure(parentID int) ([]CategoryRelation, error) {
 	var categories []CategoryRelation
 	query := `
         WITH RECURSIVE Relations AS (
