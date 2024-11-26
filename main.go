@@ -29,3 +29,4 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 	controller.SetRoutes(r, db)
+}
