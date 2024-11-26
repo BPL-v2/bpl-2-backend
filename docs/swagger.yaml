@@ -1,0 +1,143 @@
+basePath: /
+definitions:
+  controller.EventCreate:
+    properties:
+      is_current:
+        type: boolean
+      max_size:
+        type: integer
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  controller.EventResponse:
+    properties:
+      id:
+        type: integer
+      is_current:
+        type: boolean
+      max_size:
+        type: integer
+      name:
+        type: string
+      scoring_category_id:
+        type: integer
+    type: object
+  controller.EventUpdate:
+    properties:
+      is_current:
+        type: boolean
+      max_size:
+        type: integer
+      name:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+host: localhost:8000
+info:
+  contact:
+    email: Liberatorist@gmail.com
+    name: Liberatorist
+  description: This is the backend API for the BPL project.
+  title: BPL Backend API
+  version: "2.0"
+paths:
+  /events:
+    get:
+      description: Fetches all events
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.EventResponse'
+            type: array
+      tags:
+      - event
+    post:
+      consumes:
+      - application/json
+      description: Creates an events
+      parameters:
+      - description: Event to create
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/controller.EventCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.EventResponse'
+      tags:
+      - event
+  /events/{eventId}:
+    delete:
+      description: Deletes an event
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - event
+    get:
+      consumes:
+      - application/json
+      description: Gets an event by id
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.EventResponse'
+      tags:
+      - event
+    patch:
+      consumes:
+      - application/json
+      description: Updates an event
+      parameters:
+      - description: Event ID
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Event to update
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/controller.EventUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.EventResponse'
+      tags:
+      - event
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

@@ -37,6 +37,11 @@ func setupEventController(db *gorm.DB) []gin.RouteInfo {
 	return routes
 }
 
+// @Description Fetches all events
+// @Tags event
+// @Produce json
+// @Success 200 {array} EventResponse
+// @Router /events [get]
 func (e *EventController) getEventsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		events, err := e.eventService.GetAllEvents()
@@ -48,6 +53,13 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Creates an events
+// @Tags event
+// @Accept json
+// @Produce json
+// @Param event body EventCreate true "Event to create"
+// @Success 201 {object} EventResponse
+// @Router /events [post]
 func (e *EventController) createEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var eventCreate EventCreate
@@ -64,6 +76,13 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Gets an event by id
+// @Tags event
+// @Accept json
+// @Produce json
+// @Param eventId path int true "Event ID"
+// @Success 201 {object} EventResponse
+// @Router /events/{eventId} [get]
 func (e *EventController) getEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))
@@ -84,6 +103,14 @@ func (e *EventController) getEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Updates an event
+// @Tags event
+// @Accept json
+// @Produce json
+// @Param eventId path int true "Event ID"
+// @Param event body EventUpdate true "Event to update"
+// @Success 200 {object} EventResponse
+// @Router /events/{eventId} [patch]
 func (e *EventController) updateEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))
@@ -109,6 +136,11 @@ func (e *EventController) updateEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Deletes an event
+// @Tags event
+// @Param eventId path int true "Event ID"
+// @Success 204
+// @Router /events/{eventId} [delete]
 func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fmt.Println("deleteEventHandler")
