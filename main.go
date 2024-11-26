@@ -29,4 +29,5 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 	controller.SetRoutes(r, db)
+	r.Run(":8000") // listen and serve on 0.0.0.0:8080
 }
