@@ -23,6 +23,12 @@ func (e *EventService) GetAllEvents() ([]repository.Event, error) {
 }
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
+	if event.IsCurrent {
+		err := e.event_repository.InvalidateCurrentEvent()
+		if err != nil {
+			return nil, err
+		}
+	}
 	scoringCategory := &repository.ScoringCategory{Name: "default", Event: *event, Inheritance: repository.OVERWRITE}
 	category, err := e.scoring_category_repository.SaveCategory(scoringCategory)
 	if err != nil {

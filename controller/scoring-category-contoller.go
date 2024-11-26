@@ -22,6 +22,7 @@ func setupScoringCategoryController(db *gorm.DB) []gin.RouteInfo {
 	e := NewScoringCategoryController(db)
 	routes := []gin.RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/rules", HandlerFunc: e.getRulesForEventHandler()},
+		{Method: "GET", Path: "/scoring-categories/:category_id", HandlerFunc: e.getScoringCategoryHandler()},
 		{Method: "POST", Path: "/scoring-categories/:category_id", HandlerFunc: e.createCategoryHandler()},
 		{Method: "PATCH", Path: "/scoring-categories/:category_id", HandlerFunc: e.updateCategoryHandler()},
 		{Method: "DELETE", Path: "/scoring-categories/:category_id", HandlerFunc: e.deleteCategoryHandler()}}
@@ -42,6 +43,27 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, toCategoryResponse(rules))
+	}
+}
+
+func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		category_id, err := strconv.Atoi(c.Param("category_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		category, err := e.service.GetCategoryById(category_id)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "Category not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
+			return
+		}
+		c.JSON(200, toCategoryResponse(category))
 	}
 }
 
@@ -85,8 +107,9 @@ func (e *ScoringCategoryController) updateCategoryHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
-		category, err := e.service.UpdateCategory(category_id, categoryUpdate.toModel())
+		categoryModel := categoryUpdate.toModel()
+		categoryModel.ID = category_id
+		category, err := e.service.UpdateCategory(categoryModel)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
