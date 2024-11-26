@@ -70,6 +70,7 @@ func InitDB() (*gorm.DB, error) {
 		&model.ScoringMethod{},
 		&model.Event{},
 		&model.Team{},
+		&model.User{},
 	)
 
 	if err != nil {

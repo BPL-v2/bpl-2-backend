@@ -12,6 +12,7 @@ func SetRoutes(r *gin.Engine, db *gorm.DB) {
 	routes = append(routes, setupConditionController(db)...)
 	routes = append(routes, setupScoringCategoryController(db)...)
 	routes = append(routes, setupObjectiveController(db)...)
+	routes = append(routes, setupOauthController(db)...)
 	for _, route := range routes {
 		r.Handle(route.Method, route.Path, route.HandlerFunc)
 	}
