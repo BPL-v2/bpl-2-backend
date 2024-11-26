@@ -11,6 +11,8 @@ type Event struct {
 	Name              string  `gorm:"not null"`
 	ScoringCategoryID int     `gorm:"not null"`
 	Teams             []*Team `gorm:"foreignKey:EventID;constraint:OnDelete:CASCADE"`
+	IsCurrent         bool
+	MaxSize           int
 }
 
 type EventRepository struct {
@@ -37,7 +39,13 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 }
 
 func (r *EventRepository) Save(event *Event) (*Event, error) {
-	result := r.DB.Create(event)
+	if event.IsCurrent {
+		err := r.InvalidateCurrentEvent()
+		if err != nil {
+			return nil, err
+		}
+	}
+	result := r.DB.Save(event)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to create event: %v", result.Error)
 	}
@@ -52,11 +60,19 @@ func (r *EventRepository) Update(eventId int, updateEvent *Event) (*Event, error
 	if updateEvent.Name != "" {
 		event.Name = updateEvent.Name
 	}
-	result := r.DB.Save(&event)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to update event: %v", result.Error)
+	event.IsCurrent = updateEvent.IsCurrent
+	if updateEvent.MaxSize != 0 {
+		event.MaxSize = updateEvent.MaxSize
 	}
-	return event, nil
+	return r.Save(event)
+}
+
+func (r *EventRepository) InvalidateCurrentEvent() error {
+	result := r.DB.Model(&Event{}).Where("is_current = ?", true).Update("is_current", false)
+	if result.Error != nil {
+		return fmt.Errorf("failed to invalidate current event: %v", result.Error)
+	}
+	return nil
 }
 
 func (r *EventRepository) Delete(eventId int) error {
@@ -64,7 +80,12 @@ func (r *EventRepository) Delete(eventId int) error {
 	if err != nil {
 		return err
 	}
-	result := r.DB.Delete(ScoringCategory{}, event.ScoringCategoryID)
+	result := r.DB.Delete(&event)
+	if result.Error != nil {
+		return fmt.Errorf("failed to delete event: %v", result.Error)
+	}
+
+	result = r.DB.Delete(ScoringCategory{}, event.ScoringCategoryID)
 	if result.Error == nil {
 		result = r.DB.Delete(Event{}, eventId)
 	}

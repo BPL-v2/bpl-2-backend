@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -110,6 +111,7 @@ func (e *EventController) updateEventHandler() gin.HandlerFunc {
 
 func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		fmt.Println("deleteEventHandler")
 		eventId, err := strconv.Atoi(c.Param("event_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -129,28 +131,38 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 }
 
 type EventCreate struct {
-	Name string `json:"name" binding:"required"`
+	Name      string `json:"name" binding:"required"`
+	IsCurrent bool   `json:"is_current"`
+	MaxSize   int    `json:"max_size"`
 }
 
 type EventUpdate struct {
-	Name string `json:"name"`
+	Name      string `json:"name"`
+	IsCurrent bool   `json:"is_current"`
+	MaxSize   int    `json:"max_size"`
 }
 
 type EventResponse struct {
 	ID                int    `json:"id"`
 	Name              string `json:"name"`
 	ScoringCategoryID int    `json:"scoring_category_id"`
+	IsCurrent         bool   `json:"is_current"`
+	MaxSize           int    `json:"max_size"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {
 	return &repository.Event{
-		Name: e.Name,
+		Name:      e.Name,
+		IsCurrent: e.IsCurrent,
+		MaxSize:   e.MaxSize,
 	}
 }
 
 func (e *EventUpdate) toModel() *repository.Event {
 	return &repository.Event{
-		Name: e.Name,
+		Name:      e.Name,
+		IsCurrent: e.IsCurrent,
+		MaxSize:   e.MaxSize,
 	}
 }
 
@@ -159,5 +171,7 @@ func toEventResponse(event repository.Event) EventResponse {
 		ID:                event.ID,
 		Name:              event.Name,
 		ScoringCategoryID: event.ScoringCategoryID,
+		IsCurrent:         event.IsCurrent,
+		MaxSize:           event.MaxSize,
 	}
 }

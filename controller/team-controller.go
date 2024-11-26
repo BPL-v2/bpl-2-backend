@@ -70,12 +70,20 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 
 func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		event_id, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
 		var team TeamCreate
 		if err := c.BindJSON(&team); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		dbteam, err := e.teamService.CreateTeam(team.toModel())
+		teamModel := team.toModel()
+		teamModel.EventID = event_id
+		dbteam, err := e.teamService.CreateTeam(teamModel)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -168,12 +176,14 @@ type TeamResponse struct {
 
 func (e *TeamCreate) toModel() *repository.Team {
 	return &repository.Team{
-		Name: e.Name,
+		Name:           e.Name,
+		AllowedClasses: e.AllowedClasses,
 	}
 }
 
 func (e *TeamUpdate) toModel() *repository.Team {
 	return &repository.Team{
-		Name: e.Name,
+		Name:           e.Name,
+		AllowedClasses: e.AllowedClasses,
 	}
 }

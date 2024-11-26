@@ -19,7 +19,7 @@ func NewScoringCategoryService(db *gorm.DB) *ScoringCategoryService {
 }
 
 func (e *ScoringCategoryService) GetCategoryById(categoryId int) (*repository.ScoringCategory, error) {
-	category, err := e.rules_repository.GetCategoryById(categoryId)
+	category, err := e.rules_repository.GetNestedCategories(categoryId)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +47,8 @@ func (e *ScoringCategoryService) CreateCategory(parentId int, category *reposito
 	return category, nil
 }
 
-func (e *ScoringCategoryService) UpdateCategory(categoryId int, categoryUpdate *repository.ScoringCategory) (*repository.ScoringCategory, error) {
-	category, err := e.rules_repository.GetCategoryById(categoryId)
+func (e *ScoringCategoryService) UpdateCategory(categoryUpdate *repository.ScoringCategory) (*repository.ScoringCategory, error) {
+	category, err := e.rules_repository.GetCategoryById(categoryUpdate.ID)
 	if err != nil {
 		return nil, err
 	}

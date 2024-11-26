@@ -151,7 +151,7 @@ func (r *ScoringCategoryRepository) GetCategoryById(categoryId int, preloads ...
 }
 
 func (r *ScoringCategoryRepository) SaveCategory(category *ScoringCategory) (*ScoringCategory, error) {
-	result := r.DB.Create(category)
+	result := r.DB.Save(category)
 	if result.Error != nil {
 		return nil, result.Error
 	}
