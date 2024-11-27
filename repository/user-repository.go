@@ -10,6 +10,7 @@ type User struct {
 	ID                int      `gorm:"primaryKey autoIncrement"`
 	AccountName       string   `gorm:"null"`
 	DiscordID         int64    `gorm:"null"`
+	DiscordName       string   `gorm:"null"`
 	PoEToken          string   `gorm:"null"`
 	PoeTokenExpiresAt int64    `gorm:"null"`
 	Permissions       []string `gorm:"type:text[]"`

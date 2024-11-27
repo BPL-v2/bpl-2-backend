@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Close Window</title>
+  </head>
+  <body>
+    <script type="text/javascript">
+      window.opener.postMessage({ token: "{{ .token }}" }, "*");
+      window.close();
+    </script>
+    <p>You can close this window now.</p>
+  </body>
+</html>

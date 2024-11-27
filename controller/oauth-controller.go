@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"bpl/auth"
 	"bpl/service"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -45,9 +47,8 @@ type DiscordUserResponse struct {
 func NewOauthController(db *gorm.DB) *OauthController {
 	return &OauthController{
 		discordConfig: &oauth2.Config{
-			// todo: fill with env secrets
-			ClientID:     "xxx",
-			ClientSecret: "xxx",
+			ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
+			ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
 			Scopes:       []string{"identify"},
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  "https://discord.com/oauth2/authorize",
@@ -65,8 +66,8 @@ func setupOauthController(db *gorm.DB) []gin.RouteInfo {
 	e := NewOauthController(db)
 	basePath := "/oauth2"
 	routes := []gin.RouteInfo{
-		{Method: "GET", Path: "/discord", HandlerFunc: e.getDiscordOauthHandler()},
-		{Method: "GET", Path: "/discord/redirect", HandlerFunc: e.getDiscordRedirectHandler()},
+		{Method: "GET", Path: "/discord", HandlerFunc: e.discordOauthHandler()},
+		{Method: "GET", Path: "/discord/redirect", HandlerFunc: e.discordRedirectHandler()},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -90,7 +91,7 @@ func (e *OauthController) getNewVerifier() (string, string) {
 	return state, verifier
 }
 
-func (e *OauthController) getDiscordOauthHandler() gin.HandlerFunc {
+func (e *OauthController) discordOauthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		state, verifier := e.getNewVerifier()
 		url := e.discordConfig.AuthCodeURL(state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
@@ -98,7 +99,7 @@ func (e *OauthController) getDiscordOauthHandler() gin.HandlerFunc {
 	}
 }
 
-func (e *OauthController) getDiscordRedirectHandler() gin.HandlerFunc {
+func (e *OauthController) discordRedirectHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		code := c.Request.URL.Query().Get("code")
 		state := c.Request.URL.Query().Get("state")
@@ -107,28 +108,17 @@ func (e *OauthController) getDiscordRedirectHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "state is unknown"})
 			return
 		}
-		token, err := e.discordConfig.Exchange(c, code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-		}
-		response, err := e.discordConfig.Client(c, token).Get("https://discord.com/api/users/@me")
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-		}
+		token, _ := e.discordConfig.Exchange(c, code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
+		response, _ := e.discordConfig.Client(c, token).Get("https://discord.com/api/users/@me")
 		defer response.Body.Close()
 		discordUser := &DiscordUserResponse{}
-		err = json.NewDecoder(response.Body).Decode(discordUser)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-		}
-		discordId, err := strconv.ParseInt(discordUser.ID, 10, 64)
-		if err != nil {
-			c.JSON(500, gin.H{"error": "discord id is not a number"})
-		}
-		user, err := e.UserService.GetOrCreateUserByDiscordId(discordId)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-		}
-		c.JSON(200, user)
+		json.NewDecoder(response.Body).Decode(discordUser)
+		discordId, _ := strconv.ParseInt(discordUser.ID, 10, 64)
+
+		user, _ := e.UserService.GetOrCreateUserByDiscordId(discordId, discordUser.Username)
+		authToken, _ := auth.CreateToken(user)
+		c.HTML(http.StatusOK, "auth-closing.html", gin.H{
+			"token": authToken,
+		})
 	}
 }
