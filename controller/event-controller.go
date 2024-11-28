@@ -21,15 +21,15 @@ func NewEventController(db *gorm.DB) *EventController {
 	}
 }
 
-func setupEventController(db *gorm.DB) []gin.RouteInfo {
+func setupEventController(db *gorm.DB) []RouteInfo {
 	e := NewEventController(db)
 	basePath := "/events"
-	routes := []gin.RouteInfo{
+	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventsHandler()},
-		{Method: "POST", Path: "", HandlerFunc: e.createEventHandler()},
+		{Method: "POST", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
 		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEventHandler()},
-		{Method: "PATCH", Path: "/:event_id", HandlerFunc: e.updateEventHandler()},
-		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler()},
+		{Method: "PATCH", Path: "/:event_id", HandlerFunc: e.updateEventHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path

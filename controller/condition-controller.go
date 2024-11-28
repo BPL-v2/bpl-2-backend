@@ -18,10 +18,10 @@ func NewConditionController(db *gorm.DB) *ConditionController {
 	return &ConditionController{service: service.NewConditionService(db)}
 }
 
-func setupConditionController(db *gorm.DB) []gin.RouteInfo {
+func setupConditionController(db *gorm.DB) []RouteInfo {
 	e := NewConditionController(db)
 	baseUrl := "/scoring-categories/:category_id/objectives/:objective_id/conditions"
-	routes := []gin.RouteInfo{
+	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getObjectiveConditionsHandler()},
 		{Method: "POST", Path: "", HandlerFunc: e.createConditionHandler()},
 		{Method: "DELETE", Path: "/:condition_id", HandlerFunc: e.deleteConditionHandler()},

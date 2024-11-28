@@ -31,10 +31,10 @@ func toTeamResponse(team *repository.Team) TeamResponse {
 	}
 }
 
-func setupTeamController(db *gorm.DB) []gin.RouteInfo {
+func setupTeamController(db *gorm.DB) []RouteInfo {
 	e := NewTeamController(db)
 	basePath := "events/:event_id/teams"
-	routes := []gin.RouteInfo{
+	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamsHandler()},
 		{Method: "POST", Path: "", HandlerFunc: e.createTeamHandler()},
 		{Method: "GET", Path: "/:team_id", HandlerFunc: e.getTeamHandler()},

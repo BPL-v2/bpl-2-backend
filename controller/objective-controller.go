@@ -21,14 +21,14 @@ func NewObjectiveController(db *gorm.DB) *ObjectiveController {
 	return &ObjectiveController{service: service.NewObjectiveService(db)}
 }
 
-func setupObjectiveController(db *gorm.DB) []gin.RouteInfo {
+func setupObjectiveController(db *gorm.DB) []RouteInfo {
 	e := NewObjectiveController(db)
 	baseUrl := "/scoring-categories/:category_id/objectives"
-	routes := []gin.RouteInfo{
+	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getCategoryObjectivesHandler()},
-		{Method: "POST", Path: "", HandlerFunc: e.createObjectiveHandler()},
-		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteObjectiveHandler()},
-		{Method: "PATCH", Path: "/:objective_id", HandlerFunc: e.updateObjectiveHandler()},
+		{Method: "POST", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "PATCH", Path: "/:objective_id", HandlerFunc: e.updateObjectiveHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
 		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler()},
 	}
 	for i, route := range routes {

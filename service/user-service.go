@@ -4,6 +4,7 @@ import (
 	"bpl/auth"
 	"bpl/repository"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
@@ -21,7 +22,7 @@ func NewUserService(db *gorm.DB) *UserService {
 func (s *UserService) GetOrCreateUserByDiscordId(discordId int64, discordName string) (*repository.User, error) {
 	user, err := s.UserRepository.GetUserByDiscordId(discordId)
 	if err != nil {
-		user = &repository.User{DiscordID: discordId, DiscordName: discordName}
+		user = &repository.User{DiscordID: discordId, DiscordName: discordName, Permissions: []string{}}
 		user, err = s.UserRepository.SaveUser(user)
 		if err != nil {
 			return nil, err
@@ -32,6 +33,14 @@ func (s *UserService) GetOrCreateUserByDiscordId(discordId int64, discordName st
 
 func (s *UserService) GetUserById(id int) (*repository.User, error) {
 	return s.UserRepository.GetUserById(id)
+}
+
+func (s *UserService) GetUserFromAuthCookie(c *gin.Context) (*repository.User, error) {
+	cookie, err := c.Cookie("auth")
+	if err != nil {
+		return nil, err
+	}
+	return s.GetUserFromToken(cookie)
 }
 
 func (s *UserService) GetUserFromToken(tokenString string) (*repository.User, error) {

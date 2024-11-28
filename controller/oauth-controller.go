@@ -62,10 +62,10 @@ func NewOauthController(db *gorm.DB) *OauthController {
 	}
 }
 
-func setupOauthController(db *gorm.DB) []gin.RouteInfo {
+func setupOauthController(db *gorm.DB) []RouteInfo {
 	e := NewOauthController(db)
 	basePath := "/oauth2"
-	routes := []gin.RouteInfo{
+	routes := []RouteInfo{
 		{Method: "GET", Path: "/discord", HandlerFunc: e.discordOauthHandler()},
 		{Method: "GET", Path: "/discord/redirect", HandlerFunc: e.discordRedirectHandler()},
 	}
@@ -108,17 +108,34 @@ func (e *OauthController) discordRedirectHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "state is unknown"})
 			return
 		}
-		token, _ := e.discordConfig.Exchange(c, code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
-		response, _ := e.discordConfig.Client(c, token).Get("https://discord.com/api/users/@me")
+		token, err := e.discordConfig.Exchange(c, code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		response, err := e.discordConfig.Client(c, token).Get("https://discord.com/api/users/@me")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 		defer response.Body.Close()
 		discordUser := &DiscordUserResponse{}
 		json.NewDecoder(response.Body).Decode(discordUser)
-		discordId, _ := strconv.ParseInt(discordUser.ID, 10, 64)
+		discordId, err := strconv.ParseInt(discordUser.ID, 10, 64)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := e.UserService.GetOrCreateUserByDiscordId(discordId, discordUser.Username)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 
-		user, _ := e.UserService.GetOrCreateUserByDiscordId(discordId, discordUser.Username)
 		authToken, _ := auth.CreateToken(user)
-		c.HTML(http.StatusOK, "auth-closing.html", gin.H{
-			"token": authToken,
-		})
+		c.SetSameSite(http.SameSiteStrictMode)
+		// TODO: Check security settings, also make sure that this works if the server is not running on localhost
+		c.SetCookie("auth", authToken, 60*60*24*7, "/", "localhost", true, true)
+		c.HTML(http.StatusOK, "auth-closing.html", gin.H{})
 	}
 }
