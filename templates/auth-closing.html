@@ -6,7 +6,8 @@
   </head>
   <body>
     <script type="text/javascript">
-      window.opener.postMessage({ token: "{{ .token }}" }, "*");
+      // Notify the parent window that the authentication process has completed.
+      window.opener.postMessage({}, "*");
       window.close();
     </script>
     <p>You can close this window now.</p>

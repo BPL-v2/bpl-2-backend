@@ -18,14 +18,14 @@ func NewScoringCategoryController(db *gorm.DB) *ScoringCategoryController {
 	return &ScoringCategoryController{service: service.NewScoringCategoryService(db)}
 }
 
-func setupScoringCategoryController(db *gorm.DB) []gin.RouteInfo {
+func setupScoringCategoryController(db *gorm.DB) []RouteInfo {
 	e := NewScoringCategoryController(db)
-	routes := []gin.RouteInfo{
+	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/rules", HandlerFunc: e.getRulesForEventHandler()},
 		{Method: "GET", Path: "/scoring-categories/:category_id", HandlerFunc: e.getScoringCategoryHandler()},
-		{Method: "POST", Path: "/scoring-categories/:category_id", HandlerFunc: e.createCategoryHandler()},
-		{Method: "PATCH", Path: "/scoring-categories/:category_id", HandlerFunc: e.updateCategoryHandler()},
-		{Method: "DELETE", Path: "/scoring-categories/:category_id", HandlerFunc: e.deleteCategoryHandler()}}
+		{Method: "POST", Path: "/scoring-categories/:category_id", HandlerFunc: e.createCategoryHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "PATCH", Path: "/scoring-categories/:category_id", HandlerFunc: e.updateCategoryHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "DELETE", Path: "/scoring-categories/:category_id", HandlerFunc: e.deleteCategoryHandler(), Authenticated: true, RoleRequired: []string{"admin"}}}
 	return routes
 }
 

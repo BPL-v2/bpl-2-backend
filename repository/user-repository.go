@@ -3,17 +3,25 @@ package repository
 import (
 	"fmt"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
+type Permission string
+
+const (
+	PermissionAdmin       Permission = "admin"
+	PermissionCommandTeam Permission = "command_team"
+)
+
 type User struct {
-	ID                int      `gorm:"primaryKey autoIncrement"`
-	AccountName       string   `gorm:"null"`
-	DiscordID         int64    `gorm:"null"`
-	DiscordName       string   `gorm:"null"`
-	PoEToken          string   `gorm:"null"`
-	PoeTokenExpiresAt int64    `gorm:"null"`
-	Permissions       []string `gorm:"type:text[]"`
+	ID                int            `gorm:"primaryKey autoIncrement"`
+	AccountName       string         `gorm:"null"`
+	DiscordID         int64          `gorm:"null"`
+	DiscordName       string         `gorm:"null"`
+	PoeToken          string         `gorm:"null"`
+	PoeTokenExpiresAt int64          `gorm:"null"`
+	Permissions       pq.StringArray `gorm:"type:text[];not null;default:'{}'"`
 }
 
 type UserRepository struct {
@@ -41,7 +49,7 @@ func (r *UserRepository) GetUserByDiscordId(discordId int64) (*User, error) {
 
 	result := query.First(&user, "discord_id = ?", discordId)
 	if result.Error != nil {
-		return nil, fmt.Errorf("user with discord id %d not found", discordId)
+		return nil, fmt.Errorf("user with discord id %s not found", discordId)
 	}
 	return &user, nil
 }
