@@ -136,7 +136,7 @@ func (e *OauthController) discordRedirectHandler() gin.HandlerFunc {
 		authToken, _ := auth.CreateToken(user)
 		c.SetSameSite(http.SameSiteStrictMode)
 		// TODO: Check security settings, also make sure that this works if the server is not running on localhost
-		c.SetCookie("auth", authToken, 60*60*24*7, "/", os.Getenv("PUBLIC_URL"), true, true)
+		c.SetCookie("auth", authToken, 60*60*24*7, "/", os.Getenv("PUBLIC_DOMAIN"), true, true)
 		c.HTML(http.StatusOK, "auth-closing.html", gin.H{})
 	}
 }
