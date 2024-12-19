@@ -40,9 +40,10 @@ const (
 )
 
 type Condition struct {
-	ObjectiveID int       `gorm:"primaryKey;autoIncrement:false"`
-	Field       ItemField `gorm:"primaryKey;type:bpl2.item_field"`
-	Operator    Operator  `gorm:"primaryKey;type:bpl2.operator"`
+	ID          int       `gorm:"primaryKey;autoIncrement"`
+	ObjectiveID int       `gorm:"not null"`
+	Field       ItemField `gorm:"type:bpl2.item_field"`
+	Operator    Operator  `gorm:"type:bpl2.operator"`
 	Value       string    `gorm:"not null"`
 }
 
@@ -54,9 +55,9 @@ func NewConditionRepository(db *gorm.DB) *ConditionRepository {
 	return &ConditionRepository{DB: db}
 }
 
-func (r *ConditionRepository) GetConditionById(conditionId int) (*Condition, error) {
+func (r *ConditionRepository) GetConditionByPK(objectiveID int, field ItemField, operator Operator) (*Condition, error) {
 	var condition Condition
-	result := r.DB.First(&condition, "id = ?", conditionId)
+	result := r.DB.First(&condition, "objective_id = ? AND field = ? AND operator = ?", objectiveID, field, operator)
 	if result.Error != nil {
 		return nil, result.Error
 	}

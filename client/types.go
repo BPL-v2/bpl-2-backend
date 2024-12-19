@@ -552,3 +552,131 @@ type PvPMatchLadder struct {
 type Twitch struct {
 	Name string `json:"name"`
 }
+
+type ListLeaguesResponse struct {
+	Leagues []League `json:"leagues"`
+}
+
+type ListCharactersResponse struct {
+	Characters []MinimalCharacter `json:"characters"`
+}
+
+type GetLeagueResponse struct {
+	League *League `json:"league"`
+}
+
+type GetLeagueLadderResponse struct {
+	League *League `json:"league"`
+	Ladder *Ladder `json:"ladder"`
+}
+
+type GetLeagueEventLadderResponse struct {
+	League *League      `json:"league"`
+	Ladder *EventLadder `json:"ladder"`
+}
+
+type GetPvPMatchesResponse struct {
+	Matches []PvPMatch `json:"matches"`
+}
+
+type GetPvPMatchResponse struct {
+	Match *PvPMatch `json:"match"`
+}
+
+type GetPvPMatchLadderResponse struct {
+	Match  PvPMatch       `json:"match"`
+	Ladder PvPMatchLadder `json:"ladder"`
+}
+
+type GetAccountProfileResponse struct {
+	UUID   string  `json:"uuid"`
+	Name   string  `json:"name"`
+	Realm  *Realm  `json:"realm"`
+	Guild  *Guild  `json:"guild"`
+	Twitch *Twitch `json:"twitch"`
+}
+
+type GetCharacterResponse struct {
+	Character *Character `json:"character"`
+}
+
+type ListAccountStashesResponse struct {
+	Stashes []PublicStashChange `json:"stashes"`
+}
+
+type GetAccountStashResponse struct {
+	Stash *PublicStashChange `json:"stash"`
+}
+
+type ListItemFiltersResponse struct {
+	Filters []ItemFilter `json:"filters"`
+}
+
+type GetItemFilterResponse struct {
+	Filter *ItemFilter `json:"filter"`
+}
+
+type CreateItemFilterResponse struct {
+	Filter ItemFilter `json:"filter"`
+}
+
+type UpdateItemFilterResponse struct {
+	Filter ItemFilter `json:"filter"`
+	Error  *Error     `json:"error"`
+}
+
+type CreateFilterBody struct {
+	FilterName  string  `json:"filter_name"`
+	Realm       Realm   `json:"realm"`
+	Description *string `json:"description"`
+	Version     *string `json:"version"`
+	Type        *string `json:"type"`
+	Public      *bool   `json:"public"`
+	Filter      string  `json:"filter"`
+}
+
+type UpdateFilterBody struct {
+	FilterName  *string `json:"filter_name"`
+	Realm       *Realm  `json:"realm"`
+	Description *string `json:"description"`
+	Version     *string `json:"version"`
+	Type        *string `json:"type"`
+	Public      *bool   `json:"public"`
+	Filter      *string `json:"filter"`
+}
+
+type GetLeagueAccountResponse struct {
+	LeagueAccount LeagueAccount `json:"league_account"`
+}
+
+type ListGuildStashesResponse struct {
+	Stashes []PublicStashChange `json:"stashes"`
+}
+
+type GetGuildStashResponse struct {
+	Stash *PublicStashChange `json:"stash"`
+}
+
+type GetPublicStashTabsResponse struct {
+	NextChangeID string              `json:"next_change_id"`
+	Stashes      []PublicStashChange `json:"stashes"`
+}
+
+type ClientCredentialsGrantResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	TokenType   string `json:"token_type"`
+	Username    string `json:"username"`
+	Sub         string `json:"sub"`
+	Scope       string `json:"scope"`
+}
+
+type RefreshTokenGrantResponse struct {
+	AccessToken  string `json:"access_token"`
+	ExpiresIn    int    `json:"expires_in"`
+	TokenType    string `json:"token_type"`
+	Username     string `json:"username"`
+	Sub          string `json:"sub"`
+	Scope        string `json:"scope"`
+	RefreshToken string `json:"refresh_token"`
+}

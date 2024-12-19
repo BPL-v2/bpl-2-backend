@@ -1,13 +1,10 @@
-version: "3.3"
+version: "3.8"
 services:
-  db:
-    image: postgres:14.1-alpine
-    restart: always
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+  server:
+    build:
+      dockerfile: Dockerfile
     ports:
-      - "5432:5432"
-volumes:
-  db:
-    driver: local
+      - "8000:8000"
+    network_mode: "host"
+    env_file:
+      - .env

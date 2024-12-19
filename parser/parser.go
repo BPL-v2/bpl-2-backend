@@ -121,12 +121,12 @@ var fieldToComparator = map[dbModel.ItemField]func(*dbModel.Condition) (checkerF
 	dbModel.FRACTURED_MODS: StringArrayComparator,
 }
 
-func IntComparator(comparison *dbModel.Condition) (checkerFun, error) {
-	getter, err := IntFieldGetter(comparison.Field)
+func IntComparator(condition *dbModel.Condition) (checkerFun, error) {
+	getter, err := IntFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
 	}
-	var values = strings.Split(comparison.Value, ",")
+	var values = strings.Split(condition.Value, ",")
 	intValues := make([]int, len(values))
 	for i, v := range values {
 		intValue, err := strconv.Atoi(v)
@@ -137,7 +137,7 @@ func IntComparator(comparison *dbModel.Condition) (checkerFun, error) {
 	}
 	intValue := intValues[0]
 
-	switch comparison.Operator {
+	switch condition.Operator {
 	case dbModel.EQ:
 		return func(item *clientModel.Item) bool {
 			return getter(item) == intValue
@@ -183,27 +183,27 @@ func IntComparator(comparison *dbModel.Condition) (checkerFun, error) {
 			return true
 		}, nil
 	default:
-		return nil, fmt.Errorf("%s is an invalid operator for integer field %s", comparison.Operator, comparison.Field)
+		return nil, fmt.Errorf("%s is an invalid operator for integer field %s", condition.Operator, condition.Field)
 	}
 }
 
-func StringComparator(comparison *dbModel.Condition) (checkerFun, error) {
-	getter, err := StringFieldGetter(comparison.Field)
+func StringComparator(condition *dbModel.Condition) (checkerFun, error) {
+	getter, err := StringFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
 	}
 
-	switch comparison.Operator {
+	switch condition.Operator {
 	case dbModel.EQ:
 		return func(item *clientModel.Item) bool {
-			return getter(item) == comparison.Value
+			return getter(item) == condition.Value
 		}, nil
 	case dbModel.NEQ:
 		return func(item *clientModel.Item) bool {
-			return getter(item) != comparison.Value
+			return getter(item) != condition.Value
 		}, nil
 	case dbModel.IN:
-		var values = strings.Split(comparison.Value, ",")
+		var values = strings.Split(condition.Value, ",")
 		return func(item *clientModel.Item) bool {
 			fiedValue := getter(item)
 			for _, v := range values {
@@ -214,7 +214,7 @@ func StringComparator(comparison *dbModel.Condition) (checkerFun, error) {
 			return false
 		}, nil
 	case dbModel.NOT_IN:
-		var values = strings.Split(comparison.Value, ",")
+		var values = strings.Split(condition.Value, ",")
 		return func(item *clientModel.Item) bool {
 			fiedValue := getter(item)
 			for _, v := range values {
@@ -225,26 +225,26 @@ func StringComparator(comparison *dbModel.Condition) (checkerFun, error) {
 			return true
 		}, nil
 	case dbModel.MATCHES:
-		var expression = regexp.MustCompile(comparison.Value)
+		var expression = regexp.MustCompile(condition.Value)
 		return func(item *clientModel.Item) bool {
 			return expression.MatchString(getter(item))
 		}, nil
 	default:
-		return nil, fmt.Errorf("%s is an invalid operator for string field %s", comparison.Operator, comparison.Field)
+		return nil, fmt.Errorf("%s is an invalid operator for string field %s", condition.Operator, condition.Field)
 	}
 }
 
-func StringArrayComparator(comparison *dbModel.Condition) (checkerFun, error) {
-	getter, err := StringArrayFieldGetter(comparison.Field)
+func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
+	getter, err := StringArrayFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
 	}
-	values := strings.Split(comparison.Value, ",")
-	switch comparison.Operator {
+	values := strings.Split(condition.Value, ",")
+	switch condition.Operator {
 	case dbModel.CONTAINS:
 		return func(item *clientModel.Item) bool {
 			for _, fv := range getter(item) {
-				if fv == comparison.Value {
+				if fv == condition.Value {
 					return true
 				}
 			}
@@ -268,7 +268,7 @@ func StringArrayComparator(comparison *dbModel.Condition) (checkerFun, error) {
 			return true
 		}, nil
 	case dbModel.CONTAINS_MATCH:
-		expression := regexp.MustCompile(comparison.Value)
+		expression := regexp.MustCompile(condition.Value)
 		return func(item *clientModel.Item) bool {
 			for _, fv := range getter(item) {
 				if expression.MatchString(fv) {
@@ -299,29 +299,29 @@ func StringArrayComparator(comparison *dbModel.Condition) (checkerFun, error) {
 			return true
 		}, nil
 	default:
-		return nil, fmt.Errorf("%s is an invalid operator for string array field %s", comparison.Operator, comparison.Field)
+		return nil, fmt.Errorf("%s is an invalid operator for string array field %s", condition.Operator, condition.Field)
 	}
 }
 
-func Comparator(comparison *dbModel.Condition) (checkerFun, error) {
-	if f, ok := fieldToComparator[comparison.Field]; ok {
-		return f(comparison)
+func Comparator(condition *dbModel.Condition) (checkerFun, error) {
+	if f, ok := fieldToComparator[condition.Field]; ok {
+		return f(condition)
 	}
-	return nil, fmt.Errorf("Comparator: invalid field %s", comparison.Field)
+	return nil, fmt.Errorf("Comparator: invalid field %s", condition.Field)
 }
 
-func AndComparator(comparisons []*dbModel.Condition) (checkerFun, error) {
-	if len(comparisons) == 0 {
+func ComperatorFromConditions(conditions []*dbModel.Condition) (checkerFun, error) {
+	if len(conditions) == 0 {
 		return func(item *clientModel.Item) bool {
 			return true
 		}, nil
 	}
-	if len(comparisons) == 1 {
-		return Comparator(comparisons[0])
+	if len(conditions) == 1 {
+		return Comparator(conditions[0])
 	}
-	checkers := make([]checkerFun, len(comparisons))
-	for i, comparison := range comparisons {
-		checker, err := Comparator(comparison)
+	checkers := make([]checkerFun, len(conditions))
+	for i, condition := range conditions {
+		checker, err := Comparator(condition)
 		if err != nil {
 			return nil, err
 		}
@@ -343,21 +343,21 @@ type Discriminator struct {
 }
 
 func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*dbModel.Condition, error) {
-	for i, comparison := range conditions {
-		if comparison.Field == dbModel.BASE_TYPE || comparison.Field == dbModel.NAME {
-			if comparison.Operator == dbModel.EQ {
+	for i, condition := range conditions {
+		if condition.Field == dbModel.BASE_TYPE || condition.Field == dbModel.NAME {
+			if condition.Operator == dbModel.EQ {
 
 				discriminators := []*Discriminator{
-					{field: comparison.Field, value: comparison.Value},
+					{field: condition.Field, value: condition.Value},
 				}
 				remainingConditions := append(conditions[:i], conditions[i+1:]...)
 				return discriminators, remainingConditions, nil
 			}
-			if comparison.Operator == dbModel.IN {
-				values := strings.Split(comparison.Value, ",")
+			if condition.Operator == dbModel.IN {
+				values := strings.Split(condition.Value, ",")
 				discriminators := make([]*Discriminator, 0, len(values))
 				for _, value := range values {
-					discriminators = append(discriminators, &Discriminator{field: comparison.Field, value: value})
+					discriminators = append(discriminators, &Discriminator{field: condition.Field, value: value})
 				}
 				remainingConditions := append(conditions[:i], conditions[i+1:]...)
 				return discriminators, remainingConditions, nil
@@ -398,14 +398,15 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 		dbModel.BASE_TYPE: make(map[string][]*ObjectiveChecker),
 		dbModel.NAME:      make(map[string][]*ObjectiveChecker),
 	}
-	fmt.Println(objectives)
-
 	for _, objective := range objectives {
-		discriminators, conditions, err := GetDiscriminators(objective.Conditions)
+		if objective.ObjectiveType != dbModel.ITEM {
+			continue
+		}
+		discriminators, remainingConditions, err := GetDiscriminators(objective.Conditions)
 		if err != nil {
 			return nil, err
 		}
-		fn, err := AndComparator(conditions)
+		fn, err := ComperatorFromConditions(remainingConditions)
 		if err != nil {
 			return nil, err
 		}

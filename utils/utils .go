@@ -8,6 +8,41 @@ func Map[A any, B any](input []A, mapper func(A) B) []B {
 	return output
 }
 
+func Filter[A any](input []A, filter func(A) bool) []A {
+	output := make([]A, 0, len(input))
+	for _, item := range input {
+		if filter(item) {
+			output = append(output, item)
+		}
+	}
+	return output
+}
+
+func Contains[A comparable](input []A, item A) bool {
+	for _, i := range input {
+		if i == item {
+			return true
+		}
+	}
+	return false
+}
+
+func Keys[A comparable, B any](input map[A]B) []A {
+	keys := make([]A, 0, len(input))
+	for key := range input {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+func Values[A comparable, B any](input map[A]B) []B {
+	values := make([]B, 0, len(input))
+	for _, value := range input {
+		values = append(values, value)
+	}
+	return values
+}
+
 func Uniques[A comparable](input []A) []A {
 	ids := make(map[A]bool)
 	for _, item := range input {

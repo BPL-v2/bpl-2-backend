@@ -5,37 +5,16 @@ import (
 )
 
 type ScoringCategory struct {
-	ID             int                      `gorm:"primaryKey foreignKey:CategoryID references:ID on:objectives"`
-	Name           string                   `gorm:"not null"`
-	Inheritance    ScoringMethodInheritance `gorm:"type:bpl2.scoring_method_inheritance"`
-	ParentID       *int                     `gorm:"null"`
-	ScoringMethods []*ScoringMethod         `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE"`
-	SubCategories  []*ScoringCategory       `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`
-	Objectives     []*Objective             `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE"`
-	Event          Event                    `gorm:"foreignKey:ScoringCategoryID"`
+	ID        int    `gorm:"primaryKey foreignKey:CategoryID references:ID on:objectives"`
+	Name      string `gorm:"not null"`
+	ParentID  *int   `gorm:"null"`
+	ScoringId *int   `gorm:"null;references:scoring_presets(id)"`
+
+	SubCategories []*ScoringCategory `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`
+	Objectives    []*Objective       `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE"`
+	Event         Event              `gorm:"foreignKey:ScoringCategoryID"`
+	ScoringPreset *ScoringPreset     `gorm:"foreignKey:ScoringId;references:ID"`
 }
-
-type ScoringMethod struct {
-	CategoryID int               `gorm:"primaryKey"`
-	Type       ScoringMethodType `gorm:"primaryKey;type:bpl2.scoring_method_type"`
-	Points     []int             `gorm:"type:integer[]"`
-}
-
-type ScoringMethodType string
-
-const (
-	PRESENCE          ScoringMethodType = "PRESENCE"
-	RANKED            ScoringMethodType = "RANKED"
-	RELATIVE_PRESENCE ScoringMethodType = "RELATIVE_PRESENCE"
-)
-
-type ScoringMethodInheritance string
-
-const (
-	OVERWRITE ScoringMethodInheritance = "OVERWRITE"
-	INHERIT   ScoringMethodInheritance = "INHERIT"
-	EXTEND    ScoringMethodInheritance = "EXTEND"
-)
 
 type ScoringCategoryRepository struct {
 	DB *gorm.DB
@@ -73,7 +52,7 @@ func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int) (*Scorin
 		uniques = append(uniques, id)
 	}
 
-	query := r.DB.Preload("ScoringMethods").Preload("Objectives").Preload("Objectives.Conditions").Where("id IN ?", uniques)
+	query := r.DB.Preload("Objectives").Preload("Objectives.Conditions").Preload("ScoringPreset").Preload("Objectives.ScoringPreset").Where("id IN ?", uniques)
 	result := query.Find(&scoringCategories)
 	if result.Error != nil {
 		return nil, result.Error

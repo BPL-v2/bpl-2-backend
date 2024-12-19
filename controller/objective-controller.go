@@ -5,7 +5,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -23,12 +22,11 @@ func NewObjectiveController(db *gorm.DB) *ObjectiveController {
 
 func setupObjectiveController(db *gorm.DB) []RouteInfo {
 	e := NewObjectiveController(db)
-	baseUrl := "/scoring-categories/:category_id/objectives"
+	baseUrl := "/scoring/objectives"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getCategoryObjectivesHandler()},
-		{Method: "POST", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
-		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
-		{Method: "PATCH", Path: "/:objective_id", HandlerFunc: e.updateObjectiveHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
+		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
+		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
 		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler()},
 	}
 	for i, route := range routes {
@@ -39,24 +37,18 @@ func setupObjectiveController(db *gorm.DB) []RouteInfo {
 
 func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		category_id, err := strconv.Atoi(c.Param("category_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-
 		var objectiveCreate ObjectiveCreate
 		if err := c.BindJSON(&objectiveCreate); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		objective, err := e.service.CreateObjective(category_id, objectiveCreate.toModel())
+		objective, err := e.service.CreateObjective(objectiveCreate.toModel())
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
 			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
+				c.JSON(400, gin.H{"error": err.Error()})
 			}
 			return
 		}
@@ -66,13 +58,13 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 
 func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		objective_id, err := strconv.Atoi(c.Param("objective_id"))
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		err = e.service.DeleteObjective(objective_id)
+		err = e.service.DeleteObjective(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objective not found"})
@@ -84,22 +76,15 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 		c.JSON(204, nil)
 	}
 }
-
-func (e *ObjectiveController) updateObjectiveHandler() gin.HandlerFunc {
+func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		objective_id, err := strconv.Atoi(c.Param("objective_id"))
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		var objectiveCreate ObjectiveUpdate
-		if err := c.BindJSON(&objectiveCreate); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-
-		objective, err := e.service.UpdateObjective(objective_id, objectiveCreate.toModel())
+		objective, err := e.service.GetObjectiveById(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objective not found"})
@@ -150,7 +135,6 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		fmt.Println(parser)
 		item := client.Item{
 			BaseType: c.Query("baseType"),
 			Name:     c.Query("name"),
@@ -161,62 +145,64 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 }
 
 type ObjectiveCreate struct {
-	Name           string                   `json:"name" binding:"required"`
-	RequiredNumber int                      `json:"required_number" binding:"required"`
-	ObjectiveType  repository.ObjectiveType `json:"objective_type" binding:"required"`
-	ValidFrom      time.Time                `json:"valid_from" binding:"omitempty"`
-	ValidTo        time.Time                `json:"valid_to" binding:"omitempty"`
-	Conditions     []ConditionCreate        `json:"conditions"`
-}
-type ObjectiveUpdate struct {
-	Name           string                   `json:"name"`
-	RequiredNumber int                      `json:"required_number"`
-	ObjectiveType  repository.ObjectiveType `json:"objective_type"`
-	ValidFrom      time.Time                `json:"valid_from"`
-	ValidTo        time.Time                `json:"valid_to"`
+	ID             int                        `json:"id"`
+	Name           string                     `json:"name" binding:"required"`
+	RequiredNumber int                        `json:"required_number" binding:"required"`
+	ObjectiveType  repository.ObjectiveType   `json:"objective_type" binding:"required"`
+	NumberField    repository.NumberField     `json:"number_field" binding:"required"`
+	Aggregation    repository.AggregationType `json:"aggregation" binding:"required"`
+	CategoryId     int                        `json:"category_id" binding:"required"`
+	Conditions     []ConditionCreate          `json:"conditions" binding:"required"`
+	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
+	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
+	ScoringId      *int                       `json:"scoring_preset_id"`
 }
 
 type ObjectiveResponse struct {
-	ID             int                      `json:"id"`
-	Name           string                   `json:"name"`
-	RequiredNumber int                      `json:"required_number"`
-	CategoryID     int                      `json:"category_id"`
-	ObjectiveType  repository.ObjectiveType `json:"objective_type"`
-	ValidFrom      time.Time                `json:"valid_from" binding:"omitempty"`
-	ValidTo        time.Time                `json:"valid_to" binding:"omitempty"`
-	Contitions     []ConditionOut           `json:"conditions"`
+	ID             int                        `json:"id"`
+	Name           string                     `json:"name"`
+	RequiredNumber int                        `json:"required_number"`
+	CategoryID     int                        `json:"category_id"`
+	ObjectiveType  repository.ObjectiveType   `json:"objective_type"`
+	Conditions     []ConditionResponse        `json:"conditions"`
+	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
+	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
+	ScoringPreset  *ScoringPresetResponse     `json:"scoring_preset"`
+	NumberField    repository.NumberField     `json:"number_field"`
+	Aggregation    repository.AggregationType `json:"aggregation"`
 }
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {
 	return &repository.Objective{
+		ID:             e.ID,
 		Name:           e.Name,
-		RequiredNumber: e.RequiredNumber,
+		RequiredAmount: e.RequiredNumber,
 		ObjectiveType:  e.ObjectiveType,
+		NumberField:    e.NumberField,
+		Aggregation:    e.Aggregation,
 		Conditions:     utils.Map(e.Conditions, func(c ConditionCreate) *repository.Condition { return c.toModel() }),
-		ValidFrom:      &e.ValidFrom,
-		ValidTo:        &e.ValidTo,
-	}
-}
-
-func (e *ObjectiveUpdate) toModel() *repository.Objective {
-	return &repository.Objective{
-		Name:           e.Name,
-		RequiredNumber: e.RequiredNumber,
-		ObjectiveType:  e.ObjectiveType,
-		ValidFrom:      &e.ValidFrom,
-		ValidTo:        &e.ValidTo,
+		ValidFrom:      e.ValidFrom,
+		ValidTo:        e.ValidTo,
+		CategoryID:     e.CategoryId,
+		ScoringId:      e.ScoringId,
 	}
 }
 
 func toObjectiveResponse(objective *repository.Objective) ObjectiveResponse {
-	return ObjectiveResponse{
+	resp := ObjectiveResponse{
 		ID:             objective.ID,
 		Name:           objective.Name,
-		RequiredNumber: objective.RequiredNumber,
+		RequiredNumber: objective.RequiredAmount,
 		CategoryID:     objective.CategoryID,
 		ObjectiveType:  objective.ObjectiveType,
-		ValidFrom:      *objective.ValidFrom,
-		ValidTo:        *objective.ValidTo,
-		Contitions:     utils.Map(objective.Conditions, toConditionResponse),
+		ValidFrom:      objective.ValidFrom,
+		ValidTo:        objective.ValidTo,
+		Conditions:     utils.Map(objective.Conditions, toConditionResponse),
+		NumberField:    objective.NumberField,
+		Aggregation:    objective.Aggregation,
 	}
+	if objective.ScoringPreset != nil {
+		resp.ScoringPreset = toScoringPresetResponse(objective.ScoringPreset)
+	}
+	return resp
 }

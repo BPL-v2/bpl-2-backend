@@ -34,13 +34,8 @@ func (e *ScoringCategoryService) GetRulesForEvent(eventId int) (*repository.Scor
 	return e.rules_repository.GetNestedCategories(event.ScoringCategoryID)
 }
 
-func (e *ScoringCategoryService) CreateCategory(parentId int, category *repository.ScoringCategory) (*repository.ScoringCategory, error) {
-	parentCategory, err := e.rules_repository.GetCategoryById(parentId)
-	if err != nil {
-		return nil, err
-	}
-	category.ParentID = &parentCategory.ID
-	category, err = e.rules_repository.SaveCategory(category)
+func (e *ScoringCategoryService) CreateCategory(category *repository.ScoringCategory) (*repository.ScoringCategory, error) {
+	category, err := e.rules_repository.SaveCategory(category)
 	if err != nil {
 		return nil, err
 	}
@@ -54,9 +49,6 @@ func (e *ScoringCategoryService) UpdateCategory(categoryUpdate *repository.Scori
 	}
 	if categoryUpdate.Name != "" {
 		category.Name = categoryUpdate.Name
-	}
-	if categoryUpdate.Inheritance != "" {
-		category.Inheritance = categoryUpdate.Inheritance
 	}
 	return e.rules_repository.SaveCategory(category)
 }
