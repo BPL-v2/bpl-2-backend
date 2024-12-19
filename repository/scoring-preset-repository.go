@@ -3,7 +3,6 @@ package repository
 import (
 	"bpl/utils"
 	"database/sql/driver"
-	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -70,7 +69,12 @@ func (e *ExtendingNumberSlice) Scan(value interface{}) error {
 }
 
 func (e ExtendingNumberSlice) Value() (driver.Value, error) {
-	return json.Marshal(e)
+	// Convert the slice to a PostgreSQL array format string
+	var strValues []string
+	for _, num := range e {
+		strValues = append(strValues, strconv.FormatFloat(num, 'f', -1, 64))
+	}
+	return "{" + strings.Join(strValues, ",") + "}", nil
 }
 
 const (
