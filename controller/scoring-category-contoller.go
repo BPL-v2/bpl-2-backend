@@ -22,10 +22,9 @@ func setupScoringCategoryController(db *gorm.DB) []RouteInfo {
 	e := NewScoringCategoryController(db)
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/rules", HandlerFunc: e.getRulesForEventHandler()},
-		{Method: "GET", Path: "/scoring-categories/:category_id", HandlerFunc: e.getScoringCategoryHandler()},
-		{Method: "POST", Path: "/scoring-categories/:category_id", HandlerFunc: e.createCategoryHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
-		{Method: "PATCH", Path: "/scoring-categories/:category_id", HandlerFunc: e.updateCategoryHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
-		{Method: "DELETE", Path: "/scoring-categories/:category_id", HandlerFunc: e.deleteCategoryHandler(), Authenticated: true, RoleRequired: []string{"admin"}}}
+		{Method: "PUT", Path: "/scoring/categories", HandlerFunc: e.createCategoryHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
+		{Method: "GET", Path: "/scoring/categories/:id", HandlerFunc: e.getScoringCategoryHandler()},
+		{Method: "DELETE", Path: "/scoring/categories/:id", HandlerFunc: e.deleteCategoryHandler(), Authenticated: true, RequiredRoles: []string{"admin"}}}
 	return routes
 }
 
@@ -48,13 +47,13 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 
 func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		category_id, err := strconv.Atoi(c.Param("category_id"))
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		category, err := e.service.GetCategoryById(category_id)
+		category, err := e.service.GetCategoryById(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -69,19 +68,13 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 
 func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		category_id, err := strconv.Atoi(c.Param("category_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-
 		var categoryCreate CategoryCreate
 		if err := c.BindJSON(&categoryCreate); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		category, err := e.service.CreateCategory(category_id, categoryCreate.toModel())
+		category, err := e.service.CreateCategory(categoryCreate.toModel())
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Parent category not found"})
@@ -94,43 +87,15 @@ func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 	}
 }
 
-func (e *ScoringCategoryController) updateCategoryHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		category_id, err := strconv.Atoi(c.Param("category_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-
-		var categoryUpdate CategoryUpdate
-		if err := c.BindJSON(&categoryUpdate); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		categoryModel := categoryUpdate.toModel()
-		categoryModel.ID = category_id
-		category, err := e.service.UpdateCategory(categoryModel)
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Category not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			return
-		}
-		c.JSON(200, toCategoryResponse(category))
-	}
-}
-
 func (e *ScoringCategoryController) deleteCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		category_id, err := strconv.Atoi(c.Param("category_id"))
+		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		err = e.service.DeleteCategory(category_id)
+		err = e.service.DeleteCategory(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -144,57 +109,48 @@ func (e *ScoringCategoryController) deleteCategoryHandler() gin.HandlerFunc {
 }
 
 type CategoryCreate struct {
-	Name        string                              `json:"name" binding:"required"`
-	Inheritance repository.ScoringMethodInheritance `json:"inheritance" binding:"required"`
-}
-
-type CategoryUpdate struct {
-	Name        string                              `json:"name"`
-	Inheritance repository.ScoringMethodInheritance `json:"inheritance"`
+	ID        *int   `json:"id"`
+	ParentID  int    `json:"parent_id" binding:"required"`
+	Name      string `json:"name" binding:"required"`
+	ScoringId *int   `json:"scoring_preset_id"`
 }
 
 type CategoryResponse struct {
-	ID             int                                 `json:"id"`
-	Name           string                              `json:"name"`
-	Inheritance    repository.ScoringMethodInheritance `json:"inheritance"`
-	SubCategories  []CategoryResponse                  `json:"sub_categories"`
-	Objectives     []ObjectiveResponse                 `json:"objectives"`
-	ScoringMethods []ScoringMethodResponse             `json:"scoring_methods"`
+	ID              int                    `json:"id"`
+	Name            string                 `json:"name"`
+	SubCategories   []CategoryResponse     `json:"sub_categories"`
+	Objectives      []ObjectiveResponse    `json:"objectives"`
+	ScoringPreset   *ScoringPresetResponse `json:"scoring_preset"`
+	ScoringPresetID *int                   `json:"scoring_preset_id"`
 }
 
 func (e *CategoryCreate) toModel() *repository.ScoringCategory {
-	return &repository.ScoringCategory{
-		Name:        e.Name,
-		Inheritance: e.Inheritance,
+	category := &repository.ScoringCategory{
+		ParentID:  &e.ParentID,
+		Name:      e.Name,
+		ScoringId: e.ScoringId,
 	}
-}
-
-func (e *CategoryUpdate) toModel() *repository.ScoringCategory {
-	return &repository.ScoringCategory{
-		Name:        e.Name,
-		Inheritance: e.Inheritance,
+	if e.ID != nil {
+		category.ID = *e.ID
 	}
+	return category
 }
 
 type ScoringMethodResponse struct {
-	Type   repository.ScoringMethodType `json:"type"`
-	Points []int                        `json:"points"`
+	Type   repository.ScoringMethod `json:"type"`
+	Points []int                    `json:"points"`
 }
 
 func toCategoryResponse(category *repository.ScoringCategory) CategoryResponse {
-	return CategoryResponse{
-		ID:             category.ID,
-		Name:           category.Name,
-		Inheritance:    category.Inheritance,
-		SubCategories:  utils.Map(category.SubCategories, toCategoryResponse),
-		Objectives:     utils.Map(category.Objectives, toObjectiveResponse),
-		ScoringMethods: utils.Map(category.ScoringMethods, toScoringMethodResponse),
+	resp := CategoryResponse{
+		ID:            category.ID,
+		Name:          category.Name,
+		SubCategories: utils.Map(category.SubCategories, toCategoryResponse),
+		Objectives:    utils.Map(category.Objectives, toObjectiveResponse),
 	}
-}
-
-func toScoringMethodResponse(scoringMethod *repository.ScoringMethod) ScoringMethodResponse {
-	return ScoringMethodResponse{
-		Type:   scoringMethod.Type,
-		Points: scoringMethod.Points,
+	if category.ScoringPreset != nil {
+		resp.ScoringPreset = toScoringPresetResponse(category.ScoringPreset)
+		resp.ScoringPresetID = &category.ScoringPreset.ID
 	}
+	return resp
 }

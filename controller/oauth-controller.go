@@ -4,6 +4,7 @@ import (
 	"bpl/auth"
 	"bpl/service"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -54,7 +55,7 @@ func NewOauthController(db *gorm.DB) *OauthController {
 				AuthURL:  "https://discord.com/oauth2/authorize",
 				TokenURL: "https://discord.com/api/oauth2/token",
 			},
-			RedirectURL: "https://redirectmeto.com/http://localhost:8000/oauth2/discord/redirect",
+			RedirectURL: fmt.Sprintf("https://redirectmeto.com/%s/api/oauth2/discord/redirect", os.Getenv("PUBLIC_URL")),
 		},
 		// small hashmap that is used to associate states with verifiers
 		stateToVerifyer: make(map[string]Verifier),
@@ -135,7 +136,7 @@ func (e *OauthController) discordRedirectHandler() gin.HandlerFunc {
 		authToken, _ := auth.CreateToken(user)
 		c.SetSameSite(http.SameSiteStrictMode)
 		// TODO: Check security settings, also make sure that this works if the server is not running on localhost
-		c.SetCookie("auth", authToken, 60*60*24*7, "/", "localhost", true, true)
+		c.SetCookie("auth", authToken, 60*60*24*7, "/", "", true, true)
 		c.HTML(http.StatusOK, "auth-closing.html", gin.H{})
 	}
 }

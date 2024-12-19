@@ -12,11 +12,12 @@ type RouteInfo struct {
 	Path          string
 	HandlerFunc   gin.HandlerFunc
 	Authenticated bool
-	RoleRequired  []string
+	RequiredRoles []string
 }
 
 func SetRoutes(r *gin.Engine, db *gorm.DB) {
 	routes := make([]RouteInfo, 0)
+	group := r.Group("/api")
 	routes = append(routes, setupEventController(db)...)
 	routes = append(routes, setupTeamController(db)...)
 	routes = append(routes, setupConditionController(db)...)
@@ -24,40 +25,37 @@ func SetRoutes(r *gin.Engine, db *gorm.DB) {
 	routes = append(routes, setupObjectiveController(db)...)
 	routes = append(routes, setupOauthController(db)...)
 	routes = append(routes, setupUserController(db)...)
+	routes = append(routes, setupScoringPresetController(db)...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
-		if route.Authenticated {
-			handlerfuncs = append(handlerfuncs, AuthMiddleware(route.RoleRequired))
-		}
+		// if route.Authenticated {
+		// 	handlerfuncs = append(handlerfuncs, AuthMiddleware(route.RequiredRoles))
+		// }
 		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
-		r.Handle(route.Method, route.Path, handlerfuncs...)
+		group.Handle(route.Method, route.Path, handlerfuncs...)
 	}
 }
 func AuthMiddleware(roles []string) gin.HandlerFunc {
 	return func(r *gin.Context) {
 		authCookie, err := r.Cookie("auth")
 		if err != nil {
-			r.JSON(401, gin.H{"error": "Unauthenticated"})
-			r.Abort()
+			r.AbortWithStatus(401)
 			return
 		}
 		token, err := auth.ParseToken(authCookie)
 		if err != nil {
-			r.JSON(401, gin.H{"error": "Unauthenticated"})
-			r.Abort()
+			r.AbortWithStatus(401)
 			return
 		}
 		claims := &auth.Claims{}
 		if !token.Valid {
-			r.JSON(401, gin.H{"error": "Unauthenticated"})
-			r.Abort()
+			r.AbortWithStatus(401)
 			return
 		}
 
 		claims.FromJWTClaims(token.Claims)
 		if err := claims.Valid(); err != nil {
-			r.JSON(401, gin.H{"error": "Unauthenticated"})
-			r.Abort()
+			r.AbortWithStatus(401)
 			return
 		}
 		if len(roles) == 0 {
@@ -73,7 +71,6 @@ func AuthMiddleware(roles []string) gin.HandlerFunc {
 				}
 			}
 		}
-		r.JSON(403, gin.H{"error": "Unauthorized"})
-
+		r.AbortWithStatus(403)
 	}
 }

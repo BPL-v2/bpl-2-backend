@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -26,10 +25,11 @@ func setupEventController(db *gorm.DB) []RouteInfo {
 	basePath := "/events"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventsHandler()},
-		{Method: "POST", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "POST", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
+		{Method: "GET", Path: "/current", HandlerFunc: e.getCurrentEventHandler()},
 		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEventHandler()},
-		{Method: "PATCH", Path: "/:event_id", HandlerFunc: e.updateEventHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
-		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RoleRequired: []string{"admin"}},
+		{Method: "PATCH", Path: "/:event_id", HandlerFunc: e.updateEventHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
+		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -50,6 +50,22 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, utils.Map(events, toEventResponse))
+	}
+}
+
+// @Description Fetches the current event
+// @Tags event
+// @Produce json
+// @Success 200 {object} EventResponse
+// @Router /events/current [get]
+func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event, err := e.eventService.GetCurrentEvent("Teams")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, toEventResponse(*event))
 	}
 }
 
@@ -143,7 +159,6 @@ func (e *EventController) updateEventHandler() gin.HandlerFunc {
 // @Router /events/{eventId} [delete]
 func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fmt.Println("deleteEventHandler")
 		eventId, err := strconv.Atoi(c.Param("event_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})

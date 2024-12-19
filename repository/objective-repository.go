@@ -9,18 +9,43 @@ import (
 type ObjectiveType string
 
 const (
-	ITEM ObjectiveType = "ITEM"
+	ITEM       ObjectiveType = "ITEM"
+	PLAYER     ObjectiveType = "PLAYER"
+	SUBMISSION ObjectiveType = "SUBMISSION"
+)
+
+type AggregationType string
+
+const (
+	SUM_LATEST          AggregationType = "SUM_LATEST"
+	EARLIEST            AggregationType = "EARLIEST"
+	EARLIEST_FRESH_ITEM AggregationType = "EARLIEST_FRESH_ITEM"
+	MAXIMUM             AggregationType = "MAXIMUM"
+	MINIMUM             AggregationType = "MINIMUM"
+)
+
+type NumberField string
+
+const (
+	STACK_SIZE       NumberField = "STACK_SIZE"
+	PLAYER_LEVEL     NumberField = "PLAYER_LEVEL"
+	PLAYER_XP        NumberField = "PLAYER_XP"
+	SUBMISSION_VALUE NumberField = "SUBMISSION_VALUE"
 )
 
 type Objective struct {
-	ID             int           `gorm:"primaryKey"`
-	Name           string        `gorm:"not null"`
-	RequiredNumber int           `gorm:"not null"`
-	Conditions     []*Condition  `gorm:"foreignKey:ObjectiveID;constraint:OnDelete:CASCADE"`
-	CategoryID     int           `gorm:"not null"`
-	ObjectiveType  ObjectiveType `gorm:"not null;type:bpl2.objective_type"`
-	ValidFrom      *time.Time    `gorm:"null"`
-	ValidTo        *time.Time    `gorm:"null"`
+	ID             int             `gorm:"primaryKey"`
+	Name           string          `gorm:"not null"`
+	RequiredAmount int             `gorm:"not null"`
+	Conditions     []*Condition    `gorm:"foreignKey:ObjectiveID;constraint:OnDelete:CASCADE"`
+	CategoryID     int             `gorm:"not null"`
+	ObjectiveType  ObjectiveType   `gorm:"not null;type:bpl2.objective_type"`
+	NumberField    NumberField     `gorm:"not null;type:bpl2.number_field"`
+	Aggregation    AggregationType `gorm:"not null"`
+	ValidFrom      *time.Time      `gorm:"null"`
+	ValidTo        *time.Time      `gorm:"null"`
+	ScoringId      *int            `gorm:"null;references:scoring_presets(id)"`
+	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:ID"`
 }
 
 type ObjectiveRepository struct {

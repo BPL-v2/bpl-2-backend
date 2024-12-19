@@ -10,6 +10,12 @@ type Team struct {
 	Name           string         `gorm:"not null"`
 	AllowedClasses pq.StringArray `gorm:"type:text[]"`
 	EventID        int            `gorm:"not null references events(id)"`
+	Users          []*User        `gorm:"many2many:team_users"`
+}
+
+type TeamUser struct {
+	TeamID int `gorm:"primaryKey"`
+	UserID int `gorm:"primaryKey"`
 }
 
 type TeamRepository struct {

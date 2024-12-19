@@ -29,7 +29,7 @@ func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, 
 			return nil, err
 		}
 	}
-	scoringCategory := &repository.ScoringCategory{Name: "default", Event: *event, Inheritance: repository.OVERWRITE}
+	scoringCategory := &repository.ScoringCategory{Name: "default", Event: *event}
 	category, err := e.scoring_category_repository.SaveCategory(scoringCategory)
 	if err != nil {
 		return nil, err
@@ -40,6 +40,10 @@ func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, 
 
 func (e *EventService) GetEventById(eventId int, preloads ...string) (*repository.Event, error) {
 	return e.event_repository.GetEventById(eventId, preloads...)
+}
+
+func (e *EventService) GetCurrentEvent(preloads ...string) (*repository.Event, error) {
+	return e.event_repository.GetCurrentEvent(preloads...)
 }
 
 func (e *EventService) UpdateEvent(eventId int, updateEvent *repository.Event) (*repository.Event, error) {

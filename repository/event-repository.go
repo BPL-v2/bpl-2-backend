@@ -23,6 +23,21 @@ func NewEventRepository(db *gorm.DB) *EventRepository {
 	return &EventRepository{DB: db}
 }
 
+func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
+	var event Event
+	query := r.DB
+
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+
+	result := query.Where("is_current = ?", true).First(&event)
+	if result.Error != nil {
+		return nil, fmt.Errorf("no current event found: %v", result.Error)
+	}
+	return &event, nil
+}
+
 func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event, error) {
 	var event Event
 	query := r.DB

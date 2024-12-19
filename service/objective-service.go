@@ -10,26 +10,30 @@ import (
 
 type ObjectiveService struct {
 	objective_repository        *repository.ObjectiveRepository
+	condition_repository        *repository.ConditionRepository
 	scoring_category_repository *repository.ScoringCategoryRepository
 }
 
 func NewObjectiveService(db *gorm.DB) *ObjectiveService {
 	return &ObjectiveService{
 		objective_repository:        repository.NewObjectiveRepository(db),
+		condition_repository:        repository.NewConditionRepository(db),
 		scoring_category_repository: repository.NewScoringCategoryRepository(db),
 	}
 }
 
-func (e *ObjectiveService) CreateObjective(categoryId int, objective *repository.Objective) (*repository.Objective, error) {
-	category, err := e.scoring_category_repository.GetCategoryById(categoryId)
-	if err != nil {
-		return nil, err
+func (e *ObjectiveService) CreateObjective(objective *repository.Objective) (*repository.Objective, error) {
+	var err error
+	// saving conditions separately is necessary for some weird reason, otherwise condition updates will not be saved
+	if objective.ID != 0 {
+		for _, condition := range objective.Conditions {
+			condition.ObjectiveID = objective.ID
+			res := e.objective_repository.DB.Save(condition)
+			if res.Error != nil {
+				return nil, res.Error
+			}
+		}
 	}
-	err = parser.ValidateConditions(objective.Conditions)
-	if err != nil {
-		return nil, err
-	}
-	objective.CategoryID = category.ID
 	objective, err = e.objective_repository.SaveObjective(objective)
 	if err != nil {
 		return nil, err
@@ -46,7 +50,24 @@ func (e *ObjectiveService) GetObjectivesByCategoryId(categoryId int) ([]*reposit
 }
 
 func (e *ObjectiveService) GetObjectiveById(objectiveId int) (*repository.Objective, error) {
-	return e.objective_repository.GetObjectiveById(objectiveId)
+	return e.objective_repository.GetObjectiveById(objectiveId, "Conditions")
+}
+
+func (e *ObjectiveService) GetObjectivesByEvent(event *repository.Event) ([]*repository.Objective, error) {
+	category, err := e.scoring_category_repository.GetRulesForEvent(event.ID)
+	if err != nil {
+		return nil, err
+	}
+	objectives := make([]*repository.Objective, 0)
+	extractObjectives(category, &objectives)
+	return objectives, nil
+}
+
+func extractObjectives(category *repository.ScoringCategory, objectives *[]*repository.Objective) {
+	for _, subCategory := range category.SubCategories {
+		*objectives = append(*objectives, subCategory.Objectives...)
+		extractObjectives(subCategory, objectives)
+	}
 }
 
 func (e *ObjectiveService) UpdateObjective(objectiveId int, updateObjective *repository.Objective) (*repository.Objective, error) {
@@ -57,8 +78,8 @@ func (e *ObjectiveService) UpdateObjective(objectiveId int, updateObjective *rep
 	if updateObjective.Name != "" {
 		objective.Name = updateObjective.Name
 	}
-	if updateObjective.RequiredNumber != 0 {
-		objective.RequiredNumber = updateObjective.RequiredNumber
+	if updateObjective.RequiredAmount != 0 {
+		objective.RequiredAmount = updateObjective.RequiredAmount
 	}
 	if updateObjective.ObjectiveType != "" {
 		objective.ObjectiveType = updateObjective.ObjectiveType

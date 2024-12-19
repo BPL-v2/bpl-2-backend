@@ -3,9 +3,8 @@ package client
 import (
 	"context"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -41,57 +40,94 @@ type AsyncHttpClient struct {
 	mu                   sync.Mutex
 	requestTimestamps    map[RequestKey][]time.Time
 	rateLimitPolicies    map[RequestKey]map[string][]Policy
-	baseURL              string
+	baseURL              *url.URL
 	maxRequestsPerSecond float64
-	retry                bool
 	userAgent            string
 	client               *http.Client
 }
 
-func NewAsyncHttpClient(baseURL, userAgent string, maxRequestsPerSecond float64, retry bool) *AsyncHttpClient {
+func NewAsyncHttpClient(baseURL *url.URL, userAgent string, maxRequestsPerSecond float64) *AsyncHttpClient {
 	return &AsyncHttpClient{
 		requestTimestamps:    make(map[RequestKey][]time.Time),
 		rateLimitPolicies:    make(map[RequestKey]map[string][]Policy),
 		baseURL:              baseURL,
 		maxRequestsPerSecond: maxRequestsPerSecond,
-		retry:                retry,
 		userAgent:            userAgent,
 		client:               &http.Client{},
 	}
 }
 
-func (c *AsyncHttpClient) SendRequest(ctx context.Context, endpoint, token string, ignoreBaseURL bool, method string, headers map[string]string) (*http.Response, error) {
-	if headers == nil {
-		headers = make(map[string]string)
+type RequestArgs struct {
+	Endpoint      string
+	Token         string
+	Method        string
+	QueryParams   map[string]string
+	Body          *strings.Reader
+	BodyRaw       any
+	Headers       map[string]string
+	IgnoreBaseURL bool
+}
+
+func (c *AsyncHttpClient) SendRequest(
+	ctx context.Context,
+	requestArgs RequestArgs,
+) (*http.Response, error) {
+	err := error(nil)
+	var headers map[string]string
+	if requestArgs.Headers == nil {
+		headers = map[string]string{}
+	} else {
+		headers = requestArgs.Headers
 	}
+
 	headers["User-Agent"] = c.userAgent
+
+	token := requestArgs.Token
 	if token != "" {
 		headers["Authorization"] = "Bearer " + token
 	} else {
 		token = "IP"
 	}
-	key := RequestKey{Token: token, Endpoint: endpoint}
+	key := RequestKey{Token: token, Endpoint: requestArgs.Endpoint}
+
+	method := requestArgs.Method
 	if method == "" {
 		method = "GET"
 	}
-
 	if err := c.waitUntilRequestAllowed(ctx, key); err != nil {
 		return nil, err
 	}
-
-	url := endpoint
-	if !ignoreBaseURL {
-		url = fmt.Sprintf("%s/%s", c.baseURL, endpoint)
+	var requestUrl *url.URL
+	if requestArgs.IgnoreBaseURL {
+		requestUrl, err = url.Parse(requestArgs.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		requestUrl = c.baseURL.ResolveReference(&url.URL{Path: c.baseURL.Path + "/" + requestArgs.Endpoint})
 	}
-
+	if requestArgs.QueryParams != nil {
+		query := requestUrl.Query()
+		for k, v := range requestArgs.QueryParams {
+			query.Add(k, v)
+		}
+		requestUrl.RawQuery = query.Encode()
+	}
 	c.mu.Lock()
 	c.requestTimestamps[key] = append(c.requestTimestamps[key], time.Now())
 	c.mu.Unlock()
 
-	req, err := http.NewRequestWithContext(ctx, method, url, nil)
+	req := &http.Request{}
+	if requestArgs.Body != nil {
+		req, err = http.NewRequestWithContext(ctx, method, requestUrl.String(), requestArgs.Body)
+	} else {
+		req, err = http.NewRequestWithContext(ctx, method, requestUrl.String(), nil)
+	}
+
 	if err != nil {
 		return nil, err
 	}
+
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
@@ -102,16 +138,6 @@ func (c *AsyncHttpClient) SendRequest(ctx context.Context, endpoint, token strin
 	}
 
 	c.adjustPolicies(key, resp.Header)
-
-	if resp.StatusCode == http.StatusTooManyRequests && c.retry {
-		retryAfter, _ := strconv.Atoi(resp.Header.Get("Retry-After"))
-		if retryAfter == 0 {
-			retryAfter = 1
-		}
-		time.Sleep(time.Duration(retryAfter) * time.Second)
-		return c.SendRequest(ctx, endpoint, token, ignoreBaseURL, method, headers)
-	}
-
 	return resp, nil
 }
 
@@ -226,46 +252,4 @@ func (c *AsyncHttpClient) parsePolicies(rule string, headers http.Header) map[Po
 		policies[Policy{MaxHits: maxHits, Period: time.Duration(period) * time.Second}] = currentHits
 	}
 	return policies
-}
-
-func main() {
-	client := NewAsyncHttpClient("https://www.pathofexile.com/api", "user-agent", 10, true)
-	token := "xxxxxxx"
-	ctx := context.Background()
-
-	responseCodes := make(chan int)
-	characters := []string{
-		"BaldNudist",
-		"AtrocityCommitter",
-		"CastOnCringePortal",
-		"CastOnCringeYiks",
-	}
-	var wg sync.WaitGroup
-	wg.Add(len(characters))
-
-	for _, character := range characters {
-		go func(char string) {
-			defer wg.Done()
-			res, err := client.SendRequest(ctx, fmt.Sprintf("character/%s", char), token, false, "GET", nil)
-			if err != nil {
-				log.Fatal(err)
-			} else {
-				defer res.Body.Close()
-				_, err := io.ReadAll(res.Body)
-				if err != nil {
-					log.Fatal(err)
-				} else {
-					responseCodes <- res.StatusCode
-				}
-			}
-		}(character)
-	}
-	go func() {
-		for response := range responseCodes {
-			fmt.Println("Response status:", response)
-		}
-	}()
-
-	wg.Wait()
-
 }

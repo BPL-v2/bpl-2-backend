@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bpl/parser"
 	"bpl/repository"
 
 	"gorm.io/gorm"
@@ -20,37 +19,6 @@ func NewConditionService(db *gorm.DB) *ConditionService {
 }
 
 func (e *ConditionService) CreateCondition(condition *repository.Condition) (*repository.Condition, error) {
-	objective, err := e.objective_repository.GetObjectiveById(condition.ObjectiveID, "Conditions")
-	if err != nil {
-		return nil, err
-	}
-	objective.Conditions = append(objective.Conditions, condition)
-	err = parser.ValidateConditions(objective.Conditions)
-	if err != nil {
-		return nil, err
-	}
-	objective, err = e.objective_repository.SaveObjective(objective)
-	if err != nil {
-		return nil, err
-	}
-	condition.ObjectiveID = objective.ID
-	return condition, nil
-}
-
-func (e *ConditionService) UpdateCondition(conditionId int, updateCondition *repository.Condition) (*repository.Condition, error) {
-	condition, err := e.condition_repository.GetConditionById(conditionId)
-	if err != nil {
-		return nil, err
-	}
-	if updateCondition.Field != "" {
-		condition.Field = updateCondition.Field
-	}
-	if updateCondition.Operator != "" {
-		condition.Operator = updateCondition.Operator
-	}
-	if updateCondition.Value != "" {
-		condition.Value = updateCondition.Value
-	}
 	return e.condition_repository.SaveCondition(condition)
 }
 
