@@ -39,3 +39,7 @@ func (e *TeamService) UpdateTeam(teamId int, updateTeam *repository.Team) (*repo
 func (e *TeamService) DeleteTeam(teamId int) error {
 	return e.team_repository.Delete(teamId)
 }
+
+func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser) error {
+	return e.team_repository.AddUsersToTeams(teamUsers)
+}

@@ -4,9 +4,8 @@ import (
 	"bpl/utils"
 	"database/sql/driver"
 	"errors"
-	"strconv"
-	"strings"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -22,59 +21,19 @@ func (e ExtendingNumberSlice) Get(i int) float64 {
 	}
 	return e[i]
 }
-func (e *ExtendingNumberSlice) Scan(value interface{}) error {
-	if value == nil {
-		*e = ExtendingNumberSlice{}
-		return nil
-	}
 
-	switch v := value.(type) {
-	case string:
-		// Handle PostgreSQL array format
-		v = strings.Trim(v, "{}")
-		if v == "" {
-			*e = ExtendingNumberSlice{}
-			return nil
-		}
-		var numbers []float64
-		for _, s := range strings.Split(v, ",") {
-			num, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
-			if err != nil {
-				return err
-			}
-			numbers = append(numbers, num)
-		}
-		*e = ExtendingNumberSlice(numbers)
-		return nil
-	case []byte:
-		// Handle PostgreSQL array format
-		str := strings.Trim(string(v), "{}")
-		if str == "" {
-			*e = ExtendingNumberSlice{}
-			return nil
-		}
-		var numbers []float64
-		for _, s := range strings.Split(str, ",") {
-			num, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
-			if err != nil {
-				return err
-			}
-			numbers = append(numbers, num)
-		}
-		*e = ExtendingNumberSlice(numbers)
-		return nil
-	default:
-		return errors.New("unsupported data type for ExtendingNumberSlice")
+func (e *ExtendingNumberSlice) Scan(value interface{}) error {
+	var floatArray pq.Float64Array
+	if err := floatArray.Scan(value); err != nil {
+		return err
 	}
+	*e = ExtendingNumberSlice(floatArray)
+	return nil
 }
 
 func (e ExtendingNumberSlice) Value() (driver.Value, error) {
-	// Convert the slice to a PostgreSQL array format string
-	var strValues []string
-	for _, num := range e {
-		strValues = append(strValues, strconv.FormatFloat(num, 'f', -1, 64))
-	}
-	return "{" + strings.Join(strValues, ",") + "}", nil
+	floatArray := pq.Float64Array(e)
+	return floatArray.Value()
 }
 
 const (

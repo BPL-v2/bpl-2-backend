@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bpl/auth"
+	"bpl/repository"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -12,7 +13,7 @@ type RouteInfo struct {
 	Path          string
 	HandlerFunc   gin.HandlerFunc
 	Authenticated bool
-	RequiredRoles []string
+	RequiredRoles []repository.Permission
 }
 
 func SetRoutes(r *gin.Engine, db *gorm.DB) {
@@ -26,16 +27,17 @@ func SetRoutes(r *gin.Engine, db *gorm.DB) {
 	routes = append(routes, setupOauthController(db)...)
 	routes = append(routes, setupUserController(db)...)
 	routes = append(routes, setupScoringPresetController(db)...)
+	routes = append(routes, setupSignupController(db)...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
-		// if route.Authenticated {
-		// 	handlerfuncs = append(handlerfuncs, AuthMiddleware(route.RequiredRoles))
-		// }
+		if route.Authenticated {
+			handlerfuncs = append(handlerfuncs, AuthMiddleware(route.RequiredRoles))
+		}
 		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
 		group.Handle(route.Method, route.Path, handlerfuncs...)
 	}
 }
-func AuthMiddleware(roles []string) gin.HandlerFunc {
+func AuthMiddleware(roles []repository.Permission) gin.HandlerFunc {
 	return func(r *gin.Context) {
 		authCookie, err := r.Cookie("auth")
 		if err != nil {
@@ -65,7 +67,7 @@ func AuthMiddleware(roles []string) gin.HandlerFunc {
 
 		for _, requiredRole := range roles {
 			for _, userRole := range claims.Permissions {
-				if requiredRole == userRole {
+				if requiredRole == repository.Permission(userRole) {
 					r.Next()
 					return
 				}

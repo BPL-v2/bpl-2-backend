@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"bpl/utils"
+
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -70,4 +72,20 @@ func (r *TeamRepository) FindAll() ([]Team, error) {
 		return nil, result.Error
 	}
 	return teams, nil
+}
+
+func (r *TeamRepository) GetTeamUsersForEvent(event Event) ([]*TeamUser, error) {
+	teamUsers := make([]*TeamUser, 0)
+	result := r.DB.Find(&teamUsers, "team_id in ?", utils.Map(event.Teams, func(team *Team) int {
+		return team.ID
+	}))
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return teamUsers, nil
+}
+
+func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
+	result := r.DB.CreateInBatches(teamUsers, len(teamUsers))
+	return result.Error
 }

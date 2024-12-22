@@ -7,7 +7,7 @@
   <body>
     <script type="text/javascript">
       // Notify the parent window that the authentication process has completed.
-      window.opener.postMessage({}, "*");
+      window.opener.postMessage({ "bpl-auth": true }, "*");
       window.close();
     </script>
     <p>You can close this window now.</p>
