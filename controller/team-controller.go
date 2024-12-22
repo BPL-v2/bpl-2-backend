@@ -36,9 +36,9 @@ func setupTeamController(db *gorm.DB) []RouteInfo {
 	basePath := "events/:event_id/teams"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamsHandler()},
-		{Method: "POST", Path: "", HandlerFunc: e.createTeamHandler()},
+		{Method: "PUT", Path: "", HandlerFunc: e.createTeamHandler()},
+		{Method: "PUT", Path: "/users", HandlerFunc: e.addUsersToTeamsHandler()},
 		{Method: "GET", Path: "/:team_id", HandlerFunc: e.getTeamHandler()},
-		{Method: "PATCH", Path: "/:team_id", HandlerFunc: e.updateTeamHandler()},
 		{Method: "DELETE", Path: "/:team_id", HandlerFunc: e.deleteTeamHandler()},
 	}
 	for i, route := range routes {
@@ -157,7 +157,30 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 	}
 }
 
+func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var teamUsers []TeamUserCreate
+		if err := c.BindJSON(&teamUsers); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		teamUsersModel := utils.Map(teamUsers, teamUserCreateToModel)
+		err := e.teamService.AddUsersToTeams(teamUsersModel)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(204)
+	}
+}
+
+type TeamUserCreate struct {
+	TeamID int `json:"team_id" binding:"required"`
+	UserID int `json:"user_id" binding:"required"`
+}
+
 type TeamCreate struct {
+	ID             *int     `json:"id"`
 	Name           string   `json:"name" binding:"required"`
 	AllowedClasses []string `json:"allowed_classes"`
 }
@@ -172,6 +195,13 @@ type TeamResponse struct {
 	Name           string   `json:"name"`
 	AllowedClasses []string `json:"allowed_classes"`
 	EventID        int      `json:"event_id"`
+}
+
+func teamUserCreateToModel(teamUserCreate TeamUserCreate) *repository.TeamUser {
+	return &repository.TeamUser{
+		TeamID: teamUserCreate.TeamID,
+		UserID: teamUserCreate.UserID,
+	}
 }
 
 func (e *TeamCreate) toModel() *repository.Team {

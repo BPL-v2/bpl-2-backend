@@ -7,7 +7,7 @@ import (
 type ScoringCategory struct {
 	ID        int    `gorm:"primaryKey foreignKey:CategoryID references:ID on:objectives"`
 	Name      string `gorm:"not null"`
-	ParentID  *int   `gorm:"null"`
+	ParentID  *int   `gorm:"null;references:scoring_category(id)"`
 	ScoringId *int   `gorm:"null;references:scoring_presets(id)"`
 
 	SubCategories []*ScoringCategory `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`

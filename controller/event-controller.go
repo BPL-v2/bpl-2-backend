@@ -25,11 +25,10 @@ func setupEventController(db *gorm.DB) []RouteInfo {
 	basePath := "/events"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventsHandler()},
-		{Method: "POST", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
+		{Method: "PUT", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/current", HandlerFunc: e.getCurrentEventHandler()},
 		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEventHandler()},
-		{Method: "PATCH", Path: "/:event_id", HandlerFunc: e.updateEventHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
-		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []string{"admin"}},
+		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -69,7 +68,7 @@ func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
 	}
 }
 
-// @Description Creates an events
+// @Description Creates or updates an event
 // @Tags event
 // @Accept json
 // @Produce json
@@ -106,7 +105,7 @@ func (e *EventController) getEventHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		event, err := e.eventService.GetEventById(eventId)
+		event, err := e.eventService.GetEventById(eventId, "Teams")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Event not found"})
@@ -116,39 +115,6 @@ func (e *EventController) getEventHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, toEventResponse(*event))
-	}
-}
-
-// @Description Updates an event
-// @Tags event
-// @Accept json
-// @Produce json
-// @Param eventId path int true "Event ID"
-// @Param event body EventUpdate true "Event to update"
-// @Success 200 {object} EventResponse
-// @Router /events/{eventId} [patch]
-func (e *EventController) updateEventHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		var event EventUpdate
-		if err := c.BindJSON(&event); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		dbevent, err := e.eventService.UpdateEvent(eventId, event.toModel())
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Event not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			return
-		}
-		c.JSON(200, toEventResponse(*dbevent))
 	}
 }
 
@@ -178,13 +144,8 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 }
 
 type EventCreate struct {
+	ID        *int   `json:"id"`
 	Name      string `json:"name" binding:"required"`
-	IsCurrent bool   `json:"is_current"`
-	MaxSize   int    `json:"max_size"`
-}
-
-type EventUpdate struct {
-	Name      string `json:"name"`
 	IsCurrent bool   `json:"is_current"`
 	MaxSize   int    `json:"max_size"`
 }
@@ -198,19 +159,15 @@ type EventResponse struct {
 }
 
 func (e *EventCreate) toModel() *repository.Event {
-	return &repository.Event{
+	event := &repository.Event{
 		Name:      e.Name,
 		IsCurrent: e.IsCurrent,
 		MaxSize:   e.MaxSize,
 	}
-}
-
-func (e *EventUpdate) toModel() *repository.Event {
-	return &repository.Event{
-		Name:      e.Name,
-		IsCurrent: e.IsCurrent,
-		MaxSize:   e.MaxSize,
+	if e.ID != nil {
+		event.ID = *e.ID
 	}
+	return event
 }
 
 func toEventResponse(event repository.Event) EventResponse {
