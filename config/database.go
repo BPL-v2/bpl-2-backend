@@ -22,7 +22,7 @@ var enumQueries = []string{
 }
 
 func DatabaseConnection() *gorm.DB {
-	sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+	sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DATABASE_HOST"), os.Getenv("DATABASE_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("DATABASE_NAME"))
 
 	db, err := gorm.Open(postgres.Open(sqlInfo), &gorm.Config{})
 	db.Exec("SET search_path TO bpl2")
@@ -33,7 +33,7 @@ func DatabaseConnection() *gorm.DB {
 }
 
 func InitDB() (*gorm.DB, error) {
-	sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DATABASE_HOST"), os.Getenv("DATABASE_PORT"), os.Getenv("DATABASE_USER"), os.Getenv("DATABASE_PASSWORD"), os.Getenv("DATABASE_NAME"))
+	sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DATABASE_HOST"), os.Getenv("DATABASE_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("DATABASE_NAME"))
 	db, err := gorm.Open(postgres.Open(sqlInfo), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix:   "bpl2.",
