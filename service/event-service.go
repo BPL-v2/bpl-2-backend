@@ -35,6 +35,7 @@ func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, 
 		return nil, err
 	}
 	event.ScoringCategoryID = category.ID
+	e.event_repository.DB.Save(event)
 	return &category.Event, nil
 }
 
