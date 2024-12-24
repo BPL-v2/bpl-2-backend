@@ -18,12 +18,6 @@ JWT_SECRET=dummy
 " > .env
 ```
 
-Start postgres database from docker-compose.yml
-
-```sh
-docker compose up -d
-```
-
 Run application
 
 ```sh
