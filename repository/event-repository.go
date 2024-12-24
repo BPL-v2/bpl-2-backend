@@ -7,12 +7,13 @@ import (
 )
 
 type Event struct {
-	ID                int     `gorm:"primaryKey"`
-	Name              string  `gorm:"not null"`
-	ScoringCategoryID int     `gorm:"not null"`
-	Teams             []*Team `gorm:"foreignKey:EventID;constraint:OnDelete:CASCADE"`
-	IsCurrent         bool
-	MaxSize           int
+	ID                int              `gorm:"primaryKey"`
+	Name              string           `gorm:"not null"`
+	ScoringCategoryID int              `gorm:"not null"`
+	Teams             []*Team          `gorm:"foreignKey:EventID;constraint:OnDelete:CASCADE"`
+	IsCurrent         bool             `gorm:"not null"`
+	MaxSize           int              `gorm:"not null"`
+	ScoringCategory   *ScoringCategory `gorm:"foreignKey:ScoringCategoryID;constraint:OnDelete:CASCADE"`
 }
 
 type EventRepository struct {
@@ -95,16 +96,7 @@ func (r *EventRepository) Delete(eventId int) error {
 	if err != nil {
 		return err
 	}
-	result := r.DB.Delete(&event)
-	if result.Error != nil {
-		return fmt.Errorf("failed to delete event: %v", result.Error)
-	}
-
-	result = r.DB.Delete(ScoringCategory{}, event.ScoringCategoryID)
-	if result.Error == nil {
-		result = r.DB.Delete(Event{}, eventId)
-	}
-	return result.Error
+	return r.DB.Delete(&event).Error
 }
 
 func (r *EventRepository) FindAll() ([]Event, error) {

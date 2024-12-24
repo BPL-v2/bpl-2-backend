@@ -29,14 +29,9 @@ func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, 
 			return nil, err
 		}
 	}
-	scoringCategory := &repository.ScoringCategory{Name: "default", Event: *event}
-	category, err := e.scoring_category_repository.SaveCategory(scoringCategory)
-	if err != nil {
-		return nil, err
-	}
-	event.ScoringCategoryID = category.ID
+	event.ScoringCategory = &repository.ScoringCategory{Name: "default"}
 	e.event_repository.DB.Save(event)
-	return &category.Event, nil
+	return event, nil
 }
 
 func (e *EventService) GetEventById(eventId int, preloads ...string) (*repository.Event, error) {
