@@ -146,8 +146,8 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 type EventCreate struct {
 	ID        *int   `json:"id"`
 	Name      string `json:"name" binding:"required"`
-	IsCurrent bool   `json:"is_current"`
-	MaxSize   int    `json:"max_size"`
+	IsCurrent bool   `json:"is_current" binding:"required"`
+	MaxSize   int    `json:"max_size" binding:"required"`
 }
 
 type EventResponse struct {
