@@ -23,4 +23,4 @@ jobs:
 
       - name: Push to Docker Hub
         run: |
-          docker push bpl-2-backend:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/bpl-2-backend:latest
