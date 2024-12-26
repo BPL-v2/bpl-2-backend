@@ -20,7 +20,7 @@ func (e *TeamService) GetAllTeams() ([]repository.Team, error) {
 	return e.team_repository.FindAll()
 }
 
-func (e *TeamService) CreateTeam(team *repository.Team) (*repository.Team, error) {
+func (e *TeamService) SaveTeam(team *repository.Team) (*repository.Team, error) {
 	team, err := e.team_repository.Save(team)
 	if err != nil {
 		return nil, err

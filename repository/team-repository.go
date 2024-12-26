@@ -10,8 +10,8 @@ import (
 type Team struct {
 	ID             int            `gorm:"primaryKey"`
 	Name           string         `gorm:"not null"`
-	AllowedClasses pq.StringArray `gorm:"type:text[]"`
-	EventID        int            `gorm:"not null references events(id)"`
+	AllowedClasses pq.StringArray `gorm:"not null;type:text[]"`
+	EventID        int            `gorm:"not null;references events(id)"`
 	Users          []*User        `gorm:"many2many:team_users"`
 }
 
@@ -38,7 +38,7 @@ func (r *TeamRepository) GetTeamById(teamId int) (*Team, error) {
 }
 
 func (r *TeamRepository) Save(team *Team) (*Team, error) {
-	result := r.DB.Create(team)
+	result := r.DB.Save(team)
 	if result.Error != nil {
 		return nil, result.Error
 	}

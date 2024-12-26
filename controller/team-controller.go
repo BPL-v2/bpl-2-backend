@@ -83,7 +83,7 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 		}
 		teamModel := team.toModel()
 		teamModel.EventID = event_id
-		dbteam, err := e.teamService.CreateTeam(teamModel)
+		dbteam, err := e.teamService.SaveTeam(teamModel)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -109,31 +109,6 @@ func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, toTeamResponse(team))
-	}
-}
-
-func (e *TeamController) updateTeamHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		teamId, err := strconv.Atoi(c.Param("team_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		var team TeamUpdate
-		if err := c.BindJSON(&team); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		dbteam, err := e.teamService.UpdateTeam(teamId, team.toModel())
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Team not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			return
-		}
-		c.JSON(200, toTeamResponse(dbteam))
 	}
 }
 
@@ -182,7 +157,7 @@ type TeamUserCreate struct {
 type TeamCreate struct {
 	ID             *int     `json:"id"`
 	Name           string   `json:"name" binding:"required"`
-	AllowedClasses []string `json:"allowed_classes"`
+	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 }
 
 type TeamUpdate struct {
@@ -205,15 +180,12 @@ func teamUserCreateToModel(teamUserCreate TeamUserCreate) *repository.TeamUser {
 }
 
 func (e *TeamCreate) toModel() *repository.Team {
-	return &repository.Team{
+	team := &repository.Team{
 		Name:           e.Name,
 		AllowedClasses: e.AllowedClasses,
 	}
-}
-
-func (e *TeamUpdate) toModel() *repository.Team {
-	return &repository.Team{
-		Name:           e.Name,
-		AllowedClasses: e.AllowedClasses,
+	if e.ID != nil {
+		team.ID = *e.ID
 	}
+	return team
 }
