@@ -12,6 +12,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # Fetch all history for all tags and branches
+
+      - name: Print latest tag
+        run: git describe --tags --abbrev=0
 
       - name: Get latest tag
         id: get_tag
