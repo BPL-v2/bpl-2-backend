@@ -99,8 +99,8 @@ func (r *EventRepository) Delete(eventId int) error {
 	return r.DB.Delete(&event).Error
 }
 
-func (r *EventRepository) FindAll() ([]Event, error) {
-	var events []Event
+func (r *EventRepository) FindAll() ([]*Event, error) {
+	var events []*Event
 	result := r.DB.Find(&events)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to find events: %v", result.Error)

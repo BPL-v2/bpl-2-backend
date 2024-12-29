@@ -47,7 +47,7 @@ func AggregateMatches(db *gorm.DB) (ObjectiveTeamMatches, error) {
 	if err != nil {
 		return nil, err
 	}
-	objectives, err := service.NewObjectiveService(db).GetObjectivesByEvent(event)
+	objectives, err := service.NewObjectiveService(db).GetObjectivesByEventId(event.ID)
 	if err != nil {
 		return nil, err
 	}

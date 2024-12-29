@@ -25,7 +25,7 @@ func (e *ObjectiveMatchService) SaveItemMatches(matches map[int]int, userId int,
 			ObjectiveID: objectiveId,
 			Timestamp:   now,
 			Number:      number,
-			UserID:      &userId,
+			UserID:      userId,
 			StashId:     &stashId,
 			ChangeId:    &changeId,
 		}

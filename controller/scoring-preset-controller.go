@@ -87,7 +87,7 @@ func (e *ScoringPresetController) createPresetHandler() gin.HandlerFunc {
 type ScoringPresetCreate struct {
 	ID            *int                         `json:"id"`
 	Name          string                       `json:"name" binding:"required"`
-	Description   string                       `json:"description" binding:"required"`
+	Description   string                       `json:"description"`
 	Points        []float64                    `json:"points" binding:"required"`
 	ScoringMethod repository.ScoringMethod     `json:"scoring_method" binding:"required"`
 	Type          repository.ScoringPresetType `json:"type" binding:"required"`
@@ -119,6 +119,9 @@ type ScoringPresetResponse struct {
 }
 
 func toScoringPresetResponse(preset *repository.ScoringPreset) *ScoringPresetResponse {
+	if preset == nil {
+		return nil
+	}
 	return &ScoringPresetResponse{
 		ID:            preset.ID,
 		Name:          preset.Name,

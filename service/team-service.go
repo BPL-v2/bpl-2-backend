@@ -43,3 +43,23 @@ func (e *TeamService) DeleteTeam(teamId int) error {
 func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser) error {
 	return e.team_repository.AddUsersToTeams(teamUsers)
 }
+
+func (e *TeamService) GetTeamUsersForEvent(event *repository.Event) ([]*repository.TeamUser, error) {
+	return e.team_repository.GetTeamUsersForEvent(event)
+}
+
+func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error) {
+	teamUsers, err := e.GetTeamUsersForEvent(event)
+	if err != nil {
+		return nil, err
+	}
+	userToTeam := make(map[int]int)
+	for _, teamUser := range teamUsers {
+		userToTeam[teamUser.UserID] = teamUser.TeamID
+	}
+	return &userToTeam, nil
+}
+
+func (e *TeamService) GetTeamForUser(eventId int, userId int) (*repository.Team, error) {
+	return e.team_repository.GetTeamForUser(eventId, userId)
+}

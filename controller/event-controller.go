@@ -11,12 +11,18 @@ import (
 )
 
 type EventController struct {
-	eventService *service.EventService
+	eventService  *service.EventService
+	teamService   *service.TeamService
+	userService   *service.UserService
+	signupService *service.SignupService
 }
 
 func NewEventController(db *gorm.DB) *EventController {
 	return &EventController{
-		eventService: service.NewEventService(db),
+		eventService:  service.NewEventService(db),
+		teamService:   service.NewTeamService(db),
+		userService:   service.NewUserService(db),
+		signupService: service.NewSignupService(db),
 	}
 }
 
@@ -27,7 +33,9 @@ func setupEventController(db *gorm.DB) []RouteInfo {
 		{Method: "GET", Path: "", HandlerFunc: e.getEventsHandler()},
 		{Method: "PUT", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/current", HandlerFunc: e.getCurrentEventHandler()},
+
 		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEventHandler()},
+		{Method: "GET", Path: "/:event_id/status", HandlerFunc: e.getEventStatusForUser(), Authenticated: true},
 		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
@@ -64,7 +72,7 @@ func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, toEventResponse(*event))
+		c.JSON(200, toEventResponse(event))
 	}
 }
 
@@ -87,7 +95,7 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(201, toEventResponse(*dbevent))
+		c.JSON(201, toEventResponse(dbevent))
 	}
 }
 
@@ -114,7 +122,7 @@ func (e *EventController) getEventHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(200, toEventResponse(*event))
+		c.JSON(200, toEventResponse(event))
 	}
 }
 
@@ -143,6 +151,43 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	}
 }
 
+func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		eventId, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := e.userService.GetUserFromAuthCookie(c)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Not authenticated"})
+			return
+		}
+		response := EventStatusResponse{}
+
+		team, err := e.teamService.GetTeamForUser(eventId, user.ID)
+		if err != nil && err != gorm.ErrRecordNotFound {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
+		if team != nil {
+			response.TeamID = &team.ID
+			response.ApplicationStatus = ApplicationStatusAccepted
+		} else {
+
+			signup, _ := e.signupService.GetSignupForUser(user.ID, eventId)
+			if signup != nil {
+				response.ApplicationStatus = ApplicationStatusApplied
+			} else {
+				response.ApplicationStatus = ApplicationStatusNone
+			}
+
+		}
+		c.JSON(200, response)
+	}
+}
+
 type EventCreate struct {
 	ID        *int   `json:"id"`
 	Name      string `json:"name" binding:"required"`
@@ -151,11 +196,12 @@ type EventCreate struct {
 }
 
 type EventResponse struct {
-	ID                int    `json:"id"`
-	Name              string `json:"name"`
-	ScoringCategoryID int    `json:"scoring_category_id"`
-	IsCurrent         bool   `json:"is_current"`
-	MaxSize           int    `json:"max_size"`
+	ID                int             `json:"id"`
+	Name              string          `json:"name"`
+	ScoringCategoryID int             `json:"scoring_category_id"`
+	IsCurrent         bool            `json:"is_current"`
+	MaxSize           int             `json:"max_size"`
+	Teams             []*TeamResponse `json:"teams"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {
@@ -170,12 +216,30 @@ func (e *EventCreate) toModel() *repository.Event {
 	return event
 }
 
-func toEventResponse(event repository.Event) EventResponse {
-	return EventResponse{
+func toEventResponse(event *repository.Event) *EventResponse {
+	if event == nil {
+		return nil
+	}
+	return &EventResponse{
 		ID:                event.ID,
 		Name:              event.Name,
 		ScoringCategoryID: event.ScoringCategoryID,
 		IsCurrent:         event.IsCurrent,
 		MaxSize:           event.MaxSize,
+		Teams:             utils.Map(event.Teams, toTeamResponse),
 	}
 }
+
+type EventStatusResponse struct {
+	TeamID            *int              `json:"team_id"`
+	ApplicationStatus ApplicationStatus `json:"application_status"`
+}
+
+type ApplicationStatus string
+
+const (
+	ApplicationStatusApplied    ApplicationStatus = "applied"
+	ApplicationStatusAccepted   ApplicationStatus = "accepted"
+	ApplicationStatusWaitlisted ApplicationStatus = "waitlisted"
+	ApplicationStatusNone       ApplicationStatus = "none"
+)

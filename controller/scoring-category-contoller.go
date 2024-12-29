@@ -118,8 +118,8 @@ type CategoryCreate struct {
 type CategoryResponse struct {
 	ID              int                    `json:"id"`
 	Name            string                 `json:"name"`
-	SubCategories   []CategoryResponse     `json:"sub_categories"`
-	Objectives      []ObjectiveResponse    `json:"objectives"`
+	SubCategories   []*CategoryResponse    `json:"sub_categories"`
+	Objectives      []*ObjectiveResponse   `json:"objectives"`
 	ScoringPreset   *ScoringPresetResponse `json:"scoring_preset"`
 	ScoringPresetID *int                   `json:"scoring_preset_id"`
 }
@@ -141,8 +141,11 @@ type ScoringMethodResponse struct {
 	Points []int                    `json:"points"`
 }
 
-func toCategoryResponse(category *repository.ScoringCategory) CategoryResponse {
-	resp := CategoryResponse{
+func toCategoryResponse(category *repository.ScoringCategory) *CategoryResponse {
+	if category == nil {
+		return nil
+	}
+	resp := &CategoryResponse{
 		ID:            category.ID,
 		Name:          category.Name,
 		SubCategories: utils.Map(category.SubCategories, toCategoryResponse),

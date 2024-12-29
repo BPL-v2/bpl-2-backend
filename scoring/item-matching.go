@@ -136,7 +136,7 @@ func StashLoop(db *gorm.DB, poeClient *client.PoEClient, endTime time.Time) {
 		return
 	}
 
-	objectives, err := service.NewObjectiveService(db).GetObjectivesByEvent(event)
+	objectives, err := service.NewObjectiveService(db).GetObjectivesByEventId(event.ID)
 	if err != nil {
 		fmt.Println(err)
 		return
