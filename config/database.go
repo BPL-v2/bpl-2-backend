@@ -19,6 +19,7 @@ var enumQueries = []string{
 	`CREATE TYPE bpl2.scoring_preset_type AS ENUM ('OBJECTIVE', 'CATEGORY')`,
 	`CREATE TYPE bpl2.item_field AS ENUM ('BASE_TYPE', 'NAME', 'TYPE_LINE', 'RARITY', 'ILVL', 'FRAME_TYPE', 'TALISMAN_TIER', 'ENCHANT_MODS', 'EXPLICIT_MODS', 'IMPLICIT_MODS', 'CRAFTED_MODS', 'FRACTURED_MODS', 'SIX_LINK')`,
 	`CREATE TYPE bpl2.number_field AS ENUM ('STACK_SIZE', 'PLAYER_LEVEL', 'PLAYER_XP', 'SUBMISSION_VALUE')`,
+	`CREATE TYPE bpl2.approval_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED')`,
 }
 
 func DatabaseConnection() *gorm.DB {
@@ -69,6 +70,7 @@ func InitDB() (*gorm.DB, error) {
 		&model.User{},
 		&model.StashChange{},
 		&model.ObjectiveMatch{},
+		&model.Submission{},
 	)
 
 	if err != nil {

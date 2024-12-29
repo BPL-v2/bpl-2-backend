@@ -13,6 +13,7 @@ import (
 type UserController struct {
 	userService  *service.UserService
 	eventService *service.EventService
+	teamService  *service.TeamService
 }
 
 func NewUserController(db *gorm.DB) *UserController {
@@ -37,8 +38,11 @@ func toUserResponse(user *repository.User) UserResponse {
 	}
 }
 
-func toNonSensitiveUserResponse(user *repository.User) NonSensitiveUserResponse {
-	return NonSensitiveUserResponse{
+func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse {
+	if user == nil {
+		return nil
+	}
+	return &NonSensitiveUserResponse{
 		ID:          user.ID,
 		AcountName:  user.AccountName,
 		DiscordID:   strconv.FormatInt(user.DiscordID, 10),

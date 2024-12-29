@@ -164,7 +164,7 @@ type ObjectiveResponse struct {
 	RequiredNumber int                        `json:"required_number"`
 	CategoryID     int                        `json:"category_id"`
 	ObjectiveType  repository.ObjectiveType   `json:"objective_type"`
-	Conditions     []ConditionResponse        `json:"conditions"`
+	Conditions     []*ConditionResponse       `json:"conditions"`
 	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
 	ScoringPreset  *ScoringPresetResponse     `json:"scoring_preset"`
@@ -188,8 +188,11 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 	}
 }
 
-func toObjectiveResponse(objective *repository.Objective) ObjectiveResponse {
-	resp := ObjectiveResponse{
+func toObjectiveResponse(objective *repository.Objective) *ObjectiveResponse {
+	if objective == nil {
+		return nil
+	}
+	resp := &ObjectiveResponse{
 		ID:             objective.ID,
 		Name:           objective.Name,
 		RequiredNumber: objective.RequiredAmount,
@@ -201,8 +204,10 @@ func toObjectiveResponse(objective *repository.Objective) ObjectiveResponse {
 		NumberField:    objective.NumberField,
 		Aggregation:    objective.Aggregation,
 	}
-	if objective.ScoringPreset != nil {
-		resp.ScoringPreset = toScoringPresetResponse(objective.ScoringPreset)
+	scoringPreset := objective.ScoringPreset
+	isScoringPresetNotNil := scoringPreset != nil
+	if isScoringPresetNotNil {
+		resp.ScoringPreset = toScoringPresetResponse(scoringPreset)
 	}
 	return resp
 }

@@ -23,14 +23,6 @@ func NewSignupController(db *gorm.DB) *SignupController {
 	}
 }
 
-func toSignupResponse(signup *repository.Signup) SignupResponse {
-	return SignupResponse{
-		ID:        signup.ID,
-		User:      toNonSensitiveUserResponse(signup.User),
-		Timestamp: signup.Timestamp,
-	}
-}
-
 func setupSignupController(db *gorm.DB) []RouteInfo {
 	e := NewSignupController(db)
 	basePath := "/event/:event_id/signups"
@@ -130,7 +122,7 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		signupsResponse := make(map[int][]SignupResponse, 0)
+		signupsResponse := make(map[int][]*SignupResponse, 0)
 		for teamID, teamSignups := range signups {
 			signupsResponse[teamID] = utils.Map(teamSignups, toSignupResponse)
 		}
@@ -139,7 +131,19 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 }
 
 type SignupResponse struct {
-	ID        int                      `json:"id"`
-	User      NonSensitiveUserResponse `json:"user"`
-	Timestamp time.Time                `json:"timestamp"`
+	ID        int                       `json:"id"`
+	User      *NonSensitiveUserResponse `json:"user"`
+	Timestamp time.Time                 `json:"timestamp"`
+}
+
+func toSignupResponse(signup *repository.Signup) *SignupResponse {
+	if signup == nil {
+		return nil
+	}
+
+	return &SignupResponse{
+		ID:        signup.ID,
+		User:      toNonSensitiveUserResponse(signup.User),
+		Timestamp: signup.Timestamp,
+	}
 }

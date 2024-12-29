@@ -22,8 +22,8 @@ func NewTeamController(db *gorm.DB) *TeamController {
 	}
 }
 
-func toTeamResponse(team *repository.Team) TeamResponse {
-	return TeamResponse{
+func toTeamResponse(team *repository.Team) *TeamResponse {
+	return &TeamResponse{
 		ID:             team.ID,
 		Name:           team.Name,
 		AllowedClasses: team.AllowedClasses,

@@ -53,8 +53,8 @@ func (e *ObjectiveService) GetObjectiveById(objectiveId int) (*repository.Object
 	return e.objective_repository.GetObjectiveById(objectiveId, "Conditions")
 }
 
-func (e *ObjectiveService) GetObjectivesByEvent(event *repository.Event) ([]*repository.Objective, error) {
-	category, err := e.scoring_category_repository.GetRulesForEvent(event.ID)
+func (e *ObjectiveService) GetObjectivesByEventId(eventID int) ([]*repository.Objective, error) {
+	category, err := e.scoring_category_repository.GetRulesForEvent(eventID)
 	if err != nil {
 		return nil, err
 	}

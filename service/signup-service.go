@@ -45,7 +45,7 @@ func (r *SignupService) GetSignupsForEvent(eventId int) (map[int][]*repository.S
 	if err != nil {
 		return nil, err
 	}
-	teamUsers, err := r.team_repository.GetTeamUsersForEvent(*event)
+	teamUsers, err := r.team_repository.GetTeamUsersForEvent(event)
 	if err != nil {
 		return nil, err
 	}

@@ -98,8 +98,11 @@ func (e *ConditionCreate) toModel() *repository.Condition {
 	}
 }
 
-func toConditionResponse(condition *repository.Condition) ConditionResponse {
-	return ConditionResponse{
+func toConditionResponse(condition *repository.Condition) *ConditionResponse {
+	if condition == nil {
+		return nil
+	}
+	return &ConditionResponse{
 		Operator:   condition.Operator,
 		ItemField:  condition.Field,
 		FieldValue: condition.Value,

@@ -74,7 +74,7 @@ func (r *TeamRepository) FindAll() ([]Team, error) {
 	return teams, nil
 }
 
-func (r *TeamRepository) GetTeamUsersForEvent(event Event) ([]*TeamUser, error) {
+func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error) {
 	teamUsers := make([]*TeamUser, 0)
 	result := r.DB.Find(&teamUsers, "team_id in ?", utils.Map(event.Teams, func(team *Team) int {
 		return team.ID
@@ -88,4 +88,15 @@ func (r *TeamRepository) GetTeamUsersForEvent(event Event) ([]*TeamUser, error) 
 func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
 	result := r.DB.CreateInBatches(teamUsers, len(teamUsers))
 	return result.Error
+}
+
+func (r *TeamRepository) GetTeamForUser(eventID int, userId int) (*Team, error) {
+	team := &Team{}
+	result := r.DB.Joins("JOIN bpl2.team_users ON team_users.team_id = teams.id").
+		Where("team_users.user_id = ? AND teams.event_id = ?", userId, eventID).
+		First(team)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return team, nil
 }
