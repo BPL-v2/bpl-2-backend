@@ -17,7 +17,7 @@ type ObjectiveIdTeamId struct {
 
 type FreshMatches map[ObjectiveIdTeamId]bool
 
-func (f FreshMatches) contains(match Match) bool {
+func (f FreshMatches) contains(match *Match) bool {
 	return f[ObjectiveIdTeamId{ObjectiveID: match.ObjectiveID, TeamID: match.TeamID}]
 }
 
@@ -30,11 +30,11 @@ type Match struct {
 	Finished    bool
 }
 
-type TeamMatches = map[int]Match
+type TeamMatches = map[int]*Match
 
 type ObjectiveTeamMatches = map[int]TeamMatches
 
-var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []int, objectiveIds []int) ([]Match, error){
+var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []int, objectiveIds []int) ([]*Match, error){
 	repository.EARLIEST_FRESH_ITEM: handleEarliestFreshItem,
 	repository.EARLIEST:            handleEarliest,
 	repository.SUM_LATEST:          handleLatestSum,
@@ -42,11 +42,7 @@ var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []
 	repository.MINIMUM:             handleMinimum,
 }
 
-func AggregateMatches(db *gorm.DB) (ObjectiveTeamMatches, error) {
-	event, err := service.NewEventService(db).GetCurrentEvent("Teams", "Teams.Users")
-	if err != nil {
-		return nil, err
-	}
+func AggregateMatches(db *gorm.DB, event *repository.Event) (ObjectiveTeamMatches, error) {
 	objectives, err := service.NewObjectiveService(db).GetObjectivesByEventId(event.ID)
 	if err != nil {
 		return nil, err
@@ -81,7 +77,7 @@ func AggregateMatches(db *gorm.DB) (ObjectiveTeamMatches, error) {
 	return aggregations, nil
 }
 
-func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, error) {
+func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int) ([]*Match, error) {
 	query := `
 	WITH ranked_matches AS (
 		SELECT 
@@ -117,7 +113,7 @@ func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, er
 	WHERE 
 		rank = 1;
 	`
-	matches := make([]Match, 0)
+	matches := make([]*Match, 0)
 	err := db.Raw(query, teamIds, objectiveIds).Scan(&matches).Error
 	if err != nil {
 		return nil, err
@@ -125,7 +121,7 @@ func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, er
 	return matches, nil
 }
 
-func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, error) {
+func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int) ([]*Match, error) {
 	freshMatches, err := getFreshMatches(db, objectiveIds, teamIds)
 	if err != nil {
 		return nil, err
@@ -134,7 +130,7 @@ func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int) ([]
 	if err != nil {
 		return nil, err
 	}
-	matches := make([]Match, 0)
+	matches := make([]*Match, 0)
 	for _, match := range firstMatches {
 		if freshMatches.contains(match) {
 			matches = append(matches, match)
@@ -172,7 +168,8 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
         extreme.objective_id,
         extreme.team_id,
         match.user_id,
-        extreme.number
+        extreme.number,
+		match.timestamp
     FROM
         extreme
     JOIN
@@ -187,12 +184,12 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 
 }
 
-func handleMaximum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, error) {
+func handleMaximum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]*Match, error) {
 	query, err := getExtremeQuery(repository.MAXIMUM)
 	if err != nil {
 		return nil, err
 	}
-	matches := make([]Match, 0)
+	matches := make([]*Match, 0)
 	err = db.Raw(query, objectiveIds, teamIds).Scan(&matches).Error
 	if err != nil {
 		return nil, err
@@ -200,12 +197,12 @@ func handleMaximum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, err
 	return matches, nil
 }
 
-func handleMinimum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, error) {
+func handleMinimum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]*Match, error) {
 	query, err := getExtremeQuery(repository.MINIMUM)
 	if err != nil {
 		return nil, err
 	}
-	matches := make([]Match, 0)
+	matches := make([]*Match, 0)
 	err = db.Raw(query, objectiveIds, teamIds).Scan(&matches).Error
 	if err != nil {
 		return nil, err
@@ -213,7 +210,7 @@ func handleMinimum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, err
 	return matches, nil
 }
 
-func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, error) {
+func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]*Match, error) {
 	query := `
 	WITH latest AS (
 		SELECT
@@ -244,7 +241,7 @@ func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int) ([]Match, e
 	GROUP BY
 		match.objective_id, team_users.team_id
 	`
-	matches := make([]Match, 0)
+	matches := make([]*Match, 0)
 	err := db.Raw(query, objectiveIds, teamIds).Scan(&matches).Error
 	if err != nil {
 		return nil, err

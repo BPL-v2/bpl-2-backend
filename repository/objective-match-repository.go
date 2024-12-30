@@ -8,18 +8,18 @@ import (
 
 type ObjectiveMatch struct {
 	ID          int       `gorm:"primaryKey"`
-	ObjectiveID int       `gorm:"not null;references:objectives(id)"`
+	ObjectiveID int       `gorm:"index:obj_match_obj;index:obj_match_obj_user;not null;references:objectives(id)"`
 	Timestamp   time.Time `gorm:"not null"`
 	Number      int       `gorm:"not null"`
-	UserID      int       `gorm:"not null;references:users(id)"`
-	StashId     *string   `gorm:"null;references:stash_change(stash_id)"`  // Only relevant for item objectives
-	ChangeId    *int64    `gorm:"null;references:stash_change(change_id)"` // Only relevant for item objectives
+	UserID      int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
+	StashId     *string   `gorm:"index:obj_match_stash_change;null;references:stash_change(stash_id)"`  // Only relevant for item objectives
+	ChangeId    *int64    `gorm:"index:obj_match_stash_change;null;references:stash_change(change_id)"` // Only relevant for item objectives
 }
 
 type StashChange struct {
 	StashID   string `gorm:"primaryKey;not null"`
 	ChangeID  int64  `gorm:"primaryKey;not null"`
-	EventID   int    `gorm:"not null;references events(id)"`
+	EventID   int    `gorm:"index;not null;references events(id)"`
 	Timestamp time.Time
 }
 

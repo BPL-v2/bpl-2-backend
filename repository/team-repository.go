@@ -16,8 +16,8 @@ type Team struct {
 }
 
 type TeamUser struct {
-	TeamID int `gorm:"primaryKey"`
-	UserID int `gorm:"primaryKey"`
+	TeamID int `gorm:"index;primaryKey"`
+	UserID int `gorm:"index;primaryKey"`
 }
 
 type TeamRepository struct {
