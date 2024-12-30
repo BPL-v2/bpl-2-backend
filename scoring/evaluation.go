@@ -26,8 +26,8 @@ type Score struct {
 	Finished  bool
 }
 
-func EvaluateAggregations(category *repository.ScoringCategory, aggregations ObjectiveTeamMatches) ([]Score, error) {
-	scores := make([]Score, 0)
+func EvaluateAggregations(category *repository.ScoringCategory, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+	scores := make([]*Score, 0)
 
 	for _, objective := range category.Objectives {
 		if objective.ScoringPreset != nil {
@@ -70,7 +70,7 @@ type TeamCompletion struct {
 	LatestTimestamp     time.Time
 }
 
-var objectiveScoringFunctions = map[repository.ScoringMethod]func(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]Score, error){
+var objectiveScoringFunctions = map[repository.ScoringMethod]func(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error){
 	repository.PRESENCE:          handlePresence,
 	repository.RANKED_TIME:       handleRankedTime,
 	repository.RANKED_VALUE:      handleRankedValue,
@@ -78,15 +78,15 @@ var objectiveScoringFunctions = map[repository.ScoringMethod]func(objective *rep
 	repository.POINTS_FROM_VALUE: handlePointsFromValue,
 }
 
-var categoryScoringFunctions = map[repository.ScoringMethod]func(category *repository.ScoringCategory, childScores []Score) ([]Score, error){
+var categoryScoringFunctions = map[repository.ScoringMethod]func(category *repository.ScoringCategory, childScores []*Score) ([]*Score, error){
 	repository.RANKED_COMPLETION:    handleCategoryRanking,
 	repository.BONUS_PER_COMPLETION: handleCategoryBonus,
 }
 
-func handlePointsFromValue(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]Score, error) {
-	scores := make([]Score, 0)
+func handlePointsFromValue(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+	scores := make([]*Score, 0)
 	for teamID, match := range aggregations[objective.ID] {
-		score := Score{
+		score := &Score{
 			Type:      OBJECTIVE,
 			ID:        objective.ID,
 			TeamID:    teamID,
@@ -104,10 +104,10 @@ func handlePointsFromValue(objective *repository.Objective, aggregations Objecti
 	return scores, nil
 }
 
-func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]Score, error) {
-	scores := make([]Score, 0)
+func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+	scores := make([]*Score, 0)
 	for teamID, match := range aggregations[objective.ID] {
-		score := Score{
+		score := &Score{
 			Type:      OBJECTIVE,
 			ID:        objective.ID,
 			TeamID:    teamID,
@@ -125,37 +125,37 @@ func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamM
 	return scores, nil
 }
 
-func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]Score, error) {
-	rankFun := func(a, b Match) bool {
+func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+	rankFun := func(a, b *Match) bool {
 		return a.Timestamp.Before(b.Timestamp)
 	}
 	return handleRanked(objective, aggregations, rankFun)
 }
 
-func handleRankedValue(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]Score, error) {
-	rankFun := func(a, b Match) bool {
+func handleRankedValue(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+	rankFun := func(a, b *Match) bool {
 		return a.Number > b.Number
 	}
 	return handleRanked(objective, aggregations, rankFun)
 }
 
-func handleRankedReverse(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]Score, error) {
-	rankFun := func(a, b Match) bool {
+func handleRankedReverse(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+	rankFun := func(a, b *Match) bool {
 		return a.Number < b.Number
 	}
 	return handleRanked(objective, aggregations, rankFun)
 }
 
-func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMatches, rankFun func(Match, Match) bool) ([]Score, error) {
-	scores := make([]Score, 0)
-	matches := make([]Match, 0)
+func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMatches, rankFun func(*Match, *Match) bool) ([]*Score, error) {
+	scores := make([]*Score, 0)
+	matches := make([]*Match, 0)
 	for _, match := range aggregations[objective.ID] {
 		matches = append(matches, match)
 	}
 	// TODO: TEST DIRECTION LOL
 	sort.Slice(matches, func(i, j int) bool { return rankFun(matches[i], matches[j]) })
 	for i, match := range matches {
-		score := Score{
+		score := &Score{
 			Type:      OBJECTIVE,
 			ID:        objective.ID,
 			TeamID:    match.TeamID,
@@ -175,8 +175,8 @@ func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMat
 	return scores, nil
 }
 
-func handleCategoryBonus(category *repository.ScoringCategory, objectiveScores []Score) ([]Score, error) {
-	scores := make([]Score, 0)
+func handleCategoryBonus(category *repository.ScoringCategory, objectiveScores []*Score) ([]*Score, error) {
+	scores := make([]*Score, 0)
 	finishCounts := make(map[int]int)
 	teamIds := make(map[int]bool)
 	for _, score := range objectiveScores {
@@ -190,7 +190,7 @@ func handleCategoryBonus(category *repository.ScoringCategory, objectiveScores [
 		for i := 0; i < finishCounts[teamId]; i++ {
 			points += int(category.ScoringPreset.Points.Get(i))
 		}
-		score := Score{
+		score := &Score{
 			Type:      CATEGORY,
 			ID:        category.ID,
 			TeamID:    teamId,
@@ -205,7 +205,7 @@ func handleCategoryBonus(category *repository.ScoringCategory, objectiveScores [
 	return scores, nil
 }
 
-func handleCategoryRanking(category *repository.ScoringCategory, objectiveScores []Score) ([]Score, error) {
+func handleCategoryRanking(category *repository.ScoringCategory, objectiveScores []*Score) ([]*Score, error) {
 	// count the number of objectives completed by each team
 	teamCompletions := make(map[int]TeamCompletion)
 	for _, score := range objectiveScores {
@@ -227,9 +227,9 @@ func handleCategoryRanking(category *repository.ScoringCategory, objectiveScores
 		}
 		return rankedTeams[i].ObjectivesCompleted > rankedTeams[j].ObjectivesCompleted
 	})
-	categoryScores := make([]Score, 0)
+	categoryScores := make([]*Score, 0)
 	for i, completion := range rankedTeams {
-		score := Score{
+		score := &Score{
 			Type:      CATEGORY,
 			ID:        category.ID,
 			TeamID:    completion.TeamId,

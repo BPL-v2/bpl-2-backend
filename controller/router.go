@@ -29,6 +29,7 @@ func SetRoutes(r *gin.Engine, db *gorm.DB) {
 	routes = append(routes, setupScoringPresetController(db)...)
 	routes = append(routes, setupSignupController(db)...)
 	routes = append(routes, setupSubmissionController(db)...)
+	routes = append(routes, setupScoreController(db)...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
 		if route.Authenticated {
