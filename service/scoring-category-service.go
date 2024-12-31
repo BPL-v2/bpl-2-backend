@@ -18,8 +18,8 @@ func NewScoringCategoryService(db *gorm.DB) *ScoringCategoryService {
 	}
 }
 
-func (e *ScoringCategoryService) GetCategoryById(categoryId int) (*repository.ScoringCategory, error) {
-	category, err := e.rules_repository.GetNestedCategories(categoryId)
+func (e *ScoringCategoryService) GetCategoryById(categoryId int, preloads ...string) (*repository.ScoringCategory, error) {
+	category, err := e.rules_repository.GetNestedCategories(categoryId, preloads...)
 	if err != nil {
 		return nil, err
 	}

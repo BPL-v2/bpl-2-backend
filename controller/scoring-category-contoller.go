@@ -51,8 +51,7 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
-		category, err := e.service.GetCategoryById(id)
+		category, err := e.service.GetCategoryById(id, "Objectives", "Objectives.Conditions")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
