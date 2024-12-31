@@ -35,8 +35,7 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
-		rules, err := e.service.GetRulesForEvent(event_id)
+		rules, err := e.service.GetRulesForEvent(event_id, "Objectives", "Objectives.Conditions")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -116,12 +115,11 @@ type CategoryCreate struct {
 }
 
 type CategoryResponse struct {
-	ID              int                    `json:"id"`
-	Name            string                 `json:"name"`
-	SubCategories   []*CategoryResponse    `json:"sub_categories"`
-	Objectives      []*ObjectiveResponse   `json:"objectives"`
-	ScoringPreset   *ScoringPresetResponse `json:"scoring_preset"`
-	ScoringPresetID *int                   `json:"scoring_preset_id"`
+	ID              int                  `json:"id"`
+	Name            string               `json:"name"`
+	SubCategories   []*CategoryResponse  `json:"sub_categories"`
+	Objectives      []*ObjectiveResponse `json:"objectives"`
+	ScoringPresetID *int                 `json:"scoring_preset_id"`
 }
 
 func (e *CategoryCreate) toModel() *repository.ScoringCategory {
@@ -145,15 +143,11 @@ func toCategoryResponse(category *repository.ScoringCategory) *CategoryResponse 
 	if category == nil {
 		return nil
 	}
-	resp := &CategoryResponse{
-		ID:            category.ID,
-		Name:          category.Name,
-		SubCategories: utils.Map(category.SubCategories, toCategoryResponse),
-		Objectives:    utils.Map(category.Objectives, toObjectiveResponse),
+	return &CategoryResponse{
+		ID:              category.ID,
+		Name:            category.Name,
+		SubCategories:   utils.Map(category.SubCategories, toCategoryResponse),
+		Objectives:      utils.Map(category.Objectives, toObjectiveResponse),
+		ScoringPresetID: category.ScoringId,
 	}
-	if category.ScoringPreset != nil {
-		resp.ScoringPreset = toScoringPresetResponse(category.ScoringPreset)
-		resp.ScoringPresetID = &category.ScoringPreset.ID
-	}
-	return resp
 }

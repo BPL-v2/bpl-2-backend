@@ -23,16 +23,16 @@ func NewScoringCategoryRepository(db *gorm.DB) *ScoringCategoryRepository {
 	return &ScoringCategoryRepository{DB: db}
 }
 
-func (r *ScoringCategoryRepository) GetRulesForEvent(eventId int) (*ScoringCategory, error) {
+func (r *ScoringCategoryRepository) GetRulesForEvent(eventId int, preloads ...string) (*ScoringCategory, error) {
 	var event Event
 	result := r.DB.First(&event, "id = ?", eventId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return r.GetNestedCategories(event.ScoringCategoryID)
+	return r.GetNestedCategories(event.ScoringCategoryID, preloads...)
 }
 
-func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int) (*ScoringCategory, error) {
+func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int, preloads ...string) (*ScoringCategory, error) {
 	// First get all ids of the categories involved in the tree structure and their parent ids
 	relations, err := r.GetTreeStructure(categoryId)
 	if err != nil {
@@ -50,9 +50,11 @@ func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int) (*Scorin
 	for id := range ids {
 		uniques = append(uniques, id)
 	}
-
-	query := r.DB.Preload("Objectives").Preload("Objectives.Conditions").Preload("ScoringPreset").Preload("Objectives.ScoringPreset").Where("id IN ?", uniques)
-	result := query.Find(&scoringCategories)
+	query := r.DB
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	result := query.Where("id IN ?", uniques).Find(&scoringCategories)
 	if result.Error != nil {
 		return nil, result.Error
 	}
