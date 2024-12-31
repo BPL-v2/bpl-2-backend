@@ -159,17 +159,17 @@ type ObjectiveCreate struct {
 }
 
 type ObjectiveResponse struct {
-	ID             int                        `json:"id"`
-	Name           string                     `json:"name"`
-	RequiredNumber int                        `json:"required_number"`
-	CategoryID     int                        `json:"category_id"`
-	ObjectiveType  repository.ObjectiveType   `json:"objective_type"`
-	Conditions     []*ConditionResponse       `json:"conditions"`
-	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
-	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
-	ScoringPreset  *ScoringPresetResponse     `json:"scoring_preset"`
-	NumberField    repository.NumberField     `json:"number_field"`
-	Aggregation    repository.AggregationType `json:"aggregation"`
+	ID              int                        `json:"id"`
+	Name            string                     `json:"name"`
+	RequiredNumber  int                        `json:"required_number"`
+	CategoryID      int                        `json:"category_id"`
+	ObjectiveType   repository.ObjectiveType   `json:"objective_type"`
+	Conditions      []*ConditionResponse       `json:"conditions"`
+	ValidFrom       *time.Time                 `json:"valid_from" binding:"omitempty"`
+	ValidTo         *time.Time                 `json:"valid_to" binding:"omitempty"`
+	ScoringPresetID *int                       `json:"scoring_preset_id"`
+	NumberField     repository.NumberField     `json:"number_field"`
+	Aggregation     repository.AggregationType `json:"aggregation"`
 }
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {
@@ -192,22 +192,17 @@ func toObjectiveResponse(objective *repository.Objective) *ObjectiveResponse {
 	if objective == nil {
 		return nil
 	}
-	resp := &ObjectiveResponse{
-		ID:             objective.ID,
-		Name:           objective.Name,
-		RequiredNumber: objective.RequiredAmount,
-		CategoryID:     objective.CategoryID,
-		ObjectiveType:  objective.ObjectiveType,
-		ValidFrom:      objective.ValidFrom,
-		ValidTo:        objective.ValidTo,
-		Conditions:     utils.Map(objective.Conditions, toConditionResponse),
-		NumberField:    objective.NumberField,
-		Aggregation:    objective.Aggregation,
+	return &ObjectiveResponse{
+		ID:              objective.ID,
+		Name:            objective.Name,
+		RequiredNumber:  objective.RequiredAmount,
+		CategoryID:      objective.CategoryID,
+		ObjectiveType:   objective.ObjectiveType,
+		ValidFrom:       objective.ValidFrom,
+		ValidTo:         objective.ValidTo,
+		Conditions:      utils.Map(objective.Conditions, toConditionResponse),
+		NumberField:     objective.NumberField,
+		Aggregation:     objective.Aggregation,
+		ScoringPresetID: objective.ScoringId,
 	}
-	scoringPreset := objective.ScoringPreset
-	isScoringPresetNotNil := scoringPreset != nil
-	if isScoringPresetNotNil {
-		resp.ScoringPreset = toScoringPresetResponse(scoringPreset)
-	}
-	return resp
 }

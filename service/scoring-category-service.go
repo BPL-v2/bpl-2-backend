@@ -26,12 +26,13 @@ func (e *ScoringCategoryService) GetCategoryById(categoryId int) (*repository.Sc
 	return category, nil
 }
 
-func (e *ScoringCategoryService) GetRulesForEvent(eventId int) (*repository.ScoringCategory, error) {
+func (e *ScoringCategoryService) GetRulesForEvent(eventId int, preloads ...string) (*repository.ScoringCategory, error) {
 	event, err := e.event_repository.GetEventById(eventId)
 	if err != nil {
 		return nil, err
 	}
-	return e.rules_repository.GetNestedCategories(event.ScoringCategoryID)
+
+	return e.rules_repository.GetNestedCategories(event.ScoringCategoryID, preloads...)
 }
 
 func (e *ScoringCategoryService) CreateCategory(category *repository.ScoringCategory) (*repository.ScoringCategory, error) {

@@ -44,7 +44,8 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		rules, err := e.scoringCategoryService.GetRulesForEvent(event.ID)
+
+		rules, err := e.scoringCategoryService.GetRulesForEvent(event.ID, "Objectives", "Objectives.Conditions", "ScoringPreset", "Objectives.ScoringPreset")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
