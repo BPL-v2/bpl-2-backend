@@ -13,7 +13,6 @@ import (
 type UserController struct {
 	userService  *service.UserService
 	eventService *service.EventService
-	teamService  *service.TeamService
 }
 
 func NewUserController(db *gorm.DB) *UserController {
@@ -29,12 +28,15 @@ func toUserResponse(user *repository.User) UserResponse {
 		permissions[i] = repository.Permission(perm)
 	}
 	return UserResponse{
-		ID:          user.ID,
-		AcountName:  user.AccountName,
-		DiscordID:   strconv.FormatInt(user.DiscordID, 10),
-		DiscordName: user.DiscordName,
-		PoEToken:    user.PoeToken,
-		Permissions: permissions,
+		ID:                   user.ID,
+		AcountName:           user.POEAccount,
+		DisplayName:          user.DisplayName,
+		DiscordID:            strconv.FormatInt(user.DiscordID, 10),
+		DiscordName:          user.DiscordName,
+		TwitchID:             user.TwitchID,
+		TwitchName:           user.TwitchName,
+		TokenExpiryTimestamp: user.PoeTokenExpiresAt,
+		Permissions:          permissions,
 	}
 }
 
@@ -44,9 +46,12 @@ func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse
 	}
 	return &NonSensitiveUserResponse{
 		ID:          user.ID,
-		AcountName:  user.AccountName,
+		AcountName:  user.POEAccount,
+		DisplayName: user.DisplayName,
 		DiscordID:   strconv.FormatInt(user.DiscordID, 10),
 		DiscordName: user.DiscordName,
+		TwitchID:    user.TwitchID,
+		TwitchName:  user.TwitchName,
 	}
 }
 
@@ -57,9 +62,12 @@ func toUserAdminResponse(user *repository.User) UserAdminResponse {
 	}
 	return UserAdminResponse{
 		ID:          user.ID,
-		AcountName:  user.AccountName,
+		AcountName:  user.POEAccount,
+		DisplayName: user.DisplayName,
 		DiscordID:   strconv.FormatInt(user.DiscordID, 10),
 		DiscordName: user.DiscordName,
+		TwitchName:  user.TwitchName,
+		TwitchID:    user.TwitchID,
 		Permissions: permissions,
 	}
 }
@@ -130,25 +138,35 @@ func (e *UserController) logoutHandler() gin.HandlerFunc {
 }
 
 type UserResponse struct {
-	ID          int                     `json:"id"`
-	AcountName  string                  `json:"account_name"`
-	DiscordID   string                  `json:"discord_id"`
-	DiscordName string                  `json:"discord_name"`
-	PoEToken    string                  `json:"poe_token"`
+	ID                   int    `json:"id"`
+	DisplayName          string `json:"display_name"`
+	AcountName           string `json:"account_name"`
+	DiscordID            string `json:"discord_id"`
+	DiscordName          string `json:"discord_name"`
+	TwitchID             string `json:"twitch_id"`
+	TwitchName           string `json:"twitch_name"`
+	TokenExpiryTimestamp int64  `json:"token_expiry_timestamp"`
+
 	Permissions []repository.Permission `json:"permissions"`
 }
 
 type NonSensitiveUserResponse struct {
 	ID          int    `json:"id"`
+	DisplayName string `json:"display_name"`
 	AcountName  string `json:"account_name"`
 	DiscordID   string `json:"discord_id"`
 	DiscordName string `json:"discord_name"`
+	TwitchID    string `json:"twitch_id"`
+	TwitchName  string `json:"twitch_name"`
 }
 
 type UserAdminResponse struct {
 	ID          int                     `json:"id"`
+	DisplayName string                  `json:"display_name"`
 	AcountName  string                  `json:"account_name"`
 	DiscordID   string                  `json:"discord_id"`
 	DiscordName string                  `json:"discord_name"`
+	TwitchName  string                  `json:"twitch_name"`
+	TwitchID    string                  `json:"twitch_id"`
 	Permissions []repository.Permission `json:"permissions"`
 }
