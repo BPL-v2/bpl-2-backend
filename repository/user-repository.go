@@ -38,7 +38,7 @@ func (p Permissions) Value() (driver.Value, error) {
 
 type User struct {
 	ID                int         `gorm:"primaryKey autoIncrement"`
-	DisplayName       string      `gorm:"null"` // todo: need to set this to not nullable at some point
+	DisplayName       string      `gorm:"not null"`
 	POEAccount        string      `gorm:"null"`
 	DiscordID         int64       `gorm:"null"`
 	DiscordName       string      `gorm:"null"`
