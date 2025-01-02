@@ -94,7 +94,7 @@ func NewOauthController(db *gorm.DB) *OauthController {
 			ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
 			Scopes:       []string{},
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  "https://id.twitch.tv/oauth2/authorize?claims={\"id_token\":{\"email\":true}}",
+				AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 				TokenURL: "https://id.twitch.tv/oauth2/token",
 			},
 			RedirectURL: fmt.Sprintf("https://redirectmeto.com/%s/api/oauth2/twitch/redirect", os.Getenv("PUBLIC_URL")),
