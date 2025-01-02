@@ -38,9 +38,12 @@ func (p Permissions) Value() (driver.Value, error) {
 
 type User struct {
 	ID                int         `gorm:"primaryKey autoIncrement"`
-	AccountName       string      `gorm:"null"`
+	DisplayName       string      `gorm:"null"` // todo: need to set this to not nullable at some point
+	POEAccount        string      `gorm:"null"`
 	DiscordID         int64       `gorm:"null"`
 	DiscordName       string      `gorm:"null"`
+	TwitchID          string      `gorm:"null"`
+	TwitchName        string      `gorm:"null"`
 	PoeToken          string      `gorm:"null"`
 	PoeTokenExpiresAt int64       `gorm:"null"`
 	Permissions       Permissions `gorm:"type:text[];not null;default:'{}'"`
@@ -56,9 +59,7 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 
 func (r *UserRepository) GetUserById(userId int) (*User, error) {
 	var user User
-	query := r.DB
-
-	result := query.First(&user, userId)
+	result := r.DB.First(&user, userId)
 	if result.Error != nil {
 		return nil, fmt.Errorf("user with id %d not found", userId)
 	}
@@ -67,11 +68,27 @@ func (r *UserRepository) GetUserById(userId int) (*User, error) {
 
 func (r *UserRepository) GetUserByDiscordId(discordId int64) (*User, error) {
 	var user User
-	query := r.DB
-
-	result := query.First(&user, "discord_id = ?", discordId)
+	result := r.DB.First(&user, "discord_id = ?", discordId)
 	if result.Error != nil {
 		return nil, fmt.Errorf("user with discord id %d not found", discordId)
+	}
+	return &user, nil
+}
+
+func (r *UserRepository) GetUserByPoEAccount(poeAccount string) (*User, error) {
+	var user User
+	result := r.DB.First(&user, "poe_account = ?", poeAccount)
+	if result.Error != nil {
+		return nil, fmt.Errorf("user with poe account %s not found", poeAccount)
+	}
+	return &user, nil
+}
+
+func (r *UserRepository) GetUserByTwitchId(twitchId string) (*User, error) {
+	var user User
+	result := r.DB.First(&user, "twitch_id = ?", twitchId)
+	if result.Error != nil {
+		return nil, fmt.Errorf("user with twitch id %s not found", twitchId)
 	}
 	return &user, nil
 }

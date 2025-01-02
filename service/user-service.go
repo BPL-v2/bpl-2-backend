@@ -19,16 +19,20 @@ func NewUserService(db *gorm.DB) *UserService {
 	}
 }
 
-func (s *UserService) GetOrCreateUserByDiscordId(discordId int64, discordName string) (*repository.User, error) {
-	user, err := s.UserRepository.GetUserByDiscordId(discordId)
-	if err != nil {
-		user = &repository.User{DiscordID: discordId, DiscordName: discordName, Permissions: repository.Permissions{}}
-		user, err = s.UserRepository.SaveUser(user)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return user, nil
+func (s *UserService) GetUserByDiscordId(discordId int64) (*repository.User, error) {
+	return s.UserRepository.GetUserByDiscordId(discordId)
+}
+
+func (s *UserService) GetUserByPoEAccount(poeAccount string) (*repository.User, error) {
+	return s.UserRepository.GetUserByPoEAccount(poeAccount)
+}
+
+func (s *UserService) GetUserByTwitchId(twitchId string) (*repository.User, error) {
+	return s.UserRepository.GetUserByTwitchId(twitchId)
+}
+
+func (s *UserService) SaveUser(user *repository.User) (*repository.User, error) {
+	return s.UserRepository.SaveUser(user)
 }
 
 func (s *UserService) GetUsers() ([]*repository.User, error) {
