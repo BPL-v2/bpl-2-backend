@@ -87,15 +87,23 @@ func toUserAdminResponse(user *repository.User) UserAdminResponse {
 	return response
 }
 
+func toMinimalUserResponse(user *repository.User) *MinimalUserResponse {
+	return &MinimalUserResponse{
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+	}
+}
+
 func setupUserController(db *gorm.DB) []RouteInfo {
 	e := NewUserController(db)
-	basePath := "/users"
+	basePath := ""
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getUsersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
-		{Method: "PATCH", Path: "/:userId", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "POST", Path: "/logout", HandlerFunc: e.logoutHandler(), Authenticated: true},
-		{Method: "POST", Path: "/remove-auth", HandlerFunc: e.removeAuthHandler(), Authenticated: true},
+		{Method: "GET", Path: "/events/:event_id/users", HandlerFunc: e.getUsersForEventHandler()},
+		{Method: "GET", Path: "/users", HandlerFunc: e.getUsersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/users/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
+		{Method: "PATCH", Path: "/users/:userId", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "POST", Path: "/users/logout", HandlerFunc: e.logoutHandler(), Authenticated: true},
+		{Method: "POST", Path: "/users/remove-auth", HandlerFunc: e.removeAuthHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -180,6 +188,33 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 	}
 }
 
+func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		eventId, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		event, err := e.eventService.GetEventById(eventId, "Teams", "Teams.Users")
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "Event not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
+			return
+		}
+		teamUsers := make(map[int][]*MinimalUserResponse)
+		for _, team := range event.Teams {
+			teamUsers[team.ID] = make([]*MinimalUserResponse, 0)
+			for _, user := range team.Users {
+				teamUsers[team.ID] = append(teamUsers[team.ID], toMinimalUserResponse(user))
+			}
+		}
+		c.JSON(200, teamUsers)
+	}
+}
+
 type UserResponse struct {
 	ID                   int     `json:"id"`
 	DisplayName          string  `json:"display_name"`
@@ -212,4 +247,9 @@ type UserAdminResponse struct {
 	TwitchName  *string                 `json:"twitch_name"`
 	TwitchID    *string                 `json:"twitch_id"`
 	Permissions []repository.Permission `json:"permissions"`
+}
+
+type MinimalUserResponse struct {
+	ID          int    `json:"id"`
+	DisplayName string `json:"display_name"`
 }

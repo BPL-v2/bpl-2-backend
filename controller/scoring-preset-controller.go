@@ -30,6 +30,12 @@ func setupScoringPresetController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @Description Fetches the scoring presets for the current event
+// @Tags scoring
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Success 200 {array} ScoringPresetResponse
+// @Router /events/{event_id}/scoring-presets [get]
 func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event_id, err := strconv.Atoi(c.Param("event_id"))
@@ -47,6 +53,12 @@ func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.Handler
 	}
 }
 
+// @Description Fetches a scoring preset by id
+// @Tags scoring
+// @Produce json
+// @Param id path int true "Preset ID"
+// @Success 200 {object} ScoringPresetResponse
+// @Router /scoring/presets/{id} [get]
 func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -68,6 +80,13 @@ func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Creates a new scoring preset
+// @Tags scoring
+// @Accept json
+// @Produce json
+// @Param body body ScoringPresetCreate true "Preset to create"
+// @Success 200 {object} ScoringPresetResponse
+// @Router /scoring/presets [put]
 func (e *ScoringPresetController) createPresetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var presetCreate ScoringPresetCreate

@@ -28,9 +28,9 @@ func NewClientCredentialsRepository(db *gorm.DB) *ClientCredentialsRepository {
 	return &ClientCredentialsRepository{DB: db}
 }
 
-func (r *ClientCredentialsRepository) GetClientCredentialsByName(name string) (*ClientCredentials, error) {
+func (r *ClientCredentialsRepository) GetClientCredentialsByName(provider OauthProvider) (*ClientCredentials, error) {
 	var clientCredentials ClientCredentials
-	result := r.DB.First(&clientCredentials, "name = ?", name)
+	result := r.DB.First(&clientCredentials, "name = ?", provider)
 	if result.Error != nil {
 		return nil, result.Error
 	}

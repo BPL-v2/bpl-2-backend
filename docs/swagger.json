@@ -4,7 +4,7 @@
         "description": "This is the backend API for the BPL project.",
         "title": "BPL Backend API",
         "contact": {
-            "name": "Liberatorist",
+            "name": "Liberator",
             "email": "Liberatorist@gmail.com"
         },
         "version": "2.0"
@@ -34,7 +34,7 @@
                 }
             },
             "post": {
-                "description": "Creates an events",
+                "description": "Creates or updates an event",
                 "consumes": [
                     "application/json"
                 ],
@@ -58,6 +58,25 @@
                 "responses": {
                     "201": {
                         "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controller.EventResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/current": {
+            "get": {
+                "description": "Fetches the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "event"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/controller.EventResponse"
                         }
@@ -114,9 +133,11 @@
                         "description": "No Content"
                     }
                 }
-            },
-            "patch": {
-                "description": "Updates an event",
+            }
+        },
+        "/events/{eventId}/status": {
+            "get": {
+                "description": "Gets the users application status for an event",
                 "consumes": [
                     "application/json"
                 ],
@@ -133,14 +154,390 @@
                         "name": "eventId",
                         "in": "path",
                         "required": true
-                    },
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.EventStatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/scoring-presets": {
+            "get": {
+                "description": "Fetches the scoring presets for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "parameters": [
                     {
-                        "description": "Event to update",
-                        "name": "event",
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controller.ScoringPresetResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/signups": {
+            "get": {
+                "description": "Fetches all signups for the event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signup"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/controller.SignupResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/signups/self": {
+            "get": {
+                "description": "Fetches an authenticated user's signup for the event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signup"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.SignupResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Creates a signup for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signup"
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controller.SignupResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes the authenticated user's signup for the event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signup"
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/oauth2/discord": {
+            "get": {
+                "description": "Redirects to discord oauth",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Found"
+                    }
+                }
+            }
+        },
+        "/oauth2/discord/redirect": {
+            "get": {
+                "description": "Redirect handler for discord oauth",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/oauth2/twitch": {
+            "get": {
+                "description": "Redirects to twitch oauth",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Found"
+                    }
+                }
+            }
+        },
+        "/oauth2/twitch/redirect": {
+            "get": {
+                "description": "Redirect handler for twitch oauth",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/scores/latest": {
+            "get": {
+                "description": "Fetches the latest scores for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scores"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controller.ScoreResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/scoring/categories": {
+            "get": {
+                "description": "Fetches the rules for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controller.CategoryResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/scoring/categories/{id}": {
+            "get": {
+                "description": "Fetches a scoring category by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.CategoryResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a scoring category",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/scoring/objectives": {
+            "put": {
+                "description": "Creates a new objective",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "parameters": [
+                    {
+                        "description": "Objective to create",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.EventUpdate"
+                            "$ref": "#/definitions/controller.ObjectiveCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ObjectiveResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/scoring/objectives/{id}": {
+            "get": {
+                "description": "Gets an objective by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Objective ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ObjectiveResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes an objective",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Objective ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/scoring/presets": {
+            "put": {
+                "description": "Creates a new scoring preset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "parameters": [
+                    {
+                        "description": "Preset to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.ScoringPresetCreate"
                         }
                     }
                 ],
@@ -148,7 +545,57 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.EventResponse"
+                            "$ref": "#/definitions/controller.ScoringPresetResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/scoring/presets/{id}": {
+            "get": {
+                "description": "Fetches a scoring preset by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Preset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ScoringPresetResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/streams": {
+            "get": {
+                "description": "Fetches all twitch streams for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "streams"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/client.Stream"
+                            }
                         }
                     }
                 }
@@ -156,12 +603,216 @@
         }
     },
     "definitions": {
+        "client.Stream": {
+            "type": "object",
+            "properties": {
+                "game_id": {
+                    "type": "string"
+                },
+                "game_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_mature": {
+                    "type": "boolean"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "started_at": {
+                    "type": "string"
+                },
+                "tag_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "thumbnail_url": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "user_login": {
+                    "type": "string"
+                },
+                "user_name": {
+                    "type": "string"
+                },
+                "viewer_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.ApplicationStatus": {
+            "type": "string",
+            "enum": [
+                "applied",
+                "accepted",
+                "waitlisted",
+                "none"
+            ],
+            "x-enum-varnames": [
+                "ApplicationStatusApplied",
+                "ApplicationStatusAccepted",
+                "ApplicationStatusWaitlisted",
+                "ApplicationStatusNone"
+            ]
+        },
+        "controller.CategoryCreate": {
+            "type": "object",
+            "required": [
+                "name",
+                "parent_id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent_id": {
+                    "type": "integer"
+                },
+                "scoring_preset_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.CategoryResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "objectives": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.ObjectiveResponse"
+                    }
+                },
+                "scoring_preset_id": {
+                    "type": "integer"
+                },
+                "sub_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.CategoryResponse"
+                    }
+                }
+            }
+        },
+        "controller.ConditionCreate": {
+            "type": "object",
+            "required": [
+                "field",
+                "objective_id",
+                "operator",
+                "value"
+            ],
+            "properties": {
+                "field": {
+                    "enum": [
+                        "BASE_TYPE",
+                        "NAME",
+                        "TYPE_LINE",
+                        "RARITY",
+                        "ILVL",
+                        "FRAME_TYPE",
+                        "TALISMAN_TIER",
+                        "ENCHANT_MODS",
+                        "EXPLICIT_MODS",
+                        "IMPLICIT_MODS",
+                        "CRAFTED_MODS",
+                        "FRACTURED_MODS",
+                        "SIX_LINK"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/repository.ItemField"
+                        }
+                    ]
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "objective_id": {
+                    "type": "integer"
+                },
+                "operator": {
+                    "enum": [
+                        "EQ",
+                        "NEQ",
+                        "GT",
+                        "GTE",
+                        "LT",
+                        "LTE",
+                        "IN",
+                        "NOT_IN",
+                        "MATCHES",
+                        "CONTAINS",
+                        "CONTAINS_ALL",
+                        "CONTAINS_MATCH",
+                        "CONTAINS_ALL_MATCHES"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/repository.Operator"
+                        }
+                    ]
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.ConditionResponse": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "$ref": "#/definitions/repository.ItemField"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "operator": {
+                    "$ref": "#/definitions/repository.Operator"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.EventCreate": {
             "type": "object",
             "required": [
+                "is_current",
+                "max_size",
                 "name"
             ],
             "properties": {
+                "id": {
+                    "type": "integer"
+                },
                 "is_current": {
                     "type": "boolean"
                 },
@@ -190,31 +841,428 @@
                 },
                 "scoring_category_id": {
                     "type": "integer"
+                },
+                "teams": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.TeamResponse"
+                    }
                 }
             }
         },
-        "controller.EventUpdate": {
+        "controller.EventStatusResponse": {
             "type": "object",
             "properties": {
-                "is_current": {
+                "application_status": {
+                    "$ref": "#/definitions/controller.ApplicationStatus"
+                },
+                "team_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.NonSensitiveUserResponse": {
+            "type": "object",
+            "properties": {
+                "account_name": {
+                    "type": "string"
+                },
+                "discord_id": {
+                    "type": "string"
+                },
+                "discord_name": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "twitch_id": {
+                    "type": "string"
+                },
+                "twitch_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.ObjectiveCreate": {
+            "type": "object",
+            "required": [
+                "aggregation",
+                "category_id",
+                "conditions",
+                "name",
+                "number_field",
+                "objective_type",
+                "required_number"
+            ],
+            "properties": {
+                "aggregation": {
+                    "$ref": "#/definitions/repository.AggregationType"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.ConditionCreate"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number_field": {
+                    "$ref": "#/definitions/repository.NumberField"
+                },
+                "objective_type": {
+                    "$ref": "#/definitions/repository.ObjectiveType"
+                },
+                "required_number": {
+                    "type": "integer"
+                },
+                "scoring_preset_id": {
+                    "type": "integer"
+                },
+                "valid_from": {
+                    "type": "string"
+                },
+                "valid_to": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.ObjectiveResponse": {
+            "type": "object",
+            "properties": {
+                "aggregation": {
+                    "$ref": "#/definitions/repository.AggregationType"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/controller.ConditionResponse"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number_field": {
+                    "$ref": "#/definitions/repository.NumberField"
+                },
+                "objective_type": {
+                    "$ref": "#/definitions/repository.ObjectiveType"
+                },
+                "required_number": {
+                    "type": "integer"
+                },
+                "scoring_preset_id": {
+                    "type": "integer"
+                },
+                "valid_from": {
+                    "type": "string"
+                },
+                "valid_to": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.ScoreResponse": {
+            "type": "object",
+            "properties": {
+                "finished": {
                     "type": "boolean"
                 },
-                "max_size": {
+                "id": {
+                    "type": "integer"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/scoring.ScoreType"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.ScoringPresetCreate": {
+            "type": "object",
+            "required": [
+                "name",
+                "points",
+                "scoring_method",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "scoring_method": {
+                    "$ref": "#/definitions/repository.ScoringMethod"
+                },
+                "type": {
+                    "$ref": "#/definitions/repository.ScoringPresetType"
+                }
+            }
+        },
+        "controller.ScoringPresetResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "scoring_method": {
+                    "$ref": "#/definitions/repository.ScoringMethod"
+                },
+                "type": {
+                    "$ref": "#/definitions/repository.ScoringPresetType"
+                }
+            }
+        },
+        "controller.SignupResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/controller.NonSensitiveUserResponse"
+                }
+            }
+        },
+        "controller.TeamResponse": {
+            "type": "object",
+            "properties": {
+                "allowed_classes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "id": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
                 }
             }
+        },
+        "repository.AggregationType": {
+            "type": "string",
+            "enum": [
+                "SUM_LATEST",
+                "EARLIEST",
+                "EARLIEST_FRESH_ITEM",
+                "MAXIMUM",
+                "MINIMUM"
+            ],
+            "x-enum-varnames": [
+                "SUM_LATEST",
+                "EARLIEST",
+                "EARLIEST_FRESH_ITEM",
+                "MAXIMUM",
+                "MINIMUM"
+            ]
+        },
+        "repository.ItemField": {
+            "type": "string",
+            "enum": [
+                "BASE_TYPE",
+                "NAME",
+                "TYPE_LINE",
+                "RARITY",
+                "ILVL",
+                "FRAME_TYPE",
+                "TALISMAN_TIER",
+                "ENCHANT_MODS",
+                "EXPLICIT_MODS",
+                "IMPLICIT_MODS",
+                "CRAFTED_MODS",
+                "FRACTURED_MODS",
+                "SIX_LINK"
+            ],
+            "x-enum-varnames": [
+                "BASE_TYPE",
+                "NAME",
+                "TYPE_LINE",
+                "RARITY",
+                "ILVL",
+                "FRAME_TYPE",
+                "TALISMAN_TIER",
+                "ENCHANT_MODS",
+                "EXPLICIT_MODS",
+                "IMPLICIT_MODS",
+                "CRAFTED_MODS",
+                "FRACTURED_MODS",
+                "SIX_LINK"
+            ]
+        },
+        "repository.NumberField": {
+            "type": "string",
+            "enum": [
+                "STACK_SIZE",
+                "PLAYER_LEVEL",
+                "PLAYER_XP",
+                "SUBMISSION_VALUE"
+            ],
+            "x-enum-varnames": [
+                "STACK_SIZE",
+                "PLAYER_LEVEL",
+                "PLAYER_XP",
+                "SUBMISSION_VALUE"
+            ]
+        },
+        "repository.ObjectiveType": {
+            "type": "string",
+            "enum": [
+                "ITEM",
+                "PLAYER",
+                "SUBMISSION"
+            ],
+            "x-enum-varnames": [
+                "ITEM",
+                "PLAYER",
+                "SUBMISSION"
+            ]
+        },
+        "repository.Operator": {
+            "type": "string",
+            "enum": [
+                "EQ",
+                "NEQ",
+                "GT",
+                "GTE",
+                "LT",
+                "LTE",
+                "IN",
+                "NOT_IN",
+                "MATCHES",
+                "CONTAINS",
+                "CONTAINS_ALL",
+                "CONTAINS_MATCH",
+                "CONTAINS_ALL_MATCHES"
+            ],
+            "x-enum-varnames": [
+                "EQ",
+                "NEQ",
+                "GT",
+                "GTE",
+                "LT",
+                "LTE",
+                "IN",
+                "NOT_IN",
+                "MATCHES",
+                "CONTAINS",
+                "CONTAINS_ALL",
+                "CONTAINS_MATCH",
+                "CONTAINS_ALL_MATCHES"
+            ]
+        },
+        "repository.ScoringMethod": {
+            "type": "string",
+            "enum": [
+                "PRESENCE",
+                "POINTS_FROM_VALUE",
+                "RANKED_TIME",
+                "RANKED_VALUE",
+                "RANKED_REVERSE",
+                "RANKED_COMPLETION_TIME",
+                "BONUS_PER_COMPLETION"
+            ],
+            "x-enum-varnames": [
+                "PRESENCE",
+                "POINTS_FROM_VALUE",
+                "RANKED_TIME",
+                "RANKED_VALUE",
+                "RANKED_REVERSE",
+                "RANKED_COMPLETION",
+                "BONUS_PER_COMPLETION"
+            ]
+        },
+        "repository.ScoringPresetType": {
+            "type": "string",
+            "enum": [
+                "OBJECTIVE",
+                "CATEGORY"
+            ],
+            "x-enum-varnames": [
+                "OBJECTIVE",
+                "CATEGORY"
+            ]
+        },
+        "scoring.ScoreType": {
+            "type": "string",
+            "enum": [
+                "OBJECTIVE",
+                "CATEGORY"
+            ],
+            "x-enum-varnames": [
+                "OBJECTIVE",
+                "CATEGORY"
+            ]
         }
     },
     "securityDefinitions": {
         "BasicAuth": {
             "type": "basic"
         }
-    },
-    "externalDocs": {
-        "description": "OpenAPI",
-        "url": "https://swagger.io/resources/open-api/"
     }
 }

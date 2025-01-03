@@ -40,6 +40,7 @@ func SetRoutes(r *gin.Engine, db *gorm.DB) {
 		group.Handle(route.Method, route.Path, handlerfuncs...)
 	}
 }
+
 func AuthMiddleware(roles []repository.Permission) gin.HandlerFunc {
 	return func(r *gin.Context) {
 		authCookie, err := r.Cookie("auth")

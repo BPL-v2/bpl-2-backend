@@ -23,7 +23,7 @@ func NewStreamController(db *gorm.DB) *StreamController {
 
 func setupStreamController(db *gorm.DB) []RouteInfo {
 	e := NewStreamController(db)
-	basePath := "events/:event_id/streams"
+	basePath := "/streams"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getStreamsHandler()},
 	}
@@ -33,6 +33,11 @@ func setupStreamController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @Description Fetches all twitch streams for the current event
+// @Tags streams
+// @Produce json
+// @Success 200 {array} client.Stream
+// @Router /streams [get]
 func (e *StreamController) getStreamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		streams, err := e.streamService.GetStreamsForCurrentEvent()
