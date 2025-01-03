@@ -36,6 +36,8 @@ type Stream struct {
 	ThumbnailURL string   `json:"thumbnail_url"`
 	TagIDs       []string `json:"tag_ids"`
 	IsMature     bool     `json:"is_mature"`
+
+	BackendUserId int `json:"backend_user_id"`
 }
 
 type StreamResponse struct {

@@ -25,75 +25,6 @@ func NewUserController(db *gorm.DB) *UserController {
 	}
 }
 
-func toUserResponse(user *repository.User) UserResponse {
-	permissions := make([]repository.Permission, len(user.Permissions))
-	for i, perm := range user.Permissions {
-		permissions[i] = repository.Permission(perm)
-	}
-	response := UserResponse{
-		ID:                   user.ID,
-		AcountName:           user.POEAccount,
-		DisplayName:          user.DisplayName,
-		DiscordName:          user.DiscordName,
-		TwitchID:             user.TwitchID,
-		TwitchName:           user.TwitchName,
-		TokenExpiryTimestamp: user.PoeTokenExpiresAt,
-		Permissions:          permissions,
-	}
-	if user.DiscordID != nil {
-		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
-		response.DiscordID = &discordIdString
-	}
-	return response
-}
-
-func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse {
-	if user == nil {
-		return nil
-	}
-	response := &NonSensitiveUserResponse{
-		ID:          user.ID,
-		AcountName:  user.POEAccount,
-		DisplayName: user.DisplayName,
-		DiscordName: user.DiscordName,
-		TwitchID:    user.TwitchID,
-		TwitchName:  user.TwitchName,
-	}
-	if user.DiscordID != nil {
-		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
-		response.DiscordID = &discordIdString
-	}
-	return response
-}
-
-func toUserAdminResponse(user *repository.User) UserAdminResponse {
-	permissions := make([]repository.Permission, len(user.Permissions))
-	for i, perm := range user.Permissions {
-		permissions[i] = repository.Permission(perm)
-	}
-	response := UserAdminResponse{
-		ID:          user.ID,
-		AcountName:  user.POEAccount,
-		DisplayName: user.DisplayName,
-		DiscordName: user.DiscordName,
-		TwitchName:  user.TwitchName,
-		TwitchID:    user.TwitchID,
-		Permissions: permissions,
-	}
-	if user.DiscordID != nil {
-		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
-		response.DiscordID = &discordIdString
-	}
-	return response
-}
-
-func toMinimalUserResponse(user *repository.User) *MinimalUserResponse {
-	return &MinimalUserResponse{
-		ID:          user.ID,
-		DisplayName: user.DisplayName,
-	}
-}
-
 func setupUserController(db *gorm.DB) []RouteInfo {
 	e := NewUserController(db)
 	basePath := ""
@@ -252,4 +183,73 @@ type UserAdminResponse struct {
 type MinimalUserResponse struct {
 	ID          int    `json:"id"`
 	DisplayName string `json:"display_name"`
+}
+
+func toUserResponse(user *repository.User) UserResponse {
+	permissions := make([]repository.Permission, len(user.Permissions))
+	for i, perm := range user.Permissions {
+		permissions[i] = repository.Permission(perm)
+	}
+	response := UserResponse{
+		ID:                   user.ID,
+		AcountName:           user.POEAccount,
+		DisplayName:          user.DisplayName,
+		DiscordName:          user.DiscordName,
+		TwitchID:             user.TwitchID,
+		TwitchName:           user.TwitchName,
+		TokenExpiryTimestamp: user.PoeTokenExpiresAt,
+		Permissions:          permissions,
+	}
+	if user.DiscordID != nil {
+		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
+		response.DiscordID = &discordIdString
+	}
+	return response
+}
+
+func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse {
+	if user == nil {
+		return nil
+	}
+	response := &NonSensitiveUserResponse{
+		ID:          user.ID,
+		AcountName:  user.POEAccount,
+		DisplayName: user.DisplayName,
+		DiscordName: user.DiscordName,
+		TwitchID:    user.TwitchID,
+		TwitchName:  user.TwitchName,
+	}
+	if user.DiscordID != nil {
+		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
+		response.DiscordID = &discordIdString
+	}
+	return response
+}
+
+func toUserAdminResponse(user *repository.User) UserAdminResponse {
+	permissions := make([]repository.Permission, len(user.Permissions))
+	for i, perm := range user.Permissions {
+		permissions[i] = repository.Permission(perm)
+	}
+	response := UserAdminResponse{
+		ID:          user.ID,
+		AcountName:  user.POEAccount,
+		DisplayName: user.DisplayName,
+		DiscordName: user.DiscordName,
+		TwitchName:  user.TwitchName,
+		TwitchID:    user.TwitchID,
+		Permissions: permissions,
+	}
+	if user.DiscordID != nil {
+		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
+		response.DiscordID = &discordIdString
+	}
+	return response
+}
+
+func toMinimalUserResponse(user *repository.User) *MinimalUserResponse {
+	return &MinimalUserResponse{
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+	}
 }
