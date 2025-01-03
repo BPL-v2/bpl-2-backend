@@ -111,3 +111,20 @@ func (r *UserRepository) GetUsers() ([]*User, error) {
 	}
 	return users, nil
 }
+
+func (r *UserRepository) GetStreamersForCurrentEvent() ([]*User, error) {
+	var users []*User
+	query := r.DB.Table("users").
+		Select("users.*").
+		Joins("JOIN team_users ON team_users.user_id = users.id").
+		Joins("JOIN teams ON teams.id = team_users.team_id").
+		Joins("JOIN events ON events.id = teams.event_id").
+		Where("events.is_current = true").
+		Where("users.twitch_id IS NOT NULL").
+		Find(&users)
+	if query.Error != nil {
+		return nil, fmt.Errorf("failed to get streamers for current event: %v", query.Error)
+	}
+	return users, nil
+
+}

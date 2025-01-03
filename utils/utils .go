@@ -54,3 +54,18 @@ func Uniques[A comparable](input []A) []A {
 	}
 	return uniques
 }
+
+func BatchIterator[A any](input []A, batchSize int) <-chan []A {
+	ch := make(chan []A)
+	go func() {
+		defer close(ch)
+		for i := 0; i < len(input); i += batchSize {
+			end := i + batchSize
+			if end > len(input) {
+				end = len(input)
+			}
+			ch <- input[i:end]
+		}
+	}()
+	return ch
+}
