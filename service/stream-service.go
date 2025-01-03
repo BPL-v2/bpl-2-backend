@@ -36,7 +36,22 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.Stream, error) {
 		return nil, err
 	}
 	e.twitchClient.Token = *token
-	return e.twitchClient.GetAllStreams(utils.Map(users, func(user *repository.User) string {
+
+	userMap := make(map[string]*repository.User)
+	for _, user := range users {
+		userMap[*user.TwitchID] = user
+	}
+
+	streams, err := e.twitchClient.GetAllStreams(utils.Map(users, func(user *repository.User) string {
 		return *user.TwitchID
 	}))
+	if err != nil {
+		return nil, err
+	}
+	for _, stream := range streams {
+		if user, ok := userMap[stream.UserID]; ok {
+			stream.BackendUserId = user.ID
+		}
+	}
+	return streams, nil
 }
