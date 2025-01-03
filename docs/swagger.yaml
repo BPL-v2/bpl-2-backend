@@ -1,4 +1,4 @@
-basePath: /
+basePath: /api
 definitions:
   client.Stream:
     properties:
@@ -471,7 +471,6 @@ definitions:
     x-enum-varnames:
     - OBJECTIVE
     - CATEGORY
-host: localhost:8000
 info:
   contact:
     email: Liberatorist@gmail.com

@@ -9,8 +9,7 @@
         },
         "version": "2.0"
     },
-    "host": "localhost:8000",
-    "basePath": "/",
+    "basePath": "/api",
     "paths": {
         "/events": {
             "get": {

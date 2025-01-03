@@ -1276,8 +1276,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "2.0",
-	Host:             "localhost:8000",
-	BasePath:         "/",
+	Host:             "",
+	BasePath:         "/api",
 	Schemes:          []string{},
 	Title:            "BPL Backend API",
 	Description:      "This is the backend API for the BPL project.",
