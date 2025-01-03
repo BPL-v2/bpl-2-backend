@@ -45,6 +45,6 @@ func (e *StreamController) getStreamsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, gin.H{"data": streams})
+		c.JSON(200, streams)
 	}
 }
