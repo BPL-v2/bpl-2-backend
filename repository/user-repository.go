@@ -39,13 +39,13 @@ func (p Permissions) Value() (driver.Value, error) {
 type User struct {
 	ID                int         `gorm:"primaryKey autoIncrement"`
 	DisplayName       string      `gorm:"not null"`
-	POEAccount        string      `gorm:"null"`
-	DiscordID         int64       `gorm:"null"`
-	DiscordName       string      `gorm:"null"`
-	TwitchID          string      `gorm:"null"`
-	TwitchName        string      `gorm:"null"`
-	PoeToken          string      `gorm:"null"`
-	PoeTokenExpiresAt int64       `gorm:"null"`
+	POEAccount        *string     `gorm:"null"`
+	DiscordID         *int64      `gorm:"null"`
+	DiscordName       *string     `gorm:"null"`
+	TwitchID          *string     `gorm:"null"`
+	TwitchName        *string     `gorm:"null"`
+	PoeToken          *string     `gorm:"null"`
+	PoeTokenExpiresAt *int64      `gorm:"null"`
 	Permissions       Permissions `gorm:"type:text[];not null;default:'{}'"`
 }
 

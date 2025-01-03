@@ -6,10 +6,18 @@ import (
 	"gorm.io/gorm"
 )
 
+type OauthProvider string
+
+const (
+	OauthProviderDiscord OauthProvider = "discord"
+	OauthProviderTwitch  OauthProvider = "twitch"
+	OauthProviderPoE     OauthProvider = "poe"
+)
+
 type ClientCredentials struct {
-	Name        string    `gorm:"primaryKey"`
-	AccessToken string    `json:"access_token"`
-	Expiry      time.Time `json:"expiry"`
+	Name        OauthProvider `gorm:"primaryKey"`
+	AccessToken string        `json:"access_token"`
+	Expiry      time.Time     `json:"expiry"`
 }
 
 type ClientCredentialsRepository struct {
