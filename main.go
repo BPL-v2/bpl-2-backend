@@ -22,9 +22,6 @@ import (
 // @contact.name   	Liberator
 // @contact.email 	Liberatorist@gmail.com
 
-// @host      localhost:8000
-// @BasePath  /
-
 // @securityDefinitions.basic  BasicAuth
 
 func main() {
