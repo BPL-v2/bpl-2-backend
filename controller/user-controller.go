@@ -1,9 +1,12 @@
 package controller
 
 import (
+	"bpl/auth"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -27,32 +30,40 @@ func toUserResponse(user *repository.User) UserResponse {
 	for i, perm := range user.Permissions {
 		permissions[i] = repository.Permission(perm)
 	}
-	return UserResponse{
+	response := UserResponse{
 		ID:                   user.ID,
 		AcountName:           user.POEAccount,
 		DisplayName:          user.DisplayName,
-		DiscordID:            strconv.FormatInt(user.DiscordID, 10),
 		DiscordName:          user.DiscordName,
 		TwitchID:             user.TwitchID,
 		TwitchName:           user.TwitchName,
 		TokenExpiryTimestamp: user.PoeTokenExpiresAt,
 		Permissions:          permissions,
 	}
+	if user.DiscordID != nil {
+		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
+		response.DiscordID = &discordIdString
+	}
+	return response
 }
 
 func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse {
 	if user == nil {
 		return nil
 	}
-	return &NonSensitiveUserResponse{
+	response := &NonSensitiveUserResponse{
 		ID:          user.ID,
 		AcountName:  user.POEAccount,
 		DisplayName: user.DisplayName,
-		DiscordID:   strconv.FormatInt(user.DiscordID, 10),
 		DiscordName: user.DiscordName,
 		TwitchID:    user.TwitchID,
 		TwitchName:  user.TwitchName,
 	}
+	if user.DiscordID != nil {
+		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
+		response.DiscordID = &discordIdString
+	}
+	return response
 }
 
 func toUserAdminResponse(user *repository.User) UserAdminResponse {
@@ -60,16 +71,20 @@ func toUserAdminResponse(user *repository.User) UserAdminResponse {
 	for i, perm := range user.Permissions {
 		permissions[i] = repository.Permission(perm)
 	}
-	return UserAdminResponse{
+	response := UserAdminResponse{
 		ID:          user.ID,
 		AcountName:  user.POEAccount,
 		DisplayName: user.DisplayName,
-		DiscordID:   strconv.FormatInt(user.DiscordID, 10),
 		DiscordName: user.DiscordName,
 		TwitchName:  user.TwitchName,
 		TwitchID:    user.TwitchID,
 		Permissions: permissions,
 	}
+	if user.DiscordID != nil {
+		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
+		response.DiscordID = &discordIdString
+	}
+	return response
 }
 
 func setupUserController(db *gorm.DB) []RouteInfo {
@@ -80,6 +95,7 @@ func setupUserController(db *gorm.DB) []RouteInfo {
 		{Method: "GET", Path: "/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/:userId", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "POST", Path: "/logout", HandlerFunc: e.logoutHandler(), Authenticated: true},
+		{Method: "POST", Path: "/remove-auth", HandlerFunc: e.removeAuthHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -137,36 +153,63 @@ func (e *UserController) logoutHandler() gin.HandlerFunc {
 	}
 }
 
+func (e *UserController) removeAuthHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		provider := c.Request.URL.Query().Get("provider")
+		if provider == "" {
+			c.JSON(400, gin.H{"error": "No provider specified"})
+			return
+		}
+		user, err := e.userService.GetUserFromAuthCookie(c)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Not authenticated"})
+			return
+		}
+		user, err = e.userService.RemoveProvider(user, repository.OauthProvider(provider))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		authToken, err := auth.CreateToken(user)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie("auth", authToken, 60*60*24*7, "/", os.Getenv("PUBLIC_DOMAIN"), false, true)
+	}
+}
+
 type UserResponse struct {
-	ID                   int    `json:"id"`
-	DisplayName          string `json:"display_name"`
-	AcountName           string `json:"account_name"`
-	DiscordID            string `json:"discord_id"`
-	DiscordName          string `json:"discord_name"`
-	TwitchID             string `json:"twitch_id"`
-	TwitchName           string `json:"twitch_name"`
-	TokenExpiryTimestamp int64  `json:"token_expiry_timestamp"`
+	ID                   int     `json:"id"`
+	DisplayName          string  `json:"display_name"`
+	AcountName           *string `json:"account_name"`
+	DiscordID            *string `json:"discord_id"`
+	DiscordName          *string `json:"discord_name"`
+	TwitchID             *string `json:"twitch_id"`
+	TwitchName           *string `json:"twitch_name"`
+	TokenExpiryTimestamp *int64  `json:"token_expiry_timestamp"`
 
 	Permissions []repository.Permission `json:"permissions"`
 }
 
 type NonSensitiveUserResponse struct {
-	ID          int    `json:"id"`
-	DisplayName string `json:"display_name"`
-	AcountName  string `json:"account_name"`
-	DiscordID   string `json:"discord_id"`
-	DiscordName string `json:"discord_name"`
-	TwitchID    string `json:"twitch_id"`
-	TwitchName  string `json:"twitch_name"`
+	ID          int     `json:"id"`
+	DisplayName string  `json:"display_name"`
+	AcountName  *string `json:"account_name"`
+	DiscordID   *string `json:"discord_id"`
+	DiscordName *string `json:"discord_name"`
+	TwitchID    *string `json:"twitch_id"`
+	TwitchName  *string `json:"twitch_name"`
 }
 
 type UserAdminResponse struct {
 	ID          int                     `json:"id"`
 	DisplayName string                  `json:"display_name"`
-	AcountName  string                  `json:"account_name"`
-	DiscordID   string                  `json:"discord_id"`
-	DiscordName string                  `json:"discord_name"`
-	TwitchName  string                  `json:"twitch_name"`
-	TwitchID    string                  `json:"twitch_id"`
+	AcountName  *string                 `json:"account_name"`
+	DiscordID   *string                 `json:"discord_id"`
+	DiscordName *string                 `json:"discord_name"`
+	TwitchName  *string                 `json:"twitch_name"`
+	TwitchID    *string                 `json:"twitch_id"`
 	Permissions []repository.Permission `json:"permissions"`
 }

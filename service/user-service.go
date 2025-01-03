@@ -3,6 +3,7 @@ package service
 import (
 	"bpl/auth"
 	"bpl/repository"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -76,4 +77,36 @@ func (s *UserService) ChangePermissions(userId int, permissions []repository.Per
 	user.Permissions = permissions
 	_, err = s.UserRepository.SaveUser(user)
 	return err
+}
+
+func (s *UserService) RemoveProvider(user *repository.User, provider repository.OauthProvider) (*repository.User, error) {
+	numberOfProviders := 0
+	if user.DiscordID != nil {
+		numberOfProviders++
+	}
+	if user.TwitchID != nil {
+		numberOfProviders++
+	}
+	if user.POEAccount != nil {
+		numberOfProviders++
+	}
+	if numberOfProviders < 2 {
+		return nil, fmt.Errorf("cannot remove last provider")
+	}
+
+	switch provider {
+	case repository.OauthProviderDiscord:
+		user.DiscordID = nil
+		user.DiscordName = nil
+	case repository.OauthProviderTwitch:
+		user.TwitchID = nil
+		user.TwitchName = nil
+	case repository.OauthProviderPoE:
+		user.POEAccount = nil
+		user.PoeToken = nil
+		user.PoeTokenExpiresAt = nil
+	default:
+		return nil, fmt.Errorf("unknown provider")
+	}
+	return s.UserRepository.SaveUser(user)
 }
