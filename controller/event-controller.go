@@ -151,6 +151,13 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Gets the users application status for an event
+// @Tags event
+// @Accept json
+// @Produce json
+// @Param eventId path int true "Event ID"
+// @Success 200 {object} EventStatusResponse
+// @Router /events/{eventId}/status [get]
 func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))

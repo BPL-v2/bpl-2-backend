@@ -1,7 +1,148 @@
 basePath: /
 definitions:
+  client.Stream:
+    properties:
+      game_id:
+        type: string
+      game_name:
+        type: string
+      id:
+        type: string
+      is_mature:
+        type: boolean
+      language:
+        type: string
+      started_at:
+        type: string
+      tag_ids:
+        items:
+          type: string
+        type: array
+      tags:
+        items:
+          type: string
+        type: array
+      thumbnail_url:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      user_id:
+        type: string
+      user_login:
+        type: string
+      user_name:
+        type: string
+      viewer_count:
+        type: integer
+    type: object
+  controller.ApplicationStatus:
+    enum:
+    - applied
+    - accepted
+    - waitlisted
+    - none
+    type: string
+    x-enum-varnames:
+    - ApplicationStatusApplied
+    - ApplicationStatusAccepted
+    - ApplicationStatusWaitlisted
+    - ApplicationStatusNone
+  controller.CategoryCreate:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      scoring_preset_id:
+        type: integer
+    required:
+    - name
+    - parent_id
+    type: object
+  controller.CategoryResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      objectives:
+        items:
+          $ref: '#/definitions/controller.ObjectiveResponse'
+        type: array
+      scoring_preset_id:
+        type: integer
+      sub_categories:
+        items:
+          $ref: '#/definitions/controller.CategoryResponse'
+        type: array
+    type: object
+  controller.ConditionCreate:
+    properties:
+      field:
+        allOf:
+        - $ref: '#/definitions/repository.ItemField'
+        enum:
+        - BASE_TYPE
+        - NAME
+        - TYPE_LINE
+        - RARITY
+        - ILVL
+        - FRAME_TYPE
+        - TALISMAN_TIER
+        - ENCHANT_MODS
+        - EXPLICIT_MODS
+        - IMPLICIT_MODS
+        - CRAFTED_MODS
+        - FRACTURED_MODS
+        - SIX_LINK
+      id:
+        type: integer
+      objective_id:
+        type: integer
+      operator:
+        allOf:
+        - $ref: '#/definitions/repository.Operator'
+        enum:
+        - EQ
+        - NEQ
+        - GT
+        - GTE
+        - LT
+        - LTE
+        - IN
+        - NOT_IN
+        - MATCHES
+        - CONTAINS
+        - CONTAINS_ALL
+        - CONTAINS_MATCH
+        - CONTAINS_ALL_MATCHES
+      value:
+        type: string
+    required:
+    - field
+    - objective_id
+    - operator
+    - value
+    type: object
+  controller.ConditionResponse:
+    properties:
+      field:
+        $ref: '#/definitions/repository.ItemField'
+      id:
+        type: integer
+      operator:
+        $ref: '#/definitions/repository.Operator'
+      value:
+        type: string
+    type: object
   controller.EventCreate:
     properties:
+      id:
+        type: integer
       is_current:
         type: boolean
       max_size:
@@ -9,6 +150,8 @@ definitions:
       name:
         type: string
     required:
+    - is_current
+    - max_size
     - name
     type: object
   controller.EventResponse:
@@ -23,24 +166,316 @@ definitions:
         type: string
       scoring_category_id:
         type: integer
+      teams:
+        items:
+          $ref: '#/definitions/controller.TeamResponse'
+        type: array
     type: object
-  controller.EventUpdate:
+  controller.EventStatusResponse:
     properties:
-      is_current:
+      application_status:
+        $ref: '#/definitions/controller.ApplicationStatus'
+      team_id:
+        type: integer
+    type: object
+  controller.NonSensitiveUserResponse:
+    properties:
+      account_name:
+        type: string
+      discord_id:
+        type: string
+      discord_name:
+        type: string
+      display_name:
+        type: string
+      id:
+        type: integer
+      twitch_id:
+        type: string
+      twitch_name:
+        type: string
+    type: object
+  controller.ObjectiveCreate:
+    properties:
+      aggregation:
+        $ref: '#/definitions/repository.AggregationType'
+      category_id:
+        type: integer
+      conditions:
+        items:
+          $ref: '#/definitions/controller.ConditionCreate'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      number_field:
+        $ref: '#/definitions/repository.NumberField'
+      objective_type:
+        $ref: '#/definitions/repository.ObjectiveType'
+      required_number:
+        type: integer
+      scoring_preset_id:
+        type: integer
+      valid_from:
+        type: string
+      valid_to:
+        type: string
+    required:
+    - aggregation
+    - category_id
+    - conditions
+    - name
+    - number_field
+    - objective_type
+    - required_number
+    type: object
+  controller.ObjectiveResponse:
+    properties:
+      aggregation:
+        $ref: '#/definitions/repository.AggregationType'
+      category_id:
+        type: integer
+      conditions:
+        items:
+          $ref: '#/definitions/controller.ConditionResponse'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      number_field:
+        $ref: '#/definitions/repository.NumberField'
+      objective_type:
+        $ref: '#/definitions/repository.ObjectiveType'
+      required_number:
+        type: integer
+      scoring_preset_id:
+        type: integer
+      valid_from:
+        type: string
+      valid_to:
+        type: string
+    type: object
+  controller.ScoreResponse:
+    properties:
+      finished:
         type: boolean
-      max_size:
+      id:
+        type: integer
+      number:
+        type: integer
+      points:
+        type: integer
+      rank:
+        type: integer
+      team_id:
+        type: integer
+      timestamp:
+        type: string
+      type:
+        $ref: '#/definitions/scoring.ScoreType'
+      user_id:
+        type: integer
+    type: object
+  controller.ScoringPresetCreate:
+    properties:
+      description:
+        type: string
+      event_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      points:
+        items:
+          type: number
+        type: array
+      scoring_method:
+        $ref: '#/definitions/repository.ScoringMethod'
+      type:
+        $ref: '#/definitions/repository.ScoringPresetType'
+    required:
+    - name
+    - points
+    - scoring_method
+    - type
+    type: object
+  controller.ScoringPresetResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      points:
+        items:
+          type: number
+        type: array
+      scoring_method:
+        $ref: '#/definitions/repository.ScoringMethod'
+      type:
+        $ref: '#/definitions/repository.ScoringPresetType'
+    type: object
+  controller.SignupResponse:
+    properties:
+      id:
+        type: integer
+      timestamp:
+        type: string
+      user:
+        $ref: '#/definitions/controller.NonSensitiveUserResponse'
+    type: object
+  controller.TeamResponse:
+    properties:
+      allowed_classes:
+        items:
+          type: string
+        type: array
+      event_id:
+        type: integer
+      id:
         type: integer
       name:
         type: string
     type: object
-externalDocs:
-  description: OpenAPI
-  url: https://swagger.io/resources/open-api/
+  repository.AggregationType:
+    enum:
+    - SUM_LATEST
+    - EARLIEST
+    - EARLIEST_FRESH_ITEM
+    - MAXIMUM
+    - MINIMUM
+    type: string
+    x-enum-varnames:
+    - SUM_LATEST
+    - EARLIEST
+    - EARLIEST_FRESH_ITEM
+    - MAXIMUM
+    - MINIMUM
+  repository.ItemField:
+    enum:
+    - BASE_TYPE
+    - NAME
+    - TYPE_LINE
+    - RARITY
+    - ILVL
+    - FRAME_TYPE
+    - TALISMAN_TIER
+    - ENCHANT_MODS
+    - EXPLICIT_MODS
+    - IMPLICIT_MODS
+    - CRAFTED_MODS
+    - FRACTURED_MODS
+    - SIX_LINK
+    type: string
+    x-enum-varnames:
+    - BASE_TYPE
+    - NAME
+    - TYPE_LINE
+    - RARITY
+    - ILVL
+    - FRAME_TYPE
+    - TALISMAN_TIER
+    - ENCHANT_MODS
+    - EXPLICIT_MODS
+    - IMPLICIT_MODS
+    - CRAFTED_MODS
+    - FRACTURED_MODS
+    - SIX_LINK
+  repository.NumberField:
+    enum:
+    - STACK_SIZE
+    - PLAYER_LEVEL
+    - PLAYER_XP
+    - SUBMISSION_VALUE
+    type: string
+    x-enum-varnames:
+    - STACK_SIZE
+    - PLAYER_LEVEL
+    - PLAYER_XP
+    - SUBMISSION_VALUE
+  repository.ObjectiveType:
+    enum:
+    - ITEM
+    - PLAYER
+    - SUBMISSION
+    type: string
+    x-enum-varnames:
+    - ITEM
+    - PLAYER
+    - SUBMISSION
+  repository.Operator:
+    enum:
+    - EQ
+    - NEQ
+    - GT
+    - GTE
+    - LT
+    - LTE
+    - IN
+    - NOT_IN
+    - MATCHES
+    - CONTAINS
+    - CONTAINS_ALL
+    - CONTAINS_MATCH
+    - CONTAINS_ALL_MATCHES
+    type: string
+    x-enum-varnames:
+    - EQ
+    - NEQ
+    - GT
+    - GTE
+    - LT
+    - LTE
+    - IN
+    - NOT_IN
+    - MATCHES
+    - CONTAINS
+    - CONTAINS_ALL
+    - CONTAINS_MATCH
+    - CONTAINS_ALL_MATCHES
+  repository.ScoringMethod:
+    enum:
+    - PRESENCE
+    - POINTS_FROM_VALUE
+    - RANKED_TIME
+    - RANKED_VALUE
+    - RANKED_REVERSE
+    - RANKED_COMPLETION_TIME
+    - BONUS_PER_COMPLETION
+    type: string
+    x-enum-varnames:
+    - PRESENCE
+    - POINTS_FROM_VALUE
+    - RANKED_TIME
+    - RANKED_VALUE
+    - RANKED_REVERSE
+    - RANKED_COMPLETION
+    - BONUS_PER_COMPLETION
+  repository.ScoringPresetType:
+    enum:
+    - OBJECTIVE
+    - CATEGORY
+    type: string
+    x-enum-varnames:
+    - OBJECTIVE
+    - CATEGORY
+  scoring.ScoreType:
+    enum:
+    - OBJECTIVE
+    - CATEGORY
+    type: string
+    x-enum-varnames:
+    - OBJECTIVE
+    - CATEGORY
 host: localhost:8000
 info:
   contact:
     email: Liberatorist@gmail.com
-    name: Liberatorist
+    name: Liberator
   description: This is the backend API for the BPL project.
   title: BPL Backend API
   version: "2.0"
@@ -62,7 +497,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates an events
+      description: Creates or updates an event
       parameters:
       - description: Event to create
         in: body
@@ -79,6 +514,76 @@ paths:
             $ref: '#/definitions/controller.EventResponse'
       tags:
       - event
+  /events/{event_id}/scoring-presets:
+    get:
+      description: Fetches the scoring presets for the current event
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.ScoringPresetResponse'
+            type: array
+      tags:
+      - scoring
+  /events/{event_id}/signups:
+    get:
+      description: Fetches all signups for the event
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/controller.SignupResponse'
+              type: array
+            type: object
+      tags:
+      - signup
+  /events/{event_id}/signups/self:
+    delete:
+      description: Deletes the authenticated user's signup for the event
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - signup
+    get:
+      description: Fetches an authenticated user's signup for the event
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.SignupResponse'
+      tags:
+      - signup
+    put:
+      consumes:
+      - application/json
+      description: Creates a signup for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.SignupResponse'
+      tags:
+      - signup
   /events/{eventId}:
     delete:
       description: Deletes an event
@@ -112,22 +617,29 @@ paths:
             $ref: '#/definitions/controller.EventResponse'
       tags:
       - event
-    patch:
+  /events/{eventId}/status:
+    get:
       consumes:
       - application/json
-      description: Updates an event
+      description: Gets the users application status for an event
       parameters:
       - description: Event ID
         in: path
         name: eventId
         required: true
         type: integer
-      - description: Event to update
-        in: body
-        name: event
-        required: true
-        schema:
-          $ref: '#/definitions/controller.EventUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.EventStatusResponse'
+      tags:
+      - event
+  /events/current:
+    get:
+      description: Fetches the current event
       produces:
       - application/json
       responses:
@@ -137,6 +649,214 @@ paths:
             $ref: '#/definitions/controller.EventResponse'
       tags:
       - event
+  /oauth2/discord:
+    get:
+      description: Redirects to discord oauth
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Found
+      tags:
+      - oauth
+  /oauth2/discord/redirect:
+    get:
+      description: Redirect handler for discord oauth
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+      tags:
+      - oauth
+  /oauth2/twitch:
+    get:
+      description: Redirects to twitch oauth
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Found
+      tags:
+      - oauth
+  /oauth2/twitch/redirect:
+    get:
+      description: Redirect handler for twitch oauth
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+      tags:
+      - oauth
+  /scores/latest:
+    get:
+      description: Fetches the latest scores for the current event
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.ScoreResponse'
+            type: array
+      tags:
+      - scores
+  /scoring/categories:
+    get:
+      description: Fetches the rules for the current event
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.CategoryResponse'
+            type: array
+      tags:
+      - scoring
+  /scoring/categories/{id}:
+    delete:
+      description: Deletes a scoring category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - scoring
+    get:
+      description: Fetches a scoring category by id
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.CategoryResponse'
+      tags:
+      - scoring
+  /scoring/objectives:
+    put:
+      consumes:
+      - application/json
+      description: Creates a new objective
+      parameters:
+      - description: Objective to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.ObjectiveCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.ObjectiveResponse'
+      tags:
+      - objective
+  /scoring/objectives/{id}:
+    delete:
+      description: Deletes an objective
+      parameters:
+      - description: Objective ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - objective
+    get:
+      description: Gets an objective by id
+      parameters:
+      - description: Objective ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.ObjectiveResponse'
+      tags:
+      - objective
+  /scoring/presets:
+    put:
+      consumes:
+      - application/json
+      description: Creates a new scoring preset
+      parameters:
+      - description: Preset to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.ScoringPresetCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.ScoringPresetResponse'
+      tags:
+      - scoring
+  /scoring/presets/{id}:
+    get:
+      description: Fetches a scoring preset by id
+      parameters:
+      - description: Preset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.ScoringPresetResponse'
+      tags:
+      - scoring
+  /streams:
+    get:
+      description: Fetches all twitch streams for the current event
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/client.Stream'
+            type: array
+      tags:
+      - streams
 securityDefinitions:
   BasicAuth:
     type: basic

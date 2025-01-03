@@ -24,7 +24,7 @@ type Verifier struct {
 
 type OauthService struct {
 	config                     map[string]*oauth2.Config
-	clientConfig               map[string]*clientcredentials.Config
+	clientConfig               map[repository.OauthProvider]*clientcredentials.Config
 	stateToVerifyer            map[string]Verifier
 	userService                *UserService
 	clientCredentialRepository *repository.ClientCredentialsRepository
@@ -101,8 +101,8 @@ func NewOauthService(db *gorm.DB) *OauthService {
 				RedirectURL: fmt.Sprintf("https://redirectmeto.com/%s/api/oauth2/twitch/redirect", os.Getenv("PUBLIC_URL")),
 			},
 		},
-		clientConfig: map[string]*clientcredentials.Config{
-			"twitch": {
+		clientConfig: map[repository.OauthProvider]*clientcredentials.Config{
+			repository.OauthProviderTwitch: {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
 				ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
 				TokenURL:     "https://id.twitch.tv/oauth2/token",
@@ -170,8 +170,8 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 			}
 		}
 	}
-	user.DiscordID = discordId
-	user.DiscordName = discordUser.Username
+	user.DiscordID = &discordId
+	user.DiscordName = &discordUser.Username
 	user, err = e.userService.SaveUser(user)
 	if err != nil {
 		return nil, err
@@ -230,12 +230,12 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 			}
 		}
 	}
-	user.TwitchID = twitchId
-	user.TwitchName = twitchExtendedUser.Data[0].DisplayName
+	user.TwitchID = &twitchId
+	user.TwitchName = &twitchExtendedUser.Data[0].DisplayName
 	return e.userService.SaveUser(user)
 }
 
-func (e *OauthService) GetToken(provider string) (*string, error) {
+func (e *OauthService) GetToken(provider repository.OauthProvider) (*string, error) {
 	credentials, err := e.clientCredentialRepository.GetClientCredentialsByName(provider)
 	if err != nil || credentials.Expiry.Before(time.Now()) {
 		config, ok := e.clientConfig[provider]

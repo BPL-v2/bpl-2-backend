@@ -28,6 +28,11 @@ func setupScoringCategoryController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @Description Fetches the rules for the current event
+// @Tags scoring
+// @Produce json
+// @Success 200 {array} CategoryResponse
+// @Router /scoring/categories [get]
 func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event_id, err := strconv.Atoi(c.Param("event_id"))
@@ -44,6 +49,12 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Fetches a scoring category by id
+// @Tags scoring
+// @Produce json
+// @Param id path int true "Category ID"
+// @Success 200 {object} CategoryResponse
+// @Router /scoring/categories/{id} [get]
 func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -64,6 +75,12 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 	}
 }
 
+// @Description Creates a new scoring category
+// @Tags scoring
+// @Accept json
+// @Produce json
+// @Param body body CategoryCreate true "Category to create"
+// @Success 201 {object} CategoryResponse
 func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var categoryCreate CategoryCreate
@@ -85,6 +102,12 @@ func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Deletes a scoring category
+// @Tags scoring
+// @Produce json
+// @Param id path int true "Category ID"
+// @Success 204
+// @Router /scoring/categories/{id} [delete]
 func (e *ScoringCategoryController) deleteCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))

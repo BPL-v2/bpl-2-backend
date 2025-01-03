@@ -37,6 +37,6 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.Stream, error) {
 	}
 	e.twitchClient.Token = *token
 	return e.twitchClient.GetAllStreams(utils.Map(users, func(user *repository.User) string {
-		return user.TwitchID
+		return *user.TwitchID
 	}))
 }

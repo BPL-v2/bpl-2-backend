@@ -86,7 +86,9 @@ func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecke
 	userMap := make(map[string]int)
 	for _, team := range event.Teams {
 		for _, user := range team.Users {
-			userMap[user.POEAccount] = user.ID
+			if user.POEAccount != nil {
+				userMap[*user.POEAccount] = user.ID
+			}
 		}
 	}
 

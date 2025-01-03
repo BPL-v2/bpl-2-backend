@@ -31,15 +31,14 @@ func setupScoreController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @Description Fetches the latest scores for the current event
+// @Tags scores
+// @Produce json
+// @Success 200 {array} ScoreResponse
+// @Router /scores/latest [get]
 func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// eventId, err := strconv.Atoi(c.Param("event_id"))
-		// if err != nil {
-		// 	c.JSON(400, gin.H{"error": err.Error()})
-		// 	return
-		// }
 		event, err := service.NewEventService(e.db).GetCurrentEvent("Teams", "Teams.Users")
-		// event, err := service.NewEventService(e.db).GetEventById(eventId, "Teams", "Teams.Users")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

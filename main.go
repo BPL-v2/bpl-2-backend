@@ -49,8 +49,8 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	docs.SwaggerInfo.BasePath = "/"
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	docs.SwaggerInfo.BasePath = "/api"
+	r.GET("/api/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	controller.SetRoutes(r, db)
 	r.Run(":8000")
 }

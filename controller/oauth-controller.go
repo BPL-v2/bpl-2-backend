@@ -44,6 +44,11 @@ func setupOauthController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @Description Redirects to discord oauth
+// @Tags oauth
+// @Produce json
+// @Success 302
+// @Router /oauth2/discord [get]
 func (e *OauthController) discordOauthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := e.userService.GetUserFromAuthCookie(c)
@@ -52,6 +57,11 @@ func (e *OauthController) discordOauthHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Redirects to twitch oauth
+// @Tags oauth
+// @Produce json
+// @Success 302
+// @Router /oauth2/twitch [get]
 func (e *OauthController) twitchOauthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := e.userService.GetUserFromAuthCookie(c)
@@ -60,6 +70,11 @@ func (e *OauthController) twitchOauthHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Redirect handler for discord oauth
+// @Tags oauth
+// @Produce html
+// @Success 200
+// @Router /oauth2/discord/redirect [get]
 func (e *OauthController) discordRedirectHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		code := c.Request.URL.Query().Get("code")
@@ -76,6 +91,11 @@ func (e *OauthController) discordRedirectHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Redirect handler for twitch oauth
+// @Tags oauth
+// @Produce html
+// @Success 200
+// @Router /oauth2/twitch/redirect [get]
 func (e *OauthController) twitchRedirectHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		errorString := c.Request.URL.Query().Get("error")

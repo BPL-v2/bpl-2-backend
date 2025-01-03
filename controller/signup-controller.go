@@ -25,7 +25,7 @@ func NewSignupController(db *gorm.DB) *SignupController {
 
 func setupSignupController(db *gorm.DB) []RouteInfo {
 	e := NewSignupController(db)
-	basePath := "/event/:event_id/signups"
+	basePath := "/events/:event_id/signups"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true},
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
@@ -38,6 +38,11 @@ func setupSignupController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @Description Fetches an authenticated user's signup for the event
+// @Tags signup
+// @Produce json
+// @Success 200 {object} SignupResponse
+// @Router /events/{event_id}/signups/self [get]
 func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventID, err := strconv.Atoi(c.Param("event_id"))
@@ -63,6 +68,12 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Creates a signup for the authenticated user
+// @Tags signup
+// @Accept json
+// @Produce json
+// @Success 201 {object} SignupResponse
+// @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventID, err := strconv.Atoi(c.Param("event_id"))
@@ -89,6 +100,11 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Deletes the authenticated user's signup for the event
+// @Tags signup
+// @Produce json
+// @Success 204
+// @Router /events/{event_id}/signups/self [delete]
 func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventID, err := strconv.Atoi(c.Param("event_id"))
@@ -110,6 +126,11 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Fetches all signups for the event
+// @Tags signup
+// @Produce json
+// @Success 200 {object} map[int][]SignupResponse
+// @Router /events/{event_id}/signups [get]
 func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventID, err := strconv.Atoi(c.Param("event_id"))

@@ -35,6 +35,13 @@ func setupObjectiveController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @Description Creates a new objective
+// @Tags objective
+// @Accept json
+// @Produce json
+// @Param body body ObjectiveCreate true "Objective to create"
+// @Success 201 {object} ObjectiveResponse
+// @Router /scoring/objectives [put]
 func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var objectiveCreate ObjectiveCreate
@@ -56,6 +63,12 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 	}
 }
 
+// @Description Deletes an objective
+// @Tags objective
+// @Produce json
+// @Param id path int true "Objective ID"
+// @Success 204
+// @Router /scoring/objectives/{id} [delete]
 func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -76,6 +89,13 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 		c.JSON(204, nil)
 	}
 }
+
+// @Description Gets an objective by id
+// @Tags objective
+// @Produce json
+// @Param id path int true "Objective ID"
+// @Success 200 {object} ObjectiveResponse
+// @Router /scoring/objectives/{id} [get]
 func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -94,27 +114,6 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, toObjectiveResponse(objective))
-	}
-}
-
-func (e *ObjectiveController) getCategoryObjectivesHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		category_id, err := strconv.Atoi(c.Param("category_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-
-		objectives, err := e.service.GetObjectivesByCategoryId(category_id)
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Category not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			return
-		}
-		c.JSON(200, utils.Map(objectives, toObjectiveResponse))
 	}
 }
 
