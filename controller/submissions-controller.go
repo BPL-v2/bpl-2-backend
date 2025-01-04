@@ -49,7 +49,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		event, err := e.eventService.GetEventById(eventId)
+		event, err := e.eventService.GetEventById(eventId, "Teams")
 		if err != nil {
 			c.JSON(404, gin.H{"error": err.Error()})
 			return
