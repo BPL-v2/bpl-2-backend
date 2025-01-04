@@ -36,6 +36,7 @@ const (
 type Objective struct {
 	ID             int             `gorm:"primaryKey"`
 	Name           string          `gorm:"not null"`
+	Extra          string          `gorm:"null"`
 	RequiredAmount int             `gorm:"not null"`
 	Conditions     []*Condition    `gorm:"foreignKey:ObjectiveID;constraint:OnDelete:CASCADE"`
 	CategoryID     int             `gorm:"not null"`

@@ -146,6 +146,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 type ObjectiveCreate struct {
 	ID             int                        `json:"id"`
 	Name           string                     `json:"name" binding:"required"`
+	Extra          string                     `json:"extra"`
 	RequiredNumber int                        `json:"required_number" binding:"required"`
 	ObjectiveType  repository.ObjectiveType   `json:"objective_type" binding:"required"`
 	NumberField    repository.NumberField     `json:"number_field" binding:"required"`
@@ -160,6 +161,7 @@ type ObjectiveCreate struct {
 type ObjectiveResponse struct {
 	ID              int                        `json:"id"`
 	Name            string                     `json:"name"`
+	Extra           string                     `json:"extra"`
 	RequiredNumber  int                        `json:"required_number"`
 	CategoryID      int                        `json:"category_id"`
 	ObjectiveType   repository.ObjectiveType   `json:"objective_type"`
@@ -175,6 +177,7 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 	return &repository.Objective{
 		ID:             e.ID,
 		Name:           e.Name,
+		Extra:          e.Extra,
 		RequiredAmount: e.RequiredNumber,
 		ObjectiveType:  e.ObjectiveType,
 		NumberField:    e.NumberField,
@@ -194,6 +197,7 @@ func toObjectiveResponse(objective *repository.Objective) *ObjectiveResponse {
 	return &ObjectiveResponse{
 		ID:              objective.ID,
 		Name:            objective.Name,
+		Extra:           objective.Extra,
 		RequiredNumber:  objective.RequiredAmount,
 		CategoryID:      objective.CategoryID,
 		ObjectiveType:   objective.ObjectiveType,
