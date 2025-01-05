@@ -2,18 +2,22 @@ package repository
 
 import (
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type Event struct {
-	ID                int              `gorm:"primaryKey"`
-	Name              string           `gorm:"not null"`
-	ScoringCategoryID int              `gorm:"not null"`
-	Teams             []*Team          `gorm:"foreignKey:EventID;constraint:OnDelete:CASCADE"`
-	IsCurrent         bool             `gorm:"not null"`
-	MaxSize           int              `gorm:"not null"`
-	ScoringCategory   *ScoringCategory `gorm:"foreignKey:ScoringCategoryID;constraint:OnDelete:CASCADE"`
+	ID                   int              `gorm:"primaryKey"`
+	Name                 string           `gorm:"not null"`
+	ScoringCategoryID    int              `gorm:"not null"`
+	Teams                []*Team          `gorm:"foreignKey:EventID;constraint:OnDelete:CASCADE"`
+	IsCurrent            bool             `gorm:"not null"`
+	MaxSize              int              `gorm:"not null"`
+	ScoringCategory      *ScoringCategory `gorm:"foreignKey:ScoringCategoryID;constraint:OnDelete:CASCADE"`
+	ApplicationStartTime time.Time        `gorm:"null"`
+	EventStartTime       time.Time        `gorm:"null"`
+	EventEndTime         time.Time        `gorm:"null"`
 }
 
 type EventRepository struct {

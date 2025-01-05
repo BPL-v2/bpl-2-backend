@@ -86,10 +86,16 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
+		var signupCreate SignupCreate
+		if err := c.BindJSON(&signupCreate); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
 		signup := &repository.Signup{
-			UserID:    user.ID,
-			EventID:   eventID,
-			Timestamp: time.Now(),
+			UserID:           user.ID,
+			EventID:          eventID,
+			Timestamp:        time.Now(),
+			ExpectedPlayTime: signupCreate.ExpectedPlaytime,
 		}
 		signup, err = e.signupService.CreateSignup(signup)
 		if err != nil {
@@ -152,9 +158,13 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 }
 
 type SignupResponse struct {
-	ID        int                       `json:"id"`
-	User      *NonSensitiveUserResponse `json:"user"`
-	Timestamp time.Time                 `json:"timestamp"`
+	ID               int                         `json:"id"`
+	User             *NonSensitiveUserResponse   `json:"user"`
+	Timestamp        time.Time                   `json:"timestamp"`
+	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime"`
+}
+type SignupCreate struct {
+	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`
 }
 
 func toSignupResponse(signup *repository.Signup) *SignupResponse {
@@ -163,8 +173,9 @@ func toSignupResponse(signup *repository.Signup) *SignupResponse {
 	}
 
 	return &SignupResponse{
-		ID:        signup.ID,
-		User:      toNonSensitiveUserResponse(signup.User),
-		Timestamp: signup.Timestamp,
+		ID:               signup.ID,
+		User:             toNonSensitiveUserResponse(signup.User),
+		Timestamp:        signup.Timestamp,
+		ExpectedPlaytime: signup.ExpectedPlayTime,
 	}
 }

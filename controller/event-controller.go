@@ -5,6 +5,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -196,26 +197,35 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 }
 
 type EventCreate struct {
-	ID        *int   `json:"id"`
-	Name      string `json:"name" binding:"required"`
-	IsCurrent bool   `json:"is_current" binding:"required"`
-	MaxSize   int    `json:"max_size" binding:"required"`
+	ID                   *int      `json:"id"`
+	Name                 string    `json:"name" binding:"required"`
+	IsCurrent            bool      `json:"is_current"`
+	MaxSize              int       `json:"max_size" binding:"required"`
+	EventStartTime       time.Time `json:"event_start_time" binding:"required"`
+	EventEndTime         time.Time `json:"event_end_time" binding:"required"`
+	ApplicationStartTime time.Time `json:"application_start_time" binding:"required"`
 }
 
 type EventResponse struct {
-	ID                int             `json:"id"`
-	Name              string          `json:"name"`
-	ScoringCategoryID int             `json:"scoring_category_id"`
-	IsCurrent         bool            `json:"is_current"`
-	MaxSize           int             `json:"max_size"`
-	Teams             []*TeamResponse `json:"teams"`
+	ID                   int             `json:"id"`
+	Name                 string          `json:"name"`
+	ScoringCategoryID    int             `json:"scoring_category_id"`
+	IsCurrent            bool            `json:"is_current"`
+	MaxSize              int             `json:"max_size"`
+	Teams                []*TeamResponse `json:"teams"`
+	ApplicationStartTime time.Time       `json:"application_start_time"`
+	EventStartTime       time.Time       `json:"event_start_time"`
+	EventEndTime         time.Time       `json:"event_end_time"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {
 	event := &repository.Event{
-		Name:      e.Name,
-		IsCurrent: e.IsCurrent,
-		MaxSize:   e.MaxSize,
+		Name:                 e.Name,
+		IsCurrent:            e.IsCurrent,
+		MaxSize:              e.MaxSize,
+		EventStartTime:       e.EventStartTime,
+		EventEndTime:         e.EventEndTime,
+		ApplicationStartTime: e.ApplicationStartTime,
 	}
 	if e.ID != nil {
 		event.ID = *e.ID
@@ -228,12 +238,15 @@ func toEventResponse(event *repository.Event) *EventResponse {
 		return nil
 	}
 	return &EventResponse{
-		ID:                event.ID,
-		Name:              event.Name,
-		ScoringCategoryID: event.ScoringCategoryID,
-		IsCurrent:         event.IsCurrent,
-		MaxSize:           event.MaxSize,
-		Teams:             utils.Map(event.Teams, toTeamResponse),
+		ID:                   event.ID,
+		Name:                 event.Name,
+		ScoringCategoryID:    event.ScoringCategoryID,
+		IsCurrent:            event.IsCurrent,
+		MaxSize:              event.MaxSize,
+		Teams:                utils.Map(event.Teams, toTeamResponse),
+		ApplicationStartTime: event.ApplicationStartTime,
+		EventStartTime:       event.EventStartTime,
+		EventEndTime:         event.EventEndTime,
 	}
 }
 
