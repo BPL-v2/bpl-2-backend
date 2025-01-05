@@ -23,7 +23,7 @@ func NewScoringPresetController(db *gorm.DB) *ScoringPresetController {
 func setupScoringPresetController(db *gorm.DB) []RouteInfo {
 	e := NewScoringPresetController(db)
 	routes := []RouteInfo{
-		{Method: "GET", Path: "/events/:event_id/scoring-presets", HandlerFunc: e.getScoringPresetsForEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/events/:event_id/scoring-presets", HandlerFunc: e.getScoringPresetsForEventHandler()},
 		{Method: "PUT", Path: "/scoring/presets", HandlerFunc: e.createPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/scoring/presets/:id", HandlerFunc: e.getScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
