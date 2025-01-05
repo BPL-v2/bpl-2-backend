@@ -2,6 +2,7 @@ package service
 
 import (
 	"bpl/repository"
+	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -23,14 +24,25 @@ func (e *EventService) GetAllEvents() ([]*repository.Event, error) {
 }
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
+	if event.ID == 0 {
+		event.ScoringCategory = &repository.ScoringCategory{Name: "default"}
+	} else {
+		currentEvent, err := e.event_repository.GetEventById(event.ID)
+		if err != nil {
+			return nil, fmt.Errorf("event with this id does not exist: %v", err)
+		}
+		event.ScoringCategoryID = currentEvent.ScoringCategoryID
+	}
 	if event.IsCurrent {
 		err := e.event_repository.InvalidateCurrentEvent()
 		if err != nil {
 			return nil, err
 		}
 	}
-	event.ScoringCategory = &repository.ScoringCategory{Name: "default"}
-	e.event_repository.DB.Save(event)
+	result := e.event_repository.DB.Save(event)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to save event: %v", result.Error)
+	}
 	return event, nil
 }
 

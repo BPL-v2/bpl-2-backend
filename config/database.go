@@ -71,6 +71,7 @@ func InitDB() (*gorm.DB, error) {
 		&model.ObjectiveMatch{},
 		&model.Submission{},
 		&model.ClientCredentials{},
+		&model.Signup{},
 	)
 
 	if err != nil {
