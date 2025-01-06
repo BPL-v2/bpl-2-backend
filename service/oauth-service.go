@@ -146,7 +146,8 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	if err != nil {
 		return nil, err
 	}
-	response, err := e.config["discord"].Client(context.Background(), token).Get("https://discord.com/api/users/@me")
+	client := e.config["discord"].Client(context.Background(), token)
+	response, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +158,28 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	if err != nil {
 		return nil, err
 	}
+	// response, err = client.Get("https://discord.com/api/users/@me/guilds")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer response.Body.Close()
+	// guilds := []struct {
+	// 	ID   string `json:"id"`
+	// 	Name string `json:"name"`
+	// }{}
+	// json.NewDecoder(response.Body).Decode(&guilds)
+	// isMember := false
+	// for _, guild := range guilds {
+	// 	if guild.ID == os.Getenv("DISCORD_GUILD_ID") {
+	// 		isMember = true
+	// 		break
+	// 	}
+	// }
+
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// fmt.Println(response.Status)
 
 	user := &repository.User{}
 	if verifier.User != nil {
@@ -164,7 +187,7 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	} else {
 		user, err = e.userService.GetUserByDiscordId(discordId)
 		if err != nil {
-			verifier.User = &repository.User{
+			user = &repository.User{
 				Permissions: []repository.Permission{},
 				DisplayName: discordUser.Username,
 			}

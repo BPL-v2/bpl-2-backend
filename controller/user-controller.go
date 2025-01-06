@@ -32,6 +32,7 @@ func setupUserController(db *gorm.DB) []RouteInfo {
 		{Method: "GET", Path: "/events/:event_id/users", HandlerFunc: e.getUsersForEventHandler()},
 		{Method: "GET", Path: "/users", HandlerFunc: e.getUsersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/users/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
+		{Method: "PATCH", Path: "/users/self", HandlerFunc: e.updateUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/:userId", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "POST", Path: "/users/logout", HandlerFunc: e.logoutHandler(), Authenticated: true},
 		{Method: "POST", Path: "/users/remove-auth", HandlerFunc: e.removeAuthHandler(), Authenticated: true},
@@ -145,6 +146,32 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 		}
 		c.JSON(200, teamUsers)
 	}
+}
+
+func (e *UserController) updateUserHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user, err := e.userService.GetUserFromAuthCookie(c)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Not authenticated"})
+			return
+		}
+		var userUpdate UserUpdate
+		if err := c.BindJSON(&userUpdate); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		user.DisplayName = userUpdate.DisplayName
+		user, err = e.userService.SaveUser(user)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, toUserResponse(user))
+	}
+}
+
+type UserUpdate struct {
+	DisplayName string `json:"display_name" binding:"required"`
 }
 
 type UserResponse struct {

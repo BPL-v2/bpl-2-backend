@@ -134,13 +134,23 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 
 func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		event_id, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		event, err := e.eventService.GetEventById(event_id, "Teams")
+		if err != nil {
+			c.JSON(404, gin.H{"error": err.Error()})
+		}
+
 		var teamUsers []TeamUserCreate
 		if err := c.BindJSON(&teamUsers); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 		teamUsersModel := utils.Map(teamUsers, teamUserCreateToModel)
-		err := e.teamService.AddUsersToTeams(teamUsersModel)
+		err = e.teamService.AddUsersToTeams(teamUsersModel, event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
