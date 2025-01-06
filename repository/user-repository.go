@@ -37,16 +37,11 @@ func (p Permissions) Value() (driver.Value, error) {
 }
 
 type User struct {
-	ID                int         `gorm:"primaryKey autoIncrement"`
-	DisplayName       string      `gorm:"not null"`
-	POEAccount        *string     `gorm:"null"`
-	DiscordID         *int64      `gorm:"null"`
-	DiscordName       *string     `gorm:"null"`
-	TwitchID          *string     `gorm:"null"`
-	TwitchName        *string     `gorm:"null"`
-	PoeToken          *string     `gorm:"null"`
-	PoeTokenExpiresAt *int64      `gorm:"null"`
-	Permissions       Permissions `gorm:"type:text[];not null;default:'{}'"`
+	ID          int         `gorm:"primaryKey autoIncrement"`
+	DisplayName string      `gorm:"not null"`
+	Permissions Permissions `gorm:"type:text[];not null;default:'{}'"`
+
+	OauthAccounts []*Oauth `gorm:"foreignKey:UserID"`
 }
 
 type UserRepository struct {
@@ -57,9 +52,13 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{DB: db}
 }
 
-func (r *UserRepository) GetUserById(userId int) (*User, error) {
+func (r *UserRepository) GetUserById(userId int, preloads ...string) (*User, error) {
 	var user User
-	result := r.DB.First(&user, userId)
+	query := r.DB
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	result := query.First(&user, userId)
 	if result.Error != nil {
 		return nil, fmt.Errorf("user with id %d not found", userId)
 	}
@@ -112,19 +111,30 @@ func (r *UserRepository) GetUsers() ([]*User, error) {
 	return users, nil
 }
 
-func (r *UserRepository) GetStreamersForCurrentEvent() ([]*User, error) {
-	var users []*User
-	query := r.DB.Table("users").
-		Select("users.*").
-		Joins("JOIN team_users ON team_users.user_id = users.id").
-		Joins("JOIN teams ON teams.id = team_users.team_id").
-		Joins("JOIN events ON events.id = teams.event_id").
-		Where("events.is_current = true").
-		Where("users.twitch_id IS NOT NULL").
-		Find(&users)
-	if query.Error != nil {
-		return nil, fmt.Errorf("failed to get streamers for current event: %v", query.Error)
+type Streamer struct {
+	UserID   int
+	TwitchID string
+}
+
+func (r *UserRepository) GetStreamersForCurrentEvent() ([]*Streamer, error) {
+	var streamers []*Streamer
+
+	query := `
+		SELECT 
+			users.id as user_id, 
+			oauths.account_id as twitch_id
+		FROM users
+		JOIN oauths ON oauths.user_id = users.id
+		JOIN team_users ON team_users.user_id = users.id
+		JOIN teams ON teams.id = team_users.team_id
+		JOIN events ON events.id = teams.event_id
+		WHERE events.is_current = true AND oauths.provider = 'twitch'
+	`
+	result := r.DB.Raw(query).Scan(&streamers)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get streamers for current event: %v", result.Error)
 	}
-	return users, nil
+
+	return streamers, nil
 
 }

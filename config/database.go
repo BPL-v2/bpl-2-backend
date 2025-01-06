@@ -72,6 +72,7 @@ func InitDB() (*gorm.DB, error) {
 		&model.Submission{},
 		&model.ClientCredentials{},
 		&model.Signup{},
+		&model.Oauth{},
 	)
 
 	if err != nil {

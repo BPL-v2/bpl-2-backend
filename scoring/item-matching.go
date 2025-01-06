@@ -86,9 +86,12 @@ func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecke
 	userMap := make(map[string]int)
 	for _, team := range event.Teams {
 		for _, user := range team.Users {
-			if user.POEAccount != nil {
-				userMap[*user.POEAccount] = user.ID
+			for account := range user.OauthAccounts {
+				if user.OauthAccounts[account].Provider == repository.ProviderPoE {
+					userMap[user.OauthAccounts[account].AccessToken] = user.ID
+				}
 			}
+
 		}
 	}
 

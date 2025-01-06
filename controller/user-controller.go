@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -95,7 +96,7 @@ func (e *UserController) logoutHandler() gin.HandlerFunc {
 
 func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		provider := c.Request.URL.Query().Get("provider")
+		provider := repository.Provider(c.Request.URL.Query().Get("provider"))
 		if provider == "" {
 			c.JSON(400, gin.H{"error": "No provider specified"})
 			return
@@ -105,7 +106,7 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		user, err = e.userService.RemoveProvider(user, repository.OauthProvider(provider))
+		user, err = e.userService.RemoveProvider(user, provider)
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -175,14 +176,14 @@ type UserUpdate struct {
 }
 
 type UserResponse struct {
-	ID                   int     `json:"id"`
-	DisplayName          string  `json:"display_name"`
-	AcountName           *string `json:"account_name"`
-	DiscordID            *string `json:"discord_id"`
-	DiscordName          *string `json:"discord_name"`
-	TwitchID             *string `json:"twitch_id"`
-	TwitchName           *string `json:"twitch_name"`
-	TokenExpiryTimestamp *int64  `json:"token_expiry_timestamp"`
+	ID                   int        `json:"id"`
+	DisplayName          string     `json:"display_name"`
+	AcountName           *string    `json:"account_name"`
+	DiscordID            *string    `json:"discord_id"`
+	DiscordName          *string    `json:"discord_name"`
+	TwitchID             *string    `json:"twitch_id"`
+	TwitchName           *string    `json:"twitch_name"`
+	TokenExpiryTimestamp *time.Time `json:"token_expiry_timestamp"`
 
 	Permissions []repository.Permission `json:"permissions"`
 }
@@ -213,25 +214,27 @@ type MinimalUserResponse struct {
 	DisplayName string `json:"display_name"`
 }
 
-func toUserResponse(user *repository.User) UserResponse {
-	permissions := make([]repository.Permission, len(user.Permissions))
-	for i, perm := range user.Permissions {
-		permissions[i] = repository.Permission(perm)
+func toUserResponse(user *repository.User) *UserResponse {
+	response := &UserResponse{
+		ID:          user.ID,
+		DisplayName: user.DisplayName,
+		Permissions: user.Permissions,
 	}
-	response := UserResponse{
-		ID:                   user.ID,
-		AcountName:           user.POEAccount,
-		DisplayName:          user.DisplayName,
-		DiscordName:          user.DiscordName,
-		TwitchID:             user.TwitchID,
-		TwitchName:           user.TwitchName,
-		TokenExpiryTimestamp: user.PoeTokenExpiresAt,
-		Permissions:          permissions,
+	for _, oauth := range user.OauthAccounts {
+		switch oauth.Provider {
+		case repository.ProviderDiscord:
+			response.DiscordID = &oauth.AccountID
+			response.DiscordName = &oauth.Name
+		case repository.ProviderTwitch:
+			response.TwitchID = &oauth.AccountID
+			response.TwitchName = &oauth.Name
+		case repository.ProviderPoE:
+			response.AcountName = &oauth.AccountID
+			response.TokenExpiryTimestamp = &oauth.Expiry
+
+		}
 	}
-	if user.DiscordID != nil {
-		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
-		response.DiscordID = &discordIdString
-	}
+
 	return response
 }
 
@@ -241,36 +244,45 @@ func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse
 	}
 	response := &NonSensitiveUserResponse{
 		ID:          user.ID,
-		AcountName:  user.POEAccount,
 		DisplayName: user.DisplayName,
-		DiscordName: user.DiscordName,
-		TwitchID:    user.TwitchID,
-		TwitchName:  user.TwitchName,
 	}
-	if user.DiscordID != nil {
-		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
-		response.DiscordID = &discordIdString
+	for _, oauth := range user.OauthAccounts {
+		switch oauth.Provider {
+		case repository.ProviderDiscord:
+			response.DiscordID = &oauth.AccountID
+			response.DiscordName = &oauth.Name
+		case repository.ProviderTwitch:
+			response.TwitchID = &oauth.AccountID
+			response.TwitchName = &oauth.Name
+		case repository.ProviderPoE:
+			response.AcountName = &oauth.AccountID
+		}
 	}
 	return response
 }
 
-func toUserAdminResponse(user *repository.User) UserAdminResponse {
+func toUserAdminResponse(user *repository.User) *UserAdminResponse {
 	permissions := make([]repository.Permission, len(user.Permissions))
 	for i, perm := range user.Permissions {
 		permissions[i] = repository.Permission(perm)
 	}
-	response := UserAdminResponse{
+
+	response := &UserAdminResponse{
 		ID:          user.ID,
-		AcountName:  user.POEAccount,
 		DisplayName: user.DisplayName,
-		DiscordName: user.DiscordName,
-		TwitchName:  user.TwitchName,
-		TwitchID:    user.TwitchID,
 		Permissions: permissions,
 	}
-	if user.DiscordID != nil {
-		discordIdString := strconv.FormatInt(*user.DiscordID, 10)
-		response.DiscordID = &discordIdString
+	for _, oauth := range user.OauthAccounts {
+		switch oauth.Provider {
+		case repository.ProviderDiscord:
+			response.DiscordID = &oauth.AccountID
+			response.DiscordName = &oauth.Name
+		case repository.ProviderTwitch:
+			response.TwitchID = &oauth.AccountID
+			response.TwitchName = &oauth.Name
+		case repository.ProviderPoE:
+			response.AcountName = &oauth.AccountID
+		}
 	}
 	return response
 }

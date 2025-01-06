@@ -52,7 +52,7 @@ func setupOauthController(db *gorm.DB) []RouteInfo {
 func (e *OauthController) discordOauthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := e.userService.GetUserFromAuthCookie(c)
-		url := e.oauthService.GetRedirectUrl(user, "discord")
+		url := e.oauthService.GetRedirectUrl(user, repository.ProviderDiscord)
 		c.Redirect(http.StatusTemporaryRedirect, url)
 	}
 }
@@ -65,7 +65,7 @@ func (e *OauthController) discordOauthHandler() gin.HandlerFunc {
 func (e *OauthController) twitchOauthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, _ := e.userService.GetUserFromAuthCookie(c)
-		url := e.oauthService.GetRedirectUrl(user, "twitch")
+		url := e.oauthService.GetRedirectUrl(user, repository.ProviderTwitch)
 		c.Redirect(http.StatusTemporaryRedirect, url)
 	}
 }
