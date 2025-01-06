@@ -11,17 +11,23 @@ import (
 )
 
 type UserService struct {
-	UserRepository *repository.UserRepository
+	UserRepository  *repository.UserRepository
+	OauthRepository *repository.OauthRepository
 }
 
 func NewUserService(db *gorm.DB) *UserService {
 	return &UserService{
-		UserRepository: repository.NewUserRepository(db),
+		UserRepository:  repository.NewUserRepository(db),
+		OauthRepository: repository.NewOauthRepository(db),
 	}
 }
 
-func (s *UserService) GetUserByDiscordId(discordId int64) (*repository.User, error) {
-	return s.UserRepository.GetUserByDiscordId(discordId)
+func (s *UserService) GetUserByDiscordId(discordId string) (*repository.User, error) {
+	oauth, err := s.OauthRepository.GetOauthByProviderAndAccountID(repository.ProviderDiscord, discordId)
+	if err != nil {
+		return nil, err
+	}
+	return oauth.User, nil
 }
 
 func (s *UserService) GetUserByPoEAccount(poeAccount string) (*repository.User, error) {
@@ -40,8 +46,8 @@ func (s *UserService) GetUsers() ([]*repository.User, error) {
 	return s.UserRepository.GetUsers()
 }
 
-func (s *UserService) GetUserById(id int) (*repository.User, error) {
-	return s.UserRepository.GetUserById(id)
+func (s *UserService) GetUserById(id int, preloads ...string) (*repository.User, error) {
+	return s.UserRepository.GetUserById(id, preloads...)
 }
 
 func (s *UserService) GetUserFromAuthCookie(c *gin.Context) (*repository.User, error) {
@@ -64,7 +70,7 @@ func (s *UserService) GetUserFromToken(tokenString string) (*repository.User, er
 		if err := claims.Valid(); err != nil {
 			return nil, err
 		}
-		return s.GetUserById(claims.UserID)
+		return s.GetUserById(claims.UserID, "OauthAccounts")
 	}
 	return nil, jwt.ErrInvalidKey
 }
@@ -79,34 +85,17 @@ func (s *UserService) ChangePermissions(userId int, permissions []repository.Per
 	return err
 }
 
-func (s *UserService) RemoveProvider(user *repository.User, provider repository.OauthProvider) (*repository.User, error) {
-	numberOfProviders := 0
-	if user.DiscordID != nil {
-		numberOfProviders++
-	}
-	if user.TwitchID != nil {
-		numberOfProviders++
-	}
-	if user.POEAccount != nil {
-		numberOfProviders++
-	}
-	if numberOfProviders < 2 {
+func (s *UserService) RemoveProvider(user *repository.User, provider repository.Provider) (*repository.User, error) {
+
+	if len(user.OauthAccounts) < 2 {
 		return nil, fmt.Errorf("cannot remove last provider")
 	}
 
-	switch provider {
-	case repository.OauthProviderDiscord:
-		user.DiscordID = nil
-		user.DiscordName = nil
-	case repository.OauthProviderTwitch:
-		user.TwitchID = nil
-		user.TwitchName = nil
-	case repository.OauthProviderPoE:
-		user.POEAccount = nil
-		user.PoeToken = nil
-		user.PoeTokenExpiresAt = nil
-	default:
-		return nil, fmt.Errorf("unknown provider")
+	for _, oauth := range user.OauthAccounts {
+		if oauth.Provider == provider {
+
+			s.OauthRepository.DB.Delete(oauth)
+		}
 	}
-	return s.UserRepository.SaveUser(user)
+	return s.GetUserById(user.ID, "OauthAccounts")
 }

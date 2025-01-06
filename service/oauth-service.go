@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -23,11 +22,12 @@ type Verifier struct {
 }
 
 type OauthService struct {
-	config                     map[string]*oauth2.Config
-	clientConfig               map[repository.OauthProvider]*clientcredentials.Config
+	config                     map[repository.Provider]*oauth2.Config
+	clientConfig               map[repository.Provider]*clientcredentials.Config
 	stateToVerifyer            map[string]Verifier
 	userService                *UserService
 	clientCredentialRepository *repository.ClientCredentialsRepository
+	oauthRepository            *repository.OauthRepository
 }
 
 type DiscordUserResponse struct {
@@ -79,8 +79,8 @@ type TwitchExtendedUserResponse struct {
 
 func NewOauthService(db *gorm.DB) *OauthService {
 	return &OauthService{
-		config: map[string]*oauth2.Config{
-			"discord": {
+		config: map[repository.Provider]*oauth2.Config{
+			repository.ProviderDiscord: {
 				ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
 				ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
 				Scopes:       []string{"identify"},
@@ -90,7 +90,7 @@ func NewOauthService(db *gorm.DB) *OauthService {
 				},
 				RedirectURL: fmt.Sprintf("https://redirectmeto.com/%s/api/oauth2/discord/redirect", os.Getenv("PUBLIC_URL")),
 			},
-			"twitch": {
+			repository.ProviderTwitch: {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
 				ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
 				Scopes:       []string{},
@@ -101,8 +101,8 @@ func NewOauthService(db *gorm.DB) *OauthService {
 				RedirectURL: fmt.Sprintf("https://redirectmeto.com/%s/api/oauth2/twitch/redirect", os.Getenv("PUBLIC_URL")),
 			},
 		},
-		clientConfig: map[repository.OauthProvider]*clientcredentials.Config{
-			repository.OauthProviderTwitch: {
+		clientConfig: map[repository.Provider]*clientcredentials.Config{
+			repository.ProviderTwitch: {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
 				ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
 				TokenURL:     "https://id.twitch.tv/oauth2/token",
@@ -132,7 +132,7 @@ func (e *OauthService) GetNewVerifier(user *repository.User) (string, string) {
 	return state, verifier
 }
 
-func (e *OauthService) GetRedirectUrl(user *repository.User, provider string) string {
+func (e *OauthService) GetRedirectUrl(user *repository.User, provider repository.Provider) string {
 	state, verifier := e.GetNewVerifier(user)
 	return e.config[provider].AuthCodeURL(state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
 }
@@ -142,11 +142,11 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	if !ok {
 		return nil, fmt.Errorf("state is unknown")
 	}
-	token, err := e.config["discord"].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
+	token, err := e.config[repository.ProviderDiscord].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
 	if err != nil {
 		return nil, err
 	}
-	client := e.config["discord"].Client(context.Background(), token)
+	client := e.config[repository.ProviderDiscord].Client(context.Background(), token)
 	response, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
 		return nil, err
@@ -154,47 +154,35 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	defer response.Body.Close()
 	discordUser := &DiscordUserResponse{}
 	json.NewDecoder(response.Body).Decode(discordUser)
-	discordId, err := strconv.ParseInt(discordUser.ID, 10, 64)
-	if err != nil {
-		return nil, err
-	}
-	// response, err = client.Get("https://discord.com/api/users/@me/guilds")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// defer response.Body.Close()
-	// guilds := []struct {
-	// 	ID   string `json:"id"`
-	// 	Name string `json:"name"`
-	// }{}
-	// json.NewDecoder(response.Body).Decode(&guilds)
-	// isMember := false
-	// for _, guild := range guilds {
-	// 	if guild.ID == os.Getenv("DISCORD_GUILD_ID") {
-	// 		isMember = true
-	// 		break
-	// 	}
-	// }
-
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println(response.Status)
 
 	user := &repository.User{}
 	if verifier.User != nil {
 		user = verifier.User
 	} else {
-		user, err = e.userService.GetUserByDiscordId(discordId)
+		user, err = e.userService.GetUserByDiscordId(discordUser.ID)
 		if err != nil {
 			user = &repository.User{
-				Permissions: []repository.Permission{},
-				DisplayName: discordUser.Username,
+				Permissions:   []repository.Permission{},
+				DisplayName:   discordUser.Username,
+				OauthAccounts: []*repository.Oauth{},
 			}
 		}
 	}
-	user.DiscordID = &discordId
-	user.DiscordName = &discordUser.Username
+	oauthAccounts := []*repository.Oauth{}
+	for _, oauthAccount := range user.OauthAccounts {
+		if oauthAccount.Provider != repository.ProviderDiscord {
+			oauthAccounts = append(oauthAccounts, oauthAccount)
+		}
+	}
+
+	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
+		Provider:    repository.ProviderDiscord,
+		AccountID:   discordUser.ID,
+		AccessToken: token.AccessToken,
+		Expiry:      token.Expiry,
+		Name:        discordUser.Username,
+	})
+
 	user, err = e.userService.SaveUser(user)
 	if err != nil {
 		return nil, err
@@ -207,11 +195,11 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 	if !ok {
 		return nil, fmt.Errorf("state is unknown")
 	}
-	token, err := e.config["twitch"].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
+	token, err := e.config[repository.ProviderTwitch].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
 	if err != nil {
 		return nil, err
 	}
-	response, err := e.config["twitch"].Client(context.Background(), token).Get("https://id.twitch.tv/oauth2/userinfo")
+	response, err := e.config[repository.ProviderTwitch].Client(context.Background(), token).Get("https://id.twitch.tv/oauth2/userinfo")
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +228,6 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 	twitchExtendedUser := &TwitchExtendedUserResponse{}
 	json.NewDecoder(response.Body).Decode(twitchExtendedUser)
 	response.Body.Close()
-
 	user := &repository.User{}
 	if verifier.User != nil {
 		user = verifier.User
@@ -248,17 +235,30 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 		user, err = e.userService.GetUserByTwitchId(twitchId)
 		if err != nil {
 			user = &repository.User{
-				DisplayName: twitchExtendedUser.Data[0].DisplayName,
-				Permissions: []repository.Permission{},
+				Permissions:   []repository.Permission{},
+				DisplayName:   twitchExtendedUser.Data[0].DisplayName,
+				OauthAccounts: []*repository.Oauth{},
 			}
 		}
 	}
-	user.TwitchID = &twitchId
-	user.TwitchName = &twitchExtendedUser.Data[0].DisplayName
+	oauthAccounts := []*repository.Oauth{}
+	for _, oauthAccount := range user.OauthAccounts {
+		if oauthAccount.Provider != repository.ProviderDiscord {
+			oauthAccounts = append(oauthAccounts, oauthAccount)
+		}
+	}
+	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
+		Provider:    repository.ProviderTwitch,
+		AccountID:   twitchId,
+		AccessToken: token.AccessToken,
+		Expiry:      token.Expiry,
+		Name:        twitchExtendedUser.Data[0].DisplayName,
+	})
+
 	return e.userService.SaveUser(user)
 }
 
-func (e *OauthService) GetToken(provider repository.OauthProvider) (*string, error) {
+func (e *OauthService) GetToken(provider repository.Provider) (*string, error) {
 	credentials, err := e.clientCredentialRepository.GetClientCredentialsByName(provider)
 	if err != nil || credentials.Expiry.Before(time.Now()) {
 		config, ok := e.clientConfig[provider]
@@ -282,4 +282,8 @@ func (e *OauthService) GetToken(provider repository.OauthProvider) (*string, err
 		e.clientCredentialRepository.DB.Save(credentials)
 	}
 	return &credentials.AccessToken, nil
+}
+
+func (e *OauthService) GetOauthByProviderAndAccountID(provider repository.Provider, accountID string) (*repository.Oauth, error) {
+	return e.oauthRepository.GetOauthByProviderAndAccountID(provider, accountID)
 }

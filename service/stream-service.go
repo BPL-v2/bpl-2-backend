@@ -27,7 +27,7 @@ func NewStreamService(db *gorm.DB) *StreamService {
 }
 
 func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.Stream, error) {
-	users, err := e.user_repository.GetStreamersForCurrentEvent()
+	streamers, err := e.user_repository.GetStreamersForCurrentEvent()
 	if err != nil {
 		return nil, err
 	}
@@ -37,20 +37,20 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.Stream, error) {
 	}
 	e.twitchClient.Token = *token
 
-	userMap := make(map[string]*repository.User)
-	for _, user := range users {
-		userMap[*user.TwitchID] = user
+	userMap := make(map[string]int)
+	for _, streamer := range streamers {
+		userMap[streamer.TwitchID] = streamer.UserID
 	}
 
-	streams, err := e.twitchClient.GetAllStreams(utils.Map(users, func(user *repository.User) string {
-		return *user.TwitchID
+	streams, err := e.twitchClient.GetAllStreams(utils.Map(streamers, func(user *repository.Streamer) string {
+		return user.TwitchID
 	}))
 	if err != nil {
 		return nil, err
 	}
 	for _, stream := range streams {
-		if user, ok := userMap[stream.UserID]; ok {
-			stream.BackendUserId = user.ID
+		if userID, ok := userMap[stream.UserID]; ok {
+			stream.BackendUserId = userID
 		}
 	}
 	return streams, nil
