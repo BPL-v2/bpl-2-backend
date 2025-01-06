@@ -40,7 +40,11 @@ func (e *TeamService) DeleteTeam(teamId int) error {
 	return e.team_repository.Delete(teamId)
 }
 
-func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser) error {
+func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser, event *repository.Event) error {
+	err := e.team_repository.RemoveTeamUsersForEvent(teamUsers, event)
+	if err != nil {
+		return err
+	}
 	return e.team_repository.AddUsersToTeams(teamUsers)
 }
 

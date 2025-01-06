@@ -85,6 +85,16 @@ func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error)
 	return teamUsers, nil
 }
 
+func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *Event) error {
+	result := r.DB.Where("team_id in ? AND user_id in ?", utils.Map(event.Teams, func(team *Team) int {
+		return team.ID
+	}), utils.Map(teamUsers, func(user *TeamUser) int {
+		return user.UserID
+	})).Delete(&TeamUser{})
+
+	return result.Error
+}
+
 func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
 	result := r.DB.CreateInBatches(teamUsers, len(teamUsers))
 	return result.Error
