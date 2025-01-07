@@ -59,7 +59,7 @@ func (r *SignupRepository) GetSignupForUser(userID int, eventID int) (*Signup, e
 
 func (r *SignupRepository) GetSignupsForEvent(eventId int, limit int) ([]*Signup, error) {
 	signups := make([]*Signup, 0)
-	result := r.DB.Preload("User").Find(&signups, "event_id = ?", eventId).Order("timestamp ASC").Limit(limit)
+	result := r.DB.Preload("User").Order("timestamp ASC").Limit(limit).Find(&signups, "event_id = ?", eventId)
 	if result.Error != nil {
 		return nil, result.Error
 	}

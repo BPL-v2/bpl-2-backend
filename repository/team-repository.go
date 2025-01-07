@@ -96,7 +96,10 @@ func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *E
 }
 
 func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
-	result := r.DB.CreateInBatches(teamUsers, len(teamUsers))
+	validTeamUsers := utils.Filter(teamUsers, func(teamUser *TeamUser) bool {
+		return teamUser.TeamID != 0
+	})
+	result := r.DB.CreateInBatches(validTeamUsers, len(validTeamUsers))
 	return result.Error
 }
 

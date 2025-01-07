@@ -46,7 +46,7 @@ func setupUserController(db *gorm.DB) []RouteInfo {
 
 func (e *UserController) getUsersHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := e.userService.GetUsers()
+		users, err := e.userService.GetUsers("OauthAccounts")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
