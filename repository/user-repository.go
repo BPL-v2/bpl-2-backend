@@ -100,10 +100,12 @@ func (r *UserRepository) SaveUser(user *User) (*User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetUsers() ([]*User, error) {
+func (r *UserRepository) GetUsers(preloads ...string) ([]*User, error) {
 	var users []*User
 	query := r.DB
-
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
 	result := query.Find(&users)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get users: %v", result.Error)

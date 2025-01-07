@@ -42,8 +42,8 @@ func (s *UserService) SaveUser(user *repository.User) (*repository.User, error) 
 	return s.UserRepository.SaveUser(user)
 }
 
-func (s *UserService) GetUsers() ([]*repository.User, error) {
-	return s.UserRepository.GetUsers()
+func (s *UserService) GetUsers(preloads ...string) ([]*repository.User, error) {
+	return s.UserRepository.GetUsers(preloads...)
 }
 
 func (s *UserService) GetUserById(id int, preloads ...string) (*repository.User, error) {

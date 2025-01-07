@@ -160,7 +160,7 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 }
 
 type TeamUserCreate struct {
-	TeamID int `json:"team_id" binding:"required"`
+	TeamID int `json:"team_id"`
 	UserID int `json:"user_id" binding:"required"`
 }
 
