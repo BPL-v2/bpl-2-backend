@@ -25,7 +25,11 @@ func (e *EventService) GetAllEvents() ([]*repository.Event, error) {
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
 	if event.ID == 0 {
-		event.ScoringCategory = &repository.ScoringCategory{Name: "default"}
+		category, err := e.scoring_category_repository.SaveCategory(&repository.ScoringCategory{Name: "default"})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create default scoring category: %v", err)
+		}
+		event.ScoringCategory = category
 	} else {
 		currentEvent, err := e.event_repository.GetEventById(event.ID)
 		if err != nil {
