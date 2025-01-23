@@ -23,11 +23,12 @@ func setupScoringCategoryController(db *gorm.DB) []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/rules", HandlerFunc: e.getRulesForEventHandler()},
 		{Method: "PUT", Path: "/scoring/categories", HandlerFunc: e.createCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/scoring/categories/:id", HandlerFunc: e.getScoringCategoryHandler()},
+		{Method: "GET", Path: "/scoring/categories/:id", HandlerFunc: e.getScoringCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "DELETE", Path: "/scoring/categories/:id", HandlerFunc: e.deleteCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}}}
 	return routes
 }
 
+// @id GetRulesForEvent
 // @Description Fetches the rules for the current event
 // @Tags scoring
 // @Produce json
@@ -45,10 +46,11 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, toCategoryResponse(rules))
+		c.JSON(200, toPublicCategoryResponse(rules))
 	}
 }
 
+// @id GetScoringCategory
 // @Description Fetches a scoring category by id
 // @Tags scoring
 // @Produce json
@@ -75,6 +77,7 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 	}
 }
 
+// @id CreateCategory
 // @Description Creates a new scoring category
 // @Tags scoring
 // @Accept json
@@ -102,6 +105,7 @@ func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 	}
 }
 
+// @id DeleteCategory
 // @Description Deletes a scoring category
 // @Tags scoring
 // @Produce json
@@ -170,6 +174,18 @@ func toCategoryResponse(category *repository.ScoringCategory) *CategoryResponse 
 		Name:            category.Name,
 		SubCategories:   utils.Map(category.SubCategories, toCategoryResponse),
 		Objectives:      utils.Map(category.Objectives, toObjectiveResponse),
+		ScoringPresetID: category.ScoringId,
+	}
+}
+func toPublicCategoryResponse(category *repository.ScoringCategory) *CategoryResponse {
+	if category == nil {
+		return nil
+	}
+	return &CategoryResponse{
+		ID:              category.ID,
+		Name:            category.Name,
+		SubCategories:   utils.Map(category.SubCategories, toPublicCategoryResponse),
+		Objectives:      utils.Map(category.Objectives, toPublicObjectiveResponse),
 		ScoringPresetID: category.ScoringId,
 	}
 }

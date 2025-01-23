@@ -137,6 +137,17 @@ func (e *OauthService) GetRedirectUrl(user *repository.User, provider repository
 	return e.config[provider].AuthCodeURL(state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
 }
 
+func (e *OauthService) Verify(state string, code string, provider repository.Provider) (*repository.User, error) {
+	switch provider {
+	case repository.ProviderDiscord:
+		return e.VerifyDiscord(state, code)
+	case repository.ProviderTwitch:
+		return e.VerifyTwitch(state, code)
+	default:
+		return nil, fmt.Errorf("not implemented")
+	}
+}
+
 func (e *OauthService) VerifyDiscord(state string, code string) (*repository.User, error) {
 	verifier, ok := e.stateToVerifyer[state]
 	if !ok {

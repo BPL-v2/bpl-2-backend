@@ -42,6 +42,13 @@ func setupSubmissionController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id GetSubmissions
+// @Description Fetches all submissions for an event
+// @Tags submission
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Success 200 {array} SubmissionResponse
+// @Router /events/{event_id}/submissions [get]
 func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))
@@ -70,6 +77,14 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 	}
 }
 
+// @id SubmitBounty
+// @Description Submits a bounty for an event
+// @Tags submission
+// @Accept json
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Success 201 {object} SubmissionResponse
+// @Router /events/{event_id}/submissions [put]
 func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -94,6 +109,14 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 	}
 }
 
+// @id DeleteSubmission
+// @Description Deletes a submission
+// @Tags submission
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Param submission_id path int true "Submission ID"
+// @Success 204
+// @Router /events/{event_id}/submissions/{submission_id} [delete]
 func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		submissionId, err := strconv.Atoi(c.Param("submission_id"))
@@ -116,6 +139,15 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 	}
 }
 
+// @id ReviewSubmission
+// @Description Reviews a submission
+// @Tags submission
+// @Accept json
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Param submission_id path int true "Submission ID"
+// @Success 200 {object} SubmissionResponse
+// @Router /events/{event_id}/submissions/{submission_id}/review [put]
 func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		submissionId, err := strconv.Atoi(c.Param("submission_id"))

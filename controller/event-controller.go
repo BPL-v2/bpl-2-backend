@@ -45,6 +45,7 @@ func setupEventController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id GetEvents
 // @Description Fetches all events
 // @Tags event
 // @Produce json
@@ -61,6 +62,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetCurrentEvent
 // @Description Fetches the current event
 // @Tags event
 // @Produce json
@@ -77,6 +79,7 @@ func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @id CreateEvent
 // @Description Creates or updates an event
 // @Tags event
 // @Accept json
@@ -100,13 +103,14 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetEvent
 // @Description Gets an event by id
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param eventId path int true "Event ID"
+// @Param event_id path int true "Event ID"
 // @Success 201 {object} EventResponse
-// @Router /events/{eventId} [get]
+// @Router /events/{event_id} [get]
 func (e *EventController) getEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))
@@ -127,11 +131,12 @@ func (e *EventController) getEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @id DeleteEvent
 // @Description Deletes an event
 // @Tags event
-// @Param eventId path int true "Event ID"
+// @Param event_id path int true "Event ID"
 // @Success 204
-// @Router /events/{eventId} [delete]
+// @Router /events/{event_id} [delete]
 func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))
@@ -152,13 +157,14 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetEventStatusForUser
 // @Description Gets the users application status for an event
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param eventId path int true "Event ID"
+// @Param event_id path int true "Event ID"
 // @Success 200 {object} EventStatusResponse
-// @Router /events/{eventId}/status [get]
+// @Router /events/{event_id}/status [get]
 func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))
@@ -207,15 +213,15 @@ type EventCreate struct {
 }
 
 type EventResponse struct {
-	ID                   int             `json:"id"`
-	Name                 string          `json:"name"`
-	ScoringCategoryID    int             `json:"scoring_category_id"`
-	IsCurrent            bool            `json:"is_current"`
-	MaxSize              int             `json:"max_size"`
-	Teams                []*TeamResponse `json:"teams"`
-	ApplicationStartTime time.Time       `json:"application_start_time"`
-	EventStartTime       time.Time       `json:"event_start_time"`
-	EventEndTime         time.Time       `json:"event_end_time"`
+	ID                   int             `json:"id" binding:"required"`
+	Name                 string          `json:"name" binding:"required"`
+	ScoringCategoryID    int             `json:"scoring_category_id" binding:"required"`
+	IsCurrent            bool            `json:"is_current" binding:"required"`
+	MaxSize              int             `json:"max_size" binding:"required"`
+	Teams                []*TeamResponse `json:"teams" binding:"required"`
+	ApplicationStartTime time.Time       `json:"application_start_time" binding:"required"`
+	EventStartTime       time.Time       `json:"event_start_time" binding:"required"`
+	EventEndTime         time.Time       `json:"event_end_time" binding:"required"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {

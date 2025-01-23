@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type checkerFun func(item *clientModel.Item) bool
@@ -382,6 +383,16 @@ func ValidateConditions(conditions []*dbModel.Condition) error {
 type ObjectiveChecker struct {
 	ObjectiveId int
 	Function    checkerFun
+	ValidFrom   *time.Time
+	ValidTo     *time.Time
+}
+
+func (oc *ObjectiveChecker) Check(item *clientModel.Item) bool {
+	now := time.Now()
+	if (oc.ValidFrom != nil && oc.ValidFrom.After(now)) || (oc.ValidTo != nil && oc.ValidTo.Before(now)) {
+		return false
+	}
+	return oc.Function(item)
 }
 
 type CheckResult struct {
@@ -443,7 +454,7 @@ func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResul
 func applyCheckers(checkers []*ObjectiveChecker, item *clientModel.Item) []*CheckResult {
 	results := make([]*CheckResult, 0)
 	for _, checker := range checkers {
-		if checker.Function(item) {
+		if checker.Check(item) {
 			number := 1
 			if item.StackSize != nil {
 				number = *item.StackSize

@@ -58,7 +58,6 @@ func AuthMiddleware(roles []repository.Permission) gin.HandlerFunc {
 			r.AbortWithStatus(401)
 			return
 		}
-
 		claims.FromJWTClaims(token.Claims)
 		if err := claims.Valid(); err != nil {
 			r.AbortWithStatus(401)
