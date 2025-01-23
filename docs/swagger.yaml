@@ -1,7 +1,8 @@
-basePath: /api
 definitions:
   client.Stream:
     properties:
+      backend_user_id:
+        type: integer
       game_id:
         type: string
       game_name:
@@ -139,8 +140,19 @@ definitions:
       value:
         type: string
     type: object
+  controller.DiscordBotLoginBody:
+    properties:
+      token:
+        type: string
+    type: object
   controller.EventCreate:
     properties:
+      application_start_time:
+        type: string
+      event_end_time:
+        type: string
+      event_start_time:
+        type: string
       id:
         type: integer
       is_current:
@@ -150,12 +162,20 @@ definitions:
       name:
         type: string
     required:
-    - is_current
+    - application_start_time
+    - event_end_time
+    - event_start_time
     - max_size
     - name
     type: object
   controller.EventResponse:
     properties:
+      application_start_time:
+        type: string
+      event_end_time:
+        type: string
+      event_start_time:
+        type: string
       id:
         type: integer
       is_current:
@@ -170,12 +190,29 @@ definitions:
         items:
           $ref: '#/definitions/controller.TeamResponse'
         type: array
+    required:
+    - application_start_time
+    - event_end_time
+    - event_start_time
+    - id
+    - is_current
+    - max_size
+    - name
+    - scoring_category_id
+    - teams
     type: object
   controller.EventStatusResponse:
     properties:
       application_status:
         $ref: '#/definitions/controller.ApplicationStatus'
       team_id:
+        type: integer
+    type: object
+  controller.MinimalUserResponse:
+    properties:
+      display_name:
+        type: string
+      id:
         type: integer
     type: object
   controller.NonSensitiveUserResponse:
@@ -205,6 +242,8 @@ definitions:
         items:
           $ref: '#/definitions/controller.ConditionCreate'
         type: array
+      extra:
+        type: string
       id:
         type: integer
       name:
@@ -240,6 +279,8 @@ definitions:
         items:
           $ref: '#/definitions/controller.ConditionResponse'
         type: array
+      extra:
+        type: string
       id:
         type: integer
       name:
@@ -321,7 +362,36 @@ definitions:
     type: object
   controller.SignupResponse:
     properties:
+      expected_playtime:
+        $ref: '#/definitions/repository.ExpectedPlayTime'
       id:
+        type: integer
+      team_id:
+        type: integer
+      timestamp:
+        type: string
+      user:
+        $ref: '#/definitions/controller.NonSensitiveUserResponse'
+    type: object
+  controller.SubmissionResponse:
+    properties:
+      approval_status:
+        $ref: '#/definitions/repository.ApprovalStatus'
+      comment:
+        type: string
+      id:
+        type: integer
+      number:
+        type: integer
+      objective:
+        $ref: '#/definitions/controller.ObjectiveResponse'
+      proof:
+        type: string
+      review_comment:
+        type: string
+      reviewer_id:
+        type: integer
+      team_id:
         type: integer
       timestamp:
         type: string
@@ -340,6 +410,62 @@ definitions:
         type: integer
       name:
         type: string
+    required:
+    - allowed_classes
+    - event_id
+    - id
+    - name
+    type: object
+  controller.UserAdminResponse:
+    properties:
+      account_name:
+        type: string
+      discord_id:
+        type: string
+      discord_name:
+        type: string
+      display_name:
+        type: string
+      id:
+        type: integer
+      permissions:
+        items:
+          $ref: '#/definitions/repository.Permission'
+        type: array
+      twitch_id:
+        type: string
+      twitch_name:
+        type: string
+    type: object
+  controller.UserResponse:
+    properties:
+      account_name:
+        type: string
+      discord_id:
+        type: string
+      discord_name:
+        type: string
+      display_name:
+        type: string
+      id:
+        type: integer
+      permissions:
+        items:
+          $ref: '#/definitions/repository.Permission'
+        type: array
+      token_expiry_timestamp:
+        type: string
+      twitch_id:
+        type: string
+      twitch_name:
+        type: string
+    type: object
+  controller.UserUpdate:
+    properties:
+      display_name:
+        type: string
+    required:
+    - display_name
     type: object
   repository.AggregationType:
     enum:
@@ -355,6 +481,34 @@ definitions:
     - EARLIEST_FRESH_ITEM
     - MAXIMUM
     - MINIMUM
+  repository.ApprovalStatus:
+    enum:
+    - APPROVED
+    - REJECTED
+    - PENDING
+    type: string
+    x-enum-varnames:
+    - APPROVED
+    - REJECTED
+    - PENDING
+  repository.ExpectedPlayTime:
+    enum:
+    - VERY_LOW
+    - LOW
+    - MEDIUM
+    - HIGH
+    - VERY_HIGH
+    - EXTREME
+    - NO_LIFE
+    type: string
+    x-enum-varnames:
+    - VeryLow
+    - Low
+    - Medium
+    - High
+    - VeryHigh
+    - Extreme
+    - NoLife
   repository.ItemField:
     enum:
     - BASE_TYPE
@@ -437,6 +591,14 @@ definitions:
     - CONTAINS_ALL
     - CONTAINS_MATCH
     - CONTAINS_ALL_MATCHES
+  repository.Permission:
+    enum:
+    - admin
+    - command_team
+    type: string
+    x-enum-varnames:
+    - PermissionAdmin
+    - PermissionCommandTeam
   repository.ScoringMethod:
     enum:
     - PRESENCE
@@ -482,6 +644,7 @@ paths:
   /events:
     get:
       description: Fetches all events
+      operationId: GetEvents
       produces:
       - application/json
       responses:
@@ -497,6 +660,7 @@ paths:
       consumes:
       - application/json
       description: Creates or updates an event
+      operationId: CreateEvent
       parameters:
       - description: Event to create
         in: body
@@ -513,9 +677,45 @@ paths:
             $ref: '#/definitions/controller.EventResponse'
       tags:
       - event
+  /events/{event_id}:
+    delete:
+      description: Deletes an event
+      operationId: DeleteEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - event
+    get:
+      consumes:
+      - application/json
+      description: Gets an event by id
+      operationId: GetEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.EventResponse'
+      tags:
+      - event
   /events/{event_id}/scoring-presets:
     get:
       description: Fetches the scoring presets for the current event
+      operationId: GetScoringPresetsForEvent
       parameters:
       - description: Event ID
         in: path
@@ -536,6 +736,13 @@ paths:
   /events/{event_id}/signups:
     get:
       description: Fetches all signups for the event
+      operationId: GetEventSignups
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -552,6 +759,13 @@ paths:
   /events/{event_id}/signups/self:
     delete:
       description: Deletes the authenticated user's signup for the event
+      operationId: DeleteSignup
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -561,6 +775,13 @@ paths:
       - signup
     get:
       description: Fetches an authenticated user's signup for the event
+      operationId: GetPersonalSignup
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -574,6 +795,13 @@ paths:
       consumes:
       - application/json
       description: Creates a signup for the authenticated user
+      operationId: CreateSignup
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -583,48 +811,16 @@ paths:
             $ref: '#/definitions/controller.SignupResponse'
       tags:
       - signup
-  /events/{eventId}:
-    delete:
-      description: Deletes an event
-      parameters:
-      - description: Event ID
-        in: path
-        name: eventId
-        required: true
-        type: integer
-      responses:
-        "204":
-          description: No Content
-      tags:
-      - event
-    get:
-      consumes:
-      - application/json
-      description: Gets an event by id
-      parameters:
-      - description: Event ID
-        in: path
-        name: eventId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/controller.EventResponse'
-      tags:
-      - event
-  /events/{eventId}/status:
+  /events/{event_id}/status:
     get:
       consumes:
       - application/json
       description: Gets the users application status for an event
+      operationId: GetEventStatusForUser
       parameters:
       - description: Event ID
         in: path
-        name: eventId
+        name: event_id
         required: true
         type: integer
       produces:
@@ -636,9 +832,228 @@ paths:
             $ref: '#/definitions/controller.EventStatusResponse'
       tags:
       - event
+  /events/{event_id}/submissions:
+    get:
+      description: Fetches all submissions for an event
+      operationId: GetSubmissions
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.SubmissionResponse'
+            type: array
+      tags:
+      - submission
+    put:
+      consumes:
+      - application/json
+      description: Submits a bounty for an event
+      operationId: SubmitBounty
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.SubmissionResponse'
+      tags:
+      - submission
+  /events/{event_id}/submissions/{submission_id}:
+    delete:
+      description: Deletes a submission
+      operationId: DeleteSubmission
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Submission ID
+        in: path
+        name: submission_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - submission
+  /events/{event_id}/submissions/{submission_id}/review:
+    put:
+      consumes:
+      - application/json
+      description: Reviews a submission
+      operationId: ReviewSubmission
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Submission ID
+        in: path
+        name: submission_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.SubmissionResponse'
+      tags:
+      - submission
+  /events/{event_id}/teams:
+    get:
+      description: Fetches all teams for an event
+      operationId: GetTeams
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.TeamResponse'
+            type: array
+      tags:
+      - team
+    put:
+      consumes:
+      - application/json
+      description: Creates a team for an event
+      operationId: CreateTeam
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.TeamResponse'
+      tags:
+      - team
+  /events/{event_id}/teams/{team_id}:
+    delete:
+      description: Deletes a team
+      operationId: DeleteTeam
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - team
+    get:
+      description: Fetches a team by id
+      operationId: GetTeam
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.TeamResponse'
+      tags:
+      - team
+  /events/{event_id}/teams/users:
+    put:
+      consumes:
+      - application/json
+      description: Adds users to teams
+      operationId: AddUsersToTeams
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - team
+      - user
+  /events/{event_id}/users:
+    get:
+      description: Fetches all users for an event
+      operationId: GetUsersForEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              items:
+                $ref: '#/definitions/controller.MinimalUserResponse'
+              type: array
+            type: object
+      tags:
+      - user
   /events/current:
     get:
       description: Fetches the current event
+      operationId: GetCurrentEvent
       produces:
       - application/json
       responses:
@@ -656,6 +1071,28 @@ paths:
       responses:
         "302":
           description: Found
+      tags:
+      - oauth
+  /oauth2/discord/bot-login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in the discord bot
+      operationId: LoginDiscordBot
+      parameters:
+      - description: Discord bot login body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.DiscordBotLoginBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
       tags:
       - oauth
   /oauth2/discord/redirect:
@@ -691,6 +1128,7 @@ paths:
   /scores/latest:
     get:
       description: Fetches the latest scores for the current event
+      operationId: GetLatestScoresForEvent
       produces:
       - application/json
       responses:
@@ -705,6 +1143,7 @@ paths:
   /scoring/categories:
     get:
       description: Fetches the rules for the current event
+      operationId: GetRulesForEvent
       produces:
       - application/json
       responses:
@@ -719,6 +1158,7 @@ paths:
   /scoring/categories/{id}:
     delete:
       description: Deletes a scoring category
+      operationId: DeleteCategory
       parameters:
       - description: Category ID
         in: path
@@ -734,6 +1174,7 @@ paths:
       - scoring
     get:
       description: Fetches a scoring category by id
+      operationId: GetScoringCategory
       parameters:
       - description: Category ID
         in: path
@@ -749,11 +1190,47 @@ paths:
             $ref: '#/definitions/controller.CategoryResponse'
       tags:
       - scoring
+  /scoring/conditions:
+    put:
+      consumes:
+      - application/json
+      description: Creates a condition
+      operationId: CreateCondition
+      parameters:
+      - description: Condition to create
+        in: body
+        name: condition
+        required: true
+        schema:
+          $ref: '#/definitions/controller.ConditionCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.ConditionResponse'
+      tags:
+      - condition
+  /scoring/conditions/{id}:
+    delete:
+      description: Deletes a condition
+      operationId: DeleteCondition
+      parameters:
+      - description: Condition ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      tags:
+      - condition
   /scoring/objectives:
     put:
       consumes:
       - application/json
       description: Creates a new objective
+      operationId: CreateObjective
       parameters:
       - description: Objective to create
         in: body
@@ -773,6 +1250,7 @@ paths:
   /scoring/objectives/{id}:
     delete:
       description: Deletes an objective
+      operationId: DeleteObjective
       parameters:
       - description: Objective ID
         in: path
@@ -788,6 +1266,7 @@ paths:
       - objective
     get:
       description: Gets an objective by id
+      operationId: GetObjective
       parameters:
       - description: Objective ID
         in: path
@@ -808,6 +1287,7 @@ paths:
       consumes:
       - application/json
       description: Creates a new scoring preset
+      operationId: CreateScoringPreset
       parameters:
       - description: Preset to create
         in: body
@@ -827,6 +1307,7 @@ paths:
   /scoring/presets/{id}:
     get:
       description: Fetches a scoring preset by id
+      operationId: GetScoringPreset
       parameters:
       - description: Preset ID
         in: path
@@ -845,6 +1326,7 @@ paths:
   /streams:
     get:
       description: Fetches all twitch streams for the current event
+      operationId: GetStreams
       produces:
       - application/json
       responses:
@@ -856,6 +1338,124 @@ paths:
             type: array
       tags:
       - streams
+  /users:
+    get:
+      description: Fetches all users
+      operationId: GetAllUsers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.UserAdminResponse'
+            type: array
+      security:
+      - ApiKeyAuth: []
+      tags:
+      - user
+  /users/{userId}:
+    patch:
+      consumes:
+      - application/json
+      description: Changes the permissions of a user
+      operationId: ChangePermissions
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      - description: Permissions
+        in: body
+        name: permissions
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/repository.Permission'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      tags:
+      - user
+  /users/logout:
+    post:
+      description: Logs out the authenticated user
+      operationId: Logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      security:
+      - ApiKeyAuth: []
+      tags:
+      - user
+  /users/remove-auth:
+    post:
+      description: Removes an authentication provider from the authenticated user
+      operationId: RemoveAuth
+      parameters:
+      - description: Provider
+        in: query
+        name: provider
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.UserResponse'
+      security:
+      - ApiKeyAuth: []
+      tags:
+      - user
+  /users/self:
+    get:
+      description: Fetches the authenticated user
+      operationId: GetUser
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.UserResponse'
+      security:
+      - ApiKeyAuth: []
+      tags:
+      - user
+    patch:
+      consumes:
+      - application/json
+      description: Updates the authenticated users display name
+      operationId: UpdateUser
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/controller.UserUpdate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.UserResponse'
+      security:
+      - ApiKeyAuth: []
+      tags:
+      - user
 securityDefinitions:
   BasicAuth:
     type: basic

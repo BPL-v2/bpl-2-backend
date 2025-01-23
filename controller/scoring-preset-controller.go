@@ -24,12 +24,13 @@ func setupScoringPresetController(db *gorm.DB) []RouteInfo {
 	e := NewScoringPresetController(db)
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/scoring-presets", HandlerFunc: e.getScoringPresetsForEventHandler()},
-		{Method: "PUT", Path: "/scoring/presets", HandlerFunc: e.createPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "PUT", Path: "/scoring/presets", HandlerFunc: e.createScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/scoring/presets/:id", HandlerFunc: e.getScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	return routes
 }
 
+// @id GetScoringPresetsForEvent
 // @Description Fetches the scoring presets for the current event
 // @Tags scoring
 // @Produce json
@@ -53,6 +54,7 @@ func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.Handler
 	}
 }
 
+// @id GetScoringPreset
 // @Description Fetches a scoring preset by id
 // @Tags scoring
 // @Produce json
@@ -80,6 +82,7 @@ func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
 	}
 }
 
+// @id CreateScoringPreset
 // @Description Creates a new scoring preset
 // @Tags scoring
 // @Accept json
@@ -87,7 +90,7 @@ func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
 // @Param body body ScoringPresetCreate true "Preset to create"
 // @Success 200 {object} ScoringPresetResponse
 // @Router /scoring/presets [put]
-func (e *ScoringPresetController) createPresetHandler() gin.HandlerFunc {
+func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var presetCreate ScoringPresetCreate
 		if err := c.ShouldBindJSON(&presetCreate); err != nil {

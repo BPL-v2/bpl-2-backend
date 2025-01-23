@@ -31,13 +31,10 @@ func (r *SignupService) GetSignupForUser(userID int, eventID int) (*repository.S
 	return r.signup_repository.GetSignupForUser(userID, eventID)
 }
 
-// func (r *SignupService) GetSignupsForEvent(eventId int) ([]*repository.Signup, error) {
-// 	event, err := r.event_repository.GetEventById(eventId)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return r.signup_repository.GetSignupsForEvent(eventId, event.MaxSize)
-// }
+type SignupWithUser struct {
+	Signup   repository.Signup
+	TeamUser *repository.TeamUser
+}
 
 func (r *SignupService) GetSignupsForEvent(eventId int) (map[int][]*repository.Signup, error) {
 

@@ -31,6 +31,7 @@ func setupScoreController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id GetLatestScoresForEvent
 // @Description Fetches the latest scores for the current event
 // @Tags scores
 // @Produce json

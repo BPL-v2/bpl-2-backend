@@ -67,6 +67,7 @@ func InitDB() (*gorm.DB, error) {
 		&model.Event{},
 		&model.Team{},
 		&model.User{},
+		&model.TeamUser{},
 		&model.StashChange{},
 		&model.ObjectiveMatch{},
 		&model.Submission{},

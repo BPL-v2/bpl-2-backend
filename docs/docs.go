@@ -27,6 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "event"
                 ],
+                "operationId": "GetEvents",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -50,6 +51,7 @@ const docTemplate = `{
                 "tags": [
                     "event"
                 ],
+                "operationId": "CreateEvent",
                 "parameters": [
                     {
                         "description": "Event to create",
@@ -80,6 +82,7 @@ const docTemplate = `{
                 "tags": [
                     "event"
                 ],
+                "operationId": "GetCurrentEvent",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -90,7 +93,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/{eventId}": {
+        "/events/{event_id}": {
             "get": {
                 "description": "Gets an event by id",
                 "consumes": [
@@ -102,11 +105,12 @@ const docTemplate = `{
                 "tags": [
                     "event"
                 ],
+                "operationId": "GetEvent",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Event ID",
-                        "name": "eventId",
+                        "name": "event_id",
                         "in": "path",
                         "required": true
                     }
@@ -125,11 +129,12 @@ const docTemplate = `{
                 "tags": [
                     "event"
                 ],
+                "operationId": "DeleteEvent",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Event ID",
-                        "name": "eventId",
+                        "name": "event_id",
                         "in": "path",
                         "required": true
                     }
@@ -137,37 +142,6 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
-                    }
-                }
-            }
-        },
-        "/events/{eventId}/status": {
-            "get": {
-                "description": "Gets the users application status for an event",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "event"
-                ],
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event ID",
-                        "name": "eventId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/controller.EventStatusResponse"
-                        }
                     }
                 }
             }
@@ -181,6 +155,7 @@ const docTemplate = `{
                 "tags": [
                     "scoring"
                 ],
+                "operationId": "GetScoringPresetsForEvent",
                 "parameters": [
                     {
                         "type": "integer",
@@ -212,6 +187,16 @@ const docTemplate = `{
                 "tags": [
                     "signup"
                 ],
+                "operationId": "GetEventSignups",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -237,6 +222,16 @@ const docTemplate = `{
                 "tags": [
                     "signup"
                 ],
+                "operationId": "GetPersonalSignup",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -257,6 +252,16 @@ const docTemplate = `{
                 "tags": [
                     "signup"
                 ],
+                "operationId": "CreateSignup",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "201": {
                         "description": "Created",
@@ -274,9 +279,379 @@ const docTemplate = `{
                 "tags": [
                     "signup"
                 ],
+                "operationId": "DeleteSignup",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/status": {
+            "get": {
+                "description": "Gets the users application status for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "event"
+                ],
+                "operationId": "GetEventStatusForUser",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.EventStatusResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/submissions": {
+            "get": {
+                "description": "Fetches all submissions for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submission"
+                ],
+                "operationId": "GetSubmissions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controller.SubmissionResponse"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Submits a bounty for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submission"
+                ],
+                "operationId": "SubmitBounty",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controller.SubmissionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/submissions/{submission_id}": {
+            "delete": {
+                "description": "Deletes a submission",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submission"
+                ],
+                "operationId": "DeleteSubmission",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Submission ID",
+                        "name": "submission_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/submissions/{submission_id}/review": {
+            "put": {
+                "description": "Reviews a submission",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submission"
+                ],
+                "operationId": "ReviewSubmission",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Submission ID",
+                        "name": "submission_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.SubmissionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/teams": {
+            "get": {
+                "description": "Fetches all teams for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "GetTeams",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controller.TeamResponse"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Creates a team for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "CreateTeam",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controller.TeamResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/teams/users": {
+            "put": {
+                "description": "Adds users to teams",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team",
+                    "user"
+                ],
+                "operationId": "AddUsersToTeams",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/teams/{team_id}": {
+            "get": {
+                "description": "Fetches a team by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "GetTeam",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.TeamResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a team",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "DeleteTeam",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/users": {
+            "get": {
+                "description": "Fetches all users for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "GetUsersForEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/controller.MinimalUserResponse"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -293,6 +668,40 @@ const docTemplate = `{
                 "responses": {
                     "302": {
                         "description": "Found"
+                    }
+                }
+            }
+        },
+        "/oauth2/discord/bot-login": {
+            "post": {
+                "description": "Logs in the discord bot",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "operationId": "LoginDiscordBot",
+                "parameters": [
+                    {
+                        "description": "Discord bot login body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.DiscordBotLoginBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -354,6 +763,7 @@ const docTemplate = `{
                 "tags": [
                     "scores"
                 ],
+                "operationId": "GetLatestScoresForEvent",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -376,6 +786,7 @@ const docTemplate = `{
                 "tags": [
                     "scoring"
                 ],
+                "operationId": "GetRulesForEvent",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -398,6 +809,7 @@ const docTemplate = `{
                 "tags": [
                     "scoring"
                 ],
+                "operationId": "GetScoringCategory",
                 "parameters": [
                     {
                         "type": "integer",
@@ -424,6 +836,7 @@ const docTemplate = `{
                 "tags": [
                     "scoring"
                 ],
+                "operationId": "DeleteCategory",
                 "parameters": [
                     {
                         "type": "integer",
@@ -440,6 +853,59 @@ const docTemplate = `{
                 }
             }
         },
+        "/scoring/conditions": {
+            "put": {
+                "description": "Creates a condition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "condition"
+                ],
+                "operationId": "CreateCondition",
+                "parameters": [
+                    {
+                        "description": "Condition to create",
+                        "name": "condition",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.ConditionCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ConditionResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/scoring/conditions/{id}": {
+            "delete": {
+                "description": "Deletes a condition",
+                "tags": [
+                    "condition"
+                ],
+                "operationId": "DeleteCondition",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Condition ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/scoring/objectives": {
             "put": {
                 "description": "Creates a new objective",
@@ -452,6 +918,7 @@ const docTemplate = `{
                 "tags": [
                     "objective"
                 ],
+                "operationId": "CreateObjective",
                 "parameters": [
                     {
                         "description": "Objective to create",
@@ -482,6 +949,7 @@ const docTemplate = `{
                 "tags": [
                     "objective"
                 ],
+                "operationId": "GetObjective",
                 "parameters": [
                     {
                         "type": "integer",
@@ -508,6 +976,7 @@ const docTemplate = `{
                 "tags": [
                     "objective"
                 ],
+                "operationId": "DeleteObjective",
                 "parameters": [
                     {
                         "type": "integer",
@@ -536,6 +1005,7 @@ const docTemplate = `{
                 "tags": [
                     "scoring"
                 ],
+                "operationId": "CreateScoringPreset",
                 "parameters": [
                     {
                         "description": "Preset to create",
@@ -566,6 +1036,7 @@ const docTemplate = `{
                 "tags": [
                     "scoring"
                 ],
+                "operationId": "GetScoringPreset",
                 "parameters": [
                     {
                         "type": "integer",
@@ -594,6 +1065,7 @@ const docTemplate = `{
                 "tags": [
                     "streams"
                 ],
+                "operationId": "GetStreams",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -606,12 +1078,207 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches all users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "GetAllUsers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controller.UserAdminResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/logout": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Logs out the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "Logout",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/users/remove-auth": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Removes an authentication provider from the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "RemoveAuth",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Provider",
+                        "name": "provider",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.UserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/self": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Fetches the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "GetUser",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.UserResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Updates the authenticated users display name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "UpdateUser",
+                "parameters": [
+                    {
+                        "description": "User",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.UserUpdate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/controller.UserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{userId}": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Changes the permissions of a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "ChangePermissions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Permissions",
+                        "name": "permissions",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/repository.Permission"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "client.Stream": {
             "type": "object",
             "properties": {
+                "backend_user_id": {
+                    "type": "integer"
+                },
                 "game_id": {
                     "type": "string"
                 },
@@ -808,14 +1475,33 @@ const docTemplate = `{
                 }
             }
         },
+        "controller.DiscordBotLoginBody": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.EventCreate": {
             "type": "object",
             "required": [
-                "is_current",
+                "application_start_time",
+                "event_end_time",
+                "event_start_time",
                 "max_size",
                 "name"
             ],
             "properties": {
+                "application_start_time": {
+                    "type": "string"
+                },
+                "event_end_time": {
+                    "type": "string"
+                },
+                "event_start_time": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -832,7 +1518,27 @@ const docTemplate = `{
         },
         "controller.EventResponse": {
             "type": "object",
+            "required": [
+                "application_start_time",
+                "event_end_time",
+                "event_start_time",
+                "id",
+                "is_current",
+                "max_size",
+                "name",
+                "scoring_category_id",
+                "teams"
+            ],
             "properties": {
+                "application_start_time": {
+                    "type": "string"
+                },
+                "event_end_time": {
+                    "type": "string"
+                },
+                "event_start_time": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -863,6 +1569,17 @@ const docTemplate = `{
                     "$ref": "#/definitions/controller.ApplicationStatus"
                 },
                 "team_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "controller.MinimalUserResponse": {
+            "type": "object",
+            "properties": {
+                "display_name": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "integer"
                 }
             }
@@ -917,6 +1634,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/controller.ConditionCreate"
                     }
                 },
+                "extra": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -957,6 +1677,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/controller.ConditionResponse"
                     }
+                },
+                "extra": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -1080,7 +1803,51 @@ const docTemplate = `{
         "controller.SignupResponse": {
             "type": "object",
             "properties": {
+                "expected_playtime": {
+                    "$ref": "#/definitions/repository.ExpectedPlayTime"
+                },
                 "id": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/controller.NonSensitiveUserResponse"
+                }
+            }
+        },
+        "controller.SubmissionResponse": {
+            "type": "object",
+            "properties": {
+                "approval_status": {
+                    "$ref": "#/definitions/repository.ApprovalStatus"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "objective": {
+                    "$ref": "#/definitions/controller.ObjectiveResponse"
+                },
+                "proof": {
+                    "type": "string"
+                },
+                "review_comment": {
+                    "type": "string"
+                },
+                "reviewer_id": {
+                    "type": "integer"
+                },
+                "team_id": {
                     "type": "integer"
                 },
                 "timestamp": {
@@ -1093,6 +1860,12 @@ const docTemplate = `{
         },
         "controller.TeamResponse": {
             "type": "object",
+            "required": [
+                "allowed_classes",
+                "event_id",
+                "id",
+                "name"
+            ],
             "properties": {
                 "allowed_classes": {
                     "type": "array",
@@ -1107,6 +1880,84 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UserAdminResponse": {
+            "type": "object",
+            "properties": {
+                "account_name": {
+                    "type": "string"
+                },
+                "discord_id": {
+                    "type": "string"
+                },
+                "discord_name": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.Permission"
+                    }
+                },
+                "twitch_id": {
+                    "type": "string"
+                },
+                "twitch_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UserResponse": {
+            "type": "object",
+            "properties": {
+                "account_name": {
+                    "type": "string"
+                },
+                "discord_id": {
+                    "type": "string"
+                },
+                "discord_name": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/repository.Permission"
+                    }
+                },
+                "token_expiry_timestamp": {
+                    "type": "string"
+                },
+                "twitch_id": {
+                    "type": "string"
+                },
+                "twitch_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "controller.UserUpdate": {
+            "type": "object",
+            "required": [
+                "display_name"
+            ],
+            "properties": {
+                "display_name": {
                     "type": "string"
                 }
             }
@@ -1126,6 +1977,40 @@ const docTemplate = `{
                 "EARLIEST_FRESH_ITEM",
                 "MAXIMUM",
                 "MINIMUM"
+            ]
+        },
+        "repository.ApprovalStatus": {
+            "type": "string",
+            "enum": [
+                "APPROVED",
+                "REJECTED",
+                "PENDING"
+            ],
+            "x-enum-varnames": [
+                "APPROVED",
+                "REJECTED",
+                "PENDING"
+            ]
+        },
+        "repository.ExpectedPlayTime": {
+            "type": "string",
+            "enum": [
+                "VERY_LOW",
+                "LOW",
+                "MEDIUM",
+                "HIGH",
+                "VERY_HIGH",
+                "EXTREME",
+                "NO_LIFE"
+            ],
+            "x-enum-varnames": [
+                "VeryLow",
+                "Low",
+                "Medium",
+                "High",
+                "VeryHigh",
+                "Extreme",
+                "NoLife"
             ]
         },
         "repository.ItemField": {
@@ -1222,6 +2107,17 @@ const docTemplate = `{
                 "CONTAINS_ALL_MATCHES"
             ]
         },
+        "repository.Permission": {
+            "type": "string",
+            "enum": [
+                "admin",
+                "command_team"
+            ],
+            "x-enum-varnames": [
+                "PermissionAdmin",
+                "PermissionCommandTeam"
+            ]
+        },
         "repository.ScoringMethod": {
             "type": "string",
             "enum": [
@@ -1277,7 +2173,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "2.0",
 	Host:             "",
-	BasePath:         "/api",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "BPL Backend API",
 	Description:      "This is the backend API for the BPL project.",

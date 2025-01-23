@@ -30,6 +30,14 @@ func setupConditionController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id CreateCondition
+// @Description Creates a condition
+// @Tags condition
+// @Accept json
+// @Produce json
+// @Param condition body ConditionCreate true "Condition to create"
+// @Success 201 {object} ConditionResponse
+// @Router /scoring/conditions [put]
 func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var conditionCreate ConditionCreate
@@ -52,6 +60,11 @@ func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 	}
 }
 
+// @id DeleteCondition
+// @Description Deletes a condition
+// @Tags condition
+// @Param id path int true "Condition ID"
+// @Router /scoring/conditions/{id} [delete]
 func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		condition_id, err := strconv.Atoi(c.Param("id"))

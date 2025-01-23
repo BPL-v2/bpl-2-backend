@@ -38,10 +38,12 @@ func setupSignupController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id GetPersonalSignup
 // @Description Fetches an authenticated user's signup for the event
 // @Tags signup
 // @Produce json
 // @Success 200 {object} SignupResponse
+// @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/signups/self [get]
 func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -68,11 +70,13 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 	}
 }
 
+// @id CreateSignup
 // @Description Creates a signup for the authenticated user
 // @Tags signup
 // @Accept json
 // @Produce json
 // @Success 201 {object} SignupResponse
+// @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -106,10 +110,12 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	}
 }
 
+// @id DeleteSignup
 // @Description Deletes the authenticated user's signup for the event
 // @Tags signup
 // @Produce json
 // @Success 204
+// @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/signups/self [delete]
 func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -132,10 +138,12 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetEventSignups
 // @Description Fetches all signups for the event
 // @Tags signup
 // @Produce json
 // @Success 200 {object} map[int][]SignupResponse
+// @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/signups [get]
 func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -162,6 +170,7 @@ type SignupResponse struct {
 	User             *NonSensitiveUserResponse   `json:"user"`
 	Timestamp        time.Time                   `json:"timestamp"`
 	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime"`
+	TeamID           *int                        `json:"team_id"`
 }
 type SignupCreate struct {
 	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`

@@ -47,6 +47,13 @@ func setupTeamController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id GetTeams
+// @Description Fetches all teams for an event
+// @Tags team
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Success 200 {array} TeamResponse
+// @Router /events/{event_id}/teams [get]
 func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event_id, err := strconv.Atoi(c.Param("event_id"))
@@ -68,6 +75,14 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 	}
 }
 
+// @id CreateTeam
+// @Description Creates a team for an event
+// @Tags team
+// @Accept json
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Success 201 {object} TeamResponse
+// @Router /events/{event_id}/teams [put]
 func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event_id, err := strconv.Atoi(c.Param("event_id"))
@@ -92,6 +107,14 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetTeam
+// @Description Fetches a team by id
+// @Tags team
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Param team_id path int true "Team ID"
+// @Success 200 {object} TeamResponse
+// @Router /events/{event_id}/teams/{team_id} [get]
 func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		teamId, err := strconv.Atoi(c.Param("team_id"))
@@ -112,6 +135,14 @@ func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 	}
 }
 
+// @id DeleteTeam
+// @Description Deletes a team
+// @Tags team
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Param team_id path int true "Team ID"
+// @Success 204
+// @Router /events/{event_id}/teams/{team_id} [delete]
 func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		teamId, err := strconv.Atoi(c.Param("team_id"))
@@ -132,6 +163,14 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 	}
 }
 
+// @id AddUsersToTeams
+// @Description Adds users to teams
+// @Tags team, user
+// @Accept json
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Success 204
+// @Router /events/{event_id}/teams/users [put]
 func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event_id, err := strconv.Atoi(c.Param("event_id"))
@@ -160,8 +199,9 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 }
 
 type TeamUserCreate struct {
-	TeamID int `json:"team_id"`
-	UserID int `json:"user_id" binding:"required"`
+	TeamID     int  `json:"team_id"`
+	UserID     int  `json:"user_id" binding:"required"`
+	IsTeamLead bool `json:"is_team_lead"`
 }
 
 type TeamCreate struct {
@@ -176,16 +216,17 @@ type TeamUpdate struct {
 }
 
 type TeamResponse struct {
-	ID             int      `json:"id"`
-	Name           string   `json:"name"`
-	AllowedClasses []string `json:"allowed_classes"`
-	EventID        int      `json:"event_id"`
+	ID             int      `json:"id" binding:"required"`
+	Name           string   `json:"name" binding:"required"`
+	AllowedClasses []string `json:"allowed_classes" binding:"required"`
+	EventID        int      `json:"event_id" binding:"required"`
 }
 
 func teamUserCreateToModel(teamUserCreate TeamUserCreate) *repository.TeamUser {
 	return &repository.TeamUser{
-		TeamID: teamUserCreate.TeamID,
-		UserID: teamUserCreate.UserID,
+		TeamID:     teamUserCreate.TeamID,
+		UserID:     teamUserCreate.UserID,
+		IsTeamLead: teamUserCreate.IsTeamLead,
 	}
 }
 

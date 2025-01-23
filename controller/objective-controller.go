@@ -35,6 +35,7 @@ func setupObjectiveController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id CreateObjective
 // @Description Creates a new objective
 // @Tags objective
 // @Accept json
@@ -63,6 +64,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 	}
 }
 
+// @id DeleteObjective
 // @Description Deletes an objective
 // @Tags objective
 // @Produce json
@@ -90,6 +92,7 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetObjective
 // @Description Gets an objective by id
 // @Tags objective
 // @Produce json
@@ -208,4 +211,18 @@ func toObjectiveResponse(objective *repository.Objective) *ObjectiveResponse {
 		Aggregation:     objective.Aggregation,
 		ScoringPresetID: objective.ScoringId,
 	}
+}
+
+func toPublicObjectiveResponse(objective *repository.Objective) *ObjectiveResponse {
+	if objective == nil {
+		return nil
+	}
+	if objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
+		return &ObjectiveResponse{
+			CategoryID: objective.CategoryID,
+			ValidFrom:  objective.ValidFrom,
+			ValidTo:    objective.ValidTo,
+		}
+	}
+	return toObjectiveResponse(objective)
 }

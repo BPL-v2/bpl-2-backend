@@ -33,6 +33,7 @@ func setupStreamController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
+// @id GetStreams
 // @Description Fetches all twitch streams for the current event
 // @Tags streams
 // @Produce json

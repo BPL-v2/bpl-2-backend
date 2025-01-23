@@ -31,7 +31,7 @@ func setupUserController(db *gorm.DB) []RouteInfo {
 	basePath := ""
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/users", HandlerFunc: e.getUsersForEventHandler()},
-		{Method: "GET", Path: "/users", HandlerFunc: e.getUsersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/users", HandlerFunc: e.getAllUsersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/users/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/self", HandlerFunc: e.updateUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/:userId", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
@@ -44,7 +44,14 @@ func setupUserController(db *gorm.DB) []RouteInfo {
 	return routes
 }
 
-func (e *UserController) getUsersHandler() gin.HandlerFunc {
+// @id GetAllUsers
+// @Description Fetches all users
+// @Tags user
+// @Produce json
+// @Success 200 {array} UserAdminResponse
+// @Security ApiKeyAuth
+// @Router /users [get]
+func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		users, err := e.userService.GetUsers("OauthAccounts")
 		if err != nil {
@@ -55,6 +62,16 @@ func (e *UserController) getUsersHandler() gin.HandlerFunc {
 	}
 }
 
+// @id ChangePermissions
+// @Description Changes the permissions of a user
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param userId path int true "User ID"
+// @Param permissions body repository.Permissions true "Permissions"
+// @Success 200
+// @Security ApiKeyAuth
+// @Router /users/{userId} [patch]
 func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userId, err := strconv.Atoi(c.Param("userId"))
@@ -76,6 +93,13 @@ func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetUser
+// @Description Fetches the authenticated user
+// @Tags user
+// @Produce json
+// @Success 200 {object} UserResponse
+// @Security ApiKeyAuth
+// @Router /users/self [get]
 func (e *UserController) getUserHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, err := e.userService.GetUserFromAuthCookie(c)
@@ -87,6 +111,13 @@ func (e *UserController) getUserHandler() gin.HandlerFunc {
 	}
 }
 
+// @id Logout
+// @Description Logs out the authenticated user
+// @Tags user
+// @Produce json
+// @Success 200
+// @Security ApiKeyAuth
+// @Router /users/logout [post]
 func (e *UserController) logoutHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.SetCookie("auth", "", -1, "/", "", false, true)
@@ -94,6 +125,14 @@ func (e *UserController) logoutHandler() gin.HandlerFunc {
 	}
 }
 
+// @id RemoveAuth
+// @Description Removes an authentication provider from the authenticated user
+// @Tags user
+// @Produce json
+// @Param provider query string true "Provider"
+// @Success 200 {object} UserResponse
+// @Security ApiKeyAuth
+// @Router /users/remove-auth [post]
 func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		provider := repository.Provider(c.Request.URL.Query().Get("provider"))
@@ -122,6 +161,13 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetUsersForEvent
+// @Description Fetches all users for an event
+// @Tags user
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Success 200 {object} map[int][]MinimalUserResponse
+// @Router /events/{event_id}/users [get]
 func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eventId, err := strconv.Atoi(c.Param("event_id"))
@@ -149,6 +195,15 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 	}
 }
 
+// @id UpdateUser
+// @Description Updates the authenticated users display name
+// @Tags user
+// @Accept json
+// @Produce json
+// @Param user body UserUpdate true "User"
+// @Success 200 {object} UserResponse
+// @Security ApiKeyAuth
+// @Router /users/self [patch]
 func (e *UserController) updateUserHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, err := e.userService.GetUserFromAuthCookie(c)
