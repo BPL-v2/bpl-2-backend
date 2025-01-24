@@ -258,7 +258,7 @@ func toEventResponse(event *repository.Event) *EventResponse {
 
 type EventStatusResponse struct {
 	TeamID            *int              `json:"team_id"`
-	ApplicationStatus ApplicationStatus `json:"application_status"`
+	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
 }
 
 type ApplicationStatus string

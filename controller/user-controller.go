@@ -231,8 +231,8 @@ type UserUpdate struct {
 }
 
 type UserResponse struct {
-	ID                   int        `json:"id"`
-	DisplayName          string     `json:"display_name"`
+	ID                   int        `json:"id" binding:"required"`
+	DisplayName          string     `json:"display_name" binding:"required"`
 	AcountName           *string    `json:"account_name"`
 	DiscordID            *string    `json:"discord_id"`
 	DiscordName          *string    `json:"discord_name"`
@@ -244,8 +244,8 @@ type UserResponse struct {
 }
 
 type NonSensitiveUserResponse struct {
-	ID          int     `json:"id"`
-	DisplayName string  `json:"display_name"`
+	ID          int     `json:"id" binding:"required"`
+	DisplayName string  `json:"display_name" binding:"required"`
 	AcountName  *string `json:"account_name"`
 	DiscordID   *string `json:"discord_id"`
 	DiscordName *string `json:"discord_name"`
@@ -254,19 +254,19 @@ type NonSensitiveUserResponse struct {
 }
 
 type UserAdminResponse struct {
-	ID          int                     `json:"id"`
-	DisplayName string                  `json:"display_name"`
+	ID          int                     `json:"id" binding:"required"`
+	DisplayName string                  `json:"display_name" binding:"required"`
 	AcountName  *string                 `json:"account_name"`
 	DiscordID   *string                 `json:"discord_id"`
 	DiscordName *string                 `json:"discord_name"`
 	TwitchName  *string                 `json:"twitch_name"`
 	TwitchID    *string                 `json:"twitch_id"`
-	Permissions []repository.Permission `json:"permissions"`
+	Permissions []repository.Permission `json:"permissions" binding:"required"`
 }
 
 type MinimalUserResponse struct {
-	ID          int    `json:"id"`
-	DisplayName string `json:"display_name"`
+	ID          int    `json:"id" binding:"required"`
+	DisplayName string `json:"display_name" binding:"required"`
 }
 
 func toUserResponse(user *repository.User) *UserResponse {

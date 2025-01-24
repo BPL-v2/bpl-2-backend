@@ -113,7 +113,7 @@ type ScoringPresetCreate struct {
 	Points        []float64                    `json:"points" binding:"required"`
 	ScoringMethod repository.ScoringMethod     `json:"scoring_method" binding:"required"`
 	Type          repository.ScoringPresetType `json:"type" binding:"required"`
-	EventID       int                          `json:"event_id"`
+	EventID       int                          `json:"event_id" binding:"required"`
 }
 
 func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
@@ -132,12 +132,12 @@ func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
 }
 
 type ScoringPresetResponse struct {
-	ID            int                          `json:"id"`
-	Name          string                       `json:"name"`
-	Description   string                       `json:"description"`
-	Points        []float64                    `json:"points"`
-	ScoringMethod repository.ScoringMethod     `json:"scoring_method"`
-	Type          repository.ScoringPresetType `json:"type"`
+	ID            int                          `json:"id" binding:"required"`
+	Name          string                       `json:"name" binding:"required"`
+	Description   string                       `json:"description" binding:"required"`
+	Points        []float64                    `json:"points" binding:"required"`
+	ScoringMethod repository.ScoringMethod     `json:"scoring_method" binding:"required"`
+	Type          repository.ScoringPresetType `json:"type" binding:"required"`
 }
 
 func toScoringPresetResponse(preset *repository.ScoringPreset) *ScoringPresetResponse {

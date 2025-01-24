@@ -1370,6 +1370,12 @@ const docTemplate = `{
         },
         "controller.CategoryResponse": {
             "type": "object",
+            "required": [
+                "id",
+                "name",
+                "objectives",
+                "sub_categories"
+            ],
             "properties": {
                 "id": {
                     "type": "integer"
@@ -1460,6 +1466,12 @@ const docTemplate = `{
         },
         "controller.ConditionResponse": {
             "type": "object",
+            "required": [
+                "field",
+                "id",
+                "operator",
+                "value"
+            ],
             "properties": {
                 "field": {
                     "$ref": "#/definitions/repository.ItemField"
@@ -1477,6 +1489,9 @@ const docTemplate = `{
         },
         "controller.DiscordBotLoginBody": {
             "type": "object",
+            "required": [
+                "token"
+            ],
             "properties": {
                 "token": {
                     "type": "string"
@@ -1564,6 +1579,9 @@ const docTemplate = `{
         },
         "controller.EventStatusResponse": {
             "type": "object",
+            "required": [
+                "application_status"
+            ],
             "properties": {
                 "application_status": {
                     "$ref": "#/definitions/controller.ApplicationStatus"
@@ -1575,6 +1593,10 @@ const docTemplate = `{
         },
         "controller.MinimalUserResponse": {
             "type": "object",
+            "required": [
+                "display_name",
+                "id"
+            ],
             "properties": {
                 "display_name": {
                     "type": "string"
@@ -1586,6 +1608,10 @@ const docTemplate = `{
         },
         "controller.NonSensitiveUserResponse": {
             "type": "object",
+            "required": [
+                "display_name",
+                "id"
+            ],
             "properties": {
                 "account_name": {
                     "type": "string"
@@ -1665,6 +1691,17 @@ const docTemplate = `{
         },
         "controller.ObjectiveResponse": {
             "type": "object",
+            "required": [
+                "aggregation",
+                "category_id",
+                "conditions",
+                "extra",
+                "id",
+                "name",
+                "number_field",
+                "objective_type",
+                "required_number"
+            ],
             "properties": {
                 "aggregation": {
                     "$ref": "#/definitions/repository.AggregationType"
@@ -1709,6 +1746,17 @@ const docTemplate = `{
         },
         "controller.ScoreResponse": {
             "type": "object",
+            "required": [
+                "finished",
+                "id",
+                "number",
+                "points",
+                "rank",
+                "team_id",
+                "timestamp",
+                "type",
+                "user_id"
+            ],
             "properties": {
                 "finished": {
                     "type": "boolean"
@@ -1742,6 +1790,7 @@ const docTemplate = `{
         "controller.ScoringPresetCreate": {
             "type": "object",
             "required": [
+                "event_id",
                 "name",
                 "points",
                 "scoring_method",
@@ -1776,6 +1825,14 @@ const docTemplate = `{
         },
         "controller.ScoringPresetResponse": {
             "type": "object",
+            "required": [
+                "description",
+                "id",
+                "name",
+                "points",
+                "scoring_method",
+                "type"
+            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -1802,6 +1859,12 @@ const docTemplate = `{
         },
         "controller.SignupResponse": {
             "type": "object",
+            "required": [
+                "expected_playtime",
+                "id",
+                "timestamp",
+                "user"
+            ],
             "properties": {
                 "expected_playtime": {
                     "$ref": "#/definitions/repository.ExpectedPlayTime"
@@ -1822,6 +1885,14 @@ const docTemplate = `{
         },
         "controller.SubmissionResponse": {
             "type": "object",
+            "required": [
+                "approval_status",
+                "comment",
+                "id",
+                "number",
+                "proof",
+                "timestamp"
+            ],
             "properties": {
                 "approval_status": {
                     "$ref": "#/definitions/repository.ApprovalStatus"
@@ -1886,6 +1957,11 @@ const docTemplate = `{
         },
         "controller.UserAdminResponse": {
             "type": "object",
+            "required": [
+                "display_name",
+                "id",
+                "permissions"
+            ],
             "properties": {
                 "account_name": {
                     "type": "string"
@@ -1918,6 +1994,10 @@ const docTemplate = `{
         },
         "controller.UserResponse": {
             "type": "object",
+            "required": [
+                "display_name",
+                "id"
+            ],
             "properties": {
                 "account_name": {
                     "type": "string"

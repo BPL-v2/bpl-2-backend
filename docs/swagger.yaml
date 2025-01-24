@@ -80,6 +80,11 @@ definitions:
         items:
           $ref: '#/definitions/controller.CategoryResponse'
         type: array
+    required:
+    - id
+    - name
+    - objectives
+    - sub_categories
     type: object
   controller.ConditionCreate:
     properties:
@@ -139,11 +144,18 @@ definitions:
         $ref: '#/definitions/repository.Operator'
       value:
         type: string
+    required:
+    - field
+    - id
+    - operator
+    - value
     type: object
   controller.DiscordBotLoginBody:
     properties:
       token:
         type: string
+    required:
+    - token
     type: object
   controller.EventCreate:
     properties:
@@ -207,6 +219,8 @@ definitions:
         $ref: '#/definitions/controller.ApplicationStatus'
       team_id:
         type: integer
+    required:
+    - application_status
     type: object
   controller.MinimalUserResponse:
     properties:
@@ -214,6 +228,9 @@ definitions:
         type: string
       id:
         type: integer
+    required:
+    - display_name
+    - id
     type: object
   controller.NonSensitiveUserResponse:
     properties:
@@ -231,6 +248,9 @@ definitions:
         type: string
       twitch_name:
         type: string
+    required:
+    - display_name
+    - id
     type: object
   controller.ObjectiveCreate:
     properties:
@@ -297,6 +317,16 @@ definitions:
         type: string
       valid_to:
         type: string
+    required:
+    - aggregation
+    - category_id
+    - conditions
+    - extra
+    - id
+    - name
+    - number_field
+    - objective_type
+    - required_number
     type: object
   controller.ScoreResponse:
     properties:
@@ -318,6 +348,16 @@ definitions:
         $ref: '#/definitions/scoring.ScoreType'
       user_id:
         type: integer
+    required:
+    - finished
+    - id
+    - number
+    - points
+    - rank
+    - team_id
+    - timestamp
+    - type
+    - user_id
     type: object
   controller.ScoringPresetCreate:
     properties:
@@ -338,6 +378,7 @@ definitions:
       type:
         $ref: '#/definitions/repository.ScoringPresetType'
     required:
+    - event_id
     - name
     - points
     - scoring_method
@@ -359,6 +400,13 @@ definitions:
         $ref: '#/definitions/repository.ScoringMethod'
       type:
         $ref: '#/definitions/repository.ScoringPresetType'
+    required:
+    - description
+    - id
+    - name
+    - points
+    - scoring_method
+    - type
     type: object
   controller.SignupResponse:
     properties:
@@ -372,6 +420,11 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/controller.NonSensitiveUserResponse'
+    required:
+    - expected_playtime
+    - id
+    - timestamp
+    - user
     type: object
   controller.SubmissionResponse:
     properties:
@@ -397,6 +450,13 @@ definitions:
         type: string
       user:
         $ref: '#/definitions/controller.NonSensitiveUserResponse'
+    required:
+    - approval_status
+    - comment
+    - id
+    - number
+    - proof
+    - timestamp
     type: object
   controller.TeamResponse:
     properties:
@@ -436,6 +496,10 @@ definitions:
         type: string
       twitch_name:
         type: string
+    required:
+    - display_name
+    - id
+    - permissions
     type: object
   controller.UserResponse:
     properties:
@@ -459,6 +523,9 @@ definitions:
         type: string
       twitch_name:
         type: string
+    required:
+    - display_name
+    - id
     type: object
   controller.UserUpdate:
     properties:
