@@ -95,10 +95,10 @@ type ConditionCreate struct {
 }
 
 type ConditionResponse struct {
-	Operator   repository.Operator  `json:"operator"`
-	ItemField  repository.ItemField `json:"field"`
-	FieldValue string               `json:"value"`
-	ID         int                  `json:"id"`
+	Operator   repository.Operator  `json:"operator" binding:"required"`
+	ItemField  repository.ItemField `json:"field" binding:"required"`
+	FieldValue string               `json:"value" binding:"required"`
+	ID         int                  `json:"id" binding:"required"`
 }
 
 func (e *ConditionCreate) toModel() *repository.Condition {

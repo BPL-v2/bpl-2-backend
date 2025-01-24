@@ -162,18 +162,18 @@ type ObjectiveCreate struct {
 }
 
 type ObjectiveResponse struct {
-	ID              int                        `json:"id"`
-	Name            string                     `json:"name"`
-	Extra           string                     `json:"extra"`
-	RequiredNumber  int                        `json:"required_number"`
-	CategoryID      int                        `json:"category_id"`
-	ObjectiveType   repository.ObjectiveType   `json:"objective_type"`
-	Conditions      []*ConditionResponse       `json:"conditions"`
+	ID              int                        `json:"id" binding:"required"`
+	Name            string                     `json:"name" binding:"required"`
+	Extra           string                     `json:"extra" binding:"required"`
+	RequiredNumber  int                        `json:"required_number" binding:"required"`
+	CategoryID      int                        `json:"category_id" binding:"required"`
+	ObjectiveType   repository.ObjectiveType   `json:"objective_type" binding:"required"`
+	Conditions      []*ConditionResponse       `json:"conditions" binding:"required"`
 	ValidFrom       *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo         *time.Time                 `json:"valid_to" binding:"omitempty"`
 	ScoringPresetID *int                       `json:"scoring_preset_id"`
-	NumberField     repository.NumberField     `json:"number_field"`
-	Aggregation     repository.AggregationType `json:"aggregation"`
+	NumberField     repository.NumberField     `json:"number_field" binding:"required"`
+	Aggregation     repository.AggregationType `json:"aggregation" binding:"required"`
 }
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {

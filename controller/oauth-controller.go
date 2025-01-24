@@ -47,7 +47,7 @@ func setupOauthController(db *gorm.DB) []RouteInfo {
 }
 
 type DiscordBotLoginBody struct {
-	Token string `json:"token"`
+	Token string `json:"token" binding:"required"`
 }
 
 // @id LoginDiscordBot

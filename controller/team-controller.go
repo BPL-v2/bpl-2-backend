@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -194,6 +195,7 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
+		go client.NewLocalDiscordClient().AssignRoles()
 		c.Status(204)
 	}
 }

@@ -212,13 +212,13 @@ func (s *SubmissionReview) toModel() *repository.Submission {
 }
 
 type SubmissionResponse struct {
-	ID             int                       `json:"id"`
+	ID             int                       `json:"id" binding:"required"`
 	Objective      *ObjectiveResponse        `json:"objective"`
-	Number         int                       `json:"number"`
-	Proof          string                    `json:"proof"`
-	Timestamp      time.Time                 `json:"timestamp"`
-	ApprovalStatus repository.ApprovalStatus `json:"approval_status"`
-	Comment        string                    `json:"comment"`
+	Number         int                       `json:"number" binding:"required"`
+	Proof          string                    `json:"proof" binding:"required"`
+	Timestamp      time.Time                 `json:"timestamp" binding:"required"`
+	ApprovalStatus repository.ApprovalStatus `json:"approval_status" binding:"required"`
+	Comment        string                    `json:"comment" binding:"required"`
 	User           *NonSensitiveUserResponse `json:"user"`
 	TeamID         *int                      `json:"team_id"`
 	ReviewComment  *string                   `json:"review_comment"`

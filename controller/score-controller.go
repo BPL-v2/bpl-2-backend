@@ -67,15 +67,15 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 }
 
 type ScoreResponse struct {
-	Type      scoring.ScoreType `json:"type"`
-	ID        int               `json:"id"`
-	Points    int               `json:"points"`
-	TeamID    int               `json:"team_id"`
-	UserID    int               `json:"user_id"`
-	Rank      int               `json:"rank"`
-	Timestamp time.Time         `json:"timestamp"`
-	Number    int               `json:"number"`
-	Finished  bool              `json:"finished"`
+	Type      scoring.ScoreType `json:"type" binding:"required"`
+	ID        int               `json:"id" binding:"required"`
+	Points    int               `json:"points" binding:"required"`
+	TeamID    int               `json:"team_id" binding:"required"`
+	UserID    int               `json:"user_id" binding:"required"`
+	Rank      int               `json:"rank" binding:"required"`
+	Timestamp time.Time         `json:"timestamp" binding:"required"`
+	Number    int               `json:"number" binding:"required"`
+	Finished  bool              `json:"finished" binding:"required"`
 }
 
 func toScoreResponse(score *scoring.Score) *ScoreResponse {

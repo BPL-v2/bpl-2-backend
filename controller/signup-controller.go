@@ -166,10 +166,10 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 }
 
 type SignupResponse struct {
-	ID               int                         `json:"id"`
-	User             *NonSensitiveUserResponse   `json:"user"`
-	Timestamp        time.Time                   `json:"timestamp"`
-	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime"`
+	ID               int                         `json:"id" binding:"required"`
+	User             *NonSensitiveUserResponse   `json:"user" binding:"required"`
+	Timestamp        time.Time                   `json:"timestamp" binding:"required"`
+	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`
 	TeamID           *int                        `json:"team_id"`
 }
 type SignupCreate struct {

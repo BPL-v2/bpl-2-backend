@@ -141,10 +141,10 @@ type CategoryCreate struct {
 }
 
 type CategoryResponse struct {
-	ID              int                  `json:"id"`
-	Name            string               `json:"name"`
-	SubCategories   []*CategoryResponse  `json:"sub_categories"`
-	Objectives      []*ObjectiveResponse `json:"objectives"`
+	ID              int                  `json:"id" binding:"required"`
+	Name            string               `json:"name" binding:"required"`
+	SubCategories   []*CategoryResponse  `json:"sub_categories" binding:"required"`
+	Objectives      []*ObjectiveResponse `json:"objectives" binding:"required"`
 	ScoringPresetID *int                 `json:"scoring_preset_id"`
 }
 
@@ -161,8 +161,8 @@ func (e *CategoryCreate) toModel() *repository.ScoringCategory {
 }
 
 type ScoringMethodResponse struct {
-	Type   repository.ScoringMethod `json:"type"`
-	Points []int                    `json:"points"`
+	Type   repository.ScoringMethod `json:"type" binding:"required"`
+	Points []int                    `json:"points" binding:"required"`
 }
 
 func toCategoryResponse(category *repository.ScoringCategory) *CategoryResponse {
