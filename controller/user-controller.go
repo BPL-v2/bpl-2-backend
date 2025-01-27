@@ -107,6 +107,9 @@ func (e *UserController) getUserHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
+		authToken, _ := auth.CreateToken(user)
+		c.SetSameSite(http.SameSiteStrictMode)
+		c.SetCookie("auth", authToken, 60*60*24*7, "/", os.Getenv("PUBLIC_DOMAIN"), false, true)
 		c.JSON(200, toUserResponse(user))
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"crypto/sha256"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -217,8 +219,10 @@ func toPublicObjectiveResponse(objective *repository.Objective) *ObjectiveRespon
 	if objective == nil {
 		return nil
 	}
+
 	if objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &ObjectiveResponse{
+			Name:       fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
 			CategoryID: objective.CategoryID,
 			ValidFrom:  objective.ValidFrom,
 			ValidTo:    objective.ValidTo,

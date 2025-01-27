@@ -17,7 +17,7 @@ type StreamService struct {
 
 func NewStreamService(db *gorm.DB) *StreamService {
 	oauthService := NewOauthService(db)
-	token, _ := oauthService.GetToken("twitch")
+	token, _ := oauthService.GetApplicationToken("twitch")
 	return &StreamService{
 		user_repository: repository.NewUserRepository(db),
 		team_repository: repository.NewTeamRepository(db),
@@ -31,7 +31,7 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.Stream, error) {
 	if err != nil {
 		return nil, err
 	}
-	token, err := e.oauthService.GetToken("twitch")
+	token, err := e.oauthService.GetApplicationToken("twitch")
 	if err != nil {
 		return nil, err
 	}

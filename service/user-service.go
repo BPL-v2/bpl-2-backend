@@ -2,7 +2,9 @@ package service
 
 import (
 	"bpl/auth"
+	"bpl/client"
 	"bpl/repository"
+	"bpl/utils"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -98,4 +100,19 @@ func (s *UserService) RemoveProvider(user *repository.User, provider repository.
 		}
 	}
 	return s.GetUserById(user.ID, "OauthAccounts")
+}
+
+func (s *UserService) DiscordServerCheck(user *repository.User) error {
+	for _, oauth := range user.OauthAccounts {
+		if oauth.Provider == repository.ProviderDiscord {
+			memberIds, err := client.NewLocalDiscordClient().GetServerMemberIds()
+			fmt.Println(memberIds)
+			if err != nil || utils.Contains(memberIds, oauth.AccountID) {
+				return nil
+			} else {
+				return fmt.Errorf("you have not joined the discord server")
+			}
+		}
+	}
+	return fmt.Errorf("you do not have a discord account linked")
 }
