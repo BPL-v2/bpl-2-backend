@@ -187,11 +187,12 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	}
 
 	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
-		Provider:    repository.ProviderDiscord,
-		AccountID:   discordUser.ID,
-		AccessToken: token.AccessToken,
-		Expiry:      token.Expiry,
-		Name:        discordUser.Username,
+		Provider:     repository.ProviderDiscord,
+		AccountID:    discordUser.ID,
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		Expiry:       token.Expiry,
+		Name:         discordUser.Username,
 	})
 
 	user, err = e.userService.SaveUser(user)
@@ -259,17 +260,18 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 		}
 	}
 	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
-		Provider:    repository.ProviderTwitch,
-		AccountID:   twitchId,
-		AccessToken: token.AccessToken,
-		Expiry:      token.Expiry,
-		Name:        twitchExtendedUser.Data[0].DisplayName,
+		Provider:     repository.ProviderTwitch,
+		AccountID:    twitchId,
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		Expiry:       token.Expiry,
+		Name:         twitchExtendedUser.Data[0].DisplayName,
 	})
 
 	return e.userService.SaveUser(user)
 }
 
-func (e *OauthService) GetToken(provider repository.Provider) (*string, error) {
+func (e *OauthService) GetApplicationToken(provider repository.Provider) (*string, error) {
 	credentials, err := e.clientCredentialRepository.GetClientCredentialsByName(provider)
 	if err != nil || credentials.Expiry.Before(time.Now()) {
 		config, ok := e.clientConfig[provider]
