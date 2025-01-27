@@ -26,6 +26,7 @@ func setupScoringPresetController(db *gorm.DB) []RouteInfo {
 		{Method: "GET", Path: "/events/:event_id/scoring-presets", HandlerFunc: e.getScoringPresetsForEventHandler()},
 		{Method: "PUT", Path: "/scoring/presets", HandlerFunc: e.createScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/scoring/presets/:id", HandlerFunc: e.getScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "DELETE", Path: "/scoring/presets/:id", HandlerFunc: e.deleteScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	return routes
 }
@@ -103,6 +104,34 @@ func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, toScoringPresetResponse(preset))
+	}
+}
+
+// @id DeleteScoringPreset
+// @Description Deletes a scoring preset by id
+// @Tags scoring
+// @Produce json
+// @Param id path int true "Preset ID"
+// @Success 200
+// @Router /scoring/presets/{id} [delete]
+func (e *ScoringPresetController) deleteScoringPresetHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id, err := strconv.Atoi(c.Param("id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		err = e.service.DeletePreset(id)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "preset not found"})
+				return
+			}
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{})
 	}
 }
 
