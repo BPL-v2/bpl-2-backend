@@ -146,6 +146,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/scores/latest": {
+            "get": {
+                "description": "Fetches the latest scores for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scores"
+                ],
+                "operationId": "GetLatestScoresForEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/controller.ScoreResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/scoring-presets": {
             "get": {
                 "description": "Fetches the scoring presets for the current event",
@@ -754,29 +786,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/scores/latest": {
-            "get": {
-                "description": "Fetches the latest scores for the current event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scores"
-                ],
-                "operationId": "GetLatestScoresForEvent",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/controller.ScoreResponse"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/scoring/categories": {
             "get": {
                 "description": "Fetches the rules for the current event",
@@ -1052,6 +1061,30 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/controller.ScoringPresetResponse"
                         }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a scoring preset by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "DeleteScoringPreset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Preset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }

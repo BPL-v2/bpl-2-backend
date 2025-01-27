@@ -779,6 +779,27 @@ paths:
             $ref: '#/definitions/controller.EventResponse'
       tags:
       - event
+  /events/{event_id}/scores/latest:
+    get:
+      description: Fetches the latest scores for the current event
+      operationId: GetLatestScoresForEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/controller.ScoreResponse'
+            type: array
+      tags:
+      - scores
   /events/{event_id}/scoring-presets:
     get:
       description: Fetches the scoring presets for the current event
@@ -1192,21 +1213,6 @@ paths:
           description: OK
       tags:
       - oauth
-  /scores/latest:
-    get:
-      description: Fetches the latest scores for the current event
-      operationId: GetLatestScoresForEvent
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/controller.ScoreResponse'
-            type: array
-      tags:
-      - scores
   /scoring/categories:
     get:
       description: Fetches the rules for the current event
@@ -1372,6 +1378,22 @@ paths:
       tags:
       - scoring
   /scoring/presets/{id}:
+    delete:
+      description: Deletes a scoring preset by id
+      operationId: DeleteScoringPreset
+      parameters:
+      - description: Preset ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      tags:
+      - scoring
     get:
       description: Fetches a scoring preset by id
       operationId: GetScoringPreset
