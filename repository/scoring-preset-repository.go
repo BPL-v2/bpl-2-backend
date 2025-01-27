@@ -120,3 +120,8 @@ func (r *ScoringPresetRepository) GetPresetsForEvent(eventId int) ([]*ScoringPre
 	}
 	return presets, nil
 }
+
+func (r *ScoringPresetRepository) DeletePreset(presetId int) error {
+	result := r.DB.Delete(&ScoringPreset{}, "id = ?", presetId)
+	return result.Error
+}

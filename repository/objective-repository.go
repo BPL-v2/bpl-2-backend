@@ -58,6 +58,7 @@ func NewObjectiveRepository(db *gorm.DB) *ObjectiveRepository {
 }
 
 func (r *ObjectiveRepository) SaveObjective(objective *Objective) (*Objective, error) {
+
 	result := r.DB.Save(objective)
 	if result.Error != nil {
 		return nil, result.Error
@@ -102,4 +103,9 @@ func (r *ObjectiveRepository) GetObjectivesByCategoryIds(categoryIds []int) ([]*
 		return nil, result.Error
 	}
 	return objectives, nil
+}
+
+func (r *ObjectiveRepository) RemoveScoringId(scoringId int) error {
+	result := r.DB.Model(&Objective{}).Where("scoring_id = ?", scoringId).Update("scoring_id", nil)
+	return result.Error
 }
