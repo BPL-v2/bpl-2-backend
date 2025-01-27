@@ -4,6 +4,7 @@ import (
 	"bpl/scoring"
 	"bpl/service"
 	"bpl/utils"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,15 +14,20 @@ import (
 type ScoreController struct {
 	db                     *gorm.DB
 	scoringCategoryService *service.ScoringCategoryService
+	eventService           *service.EventService
 }
 
 func NewScoreController(db *gorm.DB) *ScoreController {
-	return &ScoreController{db: db, scoringCategoryService: service.NewScoringCategoryService(db)}
+	return &ScoreController{
+		db:                     db,
+		scoringCategoryService: service.NewScoringCategoryService(db),
+		eventService:           service.NewEventService(db),
+	}
 }
 
 func setupScoreController(db *gorm.DB) []RouteInfo {
 	e := NewScoreController(db)
-	baseUrl := "scores"
+	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
 	}
@@ -36,10 +42,17 @@ func setupScoreController(db *gorm.DB) []RouteInfo {
 // @Tags scores
 // @Produce json
 // @Success 200 {array} ScoreResponse
-// @Router /scores/latest [get]
+// @Param event_id path int true "Event ID"
+// @Router /events/{event_id}/scores/latest [get]
 func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event, err := service.NewEventService(e.db).GetCurrentEvent("Teams", "Teams.Users")
+		event_id, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		event, err := e.eventService.GetEventById(event_id, "Teams", "Teams.Users")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
