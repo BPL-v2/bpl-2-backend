@@ -37,10 +37,10 @@ func setupTeamController(db *gorm.DB) []RouteInfo {
 	basePath := "events/:event_id/teams"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamsHandler()},
-		{Method: "PUT", Path: "", HandlerFunc: e.createTeamHandler()},
-		{Method: "PUT", Path: "/users", HandlerFunc: e.addUsersToTeamsHandler()},
+		{Method: "PUT", Path: "", HandlerFunc: e.createTeamHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "PUT", Path: "/users", HandlerFunc: e.addUsersToTeamsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/:team_id", HandlerFunc: e.getTeamHandler()},
-		{Method: "DELETE", Path: "/:team_id", HandlerFunc: e.deleteTeamHandler()},
+		{Method: "DELETE", Path: "/:team_id", HandlerFunc: e.deleteTeamHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
