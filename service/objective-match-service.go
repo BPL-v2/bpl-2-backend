@@ -34,10 +34,11 @@ func (e *ObjectiveMatchService) SaveItemMatches(matches map[int]int, userId int,
 	return e.objective_match_repository.SaveMatches(objectiveMatches)
 }
 
-func (e *ObjectiveMatchService) SaveStashChange(stashId string, changeId int64) error {
+func (e *ObjectiveMatchService) SaveStashChange(stashId string, changeId int64, eventId int) error {
 	stashChange := &repository.StashChange{
 		StashID:   stashId,
 		ChangeID:  changeId,
+		EventID:   eventId,
 		Timestamp: time.Now(),
 	}
 	return e.objective_match_repository.SaveStashChange(stashChange)

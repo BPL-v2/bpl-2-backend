@@ -1,9 +1,11 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/scoring"
 	"bpl/service"
 	"bpl/utils"
+	"os"
 	"strconv"
 	"time"
 
@@ -15,6 +17,7 @@ type ScoreController struct {
 	db                     *gorm.DB
 	scoringCategoryService *service.ScoringCategoryService
 	eventService           *service.EventService
+	poeClient              *client.PoEClient
 }
 
 func NewScoreController(db *gorm.DB) *ScoreController {
@@ -22,6 +25,7 @@ func NewScoreController(db *gorm.DB) *ScoreController {
 		db:                     db,
 		scoringCategoryService: service.NewScoringCategoryService(db),
 		eventService:           service.NewEventService(db),
+		poeClient:              client.NewPoEClient(os.Getenv("POE_CLIENT_AGENT"), 10, false, 10),
 	}
 }
 
@@ -30,6 +34,7 @@ func setupScoreController(db *gorm.DB) []RouteInfo {
 	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
+		{Method: "POST", Path: "/:minutes", HandlerFunc: e.FetchStashChangesHandler()},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -63,7 +68,6 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-
 		matches, err := scoring.AggregateMatches(e.db, event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -74,8 +78,19 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-
 		c.JSON(200, utils.Map(scores, toScoreResponse))
+	}
+}
+
+func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		minutes, err := strconv.Atoi(c.Param("minutes"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		scoring.StashLoop(e.db, e.poeClient, time.Now().Add(time.Duration(minutes)*time.Minute))
+		c.JSON(200, gin.H{"message": "Stash change fetch started"})
 	}
 }
 

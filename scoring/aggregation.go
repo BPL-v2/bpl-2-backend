@@ -5,6 +5,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"fmt"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -58,6 +59,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event) (ObjectiveTeamMatche
 		objectiveMap[objective.ID] = *objective
 		aggregations[objective.ID] = make(TeamMatches)
 	}
+	wg := sync.WaitGroup{}
 	for _, aggregation := range []repository.AggregationType{
 		repository.EARLIEST_FRESH_ITEM,
 		repository.EARLIEST,
@@ -65,15 +67,20 @@ func AggregateMatches(db *gorm.DB, event *repository.Event) (ObjectiveTeamMatche
 		repository.MINIMUM,
 		repository.SUM_LATEST,
 	} {
-		matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds)
-		if err != nil {
-			return nil, err
-		}
-		for _, match := range matches {
-			match.Finished = objectiveMap[match.ObjectiveID].RequiredAmount <= match.Number
-			aggregations[match.ObjectiveID][match.TeamID] = match
-		}
+		wg.Add(1)
+		go func(aggregation repository.AggregationType) {
+			defer wg.Done()
+			matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds)
+			if err != nil {
+				return
+			}
+			for _, match := range matches {
+				match.Finished = objectiveMap[match.ObjectiveID].RequiredAmount <= match.Number
+				aggregations[match.ObjectiveID][match.TeamID] = match
+			}
+		}(aggregation)
 	}
+	wg.Wait()
 	return aggregations, nil
 }
 
@@ -122,13 +129,30 @@ func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int) ([]*Match, e
 }
 
 func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int) ([]*Match, error) {
-	freshMatches, err := getFreshMatches(db, objectiveIds, teamIds)
-	if err != nil {
-		return nil, err
+	var wg sync.WaitGroup
+	var freshMatches FreshMatches
+	var firstMatches []*Match
+	var err1, err2 error
+
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		freshMatches, err1 = getFreshMatches(db, objectiveIds, teamIds)
+	}()
+
+	go func() {
+		defer wg.Done()
+		firstMatches, err2 = handleEarliest(db, objectiveIds, teamIds)
+	}()
+
+	wg.Wait()
+
+	if err1 != nil {
+		return nil, err1
 	}
-	firstMatches, err := handleEarliest(db, objectiveIds, teamIds)
-	if err != nil {
-		return nil, err
+	if err2 != nil {
+		return nil, err2
 	}
 	matches := make([]*Match, 0)
 	for _, match := range firstMatches {

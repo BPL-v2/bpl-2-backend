@@ -15,11 +15,12 @@ import (
 )
 
 type ObjectiveController struct {
-	service *service.ObjectiveService
+	service      *service.ObjectiveService
+	eventService *service.EventService
 }
 
 func NewObjectiveController(db *gorm.DB) *ObjectiveController {
-	return &ObjectiveController{service: service.NewObjectiveService(db)}
+	return &ObjectiveController{service: service.NewObjectiveService(db), eventService: service.NewEventService(db)}
 }
 
 func setupObjectiveController(db *gorm.DB) []RouteInfo {
@@ -124,13 +125,12 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 
 func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		category_id, err := strconv.Atoi(c.Param("category_id"))
+		currentEvent, err := e.eventService.GetCurrentEvent()
 		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-
-		parser, err := e.service.GetParser(category_id)
+		parser, err := e.service.GetParser(currentEvent.ScoringCategoryID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -139,9 +139,11 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		item := client.Item{
-			BaseType: c.Query("baseType"),
-			Name:     c.Query("name"),
+
+		var item client.Item
+		if err := c.BindJSON(&item); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
 		}
 
 		c.JSON(200, parser.CheckForCompletions(&item))

@@ -7,12 +7,20 @@ import (
 	"gorm.io/gorm"
 )
 
+type GameVersion string
+
+const (
+	PoE1 GameVersion = "POE1"
+	PoE2 GameVersion = "POE2"
+)
+
 type Event struct {
 	ID                   int              `gorm:"primaryKey"`
 	Name                 string           `gorm:"not null"`
 	ScoringCategoryID    int              `gorm:"not null"`
 	Teams                []*Team          `gorm:"foreignKey:EventID;constraint:OnDelete:CASCADE"`
 	IsCurrent            bool             `gorm:"not null"`
+	GameVersion          GameVersion      `gorm:"null"`
 	MaxSize              int              `gorm:"not null"`
 	ScoringCategory      *ScoringCategory `gorm:"foreignKey:ScoringCategoryID;constraint:OnDelete:CASCADE"`
 	ApplicationStartTime time.Time        `gorm:"null"`

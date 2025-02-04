@@ -203,31 +203,34 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 }
 
 type EventCreate struct {
-	ID                   *int      `json:"id"`
-	Name                 string    `json:"name" binding:"required"`
-	IsCurrent            bool      `json:"is_current"`
-	MaxSize              int       `json:"max_size" binding:"required"`
-	EventStartTime       time.Time `json:"event_start_time" binding:"required"`
-	EventEndTime         time.Time `json:"event_end_time" binding:"required"`
-	ApplicationStartTime time.Time `json:"application_start_time" binding:"required"`
+	ID                   *int                   `json:"id"`
+	Name                 string                 `json:"name" binding:"required"`
+	IsCurrent            bool                   `json:"is_current"`
+	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
+	MaxSize              int                    `json:"max_size" binding:"required"`
+	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
+	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
+	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
 }
 
 type EventResponse struct {
-	ID                   int             `json:"id" binding:"required"`
-	Name                 string          `json:"name" binding:"required"`
-	ScoringCategoryID    int             `json:"scoring_category_id" binding:"required"`
-	IsCurrent            bool            `json:"is_current" binding:"required"`
-	MaxSize              int             `json:"max_size" binding:"required"`
-	Teams                []*TeamResponse `json:"teams" binding:"required"`
-	ApplicationStartTime time.Time       `json:"application_start_time" binding:"required"`
-	EventStartTime       time.Time       `json:"event_start_time" binding:"required"`
-	EventEndTime         time.Time       `json:"event_end_time" binding:"required"`
+	ID                   int                    `json:"id" binding:"required"`
+	Name                 string                 `json:"name" binding:"required"`
+	ScoringCategoryID    int                    `json:"scoring_category_id" binding:"required"`
+	IsCurrent            bool                   `json:"is_current" binding:"required"`
+	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
+	MaxSize              int                    `json:"max_size" binding:"required"`
+	Teams                []*TeamResponse        `json:"teams" binding:"required"`
+	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
+	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
+	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {
 	event := &repository.Event{
 		Name:                 e.Name,
 		IsCurrent:            e.IsCurrent,
+		GameVersion:          e.GameVersion,
 		MaxSize:              e.MaxSize,
 		EventStartTime:       e.EventStartTime,
 		EventEndTime:         e.EventEndTime,

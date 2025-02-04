@@ -98,11 +98,10 @@ func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecke
 	for stashChange := range stashChannel {
 		intStashChange, err := stashChangeToInt(stashChange.ChangeID)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
 		for _, stash := range stashChange.Stashes {
-			objectiveMatchService.SaveStashChange(stash.ID, intStashChange)
+			objectiveMatchService.SaveStashChange(stash.ID, intStashChange, event.ID)
 			if stash.League != nil && *stash.League == event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
 				userId := userMap[*stash.AccountName]
 				completions := make(map[int]int)
@@ -112,9 +111,6 @@ func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecke
 					}
 				}
 				objectiveMatchService.SaveItemMatches(completions, userId, intStashChange, stash.ID)
-				// for objectiveId, number := range completions {
-				// 	fmt.Printf("User: %d, Objective: %d, Number: %d\n", userId, objectiveId, number)
-				// }
 			}
 		}
 	}
