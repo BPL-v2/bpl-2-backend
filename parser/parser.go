@@ -230,6 +230,10 @@ func StringComparator(condition *dbModel.Condition) (checkerFun, error) {
 		return func(item *clientModel.Item) bool {
 			return expression.MatchString(getter(item))
 		}, nil
+	case dbModel.CONTAINS:
+		return func(item *clientModel.Item) bool {
+			return strings.Contains(getter(item), condition.Value)
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for string field %s", condition.Operator, condition.Field)
 	}
@@ -245,7 +249,7 @@ func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
 	case dbModel.CONTAINS:
 		return func(item *clientModel.Item) bool {
 			for _, fv := range getter(item) {
-				if fv == condition.Value {
+				if strings.Contains(fv, condition.Value) {
 					return true
 				}
 			}
@@ -257,7 +261,7 @@ func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
 			for _, v := range values {
 				found := false
 				for _, fv := range fieldValues {
-					if fv == v {
+					if strings.Contains(fv, v) {
 						found = true
 						break
 					}
@@ -442,13 +446,14 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 }
 
 func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResult {
+	results := make([]*CheckResult, 0)
 	if checkers, ok := ic.Funcmap[dbModel.BASE_TYPE][item.BaseType]; ok {
-		return applyCheckers(checkers, item)
+		results = append(results, applyCheckers(checkers, item)...)
 	}
 	if checkers, ok := ic.Funcmap[dbModel.NAME][item.Name]; ok {
-		return applyCheckers(checkers, item)
+		results = append(results, applyCheckers(checkers, item)...)
 	}
-	return make([]*CheckResult, 0)
+	return results
 }
 
 func applyCheckers(checkers []*ObjectiveChecker, item *clientModel.Item) []*CheckResult {

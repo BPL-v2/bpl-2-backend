@@ -340,7 +340,6 @@ type Item struct {
 	ExplicitMods          *[]string           `json:"explicitMods,omitempty"`
 	CraftedMods           *[]string           `json:"craftedMods,omitempty"`
 	FracturedMods         *[]string           `json:"fracturedMods,omitempty"`
-	CrucibleMods          *[]string           `json:"crucibleMods,omitempty"`
 	CosmeticMods          *[]string           `json:"cosmeticMods,omitempty"`
 	VeiledMods            *[]string           `json:"veiledMods,omitempty"`
 	Veiled                *bool               `json:"veiled,omitempty"`
@@ -355,7 +354,6 @@ type Item struct {
 	Foreseeing            *bool               `json:"foreseeing,omitempty"`
 	IncubatedItem         *ItemIncubatedItem  `json:"incubatedItem,omitempty"`
 	Scourged              *ItemScourged       `json:"scourged,omitempty"`
-	Crucible              *ItemCrucible       `json:"crucible,omitempty"`
 	Ruthless              *bool               `json:"ruthless,omitempty"`
 	FrameType             *int                `json:"frameType,omitempty"`
 	ArtFilename           *string             `json:"artFilename,omitempty"`

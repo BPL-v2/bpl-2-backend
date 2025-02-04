@@ -63,9 +63,10 @@ func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) 
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, &ClientError{
-			StatusCode:  0,
-			Error:       "bpl2_client_response_body_read_error",
-			Description: err.Error(),
+			StatusCode:      0,
+			Error:           "bpl2_client_response_body_read_error",
+			Description:     err.Error(),
+			ResponseHeaders: response.Header,
 		}
 	}
 
@@ -75,15 +76,17 @@ func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) 
 		err = json.Unmarshal(respBody, errorBody)
 		if err != nil {
 			return nil, &ClientError{
-				StatusCode:  response.StatusCode,
-				Error:       "bpl2_client_response_body_read_error",
-				Description: err.Error(),
+				StatusCode:      response.StatusCode,
+				Error:           "bpl2_client_response_body_read_error",
+				Description:     err.Error(),
+				ResponseHeaders: response.Header,
 			}
 		}
 		return nil, &ClientError{
-			StatusCode:  response.StatusCode,
-			Error:       errorBody.Error,
-			Description: errorBody.ErrorDescription,
+			StatusCode:      response.StatusCode,
+			Error:           errorBody.Error,
+			Description:     errorBody.ErrorDescription,
+			ResponseHeaders: response.Header,
 		}
 	}
 
@@ -91,9 +94,10 @@ func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) 
 	err = json.Unmarshal(respBody, result)
 	if err != nil {
 		return nil, &ClientError{
-			StatusCode:  response.StatusCode,
-			Error:       "bpl2_client_response_body_read_error",
-			Description: err.Error(),
+			StatusCode:      response.StatusCode,
+			Error:           "bpl2_client_response_body_read_error",
+			Description:     err.Error(),
+			ResponseHeaders: response.Header,
 		}
 	}
 	return result, nil
