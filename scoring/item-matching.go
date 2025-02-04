@@ -110,7 +110,7 @@ func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecke
 						completions[result.ObjectiveId] += result.Number
 					}
 				}
-				objectiveMatchService.SaveItemMatches(completions, userId, intStashChange, stash.ID)
+				objectiveMatchService.SaveItemMatches(completions, userId, intStashChange, stash.ID, event.ID)
 			}
 		}
 	}
