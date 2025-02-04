@@ -250,6 +250,7 @@ func toEventResponse(event *repository.Event) *EventResponse {
 		ID:                   event.ID,
 		Name:                 event.Name,
 		ScoringCategoryID:    event.ScoringCategoryID,
+		GameVersion:          event.GameVersion,
 		IsCurrent:            event.IsCurrent,
 		MaxSize:              event.MaxSize,
 		Teams:                utils.Map(event.Teams, toTeamResponse),
