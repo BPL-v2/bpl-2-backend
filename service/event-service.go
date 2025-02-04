@@ -19,8 +19,8 @@ func NewEventService(db *gorm.DB) *EventService {
 	}
 }
 
-func (e *EventService) GetAllEvents() ([]*repository.Event, error) {
-	return e.event_repository.FindAll()
+func (e *EventService) GetAllEvents(preloads ...string) ([]*repository.Event, error) {
+	return e.event_repository.FindAll(preloads...)
 }
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {

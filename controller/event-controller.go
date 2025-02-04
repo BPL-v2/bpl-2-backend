@@ -53,7 +53,7 @@ func setupEventController(db *gorm.DB) []RouteInfo {
 // @Router /events [get]
 func (e *EventController) getEventsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		events, err := e.eventService.GetAllEvents()
+		events, err := e.eventService.GetAllEvents("Teams")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

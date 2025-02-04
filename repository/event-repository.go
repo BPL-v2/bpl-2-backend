@@ -111,9 +111,13 @@ func (r *EventRepository) Delete(eventId int) error {
 	return r.DB.Delete(&event).Error
 }
 
-func (r *EventRepository) FindAll() ([]*Event, error) {
+func (r *EventRepository) FindAll(preloads ...string) ([]*Event, error) {
 	var events []*Event
-	result := r.DB.Find(&events)
+	query := r.DB
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	result := query.Find(&events)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to find events: %v", result.Error)
 	}
