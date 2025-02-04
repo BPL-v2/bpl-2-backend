@@ -10,8 +10,8 @@ import (
 type GameVersion string
 
 const (
-	PoE1 GameVersion = "POE1"
-	PoE2 GameVersion = "POE2"
+	PoE1 GameVersion = "poe1"
+	PoE2 GameVersion = "poe2"
 )
 
 type Event struct {
