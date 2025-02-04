@@ -17,7 +17,7 @@ func NewObjectiveMatchService(db *gorm.DB) *ObjectiveMatchService {
 	}
 }
 
-func (e *ObjectiveMatchService) SaveItemMatches(matches map[int]int, userId int, changeId int64, stashId string) error {
+func (e *ObjectiveMatchService) SaveItemMatches(matches map[int]int, userId int, changeId int64, stashId string, eventId int) error {
 	objectiveMatches := make([]*repository.ObjectiveMatch, 0)
 	now := time.Now()
 	for objectiveId, number := range matches {
@@ -26,6 +26,7 @@ func (e *ObjectiveMatchService) SaveItemMatches(matches map[int]int, userId int,
 			Timestamp:   now,
 			Number:      number,
 			UserID:      userId,
+			EventId:     eventId,
 			StashId:     &stashId,
 			ChangeId:    &changeId,
 		}
