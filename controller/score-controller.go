@@ -7,7 +7,6 @@ import (
 	"bpl/utils"
 	"crypto/sha256"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -153,15 +152,17 @@ func (e *ScoreController) StartScoreUpdater() {
 				if len(utils.Values(conns)) == 0 {
 					continue
 				}
-				log.Println("Calculating scores for event", eventID)
+				t := time.Now()
 				newScore, err := e.calcScores(eventID)
 				if err != nil {
 					continue
 				}
 				if oldScore, ok := e.latestScores[eventID]; ok && oldScore.Equals(newScore) {
+					log.Printf("Calculated scores for event %d in %d milliseconds but they are the same as the previous scores", eventID, time.Since(t).Milliseconds())
 					continue
 				}
-				fmt.Println("New score for event", eventID)
+				log.Printf("Calculated scores for event %d in %d milliseconds, updating %d connected clients", eventID, time.Since(t).Milliseconds(), len(conns))
+
 				e.latestScores[eventID] = newScore
 				for conn := range conns {
 					if err := conn.WriteMessage(websocket.TextMessage, newScore.score); err != nil {
