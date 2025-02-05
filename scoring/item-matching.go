@@ -7,6 +7,7 @@ import (
 	"bpl/service"
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"strconv"
@@ -102,16 +103,17 @@ func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecke
 		}
 		for _, stash := range stashChange.Stashes {
 			objectiveMatchService.SaveStashChange(stash.ID, intStashChange, event.ID)
-			if stash.League != nil && *stash.League == event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
-				userId := userMap[*stash.AccountName]
-				completions := make(map[int]int)
-				for _, item := range stash.Items {
-					for _, result := range itemChecker.CheckForCompletions(&item) {
-						completions[result.ObjectiveId] += result.Number
-					}
+			userId := rand.IntN(4) + 1
+			// if stash.League != nil && *stash.League == event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
+			// 	userId := userMap[*stash.AccountName]
+			completions := make(map[int]int)
+			for _, item := range stash.Items {
+				for _, result := range itemChecker.CheckForCompletions(&item) {
+					completions[result.ObjectiveId] += result.Number
 				}
-				objectiveMatchService.SaveItemMatches(completions, userId, intStashChange, stash.ID, event.ID)
 			}
+			objectiveMatchService.SaveItemMatches(completions, userId, intStashChange, stash.ID, event.ID)
+			// }
 		}
 	}
 }
