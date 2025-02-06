@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -24,45 +23,10 @@ type ScoreController struct {
 	db                     *gorm.DB
 	scoringCategoryService *service.ScoringCategoryService
 	eventService           *service.EventService
+	scoreService           *scoring.ScoreService
 	poeClient              *client.PoEClient
 	mu                     sync.Mutex
 	connections            map[int]map[*websocket.Conn]bool
-	latestScores           map[int]*LatestScore
-}
-
-type LatestScore struct {
-	score []byte
-	hash  []byte
-}
-
-func (l *LatestScore) Equals(other *LatestScore) bool {
-	if len(l.hash) != len(other.hash) {
-		return false
-	}
-	for i := range l.hash {
-		if l.hash[i] != other.hash[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func NewLatestScore(scores []*scoring.Score) (*LatestScore, error) {
-	sort.Slice(scores, func(i, j int) bool {
-		if scores[i].Type != scores[j].Type {
-			return scores[i].Type < scores[j].Type
-		}
-		if scores[i].ID != scores[j].ID {
-			return scores[i].ID < scores[j].ID
-		}
-		return scores[i].TeamID < scores[j].TeamID
-	})
-	scoreBytes, err := json.Marshal(utils.Map(scores, toScoreResponse))
-	if err != nil {
-		return nil, err
-	}
-
-	return &LatestScore{score: scoreBytes, hash: calculateHash(scores)}, nil
 }
 
 func NewScoreController(db *gorm.DB) *ScoreController {
@@ -73,9 +37,9 @@ func NewScoreController(db *gorm.DB) *ScoreController {
 		db:                     db,
 		scoringCategoryService: scoringCategoryService,
 		eventService:           eventService,
+		scoreService:           scoring.NewScoreService(db),
 		poeClient:              poeClient,
 		connections:            make(map[int]map[*websocket.Conn]bool),
-		latestScores:           make(map[int]*LatestScore),
 	}
 	controller.StartScoreUpdater()
 	return controller
@@ -122,11 +86,17 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	e.connections[eventID][conn] = true
 	e.mu.Unlock()
 
+	if _, ok := e.scoreService.LatestScores[eventID]; !ok {
+		e.scoreService.LatestScores[eventID] = make(scoring.ScoreMap)
+	}
 	// Send the latest score to the new subscriber
-	if _, ok := e.latestScores[eventID]; ok {
-		if err := conn.WriteMessage(websocket.TextMessage, e.latestScores[eventID].score); err != nil {
-			return
-		}
+	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[eventID]))
+	if err != nil {
+		return
+	}
+
+	if err := conn.WriteMessage(websocket.TextMessage, serialized); err != nil {
+		return
 	}
 
 	for {
@@ -152,20 +122,17 @@ func (e *ScoreController) StartScoreUpdater() {
 				if len(utils.Values(conns)) == 0 {
 					continue
 				}
-				t := time.Now()
-				newScore, err := e.calcScores(eventID)
+				diff, err := e.scoreService.GetNewDiff(eventID)
 				if err != nil {
 					continue
 				}
-				if oldScore, ok := e.latestScores[eventID]; ok && oldScore.Equals(newScore) {
-					log.Printf("Calculated scores for event %d in %d milliseconds but they are the same as the previous scores", eventID, time.Since(t).Milliseconds())
+				serializedDiff, err := json.Marshal(toScoreMapResponse(diff))
+				if err != nil {
+					log.Fatal(err)
 					continue
 				}
-				log.Printf("Calculated scores for event %d in %d milliseconds, updating %d connected clients", eventID, time.Since(t).Milliseconds(), len(conns))
-
-				e.latestScores[eventID] = newScore
 				for conn := range conns {
-					if err := conn.WriteMessage(websocket.TextMessage, newScore.score); err != nil {
+					if err := conn.WriteMessage(websocket.TextMessage, serializedDiff); err != nil {
 						conn.Close()
 						delete(conns, conn)
 					}
@@ -191,17 +158,12 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
 			return
 		}
-		scores, ok := e.latestScores[eventID]
-		if !ok {
-			scores, err = e.calcScores(eventID)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-			e.latestScores[eventID] = scores
+		scores := e.scoreService.LatestScores[eventID]
+		if scores == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "No scores found for event"})
+			return
 		}
-		c.Writer.WriteHeader(http.StatusOK)
-		c.Writer.Write(scores.score)
+		c.JSON(http.StatusOK, scores)
 	}
 }
 
@@ -211,26 +173,6 @@ func calculateHash(scores []*scoring.Score) []byte {
 		hash.Write([]byte(strconv.Itoa(score.TeamID + score.Number + score.Points + score.UserID)))
 	}
 	return hash.Sum(nil)
-}
-
-func (e *ScoreController) calcScores(eventId int) (score *LatestScore, err error) {
-	event, err := e.eventService.GetEventById(eventId, "Teams", "Teams.Users")
-	if err != nil {
-		return nil, err
-	}
-	rules, err := e.scoringCategoryService.GetRulesForEvent(event.ID, "Objectives", "Objectives.Conditions", "ScoringPreset", "Objectives.ScoringPreset")
-	if err != nil {
-		return nil, err
-	}
-	matches, err := scoring.AggregateMatches(e.db, event)
-	if err != nil {
-		return nil, err
-	}
-	scores, err := scoring.EvaluateAggregations(rules, matches)
-	if err != nil {
-		return nil, err
-	}
-	return NewLatestScore(scores)
 }
 
 func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
@@ -246,23 +188,41 @@ func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
 }
 
 type ScoreResponse struct {
-	Type      scoring.ScoreType `json:"type" binding:"required"`
-	ID        int               `json:"id" binding:"required"`
-	Points    int               `json:"points" binding:"required"`
-	TeamID    int               `json:"team_id" binding:"required"`
-	UserID    int               `json:"user_id" binding:"required"`
-	Rank      int               `json:"rank" binding:"required"`
-	Timestamp time.Time         `json:"timestamp" binding:"required"`
-	Number    int               `json:"number" binding:"required"`
-	Finished  bool              `json:"finished" binding:"required"`
+	Points    int       `json:"points" binding:"required"`
+	UserID    int       `json:"user_id" binding:"required"`
+	Rank      int       `json:"rank" binding:"required"`
+	Timestamp time.Time `json:"timestamp" binding:"required"`
+	Number    int       `json:"number" binding:"required"`
+	Finished  bool      `json:"finished" binding:"required"`
+}
+
+type ScoreDiffResponse struct {
+	Score     *ScoreResponse   `json:"score"`
+	FieldDiff []string         `json:"field_diff"`
+	DiffType  scoring.Difftype `json:"diff_type"`
+}
+
+type ScoreMapResponse map[string]*ScoreDiffResponse
+
+func toScoreDiffResponse(scoreDiff *scoring.ScoreDifference) *ScoreDiffResponse {
+	return &ScoreDiffResponse{
+		Score:     toScoreResponse(scoreDiff.Score),
+		FieldDiff: scoreDiff.FieldDiff,
+		DiffType:  scoreDiff.DiffType,
+	}
+}
+
+func toScoreMapResponse(scoreMap scoring.ScoreMap) ScoreMapResponse {
+	response := make(ScoreMapResponse)
+	for id, score := range scoreMap {
+		response[id] = toScoreDiffResponse(score)
+	}
+	return response
 }
 
 func toScoreResponse(score *scoring.Score) *ScoreResponse {
 	return &ScoreResponse{
-		Type:      score.Type,
-		ID:        score.ID,
 		Points:    score.Points,
-		TeamID:    score.TeamID,
 		UserID:    score.UserID,
 		Rank:      score.Rank,
 		Timestamp: score.Timestamp,

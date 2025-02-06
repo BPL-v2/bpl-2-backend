@@ -2,7 +2,6 @@ package scoring
 
 import (
 	"bpl/repository"
-	"bpl/service"
 	"bpl/utils"
 	"fmt"
 	"sync"
@@ -43,11 +42,7 @@ var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []
 	repository.MINIMUM:             handleMinimum,
 }
 
-func AggregateMatches(db *gorm.DB, event *repository.Event) (ObjectiveTeamMatches, error) {
-	objectives, err := service.NewObjectiveService(db).GetObjectivesByEventId(event.ID)
-	if err != nil {
-		return nil, err
-	}
+func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) (ObjectiveTeamMatches, error) {
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {
 		return team.ID
