@@ -127,7 +127,10 @@ func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamM
 
 func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
 	rankFun := func(a, b *Match) bool {
-		return a.Timestamp.Before(b.Timestamp)
+		if a.Finished && b.Finished {
+			return a.Timestamp.Before(b.Timestamp)
+		}
+		return a.Finished
 	}
 	return handleRanked(objective, aggregations, rankFun)
 }
