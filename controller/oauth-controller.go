@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type Verifier struct {
@@ -22,15 +21,15 @@ type OauthController struct {
 	userService  *service.UserService
 }
 
-func NewOauthController(db *gorm.DB) *OauthController {
+func NewOauthController() *OauthController {
 	return &OauthController{
-		oauthService: service.NewOauthService(db),
-		userService:  service.NewUserService(db),
+		oauthService: service.NewOauthService(),
+		userService:  service.NewUserService(),
 	}
 }
 
-func setupOauthController(db *gorm.DB) []RouteInfo {
-	e := NewOauthController(db)
+func setupOauthController() []RouteInfo {
+	e := NewOauthController()
 	basePath := "/oauth2"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/discord", HandlerFunc: e.discordOauthHandler()},

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"time"
 
 	"gorm.io/gorm"
@@ -17,8 +18,8 @@ type StashChange struct {
 	Timestamp    time.Time
 }
 
-func NewStashChangeRepository(db *gorm.DB) *StashChangeRepository {
-	return &StashChangeRepository{DB: db}
+func NewStashChangeRepository() *StashChangeRepository {
+	return &StashChangeRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *StashChangeRepository) SaveStashChange(stashChange *StashChange) error {

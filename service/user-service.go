@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -17,10 +16,10 @@ type UserService struct {
 	OauthRepository *repository.OauthRepository
 }
 
-func NewUserService(db *gorm.DB) *UserService {
+func NewUserService() *UserService {
 	return &UserService{
-		UserRepository:  repository.NewUserRepository(db),
-		OauthRepository: repository.NewOauthRepository(db),
+		UserRepository:  repository.NewUserRepository(),
+		OauthRepository: repository.NewOauthRepository(),
 	}
 }
 

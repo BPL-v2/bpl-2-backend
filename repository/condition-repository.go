@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"bpl/config"
+
 	"gorm.io/gorm"
 )
 
@@ -51,8 +53,8 @@ type ConditionRepository struct {
 	DB *gorm.DB
 }
 
-func NewConditionRepository(db *gorm.DB) *ConditionRepository {
-	return &ConditionRepository{DB: db}
+func NewConditionRepository() *ConditionRepository {
+	return &ConditionRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *ConditionRepository) GetConditionByPK(objectiveID int, field ItemField, operator Operator) (*Condition, error) {

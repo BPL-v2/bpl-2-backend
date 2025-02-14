@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"bpl/utils"
 	"database/sql/driver"
 	"errors"
@@ -87,8 +88,8 @@ type ScoringPresetRepository struct {
 	DB *gorm.DB
 }
 
-func NewScoringPresetRepository(db *gorm.DB) *ScoringPresetRepository {
-	return &ScoringPresetRepository{DB: db}
+func NewScoringPresetRepository() *ScoringPresetRepository {
+	return &ScoringPresetRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *ScoringPresetRepository) SavePreset(preset *ScoringPreset) (*ScoringPreset, error) {

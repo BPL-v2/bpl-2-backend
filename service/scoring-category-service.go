@@ -2,8 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-
-	"gorm.io/gorm"
 )
 
 type ScoringCategoryService struct {
@@ -11,10 +9,10 @@ type ScoringCategoryService struct {
 	event_repository *repository.EventRepository
 }
 
-func NewScoringCategoryService(db *gorm.DB) *ScoringCategoryService {
+func NewScoringCategoryService() *ScoringCategoryService {
 	return &ScoringCategoryService{
-		rules_repository: repository.NewScoringCategoryRepository(db),
-		event_repository: repository.NewEventRepository(db),
+		rules_repository: repository.NewScoringCategoryRepository(),
+		event_repository: repository.NewEventRepository(),
 	}
 }
 

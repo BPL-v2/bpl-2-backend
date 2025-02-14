@@ -19,15 +19,15 @@ type UserController struct {
 	eventService *service.EventService
 }
 
-func NewUserController(db *gorm.DB) *UserController {
+func NewUserController() *UserController {
 	return &UserController{
-		userService:  service.NewUserService(db),
-		eventService: service.NewEventService(db),
+		userService:  service.NewUserService(),
+		eventService: service.NewEventService(),
 	}
 }
 
-func setupUserController(db *gorm.DB) []RouteInfo {
-	e := NewUserController(db)
+func setupUserController() []RouteInfo {
+	e := NewUserController()
 	basePath := ""
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/users", HandlerFunc: e.getUsersForEventHandler()},

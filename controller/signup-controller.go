@@ -16,15 +16,15 @@ type SignupController struct {
 	userService   *service.UserService
 }
 
-func NewSignupController(db *gorm.DB) *SignupController {
+func NewSignupController() *SignupController {
 	return &SignupController{
-		signupService: service.NewSignupService(db),
-		userService:   service.NewUserService(db),
+		signupService: service.NewSignupService(),
+		userService:   service.NewUserService(),
 	}
 }
 
-func setupSignupController(db *gorm.DB) []RouteInfo {
-	e := NewSignupController(db)
+func setupSignupController() []RouteInfo {
+	e := NewSignupController()
 	basePath := "/events/:event_id/signups"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true},

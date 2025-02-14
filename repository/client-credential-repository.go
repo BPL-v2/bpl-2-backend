@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"time"
 
 	"gorm.io/gorm"
@@ -16,8 +17,8 @@ type ClientCredentialsRepository struct {
 	DB *gorm.DB
 }
 
-func NewClientCredentialsRepository(db *gorm.DB) *ClientCredentialsRepository {
-	return &ClientCredentialsRepository{DB: db}
+func NewClientCredentialsRepository() *ClientCredentialsRepository {
+	return &ClientCredentialsRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *ClientCredentialsRepository) GetClientCredentialsByName(provider Provider) (*ClientCredentials, error) {

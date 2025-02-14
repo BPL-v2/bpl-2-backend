@@ -14,14 +14,14 @@ type ScoringPresetController struct {
 	service *service.ScoringPresetsService
 }
 
-func NewScoringPresetController(db *gorm.DB) *ScoringPresetController {
+func NewScoringPresetController() *ScoringPresetController {
 	return &ScoringPresetController{
-		service: service.NewScoringPresetsService(db),
+		service: service.NewScoringPresetsService(),
 	}
 }
 
-func setupScoringPresetController(db *gorm.DB) []RouteInfo {
-	e := NewScoringPresetController(db)
+func setupScoringPresetController() []RouteInfo {
+	e := NewScoringPresetController()
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/scoring-presets", HandlerFunc: e.getScoringPresetsForEventHandler()},
 		{Method: "PUT", Path: "/scoring/presets", HandlerFunc: e.createScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},

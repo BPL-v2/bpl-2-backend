@@ -19,12 +19,12 @@ type ObjectiveController struct {
 	eventService *service.EventService
 }
 
-func NewObjectiveController(db *gorm.DB) *ObjectiveController {
-	return &ObjectiveController{service: service.NewObjectiveService(db), eventService: service.NewEventService(db)}
+func NewObjectiveController() *ObjectiveController {
+	return &ObjectiveController{service: service.NewObjectiveService(), eventService: service.NewEventService()}
 }
 
-func setupObjectiveController(db *gorm.DB) []RouteInfo {
-	e := NewObjectiveController(db)
+func setupObjectiveController() []RouteInfo {
+	e := NewObjectiveController()
 	baseUrl := "/scoring/objectives"
 	routes := []RouteInfo{
 		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},

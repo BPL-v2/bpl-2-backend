@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"time"
 
 	"gorm.io/gorm"
@@ -30,8 +31,8 @@ type OauthRepository struct {
 	DB *gorm.DB
 }
 
-func NewOauthRepository(db *gorm.DB) *OauthRepository {
-	return &OauthRepository{DB: db}
+func NewOauthRepository() *OauthRepository {
+	return &OauthRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *OauthRepository) GetOauthByProviderAndAccountID(provider Provider, accountID string) (*Oauth, error) {

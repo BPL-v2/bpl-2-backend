@@ -2,8 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-
-	"gorm.io/gorm"
 )
 
 type ScoringPresetsService struct {
@@ -11,10 +9,10 @@ type ScoringPresetsService struct {
 	objective_repository      *repository.ObjectiveRepository
 }
 
-func NewScoringPresetsService(db *gorm.DB) *ScoringPresetsService {
+func NewScoringPresetsService() *ScoringPresetsService {
 	return &ScoringPresetsService{
-		scoring_preset_repository: repository.NewScoringPresetRepository(db),
-		objective_repository:      repository.NewObjectiveRepository(db),
+		scoring_preset_repository: repository.NewScoringPresetRepository(),
+		objective_repository:      repository.NewObjectiveRepository(),
 	}
 }
 

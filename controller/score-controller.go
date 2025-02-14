@@ -30,15 +30,14 @@ type ScoreController struct {
 	connections            map[int]map[*websocket.Conn]bool
 }
 
-func NewScoreController(db *gorm.DB) *ScoreController {
-	scoringCategoryService := service.NewScoringCategoryService(db)
-	eventService := service.NewEventService(db)
+func NewScoreController() *ScoreController {
+	scoringCategoryService := service.NewScoringCategoryService()
+	eventService := service.NewEventService()
 	poeClient := client.NewPoEClient(os.Getenv("POE_CLIENT_AGENT"), 10, false, 10)
 	controller := &ScoreController{
-		db:                     db,
 		scoringCategoryService: scoringCategoryService,
 		eventService:           eventService,
-		scoreService:           scoring.NewScoreService(db),
+		scoreService:           scoring.NewScoreService(),
 		poeClient:              poeClient,
 		connections:            make(map[int]map[*websocket.Conn]bool),
 	}
@@ -46,8 +45,8 @@ func NewScoreController(db *gorm.DB) *ScoreController {
 	return controller
 }
 
-func setupScoreController(db *gorm.DB) []RouteInfo {
-	e := NewScoreController(db)
+func setupScoreController() []RouteInfo {
+	e := NewScoreController()
 	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
@@ -185,7 +184,7 @@ func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
 		}
 		_ = seconds
 		ctx, _ := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
-		err = scoring.StashLoop(ctx, e.db, e.poeClient)
+		err = scoring.StashLoop(ctx, e.poeClient)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

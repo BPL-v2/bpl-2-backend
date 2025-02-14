@@ -18,17 +18,17 @@ type EventController struct {
 	signupService *service.SignupService
 }
 
-func NewEventController(db *gorm.DB) *EventController {
+func NewEventController() *EventController {
 	return &EventController{
-		eventService:  service.NewEventService(db),
-		teamService:   service.NewTeamService(db),
-		userService:   service.NewUserService(db),
-		signupService: service.NewSignupService(db),
+		eventService:  service.NewEventService(),
+		teamService:   service.NewTeamService(),
+		userService:   service.NewUserService(),
+		signupService: service.NewSignupService(),
 	}
 }
 
-func setupEventController(db *gorm.DB) []RouteInfo {
-	e := NewEventController(db)
+func setupEventController() []RouteInfo {
+	e := NewEventController()
 	basePath := "/events"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventsHandler()},

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	"gorm.io/gorm"
 )
 
 type FetchingService struct {
@@ -24,8 +23,8 @@ type FetchingService struct {
 	stashChannel       chan StashChange
 }
 
-func NewFetchingService(ctx context.Context, event *repository.Event, poeClient *client.PoEClient, db *gorm.DB) *FetchingService {
-	stashChangeService := service.NewStashChangeService(db)
+func NewFetchingService(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) *FetchingService {
+	stashChangeService := service.NewStashChangeService()
 
 	return &FetchingService{
 		ctx:                ctx,
@@ -76,13 +75,13 @@ func (f *FetchingService) FetchStashChanges() error {
 }
 
 func (f *FetchingService) FilterStashChanges() {
-	err := config.CreateTopic(f.event)
+	err := config.CreateTopic(f.event.ID)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	writer, err := config.GetWriter(f.event)
+	writer, err := config.GetWriter(f.event.ID)
 	if err != nil {
 		fmt.Println(err)
 		return
