@@ -130,3 +130,9 @@ func (f *FetchingService) FilterStashChanges() {
 		}
 	}
 }
+
+func FetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
+	fetchingService := NewFetchingService(ctx, event, poeClient)
+	go fetchingService.FetchStashChanges()
+	go fetchingService.FilterStashChanges()
+}
