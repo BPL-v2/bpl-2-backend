@@ -107,3 +107,11 @@ func (e *ObjectiveService) GetParser(categoryId int) (*parser.ItemChecker, error
 	objectives, _ := e.objective_repository.GetObjectivesByCategoryIds(util.Uniques(categoryIds))
 	return parser.NewItemChecker(objectives)
 }
+
+func (e *ObjectiveService) StartSync(objectiveIds []int) error {
+	return e.objective_repository.StartSync(objectiveIds)
+}
+
+func (e *ObjectiveService) SetSynced(objectiveIds []int) error {
+	return e.objective_repository.FinishSync(objectiveIds)
+}

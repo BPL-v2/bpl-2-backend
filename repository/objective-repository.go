@@ -33,6 +33,14 @@ const (
 	SUBMISSION_VALUE NumberField = "SUBMISSION_VALUE"
 )
 
+type SyncStatus string
+
+const (
+	SyncStatusSynced   SyncStatus = "SYNCED"
+	SyncStatusSyncing  SyncStatus = "SYNCING"
+	SyncStatusDesynced SyncStatus = "DESYNCED"
+)
+
 type Objective struct {
 	ID             int             `gorm:"primaryKey"`
 	Name           string          `gorm:"not null"`
@@ -47,6 +55,7 @@ type Objective struct {
 	ValidTo        *time.Time      `gorm:"null"`
 	ScoringId      *int            `gorm:"null;references:scoring_presets(id)"`
 	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:ID"`
+	SyncStatus     SyncStatus
 }
 
 type ObjectiveRepository struct {
@@ -58,7 +67,7 @@ func NewObjectiveRepository(db *gorm.DB) *ObjectiveRepository {
 }
 
 func (r *ObjectiveRepository) SaveObjective(objective *Objective) (*Objective, error) {
-
+	objective.SyncStatus = SyncStatusDesynced
 	result := r.DB.Save(objective)
 	if result.Error != nil {
 		return nil, result.Error
@@ -107,5 +116,27 @@ func (r *ObjectiveRepository) GetObjectivesByCategoryIds(categoryIds []int) ([]*
 
 func (r *ObjectiveRepository) RemoveScoringId(scoringId int) error {
 	result := r.DB.Model(&Objective{}).Where("scoring_id = ?", scoringId).Update("scoring_id", nil)
+	return result.Error
+}
+
+func (r *ObjectiveRepository) StartSync(objectiveIds []int) error {
+	result := r.DB.
+		Model(&Objective{}).Where("id IN ? and sync_status = ?", objectiveIds, SyncStatusDesynced).
+		Update("sync_status", SyncStatusSyncing)
+	return result.Error
+}
+
+func (r *ObjectiveRepository) FinishSync(objectiveIds []int) error {
+	if len(objectiveIds) == 0 {
+		return nil
+	}
+	result := r.DB.
+		Model(&Objective{}).Where("id IN ? and sync_status = ?", objectiveIds, SyncStatusSyncing).
+		Update("sync_status", SyncStatusSynced)
+	return result.Error
+}
+
+func (r *ObjectiveRepository) DesyncObjective(objectiveId int) error {
+	result := r.DB.Model(&Objective{}).Where("id = ?", objectiveId).Update("sync_status", SyncStatusDesynced)
 	return result.Error
 }

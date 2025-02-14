@@ -13,15 +13,13 @@ type ObjectiveMatch struct {
 	Number      int       `gorm:"not null"`
 	UserID      int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
 	EventId     int       `gorm:"index:obj_match_event;not null;references:events(id)"`
-	StashId     *string   `gorm:"index:obj_match_stash_change;null;references:stash_change(stash_id)"`  // Only relevant for item objectives
-	ChangeId    *int64    `gorm:"index:obj_match_stash_change;null;references:stash_change(change_id)"` // Only relevant for item objectives
+	StashId     *string   `gorm:"index:obj_match_stash_change;null;references:stash_change(int_change_id)"` // Only relevant for item objectives
+	ChangeId    *int64    `gorm:"index:obj_match_stash_change;null;references:stash_change(change_id)"`     // Only relevant for item objectives
 }
 
-type StashChange struct {
-	StashID   string `gorm:"primaryKey;not null"`
-	ChangeID  int64  `gorm:"primaryKey;not null"`
-	EventID   int    `gorm:"index;not null;references events(id)"`
-	Timestamp time.Time
+type KafkaConsumer struct {
+	EventID int `gorm:"primaryKey;not null;references events(id)"`
+	GroupID int `gorm:"not null"`
 }
 
 type ObjectiveMatchRepository struct {
@@ -40,16 +38,51 @@ func (r *ObjectiveMatchRepository) SaveMatches(objectiveMatches []*ObjectiveMatc
 	return nil
 }
 
-func (r *ObjectiveMatchRepository) SaveStashChange(stashChange *StashChange) error {
-	result := r.DB.Create(stashChange)
+func (r *ObjectiveMatchRepository) DeleteMatch(id int) error {
+	result := r.DB.Delete(&ObjectiveMatch{}, id)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
 
-func (r *ObjectiveMatchRepository) DeleteMatch(id int) error {
-	result := r.DB.Delete(&ObjectiveMatch{}, id)
+func (r *ObjectiveMatchRepository) GetKafkaConsumer(eventId int) (*KafkaConsumer, error) {
+	var consumer *KafkaConsumer
+	result := r.DB.Where("event_id = ?", eventId).First(&consumer)
+	if result.Error != nil {
+		consumer.EventID = eventId
+		consumer.GroupID = 1
+		result = r.DB.Create(consumer)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		return consumer, nil
+
+	}
+	return consumer, nil
+}
+
+func (r *ObjectiveMatchRepository) SaveKafkaConsumer(consumer *KafkaConsumer) error {
+	result := r.DB.Save(consumer)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (r *ObjectiveMatchRepository) DeleteOldMatches(changeId int64, objectiveIds []int) error {
+	result := r.DB.
+		Where("change_id < ? AND objective_id IN (?)", changeId, objectiveIds).
+		Delete(&ObjectiveMatch{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+func (r *ObjectiveMatchRepository) DeleteMatches(changeIds []int64, objectiveIds []int) error {
+	result := r.DB.
+		Where("change_id in (?) AND objective_id IN (?)", changeIds, objectiveIds).
+		Delete(&ObjectiveMatch{})
 	if result.Error != nil {
 		return result.Error
 	}

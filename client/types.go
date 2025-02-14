@@ -284,86 +284,88 @@ type ItemExtended struct {
 }
 
 type Item struct {
-	Verified              bool                `json:"verified"`
-	W                     int                 `json:"w"`
-	H                     int                 `json:"h"`
-	Icon                  string              `json:"icon"`
-	Support               *bool               `json:"support,omitempty"`
-	StackSize             *int                `json:"stackSize,omitempty"`
-	MaxStackSize          *int                `json:"maxStackSize,omitempty"`
-	StackSizeText         *string             `json:"stackSizeText,omitempty"`
-	League                string              `json:"league"`
-	ID                    string              `json:"id"`
-	Influences            *ItemInfluences     `json:"influences,omitempty"`
-	Elder                 *bool               `json:"elder,omitempty"`
-	Shaper                *bool               `json:"shaper,omitempty"`
-	Searing               *bool               `json:"searing,omitempty"`
-	Tangled               *bool               `json:"tangled,omitempty"`
-	AbyssJewel            *bool               `json:"abyssJewel,omitempty"`
-	Delve                 *bool               `json:"delve,omitempty"`
-	Fractured             *bool               `json:"fractured,omitempty"`
-	Synthesised           *bool               `json:"synthesised,omitempty"`
-	Sockets               *[]ItemSocket       `json:"sockets,omitempty"`
-	SocketedItems         *[]Item             `json:"socketedItems,omitempty"`
-	Name                  string              `json:"name"`
-	TypeLine              string              `json:"typeLine"`
-	BaseType              string              `json:"baseType"`
-	Rarity                *string             `json:"rarity,omitempty"`
-	Identified            bool                `json:"identified"`
-	ItemLevel             *int                `json:"itemLevel,omitempty"`
-	Ilvl                  int                 `json:"ilvl"`
-	Note                  *string             `json:"note,omitempty"`
-	ForumNote             *string             `json:"forum_note,omitempty"`
-	LockedToCharacter     *bool               `json:"lockedToCharacter,omitempty"`
-	LockedToAccount       *bool               `json:"lockedToAccount,omitempty"`
-	Duplicated            *bool               `json:"duplicated,omitempty"`
-	Split                 *bool               `json:"split,omitempty"`
-	Corrupted             *bool               `json:"corrupted,omitempty"`
-	Unmodifiable          *bool               `json:"unmodifiable,omitempty"`
-	CisRaceReward         *bool               `json:"cisRaceReward,omitempty"`
-	SeaRaceReward         *bool               `json:"seaRaceReward,omitempty"`
-	ThRaceReward          *bool               `json:"thRaceReward,omitempty"`
-	Properties            *[]ItemProperty     `json:"properties,omitempty"`
-	NotableProperties     *[]ItemProperty     `json:"notableProperties,omitempty"`
-	Requirements          *[]ItemProperty     `json:"requirements,omitempty"`
-	AdditionalProperties  *[]ItemProperty     `json:"additionalProperties,omitempty"`
-	NextLevelRequirements *[]ItemProperty     `json:"nextLevelRequirements,omitempty"`
-	TalismanTier          *int                `json:"talismanTier,omitempty"`
-	Rewards               *[]ItemReward       `json:"rewards,omitempty"`
-	SecDescrText          *string             `json:"secDescrText,omitempty"`
-	UtilityMods           *[]string           `json:"utilityMods,omitempty"`
-	LogbookMods           *[]ItemLogbookMod   `json:"logbookMods,omitempty"`
-	EnchantMods           *[]string           `json:"enchantMods,omitempty"`
-	ScourgeMods           *[]string           `json:"scourgeMods,omitempty"`
-	ImplicitMods          *[]string           `json:"implicitMods,omitempty"`
-	UltimatumMods         *[]ItemUltimatumMod `json:"ultimatumMods,omitempty"`
-	ExplicitMods          *[]string           `json:"explicitMods,omitempty"`
-	CraftedMods           *[]string           `json:"craftedMods,omitempty"`
-	FracturedMods         *[]string           `json:"fracturedMods,omitempty"`
-	CosmeticMods          *[]string           `json:"cosmeticMods,omitempty"`
-	VeiledMods            *[]string           `json:"veiledMods,omitempty"`
-	Veiled                *bool               `json:"veiled,omitempty"`
-	DescrText             *string             `json:"descrText,omitempty"`
-	FlavourText           *[]string           `json:"flavourText,omitempty"`
-	FlavourTextParsed     *[]interface{}      `json:"flavourTextParsed,omitempty"`
-	FlavourTextNote       *string             `json:"flavourTextNote,omitempty"`
-	ProphecyText          *string             `json:"prophecyText,omitempty"`
-	IsRelic               *bool               `json:"isRelic,omitempty"`
-	FoilVariation         *int                `json:"foilVariation,omitempty"`
-	Replica               *bool               `json:"replica,omitempty"`
-	Foreseeing            *bool               `json:"foreseeing,omitempty"`
-	IncubatedItem         *ItemIncubatedItem  `json:"incubatedItem,omitempty"`
-	Scourged              *ItemScourged       `json:"scourged,omitempty"`
-	Ruthless              *bool               `json:"ruthless,omitempty"`
-	FrameType             *int                `json:"frameType,omitempty"`
-	ArtFilename           *string             `json:"artFilename,omitempty"`
-	Hybrid                *ItemHybrid         `json:"hybrid,omitempty"`
-	Extended              *ItemExtended       `json:"extended,omitempty"`
-	X                     *int                `json:"x,omitempty"`
-	Y                     *int                `json:"y,omitempty"`
-	InventoryId           *string             `json:"inventoryId,omitempty"`
-	Socket                *int                `json:"socket,omitempty"`
-	Colour                *string             `json:"colour,omitempty"`
+	Support              *bool               `json:"support,omitempty"`
+	StackSize            *int                `json:"stackSize,omitempty"`
+	Elder                *bool               `json:"elder,omitempty"`
+	Shaper               *bool               `json:"shaper,omitempty"`
+	Searing              *bool               `json:"searing,omitempty"`
+	Tangled              *bool               `json:"tangled,omitempty"`
+	AbyssJewel           *bool               `json:"abyssJewel,omitempty"`
+	Delve                *bool               `json:"delve,omitempty"`
+	Fractured            *bool               `json:"fractured,omitempty"`
+	Synthesised          *bool               `json:"synthesised,omitempty"`
+	Sockets              *[]ItemSocket       `json:"sockets,omitempty"`
+	SocketedItems        *[]Item             `json:"socketedItems,omitempty"`
+	Name                 string              `json:"name"`
+	TypeLine             string              `json:"typeLine"`
+	BaseType             string              `json:"baseType"`
+	Rarity               *string             `json:"rarity,omitempty"`
+	ItemLevel            *int                `json:"itemLevel,omitempty"`
+	Ilvl                 int                 `json:"ilvl"`
+	Duplicated           *bool               `json:"duplicated,omitempty"`
+	Split                *bool               `json:"split,omitempty"`
+	Corrupted            *bool               `json:"corrupted,omitempty"`
+	Unmodifiable         *bool               `json:"unmodifiable,omitempty"`
+	Properties           *[]ItemProperty     `json:"properties,omitempty"`
+	NotableProperties    *[]ItemProperty     `json:"notableProperties,omitempty"`
+	AdditionalProperties *[]ItemProperty     `json:"additionalProperties,omitempty"`
+	TalismanTier         *int                `json:"talismanTier,omitempty"`
+	Rewards              *[]ItemReward       `json:"rewards,omitempty"`
+	UtilityMods          *[]string           `json:"utilityMods,omitempty"`
+	LogbookMods          *[]ItemLogbookMod   `json:"logbookMods,omitempty"`
+	EnchantMods          *[]string           `json:"enchantMods,omitempty"`
+	ScourgeMods          *[]string           `json:"scourgeMods,omitempty"`
+	ImplicitMods         *[]string           `json:"implicitMods,omitempty"`
+	UltimatumMods        *[]ItemUltimatumMod `json:"ultimatumMods,omitempty"`
+	ExplicitMods         *[]string           `json:"explicitMods,omitempty"`
+	CraftedMods          *[]string           `json:"craftedMods,omitempty"`
+	FracturedMods        *[]string           `json:"fracturedMods,omitempty"`
+	CosmeticMods         *[]string           `json:"cosmeticMods,omitempty"`
+	VeiledMods           *[]string           `json:"veiledMods,omitempty"`
+	Veiled               *bool               `json:"veiled,omitempty"`
+	IsRelic              *bool               `json:"isRelic,omitempty"`
+	FoilVariation        *int                `json:"foilVariation,omitempty"`
+	Foreseeing           *bool               `json:"foreseeing,omitempty"`
+	IncubatedItem        *ItemIncubatedItem  `json:"incubatedItem,omitempty"`
+	Ruthless             *bool               `json:"ruthless,omitempty"`
+	FrameType            *int                `json:"frameType,omitempty"`
+	Hybrid               *ItemHybrid         `json:"hybrid,omitempty"`
+	Extended             *ItemExtended       `json:"extended,omitempty"`
+	Socket               *int                `json:"socket,omitempty"`
+	Colour               *string             `json:"colour,omitempty"`
+	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
+
+	// Verified              bool                `json:"verified"`
+	// W                     int                 `json:"w"`
+	// H                     int                 `json:"h"`
+	// Icon                  string              `json:"icon"`
+	// MaxStackSize          *int                `json:"maxStackSize,omitempty"`
+	// StackSizeText         *string             `json:"stackSizeText,omitempty"`
+	// League                string              `json:"league"`
+	// ID                    string              `json:"id"`
+	// Influences            *ItemInfluences     `json:"influences,omitempty"`
+	// Identified            bool                `json:"identified"`
+	// Note                  *string             `json:"note,omitempty"`
+	// ForumNote             *string             `json:"forum_note,omitempty"`
+	// LockedToCharacter     *bool               `json:"lockedToCharacter,omitempty"`
+	// LockedToAccount       *bool               `json:"lockedToAccount,omitempty"`
+	// CisRaceReward         *bool               `json:"cisRaceReward,omitempty"`
+	// SeaRaceReward         *bool               `json:"seaRaceReward,omitempty"`
+	// ThRaceReward          *bool               `json:"thRaceReward,omitempty"`
+	// Requirements          *[]ItemProperty     `json:"requirements,omitempty"`
+	// NextLevelRequirements *[]ItemProperty     `json:"nextLevelRequirements,omitempty"`
+	// SecDescrText          *string             `json:"secDescrText,omitempty"`
+	// DescrText             *string             `json:"descrText,omitempty"`
+	// FlavourText           *[]string           `json:"flavourText,omitempty"`
+	// FlavourTextParsed     *[]interface{}      `json:"flavourTextParsed,omitempty"`
+	// FlavourTextNote       *string             `json:"flavourTextNote,omitempty"`
+	// ProphecyText          *string             `json:"prophecyText,omitempty"`
+	// Replica               *bool               `json:"replica,omitempty"`
+	// Scourged              *ItemScourged       `json:"scourged,omitempty"`
+	// ArtFilename           *string             `json:"artFilename,omitempty"`
+	// X                     *int                `json:"x,omitempty"`
+	// Y                     *int                `json:"y,omitempty"`
+	// InventoryId           *string             `json:"inventoryId,omitempty"`
 }
 
 type Passives struct {

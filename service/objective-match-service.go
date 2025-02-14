@@ -2,6 +2,7 @@ package service
 
 import (
 	"bpl/repository"
+	"bpl/utils"
 	"time"
 
 	"gorm.io/gorm"
@@ -17,13 +18,26 @@ func NewObjectiveMatchService(db *gorm.DB) *ObjectiveMatchService {
 	}
 }
 
-func (e *ObjectiveMatchService) SaveItemMatches(matches map[int]int, userId int, changeId int64, stashId string, eventId int) error {
+type NinjaResponse struct {
+	ID                      int    `json:"id"`
+	NextChangeID            string `json:"next_change_id"`
+	APIBytesDownloaded      int    `json:"api_bytes_downloaded"`
+	StashTabsProcessed      int    `json:"stash_tabs_processed"`
+	APICalls                int    `json:"api_calls"`
+	CharacterBytesDl        int    `json:"character_bytes_downloaded"`
+	CharacterAPICalls       int    `json:"character_api_calls"`
+	LadderBytesDl           int    `json:"ladder_bytes_downloaded"`
+	LadderAPICalls          int    `json:"ladder_api_calls"`
+	PoBCharactersCalculated int    `json:"pob_characters_calculated"`
+	OAuthFlows              int    `json:"oauth_flows"`
+}
+
+func (e *ObjectiveMatchService) CreateMatches(matches map[int]int, userId int, changeId int64, stashId string, eventId int, timestamp time.Time) []*repository.ObjectiveMatch {
 	objectiveMatches := make([]*repository.ObjectiveMatch, 0)
-	now := time.Now()
 	for objectiveId, number := range matches {
 		objectiveMatch := &repository.ObjectiveMatch{
 			ObjectiveID: objectiveId,
-			Timestamp:   now,
+			Timestamp:   timestamp,
 			Number:      number,
 			UserID:      userId,
 			EventId:     eventId,
@@ -32,15 +46,32 @@ func (e *ObjectiveMatchService) SaveItemMatches(matches map[int]int, userId int,
 		}
 		objectiveMatches = append(objectiveMatches, objectiveMatch)
 	}
-	return e.objective_match_repository.SaveMatches(objectiveMatches)
+	return objectiveMatches
 }
 
-func (e *ObjectiveMatchService) SaveStashChange(stashId string, changeId int64, eventId int) error {
-	stashChange := &repository.StashChange{
-		StashID:   stashId,
-		ChangeID:  changeId,
-		EventID:   eventId,
-		Timestamp: time.Now(),
+func (e *ObjectiveMatchService) SaveMatches(matches []*repository.ObjectiveMatch, deleteOld bool) error {
+	if len(matches) == 0 {
+		return nil
 	}
-	return e.objective_match_repository.SaveStashChange(stashChange)
+	if deleteOld {
+		changeIds := make(map[int64]bool)
+		objectiveIds := make(map[int]bool)
+		for _, match := range matches {
+			changeIds[*match.ChangeId] = true
+			objectiveIds[match.ObjectiveID] = true
+		}
+		err := e.objective_match_repository.DeleteMatches(utils.Keys(changeIds), utils.Keys(objectiveIds))
+		if err != nil {
+			return err
+		}
+	}
+	return e.objective_match_repository.SaveMatches(matches)
+}
+
+func (e *ObjectiveMatchService) GetKafkaConsumer(eventId int) (*repository.KafkaConsumer, error) {
+	return e.objective_match_repository.GetKafkaConsumer(eventId)
+}
+
+func (e *ObjectiveMatchService) SaveKafkaConsumerId(consumer *repository.KafkaConsumer) error {
+	return e.objective_match_repository.SaveKafkaConsumer(consumer)
 }

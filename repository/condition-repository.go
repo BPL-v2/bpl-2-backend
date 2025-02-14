@@ -65,6 +65,7 @@ func (r *ConditionRepository) GetConditionByPK(objectiveID int, field ItemField,
 }
 
 func (r *ConditionRepository) SaveCondition(condition *Condition) (*Condition, error) {
+	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveID).Update("sync_status", SyncStatusDesynced)
 	result := r.DB.Save(condition)
 	if result.Error != nil {
 		return nil, result.Error
@@ -73,6 +74,9 @@ func (r *ConditionRepository) SaveCondition(condition *Condition) (*Condition, e
 }
 
 func (r *ConditionRepository) DeleteCondition(conditionId int) error {
+	condition := Condition{}
+	r.DB.First(&condition, "id = ?", conditionId)
+	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveID).Update("sync_status", SyncStatusDesynced)
 	result := r.DB.Delete(&Condition{}, "id = ?", conditionId)
 	return result.Error
 }

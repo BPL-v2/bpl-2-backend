@@ -74,6 +74,7 @@ func InitDB() (*gorm.DB, error) {
 		&model.ClientCredentials{},
 		&model.Signup{},
 		&model.Oauth{},
+		&model.KafkaConsumer{},
 	)
 
 	if err != nil {

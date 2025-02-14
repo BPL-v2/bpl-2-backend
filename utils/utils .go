@@ -9,7 +9,7 @@ func Map[A any, B any](input []A, mapper func(A) B) []B {
 }
 
 func Filter[A any](input []A, filter func(A) bool) []A {
-	output := make([]A, 0, len(input))
+	output := make([]A, 0)
 	for _, item := range input {
 		if filter(item) {
 			output = append(output, item)
@@ -48,11 +48,7 @@ func Uniques[A comparable](input []A) []A {
 	for _, item := range input {
 		ids[item] = true
 	}
-	uniques := make([]A, 0, len(ids))
-	for id := range ids {
-		uniques = append(uniques, id)
-	}
-	return uniques
+	return Keys(ids)
 }
 
 func BatchIterator[A any](input []A, batchSize int) <-chan []A {

@@ -275,7 +275,7 @@ func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
     WITH latest AS (
         SELECT 
             stash_id, 
-            MAX(change_id) AS change_id
+            MAX(int_change_id) AS change_id
         FROM stash_changes
 		WHERE event_id = @eventId
         GROUP BY stash_id
