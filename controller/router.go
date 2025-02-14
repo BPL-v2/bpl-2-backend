@@ -5,7 +5,6 @@ import (
 	"bpl/repository"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type RouteInfo struct {
@@ -16,21 +15,21 @@ type RouteInfo struct {
 	RequiredRoles []repository.Permission
 }
 
-func SetRoutes(r *gin.Engine, db *gorm.DB) {
+func SetRoutes(r *gin.Engine) {
 	routes := make([]RouteInfo, 0)
 	group := r.Group("/api")
-	routes = append(routes, setupEventController(db)...)
-	routes = append(routes, setupTeamController(db)...)
-	routes = append(routes, setupConditionController(db)...)
-	routes = append(routes, setupScoringCategoryController(db)...)
-	routes = append(routes, setupObjectiveController(db)...)
-	routes = append(routes, setupOauthController(db)...)
-	routes = append(routes, setupUserController(db)...)
-	routes = append(routes, setupScoringPresetController(db)...)
-	routes = append(routes, setupSignupController(db)...)
-	routes = append(routes, setupSubmissionController(db)...)
-	routes = append(routes, setupScoreController(db)...)
-	routes = append(routes, setupStreamController(db)...)
+	routes = append(routes, setupEventController()...)
+	routes = append(routes, setupTeamController()...)
+	routes = append(routes, setupConditionController()...)
+	routes = append(routes, setupScoringCategoryController()...)
+	routes = append(routes, setupObjectiveController()...)
+	routes = append(routes, setupOauthController()...)
+	routes = append(routes, setupUserController()...)
+	routes = append(routes, setupScoringPresetController()...)
+	routes = append(routes, setupSignupController()...)
+	routes = append(routes, setupSubmissionController()...)
+	routes = append(routes, setupScoreController()...)
+	routes = append(routes, setupStreamController()...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
 		if route.Authenticated {

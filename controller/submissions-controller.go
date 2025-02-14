@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type SubmissionController struct {
@@ -18,17 +17,17 @@ type SubmissionController struct {
 	eventService      *service.EventService
 }
 
-func NewSubmissionController(db *gorm.DB) *SubmissionController {
+func NewSubmissionController() *SubmissionController {
 	return &SubmissionController{
-		submissionService: service.NewSubmissionService(db),
-		userService:       service.NewUserService(db),
-		teamService:       service.NewTeamService(db),
-		eventService:      service.NewEventService(db),
+		submissionService: service.NewSubmissionService(),
+		userService:       service.NewUserService(),
+		teamService:       service.NewTeamService(),
+		eventService:      service.NewEventService(),
 	}
 }
 
-func setupSubmissionController(db *gorm.DB) []RouteInfo {
-	e := NewSubmissionController(db)
+func setupSubmissionController() []RouteInfo {
+	e := NewSubmissionController()
 	baseUrl := "events/:event_id/submissions"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getSubmissionsHandler()},

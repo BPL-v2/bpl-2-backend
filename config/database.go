@@ -1,7 +1,6 @@
 package config
 
 import (
-	model "bpl/repository"
 	"fmt"
 	"os"
 	"strings"
@@ -60,25 +59,5 @@ func InitDB() (*gorm.DB, error) {
 		}
 	}
 
-	err = db.AutoMigrate(
-		&model.ScoringCategory{},
-		&model.Objective{},
-		&model.Condition{},
-		&model.Event{},
-		&model.Team{},
-		&model.User{},
-		&model.TeamUser{},
-		&model.StashChange{},
-		&model.ObjectiveMatch{},
-		&model.Submission{},
-		&model.ClientCredentials{},
-		&model.Signup{},
-		&model.Oauth{},
-		&model.KafkaConsumer{},
-	)
-
-	if err != nil {
-		return nil, err
-	}
 	return db, nil
 }

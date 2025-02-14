@@ -4,7 +4,6 @@ import (
 	"bpl/service"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type StreamController struct {
@@ -13,16 +12,16 @@ type StreamController struct {
 	streamService *service.StreamService
 }
 
-func NewStreamController(db *gorm.DB) *StreamController {
+func NewStreamController() *StreamController {
 	return &StreamController{
-		teamService:   service.NewTeamService(db),
-		oauthService:  service.NewOauthService(db),
-		streamService: service.NewStreamService(db),
+		teamService:   service.NewTeamService(),
+		oauthService:  service.NewOauthService(),
+		streamService: service.NewStreamService(),
 	}
 }
 
-func setupStreamController(db *gorm.DB) []RouteInfo {
-	e := NewStreamController(db)
+func setupStreamController() []RouteInfo {
+	e := NewStreamController()
 	basePath := "/streams"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getStreamsHandler()},

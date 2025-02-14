@@ -13,12 +13,12 @@ type ConditionController struct {
 	service *service.ConditionService
 }
 
-func NewConditionController(db *gorm.DB) *ConditionController {
-	return &ConditionController{service: service.NewConditionService(db)}
+func NewConditionController() *ConditionController {
+	return &ConditionController{service: service.NewConditionService()}
 }
 
-func setupConditionController(db *gorm.DB) []RouteInfo {
-	e := NewConditionController(db)
+func setupConditionController() []RouteInfo {
+	e := NewConditionController()
 	baseUrl := "/scoring/conditions"
 	routes := []RouteInfo{
 		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler()},

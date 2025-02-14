@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"bpl/config"
+
 	"gorm.io/gorm"
 )
 
@@ -19,8 +21,8 @@ type ScoringCategoryRepository struct {
 	DB *gorm.DB
 }
 
-func NewScoringCategoryRepository(db *gorm.DB) *ScoringCategoryRepository {
-	return &ScoringCategoryRepository{DB: db}
+func NewScoringCategoryRepository() *ScoringCategoryRepository {
+	return &ScoringCategoryRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *ScoringCategoryRepository) GetRulesForEvent(eventId int, preloads ...string) (*ScoringCategory, error) {

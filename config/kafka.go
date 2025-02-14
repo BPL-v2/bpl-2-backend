@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bpl/repository"
 	"fmt"
 	"net"
 	"os"
@@ -10,12 +9,12 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-func CreateTopic(event *repository.Event) error {
+func CreateTopic(eventID int) error {
 	broker := os.Getenv("KAFKA_BROKER")
 	if broker == "" {
 		return fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
-	topic := fmt.Sprintf("stash-changes-%d", event.ID)
+	topic := fmt.Sprintf("stash-changes-%d", eventID)
 
 	conn, err := kafka.Dial("tcp", broker)
 	if err != nil {
@@ -52,12 +51,12 @@ func CreateTopic(event *repository.Event) error {
 	return controllerConn.CreateTopics(topicConfig)
 }
 
-func GetWriter(event *repository.Event) (*kafka.Writer, error) {
+func GetWriter(eventID int) (*kafka.Writer, error) {
 	broker := os.Getenv("KAFKA_BROKER")
 	if broker == "" {
 		return nil, fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
-	topic := fmt.Sprintf("stash-changes-%d", event.ID)
+	topic := fmt.Sprintf("stash-changes-%d", eventID)
 	return kafka.NewWriter(kafka.WriterConfig{
 		Brokers:          []string{broker},
 		Topic:            topic,
@@ -66,14 +65,14 @@ func GetWriter(event *repository.Event) (*kafka.Writer, error) {
 	}), nil
 }
 
-func GetReader(event *repository.Event, consumerId int) (*kafka.Reader, error) {
+func GetReader(eventID int, consumerId int) (*kafka.Reader, error) {
 	broker := os.Getenv("KAFKA_BROKER")
 	if broker == "" {
 		return nil, fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
-	topic := fmt.Sprintf("stash-changes-%d", event.ID)
+	topic := fmt.Sprintf("stash-changes-%d", eventID)
 
-	err := CreateTopic(event)
+	err := CreateTopic(eventID)
 	if err != nil {
 		return nil, err
 	}

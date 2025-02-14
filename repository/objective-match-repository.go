@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"time"
 
 	"gorm.io/gorm"
@@ -26,8 +27,8 @@ type ObjectiveMatchRepository struct {
 	DB *gorm.DB
 }
 
-func NewObjectiveMatchRepository(db *gorm.DB) *ObjectiveMatchRepository {
-	return &ObjectiveMatchRepository{DB: db}
+func NewObjectiveMatchRepository() *ObjectiveMatchRepository {
+	return &ObjectiveMatchRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *ObjectiveMatchRepository) SaveMatches(objectiveMatches []*ObjectiveMatch) error {

@@ -2,8 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-
-	"gorm.io/gorm"
 )
 
 type SignupService struct {
@@ -12,11 +10,11 @@ type SignupService struct {
 	team_repository   *repository.TeamRepository
 }
 
-func NewSignupService(db *gorm.DB) *SignupService {
+func NewSignupService() *SignupService {
 	return &SignupService{
-		signup_repository: repository.NewSignupRepository(db),
-		event_repository:  repository.NewEventRepository(db),
-		team_repository:   repository.NewTeamRepository(db),
+		signup_repository: repository.NewSignupRepository(),
+		event_repository:  repository.NewEventRepository(),
+		team_repository:   repository.NewTeamRepository(),
 	}
 }
 

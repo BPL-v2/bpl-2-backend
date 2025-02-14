@@ -12,7 +12,6 @@ import (
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
-	"gorm.io/gorm"
 )
 
 type Verifier struct {
@@ -77,7 +76,7 @@ type TwitchExtendedUserResponse struct {
 	} `json:"data"`
 }
 
-func NewOauthService(db *gorm.DB) *OauthService {
+func NewOauthService() *OauthService {
 	return &OauthService{
 		config: map[repository.Provider]*oauth2.Config{
 			repository.ProviderDiscord: {
@@ -110,8 +109,8 @@ func NewOauthService(db *gorm.DB) *OauthService {
 		},
 
 		stateToVerifyer:            make(map[string]Verifier),
-		userService:                NewUserService(db),
-		clientCredentialRepository: repository.NewClientCredentialsRepository(db),
+		userService:                NewUserService(),
+		clientCredentialRepository: repository.NewClientCredentialsRepository(),
 	}
 }
 

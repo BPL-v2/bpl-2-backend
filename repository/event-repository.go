@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"fmt"
 	"time"
 
@@ -32,8 +33,8 @@ type EventRepository struct {
 	DB *gorm.DB
 }
 
-func NewEventRepository(db *gorm.DB) *EventRepository {
-	return &EventRepository{DB: db}
+func NewEventRepository() *EventRepository {
+	return &EventRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {

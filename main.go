@@ -4,6 +4,7 @@ import (
 	"bpl/config"
 	"bpl/controller"
 	"bpl/docs"
+	"bpl/repository"
 	"log"
 	"time"
 
@@ -32,9 +33,29 @@ func main() {
 	}
 	db, err := config.InitDB()
 	if err != nil {
-		log.Fatal(err)
-		return
+		panic(err)
 	}
+	err = db.AutoMigrate(
+		&repository.ScoringCategory{},
+		&repository.Objective{},
+		&repository.Condition{},
+		&repository.Event{},
+		&repository.Team{},
+		&repository.User{},
+		&repository.TeamUser{},
+		&repository.StashChange{},
+		&repository.ObjectiveMatch{},
+		&repository.Submission{},
+		&repository.ClientCredentials{},
+		&repository.Signup{},
+		&repository.Oauth{},
+		&repository.KafkaConsumer{},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 	r.Use(gin.Recovery())
@@ -48,6 +69,6 @@ func main() {
 	}))
 	docs.SwaggerInfo.BasePath = "/api"
 	r.GET("/api/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-	controller.SetRoutes(r, db)
+	controller.SetRoutes(r)
 	r.Run(":8000")
 }

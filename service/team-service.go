@@ -2,17 +2,15 @@ package service
 
 import (
 	"bpl/repository"
-
-	"gorm.io/gorm"
 )
 
 type TeamService struct {
 	team_repository *repository.TeamRepository
 }
 
-func NewTeamService(db *gorm.DB) *TeamService {
+func NewTeamService() *TeamService {
 	return &TeamService{
-		team_repository: repository.NewTeamRepository(db),
+		team_repository: repository.NewTeamRepository(),
 	}
 }
 

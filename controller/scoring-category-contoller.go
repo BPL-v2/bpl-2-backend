@@ -14,12 +14,12 @@ type ScoringCategoryController struct {
 	service *service.ScoringCategoryService
 }
 
-func NewScoringCategoryController(db *gorm.DB) *ScoringCategoryController {
-	return &ScoringCategoryController{service: service.NewScoringCategoryService(db)}
+func NewScoringCategoryController() *ScoringCategoryController {
+	return &ScoringCategoryController{service: service.NewScoringCategoryService()}
 }
 
-func setupScoringCategoryController(db *gorm.DB) []RouteInfo {
-	e := NewScoringCategoryController(db)
+func setupScoringCategoryController() []RouteInfo {
+	e := NewScoringCategoryController()
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/rules", HandlerFunc: e.getRulesForEventHandler()},
 		{Method: "PUT", Path: "/scoring/categories", HandlerFunc: e.createCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},

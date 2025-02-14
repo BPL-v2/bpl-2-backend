@@ -3,6 +3,7 @@
 package scoring
 
 import (
+	"bpl/config"
 	"bpl/service"
 	"fmt"
 	"log"
@@ -45,12 +46,12 @@ type ScoreService struct {
 	db                     *gorm.DB
 }
 
-func NewScoreService(db *gorm.DB) *ScoreService {
-	eventService := service.NewEventService(db)
-	scoringCategoryService := service.NewScoringCategoryService(db)
-	objectiveService := service.NewObjectiveService(db)
+func NewScoreService() *ScoreService {
+	eventService := service.NewEventService()
+	scoringCategoryService := service.NewScoringCategoryService()
+	objectiveService := service.NewObjectiveService()
 	return &ScoreService{
-		db:                     db,
+		db:                     config.DatabaseConnection(),
 		eventService:           eventService,
 		scoringCategoryService: scoringCategoryService,
 		objectiveService:       objectiveService,

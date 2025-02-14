@@ -16,10 +16,10 @@ type TeamController struct {
 	eventService *service.EventService
 }
 
-func NewTeamController(db *gorm.DB) *TeamController {
+func NewTeamController() *TeamController {
 	return &TeamController{
-		teamService:  service.NewTeamService(db),
-		eventService: service.NewEventService(db),
+		teamService:  service.NewTeamService(),
+		eventService: service.NewEventService(),
 	}
 }
 
@@ -32,8 +32,8 @@ func toTeamResponse(team *repository.Team) *TeamResponse {
 	}
 }
 
-func setupTeamController(db *gorm.DB) []RouteInfo {
-	e := NewTeamController(db)
+func setupTeamController() []RouteInfo {
+	e := NewTeamController()
 	basePath := "events/:event_id/teams"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamsHandler()},

@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"time"
 
 	"gorm.io/gorm"
@@ -62,8 +63,8 @@ type ObjectiveRepository struct {
 	DB *gorm.DB
 }
 
-func NewObjectiveRepository(db *gorm.DB) *ObjectiveRepository {
-	return &ObjectiveRepository{DB: db}
+func NewObjectiveRepository() *ObjectiveRepository {
+	return &ObjectiveRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *ObjectiveRepository) SaveObjective(objective *Objective) (*Objective, error) {

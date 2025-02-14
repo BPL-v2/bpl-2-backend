@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"bpl/utils"
 
 	"github.com/lib/pq"
@@ -25,8 +26,8 @@ type TeamRepository struct {
 	DB *gorm.DB
 }
 
-func NewTeamRepository(db *gorm.DB) *TeamRepository {
-	return &TeamRepository{DB: db}
+func NewTeamRepository() *TeamRepository {
+	return &TeamRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *TeamRepository) GetTeamById(teamId int) (*Team, error) {

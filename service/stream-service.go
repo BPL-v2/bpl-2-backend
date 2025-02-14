@@ -4,8 +4,6 @@ import (
 	"bpl/client"
 	"bpl/repository"
 	"bpl/utils"
-
-	"gorm.io/gorm"
 )
 
 type StreamService struct {
@@ -15,12 +13,12 @@ type StreamService struct {
 	oauthService    *OauthService
 }
 
-func NewStreamService(db *gorm.DB) *StreamService {
-	oauthService := NewOauthService(db)
+func NewStreamService() *StreamService {
+	oauthService := NewOauthService()
 	token, _ := oauthService.GetApplicationToken("twitch")
 	return &StreamService{
-		user_repository: repository.NewUserRepository(db),
-		team_repository: repository.NewTeamRepository(db),
+		user_repository: repository.NewUserRepository(),
+		team_repository: repository.NewTeamRepository(),
 		twitchClient:    client.NewTwitchClient(*token),
 		oauthService:    oauthService,
 	}

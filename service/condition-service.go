@@ -2,8 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-
-	"gorm.io/gorm"
 )
 
 type ConditionService struct {
@@ -11,10 +9,10 @@ type ConditionService struct {
 	objective_repository *repository.ObjectiveRepository
 }
 
-func NewConditionService(db *gorm.DB) *ConditionService {
+func NewConditionService() *ConditionService {
 	return &ConditionService{
-		condition_repository: repository.NewConditionRepository(db),
-		objective_repository: repository.NewObjectiveRepository(db),
+		condition_repository: repository.NewConditionRepository(),
+		objective_repository: repository.NewObjectiveRepository(),
 	}
 }
 

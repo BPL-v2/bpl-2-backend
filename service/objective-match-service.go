@@ -4,17 +4,15 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type ObjectiveMatchService struct {
 	objective_match_repository *repository.ObjectiveMatchRepository
 }
 
-func NewObjectiveMatchService(db *gorm.DB) *ObjectiveMatchService {
+func NewObjectiveMatchService() *ObjectiveMatchService {
 	return &ObjectiveMatchService{
-		objective_match_repository: repository.NewObjectiveMatchRepository(db),
+		objective_match_repository: repository.NewObjectiveMatchRepository(),
 	}
 }
 

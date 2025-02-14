@@ -4,8 +4,6 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	util "bpl/utils"
-
-	"gorm.io/gorm"
 )
 
 type ObjectiveService struct {
@@ -14,11 +12,11 @@ type ObjectiveService struct {
 	scoring_category_repository *repository.ScoringCategoryRepository
 }
 
-func NewObjectiveService(db *gorm.DB) *ObjectiveService {
+func NewObjectiveService() *ObjectiveService {
 	return &ObjectiveService{
-		objective_repository:        repository.NewObjectiveRepository(db),
-		condition_repository:        repository.NewConditionRepository(db),
-		scoring_category_repository: repository.NewScoringCategoryRepository(db),
+		objective_repository:        repository.NewObjectiveRepository(),
+		condition_repository:        repository.NewConditionRepository(),
+		scoring_category_repository: repository.NewScoringCategoryRepository(),
 	}
 }
 

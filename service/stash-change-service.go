@@ -6,17 +6,15 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type StashChangeService struct {
 	stashChangeRepository *repository.StashChangeRepository
 }
 
-func NewStashChangeService(db *gorm.DB) *StashChangeService {
+func NewStashChangeService() *StashChangeService {
 	return &StashChangeService{
-		stashChangeRepository: repository.NewStashChangeRepository(db),
+		stashChangeRepository: repository.NewStashChangeRepository(),
 	}
 }
 

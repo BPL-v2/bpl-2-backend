@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"database/sql/driver"
 	"fmt"
 
@@ -48,8 +49,8 @@ type UserRepository struct {
 	DB *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepository {
-	return &UserRepository{DB: db}
+func NewUserRepository() *UserRepository {
+	return &UserRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *UserRepository) GetUserById(userId int, preloads ...string) (*User, error) {

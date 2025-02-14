@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	"gorm.io/gorm"
 )
 
 type StashChange struct {
@@ -28,7 +27,6 @@ type StashChange struct {
 
 type MatchingService struct {
 	ctx                   context.Context
-	db                    *gorm.DB
 	poeClient             *client.PoEClient
 	objectiveMatchService *service.ObjectiveMatchService
 	objectiveService      *service.ObjectiveService
@@ -37,16 +35,15 @@ type MatchingService struct {
 	event                 *repository.Event
 }
 
-func NewMatchingService(ctx context.Context, db *gorm.DB, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
-	objectiveMatchService := service.NewObjectiveMatchService(db)
-	objectiveService := service.NewObjectiveService(db)
-	stashService := service.NewStashChangeService(db)
+func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
+	objectiveMatchService := service.NewObjectiveMatchService()
+	objectiveService := service.NewObjectiveService()
+	stashService := service.NewStashChangeService()
 	stashChange, err := stashService.GetInitialChangeId(event)
 	if err != nil {
 		return nil, err
 	}
 	return &MatchingService{
-		db:                    db,
 		poeClient:             poeClient,
 		objectiveMatchService: objectiveMatchService,
 		objectiveService:      objectiveService,
@@ -130,7 +127,7 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 		}
 	}
 
-	return config.GetReader(m.event, consumer.GroupID)
+	return config.GetReader(m.event.ID, consumer.GroupID)
 
 }
 
@@ -211,14 +208,14 @@ func stashChangeToInt(change string) (int64, error) {
 	return sum, nil
 }
 
-func StashLoop(ctx context.Context, db *gorm.DB, poeClient *client.PoEClient) error {
+func StashLoop(ctx context.Context, poeClient *client.PoEClient) error {
 
-	event, err := service.NewEventService(db).GetCurrentEvent("Teams", "Teams.Users")
+	event, err := service.NewEventService().GetCurrentEvent("Teams", "Teams.Users")
 	if err != nil {
 		fmt.Println("Failed to get current event:", err)
 		return err
 	}
-	m, err := NewMatchingService(ctx, db, poeClient, event)
+	m, err := NewMatchingService(ctx, poeClient, event)
 	if err != nil {
 		fmt.Println("Failed to create matching service:", err)
 		return err

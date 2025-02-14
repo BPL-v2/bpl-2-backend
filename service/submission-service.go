@@ -4,22 +4,20 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
-
-	"gorm.io/gorm"
 )
 
 type SubmissionService struct {
 	submission_repository *repository.SubmissionRepository
 }
 
-func NewSubmissionService(db *gorm.DB) *SubmissionService {
+func NewSubmissionService() *SubmissionService {
 	return &SubmissionService{
-		submission_repository: repository.NewSubmissionRepository(db),
+		submission_repository: repository.NewSubmissionRepository(),
 	}
 }
 
 func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submission, error) {
-	objectiveService := NewObjectiveService(e.submission_repository.DB)
+	objectiveService := NewObjectiveService()
 	objectives, err := objectiveService.GetObjectivesByEventId(eventId)
 	if err != nil {
 		return nil, err

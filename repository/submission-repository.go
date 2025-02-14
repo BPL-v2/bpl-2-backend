@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"bpl/utils"
 	"time"
 
@@ -47,8 +48,8 @@ type SubmissionRepository struct {
 	DB *gorm.DB
 }
 
-func NewSubmissionRepository(db *gorm.DB) *SubmissionRepository {
-	return &SubmissionRepository{DB: db}
+func NewSubmissionRepository() *SubmissionRepository {
+	return &SubmissionRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *SubmissionRepository) GetSubmissionsForObjectives(objectives []*Objective) ([]*Submission, error) {

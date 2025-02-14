@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/config"
 	"time"
 
 	"gorm.io/gorm"
@@ -31,8 +32,8 @@ type SignupRepository struct {
 	DB *gorm.DB
 }
 
-func NewSignupRepository(db *gorm.DB) *SignupRepository {
-	return &SignupRepository{DB: db}
+func NewSignupRepository() *SignupRepository {
+	return &SignupRepository{DB: config.DatabaseConnection()}
 }
 
 func (r *SignupRepository) CreateSignup(signup *Signup) (*Signup, error) {
