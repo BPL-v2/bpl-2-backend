@@ -51,7 +51,7 @@ func setupScoreController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
 		{Method: "POST", Path: "/fetch/:seconds", HandlerFunc: e.FetchStashChangesHandler()},
-		{Method: "POST", Path: "/evaluate/:seconds", HandlerFunc: e.FetchStashChangesHandler()},
+		{Method: "POST", Path: "/evaluate/:seconds", HandlerFunc: e.EvaluateStashChangesHandler()},
 		{Method: "GET", Path: "/ws", HandlerFunc: e.WebSocketHandler},
 	}
 	for i, route := range routes {
@@ -206,7 +206,6 @@ func (e *ScoreController) EvaluateStashChangesHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		_ = seconds
 		ctx, _ := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
 		err = scoring.StashLoop(ctx, e.poeClient)
 		if err != nil {
