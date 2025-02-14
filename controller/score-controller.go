@@ -5,6 +5,7 @@ import (
 	"bpl/scoring"
 	"bpl/service"
 	"bpl/utils"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"log"
@@ -50,7 +51,7 @@ func setupScoreController(db *gorm.DB) []RouteInfo {
 	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
-		{Method: "POST", Path: "/:minutes", HandlerFunc: e.FetchStashChangesHandler()},
+		{Method: "POST", Path: "/:seconds", HandlerFunc: e.FetchStashChangesHandler()},
 		{Method: "GET", Path: "/ws", HandlerFunc: e.WebSocketHandler},
 	}
 	for i, route := range routes {
@@ -177,12 +178,18 @@ func calculateHash(scores []*scoring.Score) []byte {
 
 func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		minutes, err := strconv.Atoi(c.Param("minutes"))
+		seconds, err := strconv.Atoi(c.Param("seconds"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		scoring.StashLoop(e.db, e.poeClient, time.Now().Add(time.Duration(minutes)*time.Minute))
+		_ = seconds
+		ctx, _ := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
+		err = scoring.StashLoop(ctx, e.db, e.poeClient)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(200, gin.H{"message": "Stash change fetch started"})
 	}
 }

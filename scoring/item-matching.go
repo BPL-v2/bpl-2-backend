@@ -2,90 +2,75 @@ package scoring
 
 import (
 	"bpl/client"
+	"bpl/config"
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
-	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 )
 
-type NinjaResponse struct {
-	ID                      int    `json:"id"`
-	NextChangeID            string `json:"next_change_id"`
-	APIBytesDownloaded      int    `json:"api_bytes_downloaded"`
-	StashTabsProcessed      int    `json:"stash_tabs_processed"`
-	APICalls                int    `json:"api_calls"`
-	CharacterBytesDl        int    `json:"character_bytes_downloaded"`
-	CharacterAPICalls       int    `json:"character_api_calls"`
-	LadderBytesDl           int    `json:"ladder_bytes_downloaded"`
-	LadderAPICalls          int    `json:"ladder_api_calls"`
-	PoBCharactersCalculated int    `json:"pob_characters_calculated"`
-	OAuthFlows              int    `json:"oauth_flows"`
-}
-
 type StashChange struct {
-	Stashes  []client.PublicStashChange
-	ChangeID string
+	Stashes      []client.PublicStashChange
+	ChangeID     string
+	NextChangeID string
+	Timestamp    time.Time
 }
 
-func getInitialChangeId() (string, error) {
-	response, err := http.Get("https://poe.ninja/api/data/GetStats")
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch initial change id: %s", err)
-	}
-	defer response.Body.Close()
-	var ninjaResponse NinjaResponse
-	err = json.NewDecoder(response.Body).Decode(&ninjaResponse)
-	if err != nil {
-		return "", fmt.Errorf("failed to decode initial change id response: %s", err)
-	}
-	return ninjaResponse.NextChangeID, nil
+type MatchingService struct {
+	ctx                   context.Context
+	db                    *gorm.DB
+	poeClient             *client.PoEClient
+	objectiveMatchService *service.ObjectiveMatchService
+	objectiveService      *service.ObjectiveService
+	stashChannel          chan StashChange
+	startChangeId         int64
+	event                 *repository.Event
 }
 
-func FetchStashChanges(poeClient *client.PoEClient, endTime time.Time, stashChannel chan StashChange) error {
-	token := os.Getenv("POE_CLIENT_TOKEN")
-	if token == "" {
-		return fmt.Errorf("POE_CLIENT_TOKEN environment variable not set")
-	}
-	changeId, err := getInitialChangeId()
+func NewMatchingService(ctx context.Context, db *gorm.DB, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
+	objectiveMatchService := service.NewObjectiveMatchService(db)
+	objectiveService := service.NewObjectiveService(db)
+	stashService := service.NewStashChangeService(db)
+	stashChange, err := stashService.GetInitialChangeId(event)
 	if err != nil {
-		fmt.Println(err)
-		return err
+		return nil, err
 	}
-	fmt.Println("Initial change id:", changeId)
-	for time.Now().Before(endTime) {
-		response, err := poeClient.GetPublicStashes(token, "pc", changeId)
-		if err != nil {
-			if err.StatusCode == 429 {
-				fmt.Println(err.ResponseHeaders)
-				retryAfter, err := strconv.Atoi(err.ResponseHeaders.Get("Retry-After"))
-				if err != nil {
-					fmt.Println(err)
-					return fmt.Errorf("failed to parse Retry-After header: %s", err)
-				}
-				<-time.After((time.Duration(retryAfter) + 1) * time.Second)
-			} else {
-				fmt.Println(err)
-				return fmt.Errorf("failed to fetch public stashes: %s", err.Description)
-			}
-		}
-		stashChannel <- StashChange{ChangeID: changeId, Stashes: response.Stashes}
-		changeId = response.NextChangeID
-	}
-	return nil
+	return &MatchingService{
+		db:                    db,
+		poeClient:             poeClient,
+		objectiveMatchService: objectiveMatchService,
+		objectiveService:      objectiveService,
+		stashChannel:          make(chan StashChange, 10000),
+		startChangeId:         stashChange.IntChangeID,
+		event:                 event,
+		ctx:                   ctx,
+	}, nil
 }
 
-func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecker, objectiveMatchService *service.ObjectiveMatchService, stashChannel chan StashChange) {
+func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange StashChange, err error) {
+	msg, err := reader.ReadMessage(context.Background())
+	if err != nil {
+		return stashChange, err
+	}
+	if err := json.Unmarshal(msg.Value, &stashChange); err != nil {
+		return stashChange, err
+	}
+	return stashChange, nil
+}
+
+func (m *MatchingService) getUserMap() map[string]int {
 	userMap := make(map[string]int)
-	for _, team := range event.Teams {
+	for _, team := range m.event.Teams {
 		for _, user := range team.Users {
 			for account := range user.OauthAccounts {
 				if user.OauthAccounts[account].Provider == repository.ProviderPoE {
@@ -95,25 +80,121 @@ func ProcessStashChanges(event *repository.Event, itemChecker *parser.ItemChecke
 
 		}
 	}
+	return userMap
+}
 
-	for stashChange := range stashChannel {
-		intStashChange, err := stashChangeToInt(stashChange.ChangeID)
-		if err != nil {
-			continue
-		}
-		for _, stash := range stashChange.Stashes {
-			objectiveMatchService.SaveStashChange(stash.ID, intStashChange, event.ID)
-			userId := rand.IntN(4) + 1
-			// if stash.League != nil && *stash.League == event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
-			// 	userId := userMap[*stash.AccountName]
-			completions := make(map[int]int)
-			for _, item := range stash.Items {
-				for _, result := range itemChecker.CheckForCompletions(&item) {
+func (m *MatchingService) getMatches(stashChange StashChange, userMap map[string]int, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
+	matches := make([]*repository.ObjectiveMatch, 0)
+	syncFinished := len(desyncedObjectiveIds) == 0
+	intChangeId, err := stashChangeToInt(stashChange.ChangeID)
+	if err != nil {
+		fmt.Println(err)
+		return matches
+	}
+	for _, stash := range stashChange.Stashes {
+		userId := rand.IntN(4) + 1
+		// if stash.League != nil && *stash.League == m.event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
+		// 	userId := userMap[*stash.AccountName]
+		completions := make(map[int]int)
+		for _, item := range stash.Items {
+
+			for _, result := range itemChecker.CheckForCompletions(&item) {
+				// while syncing we only update the completions for objectives that are desynced
+				if syncFinished || utils.Contains(desyncedObjectiveIds, result.ObjectiveId) {
 					completions[result.ObjectiveId] += result.Number
 				}
 			}
-			objectiveMatchService.SaveItemMatches(completions, userId, intStashChange, stash.ID, event.ID)
-			// }
+		}
+		matches = append(matches, m.objectiveMatchService.CreateMatches(completions, userId, intChangeId, stash.ID, m.event.ID, stashChange.Timestamp)...)
+		// }
+	}
+	return matches
+}
+
+func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, error) {
+	err := m.objectiveService.StartSync(desyncedObjectiveIds)
+	if err != nil {
+		return nil, err
+	}
+
+	consumer, err := m.objectiveMatchService.GetKafkaConsumer(m.event.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(desyncedObjectiveIds) > 0 {
+		consumer.GroupID += 1
+		err = m.objectiveMatchService.SaveKafkaConsumerId(consumer)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	return config.GetReader(m.event, consumer.GroupID)
+
+}
+
+func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, objectives []*repository.Objective) {
+
+	userMap := m.getUserMap()
+	desyncedObjectiveIds := make([]int, 0)
+	for _, objective := range objectives {
+		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ITEM {
+			desyncedObjectiveIds = append(desyncedObjectiveIds, objective.ID)
+		}
+	}
+	reader, err := m.GetReader(desyncedObjectiveIds)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer reader.Close()
+
+	deleteOld := len(desyncedObjectiveIds) > 0
+	matches := make([]*repository.ObjectiveMatch, 0)
+	if m.startChangeId == 0 {
+		// this means we dont have any earlier changes, so we assume there are no desynced objectives
+		m.objectiveService.SetSynced(desyncedObjectiveIds)
+		desyncedObjectiveIds = make([]int, 0)
+	}
+
+	t := time.Now()
+	for {
+		select {
+		case <-m.ctx.Done():
+			return
+		default:
+			stashChange, err := m.GetStashChange(reader)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			intChangeId, err := stashChangeToInt(stashChange.ChangeID)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+
+			if intChangeId == m.startChangeId {
+				// once we reach the starting change id the sync is finished
+				m.objectiveService.SetSynced(desyncedObjectiveIds)
+				desyncedObjectiveIds = make([]int, 0)
+			}
+			matches = append(matches, m.getMatches(stashChange, userMap, itemChecker, desyncedObjectiveIds)...)
+			if len(desyncedObjectiveIds) == 0 {
+				tt := time.Now()
+				err = m.objectiveMatchService.SaveMatches(matches, deleteOld)
+				fmt.Printf("saving in %s\n", time.Since(tt))
+				if err != nil {
+					fmt.Println(err)
+				}
+				if deleteOld {
+					fmt.Printf("finished sync in %s\n", time.Since(t))
+				}
+				deleteOld = false
+				matches = make([]*repository.ObjectiveMatch, 0)
+			}
+
 		}
 	}
 }
@@ -130,26 +211,27 @@ func stashChangeToInt(change string) (int64, error) {
 	return sum, nil
 }
 
-func StashLoop(db *gorm.DB, poeClient *client.PoEClient, endTime time.Time) {
-	var stashChannel = make(chan StashChange, 10000)
+func StashLoop(ctx context.Context, db *gorm.DB, poeClient *client.PoEClient) error {
 
 	event, err := service.NewEventService(db).GetCurrentEvent("Teams", "Teams.Users")
 	if err != nil {
-		fmt.Println(err)
-		return
+		fmt.Println("Failed to get current event:", err)
+		return err
+	}
+	m, err := NewMatchingService(ctx, db, poeClient, event)
+	if err != nil {
+		fmt.Println("Failed to create matching service:", err)
+		return err
 	}
 
-	objectives, err := service.NewObjectiveService(db).GetObjectivesByEventId(event.ID)
+	objectives, err := m.objectiveService.GetObjectivesByEventId(event.ID)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
 	itemChecker, err := parser.NewItemChecker(objectives)
 	if err != nil {
-		fmt.Println(err)
-		return
+		return err
 	}
-	objectiveMatchService := service.NewObjectiveMatchService(db)
-	go FetchStashChanges(poeClient, endTime, stashChannel)
-	go ProcessStashChanges(event, itemChecker, objectiveMatchService, stashChannel)
+	go m.ProcessStashChanges(itemChecker, objectives)
+	return nil
 }

@@ -128,6 +128,9 @@ func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamM
 func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
 	rankFun := func(a, b *Match) bool {
 		if a.Finished && b.Finished {
+			if a.Timestamp.Equal(b.Timestamp) {
+				return a.Number > b.Number
+			}
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Finished
@@ -155,7 +158,6 @@ func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMat
 	for _, match := range aggregations[objective.ID] {
 		matches = append(matches, match)
 	}
-	// TODO: TEST DIRECTION LOL
 	sort.Slice(matches, func(i, j int) bool { return rankFun(matches[i], matches[j]) })
 	for i, match := range matches {
 		score := &Score{
