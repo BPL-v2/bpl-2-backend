@@ -50,7 +50,8 @@ func setupScoreController() []RouteInfo {
 	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
-		{Method: "POST", Path: "/:seconds", HandlerFunc: e.FetchStashChangesHandler()},
+		{Method: "POST", Path: "/fetch/:seconds", HandlerFunc: e.FetchStashChangesHandler()},
+		{Method: "POST", Path: "/evaluate/:seconds", HandlerFunc: e.FetchStashChangesHandler()},
 		{Method: "GET", Path: "/ws", HandlerFunc: e.WebSocketHandler},
 	}
 	for i, route := range routes {
@@ -182,6 +183,29 @@ func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+		eventId, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		event, err := e.eventService.GetEventById(eventId)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		ctx, _ := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
+		scoring.FetchLoop(ctx, event, e.poeClient)
+		c.JSON(200, gin.H{"message": "Stash change fetch started"})
+	}
+}
+func (e *ScoreController) EvaluateStashChangesHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		seconds, err := strconv.Atoi(c.Param("seconds"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
 		_ = seconds
 		ctx, _ := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
 		err = scoring.StashLoop(ctx, e.poeClient)
@@ -189,7 +213,7 @@ func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, gin.H{"message": "Stash change fetch started"})
+		c.JSON(200, gin.H{"message": "Stash change evaluation started"})
 	}
 }
 

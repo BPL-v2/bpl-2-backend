@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,43 +22,52 @@ var enumQueries = []string{
 	`CREATE TYPE bpl2.approval_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED')`,
 }
 
-func DatabaseConnection() *gorm.DB {
-	sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable search_path=bpl2", os.Getenv("DATABASE_HOST"), os.Getenv("DATABASE_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("DATABASE_NAME"))
+var (
+	db   *gorm.DB
+	once sync.Once
+)
 
-	db, err := gorm.Open(postgres.Open(sqlInfo), &gorm.Config{})
-	if err != nil {
-		panic(err)
-	}
+func DatabaseConnection() *gorm.DB {
 	return db
 }
 
 func InitDB() (*gorm.DB, error) {
-	sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable search_path=bpl2", os.Getenv("DATABASE_HOST"), os.Getenv("DATABASE_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("DATABASE_NAME"))
-	db, err := gorm.Open(postgres.Open(sqlInfo), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			TablePrefix:   "bpl2.",
-			SingularTable: false,
-		},
-		Logger: logger.Default.LogMode(logger.Silent),
-		// Logger: logger.Default.LogMode(logger.Info),
-	})
-	if err != nil {
-		return nil, err
-	}
+	var err error
+	once.Do(func() {
+		sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable search_path=bpl2",
+			os.Getenv("DATABASE_HOST"),
+			os.Getenv("DATABASE_PORT"),
+			os.Getenv("POSTGRES_USER"),
+			os.Getenv("POSTGRES_PASSWORD"),
+			os.Getenv("DATABASE_NAME"))
 
-	x := db.Exec(`CREATE SCHEMA IF NOT EXISTS bpl2`)
-	if x.Error != nil {
-		return nil, x.Error
-	}
-	for _, query := range enumQueries {
-		x := db.Exec(query)
-		if x.Error != nil {
-			if strings.Contains(x.Error.Error(), "already exists") {
-				continue
-			}
-			return nil, x.Error
+		db, err = gorm.Open(postgres.Open(sqlInfo), &gorm.Config{
+			NamingStrategy: schema.NamingStrategy{
+				TablePrefix:   "bpl2.",
+				SingularTable: false,
+			},
+			Logger: logger.Default.LogMode(logger.Silent),
+		})
+		if err != nil {
+			return
 		}
-	}
 
-	return db, nil
+		x := db.Exec(`CREATE SCHEMA IF NOT EXISTS bpl2`)
+		if x.Error != nil {
+			err = x.Error
+			return
+		}
+		for _, query := range enumQueries {
+			x := db.Exec(query)
+			if x.Error != nil {
+				if strings.Contains(x.Error.Error(), "already exists") {
+					continue
+				}
+				err = x.Error
+				return
+			}
+		}
+	})
+
+	return db, err
 }
