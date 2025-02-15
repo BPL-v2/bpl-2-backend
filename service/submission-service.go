@@ -79,7 +79,6 @@ func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview 
 			submission.Match = match
 		}
 	}
-
 	submission.ApprovalStatus = submissionReview.ApprovalStatus
 	submission.ReviewComment = submissionReview.ReviewComment
 	submission.ReviewerID = &reviewer.ID

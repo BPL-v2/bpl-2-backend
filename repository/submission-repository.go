@@ -28,6 +28,7 @@ type Submission struct {
 	ReviewComment  *string        `gorm:"null"`
 	ReviewerID     *int           `gorm:"null;references:users(id)"`
 	MatchID        *int           `gorm:"null;references:objective_matches(id)"`
+	EventID        int            `gorm:"not null;references:events(id)"`
 
 	Match     *ObjectiveMatch `gorm:"foreignKey:MatchID;constraint:OnDelete:CASCADE;"`
 	Objective *Objective      `gorm:"foreignKey:ObjectiveID;constraint:OnDelete:CASCADE;"`
@@ -41,6 +42,7 @@ func (s *Submission) ToObjectiveMatch() *ObjectiveMatch {
 		Timestamp:   s.Timestamp,
 		Number:      s.Number,
 		UserID:      s.UserID,
+		EventId:     s.EventID,
 	}
 }
 
