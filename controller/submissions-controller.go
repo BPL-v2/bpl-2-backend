@@ -93,6 +93,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 			return
 		}
 		submission := submissionCreate.toModel()
+		submission.EventID, _ = strconv.Atoi(c.Param("event_id"))
 		user, err := e.userService.GetUserFromAuthCookie(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
@@ -159,14 +160,21 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
+		eventId, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
 
 		var submissionReview *SubmissionReview
 		if err := c.BindJSON(&submissionReview); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+		model := submissionReview.toModel()
+		model.EventID = eventId
 
-		submission, err := e.submissionService.ReviewSubmission(submissionId, submissionReview.toModel(), user)
+		submission, err := e.submissionService.ReviewSubmission(submissionId, model, user)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
