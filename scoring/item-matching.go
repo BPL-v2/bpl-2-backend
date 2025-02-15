@@ -31,7 +31,7 @@ type MatchingService struct {
 	objectiveMatchService *service.ObjectiveMatchService
 	objectiveService      *service.ObjectiveService
 	stashChannel          chan StashChange
-	startChangeId         int64
+	lastChangeId          int64
 	event                 *repository.Event
 }
 
@@ -48,7 +48,7 @@ func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event 
 		objectiveMatchService: objectiveMatchService,
 		objectiveService:      objectiveService,
 		stashChannel:          make(chan StashChange, 10000),
-		startChangeId:         stashChange.IntChangeID,
+		lastChangeId:          stashChange.IntChangeID,
 		event:                 event,
 		ctx:                   ctx,
 	}, nil
@@ -147,15 +147,14 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	}
 	defer reader.Close()
 
-	deleteOld := len(desyncedObjectiveIds) > 0
+	syncing := len(desyncedObjectiveIds) > 0
 	matches := make([]*repository.ObjectiveMatch, 0)
-	if m.startChangeId == 0 {
+	if m.lastChangeId == 0 {
 		// this means we dont have any earlier changes, so we assume there are no desynced objectives
 		m.objectiveService.SetSynced(desyncedObjectiveIds)
 		desyncedObjectiveIds = make([]int, 0)
 	}
 
-	t := time.Now()
 	for {
 		select {
 		case <-m.ctx.Done():
@@ -166,29 +165,25 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				fmt.Println(err)
 				return
 			}
+			fmt.Printf("Processing change %s\n", stashChange.ChangeID)
 			intChangeId, err := stashChangeToInt(stashChange.ChangeID)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			if intChangeId == m.startChangeId {
+			if intChangeId == m.lastChangeId {
 				// once we reach the starting change id the sync is finished
 				m.objectiveService.SetSynced(desyncedObjectiveIds)
-				desyncedObjectiveIds = make([]int, 0)
+				syncing = false
 			}
 			matches = append(matches, m.getMatches(stashChange, userMap, itemChecker, desyncedObjectiveIds)...)
-			if len(desyncedObjectiveIds) == 0 {
-				tt := time.Now()
-				err = m.objectiveMatchService.SaveMatches(matches, deleteOld)
-				fmt.Printf("saving in %s\n", time.Since(tt))
+			if !syncing {
+				err = m.objectiveMatchService.SaveMatches(matches, desyncedObjectiveIds)
 				if err != nil {
 					fmt.Println(err)
 				}
-				if deleteOld {
-					fmt.Printf("finished sync in %s\n", time.Since(t))
-				}
-				deleteOld = false
+				desyncedObjectiveIds = make([]int, 0)
 				matches = make([]*repository.ObjectiveMatch, 0)
 			}
 
@@ -208,13 +203,7 @@ func stashChangeToInt(change string) (int64, error) {
 	return sum, nil
 }
 
-func StashLoop(ctx context.Context, poeClient *client.PoEClient) error {
-
-	event, err := service.NewEventService().GetCurrentEvent("Teams", "Teams.Users")
-	if err != nil {
-		fmt.Println("Failed to get current event:", err)
-		return err
-	}
+func StashLoop(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) error {
 	m, err := NewMatchingService(ctx, poeClient, event)
 	if err != nil {
 		fmt.Println("Failed to create matching service:", err)
