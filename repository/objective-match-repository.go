@@ -39,6 +39,20 @@ func (r *ObjectiveMatchRepository) SaveMatches(objectiveMatches []*ObjectiveMatc
 	return nil
 }
 
+func (r *ObjectiveMatchRepository) OverwriteMatches(objectiveMatches []*ObjectiveMatch, changeIds []int64, objectiveIds []int) error {
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		err := r.DeleteMatches(changeIds, objectiveIds)
+		if err != nil {
+			return err
+		}
+		err = r.SaveMatches(objectiveMatches)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func (r *ObjectiveMatchRepository) DeleteMatch(id int) error {
 	result := r.DB.Delete(&ObjectiveMatch{}, id)
 	if result.Error != nil {

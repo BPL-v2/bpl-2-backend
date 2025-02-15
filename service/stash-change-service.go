@@ -18,15 +18,8 @@ func NewStashChangeService() *StashChangeService {
 	}
 }
 
-func (s *StashChangeService) SaveStashChange(stashId string, nextChangeId string, intChangeId int64, eventId int, timestamp time.Time) error {
-	stashChange := &repository.StashChange{
-		StashID:      stashId,
-		NextChangeID: nextChangeId,
-		IntChangeID:  intChangeId,
-		EventID:      eventId,
-		Timestamp:    timestamp,
-	}
-	return s.stashChangeRepository.SaveStashChange(stashChange)
+func (s *StashChangeService) SaveStashChangesConditionally(stashChanges []*repository.StashChange, condFunc func() error) error {
+	return s.stashChangeRepository.SaveStashChangesConditionally(stashChanges, condFunc)
 }
 
 func (s *StashChangeService) GetLatestStashChangeForEvent(event *repository.Event) (*repository.StashChange, error) {

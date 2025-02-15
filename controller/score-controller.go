@@ -6,7 +6,6 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"context"
-	"crypto/sha256"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -17,17 +16,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"gorm.io/gorm"
 )
 
 type ScoreController struct {
-	db                     *gorm.DB
 	scoringCategoryService *service.ScoringCategoryService
 	eventService           *service.EventService
 	scoreService           *scoring.ScoreService
 	poeClient              *client.PoEClient
 	mu                     sync.Mutex
 	connections            map[int]map[*websocket.Conn]bool
+	cancelFetching         context.CancelFunc
+	cancelEvaluating       context.CancelFunc
 }
 
 func NewScoreController() *ScoreController {
@@ -40,6 +39,8 @@ func NewScoreController() *ScoreController {
 		scoreService:           scoring.NewScoreService(),
 		poeClient:              poeClient,
 		connections:            make(map[int]map[*websocket.Conn]bool),
+		cancelFetching:         nil,
+		cancelEvaluating:       nil,
 	}
 	controller.StartScoreUpdater()
 	return controller
@@ -168,14 +169,6 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	}
 }
 
-func calculateHash(scores []*scoring.Score) []byte {
-	hash := sha256.New()
-	for _, score := range scores {
-		hash.Write([]byte(strconv.Itoa(score.TeamID + score.Number + score.Points + score.UserID)))
-	}
-	return hash.Sum(nil)
-}
-
 func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		seconds, err := strconv.Atoi(c.Param("seconds"))
@@ -193,8 +186,11 @@ func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
-		ctx, _ := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
+		if e.cancelFetching != nil {
+			e.cancelFetching()
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
+		e.cancelFetching = cancel
 		scoring.FetchLoop(ctx, event, e.poeClient)
 		c.JSON(200, gin.H{"message": "Stash change fetch started"})
 	}
@@ -206,8 +202,23 @@ func (e *ScoreController) EvaluateStashChangesHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		ctx, _ := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
-		err = scoring.StashLoop(ctx, e.poeClient)
+		eventId, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		event, err := e.eventService.GetEventById(eventId, "Teams", "Teams.Users")
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		if e.cancelEvaluating != nil {
+			e.cancelEvaluating()
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
+		e.cancelEvaluating = cancel
+		ctx.Done()
+		err = scoring.StashLoop(ctx, e.poeClient, event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

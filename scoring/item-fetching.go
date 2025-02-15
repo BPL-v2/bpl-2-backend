@@ -52,6 +52,7 @@ func (f *FetchingService) FetchStashChanges() error {
 		case <-f.ctx.Done():
 			return nil
 		default:
+			fmt.Println("Fetching stashes with change id:", changeId)
 			response, err := f.poeClient.GetPublicStashes(token, "pc", changeId)
 			if err != nil {
 				if err.StatusCode == 429 {
@@ -100,6 +101,7 @@ func (f *FetchingService) FilterStashChanges() {
 				Stashes:      make([]client.PublicStashChange, 0),
 			}
 			now := time.Now()
+			stashChanges := make([]*repository.StashChange, 0)
 			for _, stash := range stashChange.Stashes {
 				intStashChange, err := stashChangeToInt(stashChange.ChangeID)
 				if err != nil {
@@ -107,26 +109,33 @@ func (f *FetchingService) FilterStashChanges() {
 					return
 				}
 				// if stash.League != nil && *stash.League == event.Name {
-				f.stashChangeService.SaveStashChange(stash.ID, stashChange.NextChangeID, intStashChange, f.event.ID, now)
+				stashChanges = append(stashChanges, &repository.StashChange{
+					StashID:      stash.ID,
+					NextChangeID: stashChange.NextChangeID,
+					IntChangeID:  intStashChange,
+					EventID:      f.event.ID,
+					Timestamp:    now,
+				})
+
 				filteredStashChange.Stashes = append(filteredStashChange.Stashes, stash)
 				// }
 			}
 			filteredStashChange.Timestamp = now
-
+			fmt.Printf("Found %d stashes\n", len(filteredStashChange.Stashes))
 			data, err := json.Marshal(filteredStashChange)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
-			err = writer.WriteMessages(context.Background(),
-				kafka.Message{
-					Value: data,
-				},
-			)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+			// make sure that stash changes are only saved if the messages are successfully written to kafka
+			f.stashChangeService.SaveStashChangesConditionally(stashChanges,
+				func() error {
+					return writer.WriteMessages(context.Background(),
+						kafka.Message{
+							Value: data,
+						},
+					)
+				})
 		}
 	}
 }

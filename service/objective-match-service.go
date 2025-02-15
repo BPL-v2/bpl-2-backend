@@ -47,21 +47,16 @@ func (e *ObjectiveMatchService) CreateMatches(matches map[int]int, userId int, c
 	return objectiveMatches
 }
 
-func (e *ObjectiveMatchService) SaveMatches(matches []*repository.ObjectiveMatch, deleteOld bool) error {
+func (e *ObjectiveMatchService) SaveMatches(matches []*repository.ObjectiveMatch, desyncedObjectIDs []int) error {
 	if len(matches) == 0 {
 		return nil
 	}
-	if deleteOld {
+	if len(desyncedObjectIDs) > 0 {
 		changeIds := make(map[int64]bool)
-		objectiveIds := make(map[int]bool)
 		for _, match := range matches {
 			changeIds[*match.ChangeId] = true
-			objectiveIds[match.ObjectiveID] = true
 		}
-		err := e.objective_match_repository.DeleteMatches(utils.Keys(changeIds), utils.Keys(objectiveIds))
-		if err != nil {
-			return err
-		}
+		return e.objective_match_repository.OverwriteMatches(matches, utils.Keys(changeIds), desyncedObjectIDs)
 	}
 	return e.objective_match_repository.SaveMatches(matches)
 }
