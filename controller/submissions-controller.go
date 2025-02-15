@@ -99,7 +99,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		_, err = e.teamService.GetTeamForUser(user.ID, submission.EventID)
+		_, err = e.teamService.GetTeamForUser(submission.EventID, user.ID)
 		if err != nil {
 			c.JSON(403, gin.H{"error": "User does not participate in event"})
 			return
