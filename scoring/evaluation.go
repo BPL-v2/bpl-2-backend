@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"sort"
+	"strconv"
 	"time"
 )
 
@@ -24,6 +25,14 @@ type Score struct {
 	Timestamp time.Time
 	Number    int
 	Finished  bool
+}
+
+func (s *Score) Identifier() string {
+	if s.Type == OBJECTIVE {
+		return "O-" + strconv.Itoa(s.ID) + "-" + strconv.Itoa(s.TeamID)
+	} else {
+		return "C-" + strconv.Itoa(s.ID) + "-" + strconv.Itoa(s.TeamID)
+	}
 }
 
 func EvaluateAggregations(category *repository.ScoringCategory, aggregations ObjectiveTeamMatches) ([]*Score, error) {

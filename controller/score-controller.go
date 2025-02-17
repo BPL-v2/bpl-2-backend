@@ -1,15 +1,12 @@
 package controller
 
 import (
-	"bpl/client"
 	"bpl/scoring"
 	"bpl/service"
 	"bpl/utils"
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -21,26 +18,19 @@ import (
 type ScoreController struct {
 	scoringCategoryService *service.ScoringCategoryService
 	eventService           *service.EventService
-	scoreService           *scoring.ScoreService
-	poeClient              *client.PoEClient
+	scoreService           *service.ScoreService
 	mu                     sync.Mutex
 	connections            map[int]map[*websocket.Conn]bool
-	cancelFetching         context.CancelFunc
-	cancelEvaluating       context.CancelFunc
 }
 
 func NewScoreController() *ScoreController {
 	scoringCategoryService := service.NewScoringCategoryService()
 	eventService := service.NewEventService()
-	poeClient := client.NewPoEClient(os.Getenv("POE_CLIENT_AGENT"), 10, false, 10)
 	controller := &ScoreController{
 		scoringCategoryService: scoringCategoryService,
 		eventService:           eventService,
-		scoreService:           scoring.NewScoreService(),
-		poeClient:              poeClient,
+		scoreService:           service.NewScoreService(),
 		connections:            make(map[int]map[*websocket.Conn]bool),
-		cancelFetching:         nil,
-		cancelEvaluating:       nil,
 	}
 	controller.StartScoreUpdater()
 	return controller
@@ -51,8 +41,6 @@ func setupScoreController() []RouteInfo {
 	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
-		{Method: "POST", Path: "/fetch/:seconds", HandlerFunc: e.FetchStashChangesHandler()},
-		{Method: "POST", Path: "/evaluate/:seconds", HandlerFunc: e.EvaluateStashChangesHandler()},
 		{Method: "GET", Path: "/ws", HandlerFunc: e.WebSocketHandler},
 	}
 	for i, route := range routes {
@@ -89,7 +77,7 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	e.mu.Unlock()
 
 	if _, ok := e.scoreService.LatestScores[eventID]; !ok {
-		e.scoreService.LatestScores[eventID] = make(scoring.ScoreMap)
+		e.scoreService.LatestScores[eventID] = make(service.ScoreMap)
 	}
 	// Send the latest score to the new subscriber
 	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[eventID]))
@@ -169,64 +157,6 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	}
 }
 
-func (e *ScoreController) FetchStashChangesHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		seconds, err := strconv.Atoi(c.Param("seconds"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		event, err := e.eventService.GetEventById(eventId)
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		if e.cancelFetching != nil {
-			e.cancelFetching()
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
-		e.cancelFetching = cancel
-		scoring.FetchLoop(ctx, event, e.poeClient)
-		c.JSON(200, gin.H{"message": "Stash change fetch started"})
-	}
-}
-func (e *ScoreController) EvaluateStashChangesHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		seconds, err := strconv.Atoi(c.Param("seconds"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		event, err := e.eventService.GetEventById(eventId, "Teams", "Teams.Users")
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		if e.cancelEvaluating != nil {
-			e.cancelEvaluating()
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(seconds)*time.Second)
-		e.cancelEvaluating = cancel
-		ctx.Done()
-		err = scoring.StashLoop(ctx, e.poeClient, event)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, gin.H{"message": "Stash change evaluation started"})
-	}
-}
-
 type ScoreResponse struct {
 	Points    int       `json:"points" binding:"required"`
 	UserID    int       `json:"user_id" binding:"required"`
@@ -239,12 +169,12 @@ type ScoreResponse struct {
 type ScoreDiffResponse struct {
 	Score     *ScoreResponse   `json:"score"`
 	FieldDiff []string         `json:"field_diff"`
-	DiffType  scoring.Difftype `json:"diff_type"`
+	DiffType  service.Difftype `json:"diff_type"`
 }
 
 type ScoreMapResponse map[string]*ScoreDiffResponse
 
-func toScoreDiffResponse(scoreDiff *scoring.ScoreDifference) *ScoreDiffResponse {
+func toScoreDiffResponse(scoreDiff *service.ScoreDifference) *ScoreDiffResponse {
 	return &ScoreDiffResponse{
 		Score:     toScoreResponse(scoreDiff.Score),
 		FieldDiff: scoreDiff.FieldDiff,
@@ -252,7 +182,7 @@ func toScoreDiffResponse(scoreDiff *scoring.ScoreDifference) *ScoreDiffResponse 
 	}
 }
 
-func toScoreMapResponse(scoreMap scoring.ScoreMap) ScoreMapResponse {
+func toScoreMapResponse(scoreMap service.ScoreMap) ScoreMapResponse {
 	response := make(ScoreMapResponse)
 	for id, score := range scoreMap {
 		response[id] = toScoreDiffResponse(score)
