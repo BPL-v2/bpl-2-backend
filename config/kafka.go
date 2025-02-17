@@ -1,13 +1,23 @@
 package config
 
 import (
+	"bpl/client"
 	"fmt"
 	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
+
+// message object
+type StashChangeMessage struct {
+	Stashes      []client.PublicStashChange
+	ChangeID     string
+	NextChangeID string
+	Timestamp    time.Time
+}
 
 func CreateTopic(eventID int) error {
 	broker := os.Getenv("KAFKA_BROKER")
@@ -44,6 +54,15 @@ func CreateTopic(eventID int) error {
 			{
 				ConfigName:  "compression.type",
 				ConfigValue: "zstd",
+			},
+			// 7 days retention
+			{
+				ConfigName:  "retention.ms",
+				ConfigValue: "604800000",
+			},
+			{
+				ConfigName:  "retention.bytes",
+				ConfigValue: "-1",
 			},
 		},
 	}

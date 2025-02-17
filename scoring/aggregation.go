@@ -67,6 +67,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 			defer wg.Done()
 			matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds, event.ID)
 			if err != nil {
+				fmt.Println(err)
 				return
 			}
 			for _, match := range matches {
@@ -134,12 +135,16 @@ func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int, eve
 
 	go func() {
 		defer wg.Done()
+		t := time.Now()
 		freshMatches, err1 = getFreshMatches(db, objectiveIds, teamIds, eventId)
+		fmt.Println("Fresh matches took", time.Since(t))
 	}()
 
 	go func() {
 		defer wg.Done()
+		t := time.Now()
 		firstMatches, err2 = handleEarliest(db, objectiveIds, teamIds, eventId)
+		fmt.Println("Earliest matches took", time.Since(t))
 	}()
 
 	wg.Wait()
@@ -271,11 +276,12 @@ func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
 }
 
 func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) (FreshMatches, error) {
+	// todo: might want to also check if the match finishes the objective
 	query := `
     WITH latest AS (
         SELECT 
             stash_id, 
-            MAX(int_change_id) AS change_id
+            MAX(id) AS id
         FROM stash_changes
 		WHERE event_id = @eventId
         GROUP BY stash_id
@@ -284,8 +290,7 @@ func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
         objective_matches.objective_id,
         team_users.team_id
     FROM objective_matches
-    JOIN latest ON objective_matches.stash_id = latest.stash_id
-        AND objective_matches.change_id = latest.change_id
+	JOIN latest ON objective_matches.stash_change_id = latest.id
     JOIN team_users ON team_users.user_id = objective_matches.user_id
     WHERE event_id = @eventId AND objective_matches.objective_id IN @objectiveIds AND team_users.team_id IN @teamIds
     GROUP BY 

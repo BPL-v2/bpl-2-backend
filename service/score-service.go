@@ -1,25 +1,14 @@
-// should be in service package, but would lead to circular imports
-
-package scoring
+package service
 
 import (
 	"bpl/config"
-	"bpl/service"
+	"bpl/scoring"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"gorm.io/gorm"
 )
-
-func (s *Score) Identifier() string {
-	if s.Type == OBJECTIVE {
-		return "O-" + strconv.Itoa(s.ID) + "-" + strconv.Itoa(s.TeamID)
-	} else {
-		return "C-" + strconv.Itoa(s.ID) + "-" + strconv.Itoa(s.TeamID)
-	}
-}
 
 type ScoreMap map[string]*ScoreDifference
 
@@ -33,23 +22,23 @@ const (
 )
 
 type ScoreDifference struct {
-	Score     *Score
+	Score     *scoring.Score
 	FieldDiff []string
 	DiffType  Difftype
 }
 
 type ScoreService struct {
 	LatestScores           map[int]ScoreMap
-	eventService           *service.EventService
-	scoringCategoryService *service.ScoringCategoryService
-	objectiveService       *service.ObjectiveService
+	eventService           *EventService
+	scoringCategoryService *ScoringCategoryService
+	objectiveService       *ObjectiveService
 	db                     *gorm.DB
 }
 
 func NewScoreService() *ScoreService {
-	eventService := service.NewEventService()
-	scoringCategoryService := service.NewScoringCategoryService()
-	objectiveService := service.NewObjectiveService()
+	eventService := NewEventService()
+	scoringCategoryService := NewScoringCategoryService()
+	objectiveService := NewObjectiveService()
 	return &ScoreService{
 		db:                     config.DatabaseConnection(),
 		eventService:           eventService,
@@ -59,34 +48,34 @@ func NewScoreService() *ScoreService {
 	}
 }
 
-func GetScoreDifference(prevDiff *ScoreDifference, scoreB *Score) *ScoreDifference {
+func GetScoreDifference(prevDiff *ScoreDifference, scoreA *scoring.Score) *ScoreDifference {
 	if prevDiff == nil {
-		return &ScoreDifference{Score: scoreB, DiffType: Added}
+		return &ScoreDifference{Score: scoreA, DiffType: Added}
 	}
-	scoreA := prevDiff.Score
+	scoreB := prevDiff.Score
 	fieldDiff := make([]string, 0)
-	if scoreA.Points != scoreB.Points {
+	if scoreB.Points != scoreA.Points {
 		fieldDiff = append(fieldDiff, "Points")
 	}
-	if scoreA.UserID != scoreB.UserID {
+	if scoreB.UserID != scoreA.UserID {
 		fieldDiff = append(fieldDiff, "UserID")
 	}
-	if scoreA.Rank != scoreB.Rank {
+	if scoreB.Rank != scoreA.Rank {
 		fieldDiff = append(fieldDiff, "Rank")
 	}
-	if scoreA.Number != scoreB.Number {
+	if scoreB.Number != scoreA.Number {
 		fieldDiff = append(fieldDiff, "Number")
 	}
-	if scoreA.Finished != scoreB.Finished {
+	if scoreB.Finished != scoreA.Finished {
 		fieldDiff = append(fieldDiff, "Finished")
 	}
 	if len(fieldDiff) == 0 {
-		return &ScoreDifference{Score: scoreB, DiffType: Unchanged}
+		return &ScoreDifference{Score: scoreA, DiffType: Unchanged}
 	}
-	return &ScoreDifference{Score: scoreB, FieldDiff: fieldDiff, DiffType: Changed}
+	return &ScoreDifference{Score: scoreA, FieldDiff: fieldDiff, DiffType: Changed}
 }
 
-func Diff(scoreMap map[string]*ScoreDifference, scores []*Score) (ScoreMap, ScoreMap) {
+func Diff(scoreMap map[string]*ScoreDifference, scores []*scoring.Score) (ScoreMap, ScoreMap) {
 	newMap := make(ScoreMap)
 	diffMap := make(ScoreMap)
 	for _, score := range scores {
@@ -122,7 +111,7 @@ func (s *ScoreService) GetNewDiff(eventID int) (ScoreMap, error) {
 	return diff, nil
 }
 
-func (s *ScoreService) calcScores(eventId int) (score []*Score, err error) {
+func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err error) {
 
 	event, err := s.eventService.GetEventById(eventId, "Teams", "Teams.Users")
 	if err != nil {
@@ -137,11 +126,11 @@ func (s *ScoreService) calcScores(eventId int) (score []*Score, err error) {
 		return nil, err
 	}
 
-	matches, err := AggregateMatches(s.db, event, objectives)
+	matches, err := scoring.AggregateMatches(s.db, event, objectives)
 	if err != nil {
 		return nil, err
 	}
-	scores, err := EvaluateAggregations(rules, matches)
+	scores, err := scoring.EvaluateAggregations(rules, matches)
 	if err != nil {
 		return nil, err
 	}

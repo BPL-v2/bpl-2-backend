@@ -1,12 +1,10 @@
-package scoring
+package service
 
 import (
 	"bpl/client"
 	"bpl/config"
 	"bpl/repository"
-	"bpl/service"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -19,19 +17,19 @@ type FetchingService struct {
 	ctx                context.Context
 	event              *repository.Event
 	poeClient          *client.PoEClient
-	stashChangeService *service.StashChangeService
-	stashChannel       chan StashChange
+	stashChangeService *StashChangeService
+	stashChannel       chan config.StashChangeMessage
 }
 
 func NewFetchingService(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) *FetchingService {
-	stashChangeService := service.NewStashChangeService()
+	stashChangeService := NewStashChangeService()
 
 	return &FetchingService{
 		ctx:                ctx,
 		event:              event,
 		poeClient:          poeClient,
 		stashChangeService: stashChangeService,
-		stashChannel:       make(chan StashChange),
+		stashChannel:       make(chan config.StashChangeMessage),
 	}
 }
 
@@ -46,7 +44,8 @@ func (f *FetchingService) FetchStashChanges() error {
 		return nil
 	}
 
-	changeId := initialStashChange.NextChangeID
+	changeId := initialStashChange
+	count := 0
 	for {
 		select {
 		case <-f.ctx.Done():
@@ -69,8 +68,13 @@ func (f *FetchingService) FetchStashChanges() error {
 				}
 				continue
 			}
-			f.stashChannel <- StashChange{ChangeID: changeId, NextChangeID: response.NextChangeID, Stashes: response.Stashes}
+			f.stashChannel <- config.StashChangeMessage{ChangeID: changeId, NextChangeID: response.NextChangeID, Stashes: response.Stashes}
 			changeId = response.NextChangeID
+			count++
+			if count%100 == 0 {
+				diff := f.stashChangeService.GetNinjaDifference(changeId)
+				fmt.Printf("Difference between ninja and poe change ids: %d\n", diff)
+			}
 		}
 	}
 }
@@ -95,41 +99,21 @@ func (f *FetchingService) FilterStashChanges() {
 			return
 		default:
 
-			filteredStashChange := StashChange{
+			stashes := make([]client.PublicStashChange, 0)
+			for _, stash := range stashChange.Stashes {
+				// if stash.League != nil && *stash.League == event.Name {
+				stashes = append(stashes, stash)
+				// // }
+			}
+			message := config.StashChangeMessage{
 				ChangeID:     stashChange.ChangeID,
 				NextChangeID: stashChange.NextChangeID,
-				Stashes:      make([]client.PublicStashChange, 0),
+				Timestamp:    time.Now(),
 			}
-			now := time.Now()
-			stashChanges := make([]*repository.StashChange, 0)
-			for _, stash := range stashChange.Stashes {
-				intStashChange, err := stashChangeToInt(stashChange.ChangeID)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-				// if stash.League != nil && *stash.League == event.Name {
-				stashChanges = append(stashChanges, &repository.StashChange{
-					StashID:      stash.ID,
-					NextChangeID: stashChange.NextChangeID,
-					IntChangeID:  intStashChange,
-					EventID:      f.event.ID,
-					Timestamp:    now,
-				})
-
-				filteredStashChange.Stashes = append(filteredStashChange.Stashes, stash)
-				// }
-			}
-			filteredStashChange.Timestamp = now
-			fmt.Printf("Found %d stashes\n", len(filteredStashChange.Stashes))
-			data, err := json.Marshal(filteredStashChange)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
+			fmt.Printf("Found %d stashes\n", len(stashes))
 			// make sure that stash changes are only saved if the messages are successfully written to kafka
-			f.stashChangeService.SaveStashChangesConditionally(stashChanges,
-				func() error {
+			f.stashChangeService.SaveStashChangesConditionally(stashes, message, f.event.ID,
+				func(data []byte) error {
 					return writer.WriteMessages(context.Background(),
 						kafka.Message{
 							Value: data,

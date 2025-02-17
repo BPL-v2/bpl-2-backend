@@ -30,6 +30,7 @@ func SetRoutes(r *gin.Engine) {
 	routes = append(routes, setupSubmissionController()...)
 	routes = append(routes, setupScoreController()...)
 	routes = append(routes, setupStreamController()...)
+	routes = append(routes, setupRecurringJobsController()...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
 		if route.Authenticated {

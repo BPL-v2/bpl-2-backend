@@ -147,6 +147,8 @@ type PublicStashChange struct {
 	StashType         string  `json:"stashType"`
 	League            *string `json:"league,omitempty"`
 	Items             []Item  `json:"items"`
+	// not included in the ggg response, but we use this field to store the db stashchange pk
+	StashChangeID int `json:"stash_change_id"`
 }
 
 type Ladder struct {

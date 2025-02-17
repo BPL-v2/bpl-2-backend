@@ -47,6 +47,7 @@ func InitDB() (*gorm.DB, error) {
 				SingularTable: false,
 			},
 			Logger: logger.Default.LogMode(logger.Silent),
+			// Logger: logger.Default.LogMode(logger.Info),
 		})
 		if err != nil {
 			return

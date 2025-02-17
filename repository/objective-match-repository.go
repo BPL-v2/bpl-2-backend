@@ -2,20 +2,20 @@ package repository
 
 import (
 	"bpl/config"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
 )
 
 type ObjectiveMatch struct {
-	ID          int       `gorm:"primaryKey"`
-	ObjectiveID int       `gorm:"index:obj_match_obj;index:obj_match_obj_user;not null;references:objectives(id)"`
-	Timestamp   time.Time `gorm:"not null"`
-	Number      int       `gorm:"not null"`
-	UserID      int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
-	EventId     int       `gorm:"index:obj_match_event;not null;references:events(id)"`
-	StashId     *string   `gorm:"index:obj_match_stash_change;null;references:stash_change(int_change_id)"` // Only relevant for item objectives
-	ChangeId    *int64    `gorm:"index:obj_match_stash_change;null;references:stash_change(change_id)"`     // Only relevant for item objectives
+	ID            int       `gorm:"primaryKey"`
+	ObjectiveID   int       `gorm:"index:obj_match_obj;index:obj_match_obj_user;not null;references:objectives(id)"`
+	Timestamp     time.Time `gorm:"not null"`
+	Number        int       `gorm:"not null"`
+	UserID        int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
+	EventId       int       `gorm:"index:obj_match_event;not null;references:events(id)"`
+	StashChangeID *int      `gorm:"index:obj_match_stash_change;references:stash_change(id)"`
 }
 
 type KafkaConsumer struct {
@@ -39,16 +39,19 @@ func (r *ObjectiveMatchRepository) SaveMatches(objectiveMatches []*ObjectiveMatc
 	return nil
 }
 
-func (r *ObjectiveMatchRepository) OverwriteMatches(objectiveMatches []*ObjectiveMatch, changeIds []int64, objectiveIds []int) error {
+func (r *ObjectiveMatchRepository) OverwriteMatches(objectiveMatches []*ObjectiveMatch, objectiveIds []int) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
-		err := r.DeleteMatches(changeIds, objectiveIds)
+		t := time.Now()
+		err := r.DeleteMatches(objectiveIds)
 		if err != nil {
 			return err
 		}
+		fmt.Println("Saving new matches")
 		err = r.SaveMatches(objectiveMatches)
 		if err != nil {
 			return err
 		}
+		fmt.Println("Overwrite took", time.Since(t))
 		return nil
 	})
 }
@@ -94,12 +97,6 @@ func (r *ObjectiveMatchRepository) DeleteOldMatches(changeId int64, objectiveIds
 	}
 	return nil
 }
-func (r *ObjectiveMatchRepository) DeleteMatches(changeIds []int64, objectiveIds []int) error {
-	result := r.DB.
-		Where("change_id in (?) AND objective_id IN (?)", changeIds, objectiveIds).
-		Delete(&ObjectiveMatch{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
+func (r *ObjectiveMatchRepository) DeleteMatches(objectiveIds []int) error {
+	return r.DB.Where("objective_id IN ?", objectiveIds).Delete(&ObjectiveMatch{}).Error
 }
