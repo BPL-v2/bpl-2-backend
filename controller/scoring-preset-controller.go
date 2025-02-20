@@ -36,7 +36,7 @@ func setupScoringPresetController() []RouteInfo {
 // @Tags scoring
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 200 {array} ScoringPresetResponse
+// @Success 200 {array} ScoringPreset
 // @Router /events/{event_id}/scoring-presets [get]
 func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -60,7 +60,7 @@ func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.Handler
 // @Tags scoring
 // @Produce json
 // @Param id path int true "Preset ID"
-// @Success 200 {object} ScoringPresetResponse
+// @Success 200 {object} ScoringPreset
 // @Router /scoring/presets/{id} [get]
 func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -89,7 +89,7 @@ func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param body body ScoringPresetCreate true "Preset to create"
-// @Success 200 {object} ScoringPresetResponse
+// @Success 200 {object} ScoringPreset
 // @Router /scoring/presets [put]
 func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -160,7 +160,7 @@ func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
 	return preset
 }
 
-type ScoringPresetResponse struct {
+type ScoringPreset struct {
 	ID            int                          `json:"id" binding:"required"`
 	Name          string                       `json:"name" binding:"required"`
 	Description   string                       `json:"description" binding:"required"`
@@ -169,11 +169,11 @@ type ScoringPresetResponse struct {
 	Type          repository.ScoringPresetType `json:"type" binding:"required"`
 }
 
-func toScoringPresetResponse(preset *repository.ScoringPreset) *ScoringPresetResponse {
+func toScoringPresetResponse(preset *repository.ScoringPreset) *ScoringPreset {
 	if preset == nil {
 		return nil
 	}
-	return &ScoringPresetResponse{
+	return &ScoringPreset{
 		ID:            preset.ID,
 		Name:          preset.Name,
 		Description:   preset.Description,

@@ -1,5 +1,26 @@
 definitions:
-  client.Stream:
+  JobType:
+    enum:
+    - FetchStashChanges
+    - EvaluateStashChanges
+    - FetchCharacterData
+    type: string
+    x-enum-varnames:
+    - FetchStashChanges
+    - EvaluateStashChanges
+    - FetchCharacterData
+  RecurringJob:
+    properties:
+      end_date:
+        type: string
+      event_id:
+        type: integer
+      job_type:
+        $ref: '#/definitions/JobType'
+      sleep_after_each_run_seconds:
+        type: integer
+    type: object
+  TwitchStream:
     properties:
       backend_user_id:
         type: integer
@@ -38,7 +59,7 @@ definitions:
       viewer_count:
         type: integer
     type: object
-  controller.ApplicationStatus:
+  ApplicationStatus:
     enum:
     - applied
     - accepted
@@ -50,7 +71,31 @@ definitions:
     - ApplicationStatusAccepted
     - ApplicationStatusWaitlisted
     - ApplicationStatusNone
-  controller.CategoryCreate:
+  Category:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      objectives:
+        items:
+          $ref: '#/definitions/Objective'
+        type: array
+      scoring_preset:
+        $ref: '#/definitions/ScoringPreset'
+      scoring_preset_id:
+        type: integer
+      sub_categories:
+        items:
+          $ref: '#/definitions/Category'
+        type: array
+    required:
+    - id
+    - name
+    - objectives
+    - sub_categories
+    type: object
+  CategoryCreate:
     properties:
       id:
         type: integer
@@ -64,33 +109,27 @@ definitions:
     - name
     - parent_id
     type: object
-  controller.CategoryResponse:
+  Condition:
     properties:
+      field:
+        $ref: '#/definitions/ItemField'
       id:
         type: integer
-      name:
+      operator:
+        $ref: '#/definitions/Operator'
+      value:
         type: string
-      objectives:
-        items:
-          $ref: '#/definitions/controller.ObjectiveResponse'
-        type: array
-      scoring_preset_id:
-        type: integer
-      sub_categories:
-        items:
-          $ref: '#/definitions/controller.CategoryResponse'
-        type: array
     required:
+    - field
     - id
-    - name
-    - objectives
-    - sub_categories
+    - operator
+    - value
     type: object
-  controller.ConditionCreate:
+  ConditionCreate:
     properties:
       field:
         allOf:
-        - $ref: '#/definitions/repository.ItemField'
+        - $ref: '#/definitions/ItemField'
         enum:
         - BASE_TYPE
         - NAME
@@ -111,7 +150,7 @@ definitions:
         type: integer
       operator:
         allOf:
-        - $ref: '#/definitions/repository.Operator'
+        - $ref: '#/definitions/Operator'
         enum:
         - EQ
         - NEQ
@@ -134,30 +173,14 @@ definitions:
     - operator
     - value
     type: object
-  controller.ConditionResponse:
-    properties:
-      field:
-        $ref: '#/definitions/repository.ItemField'
-      id:
-        type: integer
-      operator:
-        $ref: '#/definitions/repository.Operator'
-      value:
-        type: string
-    required:
-    - field
-    - id
-    - operator
-    - value
-    type: object
-  controller.DiscordBotLoginBody:
+  DiscordBotLoginBody:
     properties:
       token:
         type: string
     required:
     - token
     type: object
-  controller.EventCreate:
+  Event:
     properties:
       application_start_time:
         type: string
@@ -165,29 +188,8 @@ definitions:
         type: string
       event_start_time:
         type: string
-      id:
-        type: integer
-      is_current:
-        type: boolean
-      max_size:
-        type: integer
-      name:
-        type: string
-    required:
-    - application_start_time
-    - event_end_time
-    - event_start_time
-    - max_size
-    - name
-    type: object
-  controller.EventResponse:
-    properties:
-      application_start_time:
-        type: string
-      event_end_time:
-        type: string
-      event_start_time:
-        type: string
+      game_version:
+        $ref: '#/definitions/GameVersion'
       id:
         type: integer
       is_current:
@@ -200,12 +202,13 @@ definitions:
         type: integer
       teams:
         items:
-          $ref: '#/definitions/controller.TeamResponse'
+          $ref: '#/definitions/Team'
         type: array
     required:
     - application_start_time
     - event_end_time
     - event_start_time
+    - game_version
     - id
     - is_current
     - max_size
@@ -213,16 +216,55 @@ definitions:
     - scoring_category_id
     - teams
     type: object
-  controller.EventStatusResponse:
+  EventCreate:
+    properties:
+      application_start_time:
+        type: string
+      event_end_time:
+        type: string
+      event_start_time:
+        type: string
+      game_version:
+        $ref: '#/definitions/GameVersion'
+      id:
+        type: integer
+      is_current:
+        type: boolean
+      max_size:
+        type: integer
+      name:
+        type: string
+    required:
+    - application_start_time
+    - event_end_time
+    - event_start_time
+    - game_version
+    - max_size
+    - name
+    type: object
+  EventStatus:
     properties:
       application_status:
-        $ref: '#/definitions/controller.ApplicationStatus'
+        $ref: '#/definitions/ApplicationStatus'
       team_id:
         type: integer
     required:
     - application_status
     type: object
-  controller.MinimalUserResponse:
+  JobCreate:
+    properties:
+      duration_in_seconds:
+        type: integer
+      end_date:
+        type: string
+      event_id:
+        type: integer
+      job_type:
+        $ref: '#/definitions/JobType'
+      sleep_after_each_run_seconds:
+        type: integer
+    type: object
+  MinimalUser:
     properties:
       display_name:
         type: string
@@ -232,7 +274,7 @@ definitions:
     - display_name
     - id
     type: object
-  controller.NonSensitiveUserResponse:
+  NonSensitiveUser:
     properties:
       account_name:
         type: string
@@ -252,15 +294,15 @@ definitions:
     - display_name
     - id
     type: object
-  controller.ObjectiveCreate:
+  Objective:
     properties:
       aggregation:
-        $ref: '#/definitions/repository.AggregationType'
+        $ref: '#/definitions/AggregationType'
       category_id:
         type: integer
       conditions:
         items:
-          $ref: '#/definitions/controller.ConditionCreate'
+          $ref: '#/definitions/Condition'
         type: array
       extra:
         type: string
@@ -269,48 +311,13 @@ definitions:
       name:
         type: string
       number_field:
-        $ref: '#/definitions/repository.NumberField'
+        $ref: '#/definitions/NumberField'
       objective_type:
-        $ref: '#/definitions/repository.ObjectiveType'
+        $ref: '#/definitions/ObjectiveType'
       required_number:
         type: integer
-      scoring_preset_id:
-        type: integer
-      valid_from:
-        type: string
-      valid_to:
-        type: string
-    required:
-    - aggregation
-    - category_id
-    - conditions
-    - name
-    - number_field
-    - objective_type
-    - required_number
-    type: object
-  controller.ObjectiveResponse:
-    properties:
-      aggregation:
-        $ref: '#/definitions/repository.AggregationType'
-      category_id:
-        type: integer
-      conditions:
-        items:
-          $ref: '#/definitions/controller.ConditionResponse'
-        type: array
-      extra:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      number_field:
-        $ref: '#/definitions/repository.NumberField'
-      objective_type:
-        $ref: '#/definitions/repository.ObjectiveType'
-      required_number:
-        type: integer
+      scoring_preset:
+        $ref: '#/definitions/ScoringPreset'
       scoring_preset_id:
         type: integer
       valid_from:
@@ -328,38 +335,154 @@ definitions:
     - objective_type
     - required_number
     type: object
-  controller.ScoreResponse:
+  ObjectiveConditionCreate:
+    properties:
+      field:
+        allOf:
+        - $ref: '#/definitions/ItemField'
+        enum:
+        - BASE_TYPE
+        - NAME
+        - TYPE_LINE
+        - RARITY
+        - ILVL
+        - FRAME_TYPE
+        - TALISMAN_TIER
+        - ENCHANT_MODS
+        - EXPLICIT_MODS
+        - IMPLICIT_MODS
+        - CRAFTED_MODS
+        - FRACTURED_MODS
+        - SIX_LINK
+      id:
+        type: integer
+      operator:
+        allOf:
+        - $ref: '#/definitions/Operator'
+        enum:
+        - EQ
+        - NEQ
+        - GT
+        - GTE
+        - LT
+        - LTE
+        - IN
+        - NOT_IN
+        - MATCHES
+        - CONTAINS
+        - CONTAINS_ALL
+        - CONTAINS_MATCH
+        - CONTAINS_ALL_MATCHES
+      value:
+        type: string
+    required:
+    - field
+    - operator
+    - value
+    type: object
+  ObjectiveCreate:
+    properties:
+      aggregation:
+        $ref: '#/definitions/AggregationType'
+      category_id:
+        type: integer
+      conditions:
+        items:
+          $ref: '#/definitions/ObjectiveConditionCreate'
+        type: array
+      extra:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      number_field:
+        $ref: '#/definitions/NumberField'
+      objective_type:
+        $ref: '#/definitions/ObjectiveType'
+      required_number:
+        type: integer
+      scoring_preset_id:
+        type: integer
+      valid_from:
+        type: string
+      valid_to:
+        type: string
+    required:
+    - aggregation
+    - category_id
+    - conditions
+    - name
+    - number_field
+    - objective_type
+    - required_number
+    type: object
+  Score:
     properties:
       finished:
         type: boolean
-      id:
-        type: integer
       number:
         type: integer
       points:
         type: integer
       rank:
         type: integer
-      team_id:
-        type: integer
       timestamp:
         type: string
-      type:
-        $ref: '#/definitions/scoring.ScoreType'
       user_id:
         type: integer
     required:
     - finished
-    - id
     - number
     - points
     - rank
-    - team_id
     - timestamp
-    - type
     - user_id
     type: object
-  controller.ScoringPresetCreate:
+  ScoreDiff:
+    properties:
+      diff_type:
+        $ref: '#/definitions/Difftype'
+      field_diff:
+        items:
+          type: string
+        type: array
+      score:
+        $ref: '#/definitions/Score'
+    required:
+    - diff_type
+    - field_diff
+    - score
+    type: object
+  ScoreMap:
+    additionalProperties:
+      $ref: '#/definitions/ScoreDiff'
+    type: object
+  ScoringPreset:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      points:
+        items:
+          type: number
+        type: array
+      scoring_method:
+        $ref: '#/definitions/ScoringMethod'
+      type:
+        $ref: '#/definitions/ScoringPresetType'
+    required:
+    - description
+    - id
+    - name
+    - points
+    - scoring_method
+    - type
+    type: object
+  ScoringPresetCreate:
     properties:
       description:
         type: string
@@ -374,9 +497,9 @@ definitions:
           type: number
         type: array
       scoring_method:
-        $ref: '#/definitions/repository.ScoringMethod'
+        $ref: '#/definitions/ScoringMethod'
       type:
-        $ref: '#/definitions/repository.ScoringPresetType'
+        $ref: '#/definitions/ScoringPresetType'
     required:
     - event_id
     - name
@@ -384,34 +507,10 @@ definitions:
     - scoring_method
     - type
     type: object
-  controller.ScoringPresetResponse:
-    properties:
-      description:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-      points:
-        items:
-          type: number
-        type: array
-      scoring_method:
-        $ref: '#/definitions/repository.ScoringMethod'
-      type:
-        $ref: '#/definitions/repository.ScoringPresetType'
-    required:
-    - description
-    - id
-    - name
-    - points
-    - scoring_method
-    - type
-    type: object
-  controller.SignupResponse:
+  Signup:
     properties:
       expected_playtime:
-        $ref: '#/definitions/repository.ExpectedPlayTime'
+        $ref: '#/definitions/ExpectedPlayTime'
       id:
         type: integer
       team_id:
@@ -419,17 +518,17 @@ definitions:
       timestamp:
         type: string
       user:
-        $ref: '#/definitions/controller.NonSensitiveUserResponse'
+        $ref: '#/definitions/NonSensitiveUser'
     required:
     - expected_playtime
     - id
     - timestamp
     - user
     type: object
-  controller.SubmissionResponse:
+  Submission:
     properties:
       approval_status:
-        $ref: '#/definitions/repository.ApprovalStatus'
+        $ref: '#/definitions/ApprovalStatus'
       comment:
         type: string
       id:
@@ -437,7 +536,7 @@ definitions:
       number:
         type: integer
       objective:
-        $ref: '#/definitions/controller.ObjectiveResponse'
+        $ref: '#/definitions/Objective'
       proof:
         type: string
       review_comment:
@@ -449,7 +548,7 @@ definitions:
       timestamp:
         type: string
       user:
-        $ref: '#/definitions/controller.NonSensitiveUserResponse'
+        $ref: '#/definitions/NonSensitiveUser'
     required:
     - approval_status
     - comment
@@ -458,7 +557,39 @@ definitions:
     - proof
     - timestamp
     type: object
-  controller.TeamResponse:
+  SubmissionCreate:
+    properties:
+      comment:
+        type: string
+      id:
+        type: integer
+      number:
+        type: integer
+      objective_id:
+        type: integer
+      proof:
+        type: string
+      timestamp:
+        type: string
+    required:
+    - objective_id
+    - timestamp
+    type: object
+  SubmissionReview:
+    properties:
+      approval_status:
+        allOf:
+        - $ref: '#/definitions/ApprovalStatus'
+        enum:
+        - APPROVED
+        - PENDING
+        - REJECTED
+      review_comment:
+        type: string
+    required:
+    - approval_status
+    type: object
+  Team:
     properties:
       allowed_classes:
         items:
@@ -476,7 +607,7 @@ definitions:
     - id
     - name
     type: object
-  controller.UserAdminResponse:
+  User:
     properties:
       account_name:
         type: string
@@ -490,32 +621,7 @@ definitions:
         type: integer
       permissions:
         items:
-          $ref: '#/definitions/repository.Permission'
-        type: array
-      twitch_id:
-        type: string
-      twitch_name:
-        type: string
-    required:
-    - display_name
-    - id
-    - permissions
-    type: object
-  controller.UserResponse:
-    properties:
-      account_name:
-        type: string
-      discord_id:
-        type: string
-      discord_name:
-        type: string
-      display_name:
-        type: string
-      id:
-        type: integer
-      permissions:
-        items:
-          $ref: '#/definitions/repository.Permission'
+          $ref: '#/definitions/Permission'
         type: array
       token_expiry_timestamp:
         type: string
@@ -526,15 +632,16 @@ definitions:
     required:
     - display_name
     - id
+    - permissions
     type: object
-  controller.UserUpdate:
+  UserUpdate:
     properties:
       display_name:
         type: string
     required:
     - display_name
     type: object
-  repository.AggregationType:
+  AggregationType:
     enum:
     - SUM_LATEST
     - EARLIEST
@@ -548,7 +655,7 @@ definitions:
     - EARLIEST_FRESH_ITEM
     - MAXIMUM
     - MINIMUM
-  repository.ApprovalStatus:
+  ApprovalStatus:
     enum:
     - APPROVED
     - REJECTED
@@ -558,7 +665,7 @@ definitions:
     - APPROVED
     - REJECTED
     - PENDING
-  repository.ExpectedPlayTime:
+  ExpectedPlayTime:
     enum:
     - VERY_LOW
     - LOW
@@ -576,7 +683,15 @@ definitions:
     - VeryHigh
     - Extreme
     - NoLife
-  repository.ItemField:
+  GameVersion:
+    enum:
+    - poe1
+    - poe2
+    type: string
+    x-enum-varnames:
+    - PoE1
+    - PoE2
+  ItemField:
     enum:
     - BASE_TYPE
     - NAME
@@ -606,7 +721,7 @@ definitions:
     - CRAFTED_MODS
     - FRACTURED_MODS
     - SIX_LINK
-  repository.NumberField:
+  NumberField:
     enum:
     - STACK_SIZE
     - PLAYER_LEVEL
@@ -618,7 +733,7 @@ definitions:
     - PLAYER_LEVEL
     - PLAYER_XP
     - SUBMISSION_VALUE
-  repository.ObjectiveType:
+  ObjectiveType:
     enum:
     - ITEM
     - PLAYER
@@ -628,7 +743,7 @@ definitions:
     - ITEM
     - PLAYER
     - SUBMISSION
-  repository.Operator:
+  Operator:
     enum:
     - EQ
     - NEQ
@@ -658,7 +773,7 @@ definitions:
     - CONTAINS_ALL
     - CONTAINS_MATCH
     - CONTAINS_ALL_MATCHES
-  repository.Permission:
+  Permission:
     enum:
     - admin
     - command_team
@@ -666,7 +781,7 @@ definitions:
     x-enum-varnames:
     - PermissionAdmin
     - PermissionCommandTeam
-  repository.ScoringMethod:
+  ScoringMethod:
     enum:
     - PRESENCE
     - POINTS_FROM_VALUE
@@ -684,7 +799,7 @@ definitions:
     - RANKED_REVERSE
     - RANKED_COMPLETION
     - BONUS_PER_COMPLETION
-  repository.ScoringPresetType:
+  ScoringPresetType:
     enum:
     - OBJECTIVE
     - CATEGORY
@@ -692,14 +807,18 @@ definitions:
     x-enum-varnames:
     - OBJECTIVE
     - CATEGORY
-  scoring.ScoreType:
+  Difftype:
     enum:
-    - OBJECTIVE
-    - CATEGORY
+    - Added
+    - Removed
+    - Changed
+    - Unchanged
     type: string
     x-enum-varnames:
-    - OBJECTIVE
-    - CATEGORY
+    - Added
+    - Removed
+    - Changed
+    - Unchanged
 info:
   contact:
     email: Liberatorist@gmail.com
@@ -719,7 +838,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.EventResponse'
+              $ref: '#/definitions/Event'
             type: array
       tags:
       - event
@@ -734,14 +853,14 @@ paths:
         name: event
         required: true
         schema:
-          $ref: '#/definitions/controller.EventCreate'
+          $ref: '#/definitions/EventCreate'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.EventResponse'
+            $ref: '#/definitions/Event'
       tags:
       - event
   /events/{event_id}:
@@ -776,9 +895,28 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.EventResponse'
+            $ref: '#/definitions/Event'
       tags:
       - event
+  /events/{event_id}/rules:
+    get:
+      description: Fetches the rules for the current event
+      operationId: GetRulesForEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Category'
+      tags:
+      - scoring
   /events/{event_id}/scores/latest:
     get:
       description: Fetches the latest scores for the current event
@@ -795,9 +933,27 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/controller.ScoreResponse'
-            type: array
+            $ref: '#/definitions/ScoreMap'
+      tags:
+      - scores
+  /events/{event_id}/scores/ws:
+    get:
+      description: Websocket for score updates. Once connected, the client will receive
+        score updates in real-time.
+      operationId: ScoreWebSocket
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ScoreDiff'
+      security:
+      - ApiKeyAuth: []
       tags:
       - scores
   /events/{event_id}/scoring-presets:
@@ -817,7 +973,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.ScoringPresetResponse'
+              $ref: '#/definitions/ScoringPreset'
             type: array
       tags:
       - scoring
@@ -839,7 +995,7 @@ paths:
           schema:
             additionalProperties:
               items:
-                $ref: '#/definitions/controller.SignupResponse'
+                $ref: '#/definitions/Signup'
               type: array
             type: object
       tags:
@@ -876,7 +1032,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.SignupResponse'
+            $ref: '#/definitions/Signup'
       tags:
       - signup
     put:
@@ -896,7 +1052,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.SignupResponse'
+            $ref: '#/definitions/Signup'
       tags:
       - signup
   /events/{event_id}/status:
@@ -917,7 +1073,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.EventStatusResponse'
+            $ref: '#/definitions/EventStatus'
       tags:
       - event
   /events/{event_id}/submissions:
@@ -937,7 +1093,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.SubmissionResponse'
+              $ref: '#/definitions/Submission'
             type: array
       tags:
       - submission
@@ -952,13 +1108,19 @@ paths:
         name: event_id
         required: true
         type: integer
+      - description: Submission to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SubmissionCreate'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.SubmissionResponse'
+            $ref: '#/definitions/Submission'
       tags:
       - submission
   /events/{event_id}/submissions/{submission_id}:
@@ -1000,13 +1162,19 @@ paths:
         name: submission_id
         required: true
         type: integer
+      - description: Submission review
+        in: body
+        name: submission
+        required: true
+        schema:
+          $ref: '#/definitions/SubmissionReview'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.SubmissionResponse'
+            $ref: '#/definitions/Submission'
       tags:
       - submission
   /events/{event_id}/teams:
@@ -1026,7 +1194,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.TeamResponse'
+              $ref: '#/definitions/Team'
             type: array
       tags:
       - team
@@ -1047,7 +1215,7 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.TeamResponse'
+            $ref: '#/definitions/Team'
       tags:
       - team
   /events/{event_id}/teams/{team_id}:
@@ -1092,7 +1260,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.TeamResponse'
+            $ref: '#/definitions/Team'
       tags:
       - team
   /events/{event_id}/teams/users:
@@ -1133,7 +1301,7 @@ paths:
           schema:
             additionalProperties:
               items:
-                $ref: '#/definitions/controller.MinimalUserResponse'
+                $ref: '#/definitions/MinimalUser'
               type: array
             type: object
       tags:
@@ -1148,9 +1316,26 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.EventResponse'
+            $ref: '#/definitions/Event'
       tags:
       - event
+  /jobs:
+    get:
+      consumes:
+      - application/json
+      description: Get all recurring jobs
+      operationId: GetJobs
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/RecurringJob'
+            type: array
+      tags:
+      - jobs
   /oauth2/discord:
     get:
       description: Redirects to discord oauth
@@ -1165,7 +1350,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Logs in the discord bot
+      description: Logs in the discord bot (only for internal use)
       operationId: LoginDiscordBot
       parameters:
       - description: Discord bot login body
@@ -1173,7 +1358,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.DiscordBotLoginBody'
+          $ref: '#/definitions/DiscordBotLoginBody'
       produces:
       - application/json
       responses:
@@ -1214,18 +1399,25 @@ paths:
       tags:
       - oauth
   /scoring/categories:
-    get:
-      description: Fetches the rules for the current event
-      operationId: GetRulesForEvent
+    put:
+      consumes:
+      - application/json
+      description: Creates a new scoring category
+      operationId: CreateCategory
+      parameters:
+      - description: Category to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CategoryCreate'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
-            items:
-              $ref: '#/definitions/controller.CategoryResponse'
-            type: array
+            $ref: '#/definitions/Category'
       tags:
       - scoring
   /scoring/categories/{id}:
@@ -1260,7 +1452,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.CategoryResponse'
+            $ref: '#/definitions/Category'
       tags:
       - scoring
   /scoring/conditions:
@@ -1275,14 +1467,14 @@ paths:
         name: condition
         required: true
         schema:
-          $ref: '#/definitions/controller.ConditionCreate'
+          $ref: '#/definitions/ConditionCreate'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.ConditionResponse'
+            $ref: '#/definitions/Condition'
       tags:
       - condition
   /scoring/conditions/{id}:
@@ -1310,14 +1502,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.ObjectiveCreate'
+          $ref: '#/definitions/ObjectiveCreate'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/controller.ObjectiveResponse'
+            $ref: '#/definitions/Objective'
       tags:
       - objective
   /scoring/objectives/{id}:
@@ -1352,7 +1544,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.ObjectiveResponse'
+            $ref: '#/definitions/Objective'
       tags:
       - objective
   /scoring/presets:
@@ -1367,14 +1559,14 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/controller.ScoringPresetCreate'
+          $ref: '#/definitions/ScoringPresetCreate'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.ScoringPresetResponse'
+            $ref: '#/definitions/ScoringPreset'
       tags:
       - scoring
   /scoring/presets/{id}:
@@ -1409,7 +1601,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.ScoringPresetResponse'
+            $ref: '#/definitions/ScoringPreset'
       tags:
       - scoring
   /streams:
@@ -1423,7 +1615,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/client.Stream'
+              $ref: '#/definitions/TwitchStream'
             type: array
       tags:
       - streams
@@ -1438,7 +1630,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/controller.UserAdminResponse'
+              $ref: '#/definitions/User'
             type: array
       security:
       - ApiKeyAuth: []
@@ -1462,13 +1654,15 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/repository.Permission'
+            $ref: '#/definitions/Permission'
           type: array
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/User'
       security:
       - ApiKeyAuth: []
       tags:
@@ -1502,7 +1696,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.UserResponse'
+            $ref: '#/definitions/User'
       security:
       - ApiKeyAuth: []
       tags:
@@ -1517,7 +1711,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.UserResponse'
+            $ref: '#/definitions/User'
       security:
       - ApiKeyAuth: []
       tags:
@@ -1533,14 +1727,14 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/controller.UserUpdate'
+          $ref: '#/definitions/UserUpdate'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/controller.UserResponse'
+            $ref: '#/definitions/User'
       security:
       - ApiKeyAuth: []
       tags:

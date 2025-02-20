@@ -24,7 +24,7 @@ func NewStreamService() *StreamService {
 	}
 }
 
-func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.Stream, error) {
+func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.TwitchStream, error) {
 	streamers, err := e.user_repository.GetStreamersForCurrentEvent()
 	if err != nil {
 		return nil, err

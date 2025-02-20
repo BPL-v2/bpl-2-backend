@@ -36,7 +36,7 @@ func setupStreamController() []RouteInfo {
 // @Description Fetches all twitch streams for the current event
 // @Tags streams
 // @Produce json
-// @Success 200 {array} client.Stream
+// @Success 200 {array} client.TwitchStream
 // @Router /streams [get]
 func (e *StreamController) getStreamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

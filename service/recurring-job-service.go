@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type JobType string
+type JobType string //@name JobType
 
 const (
 	FetchStashChanges    JobType = "FetchStashChanges"
@@ -18,12 +18,12 @@ const (
 )
 
 type RecurringJob struct {
-	JobType           JobType            `json:"job_type"`
-	SleepAfterEachRun time.Duration      `json:"sleep_after_each_run"`
-	Cancel            context.CancelFunc `json:"-"`
-	EndDate           *time.Time         `json:"end_date"`
-	EventId           *int               `json:"event_id"`
-}
+	JobType                  JobType            `json:"job_type"`
+	SleepAfterEachRunSeconds int                `json:"sleep_after_each_run_seconds"`
+	Cancel                   context.CancelFunc `json:"-"`
+	EndDate                  *time.Time         `json:"end_date"`
+	EventId                  *int               `json:"event_id"`
+} //@name RecurringJob
 
 type RecurringJobService struct {
 	objective_repository        *repository.ObjectiveRepository
@@ -68,7 +68,7 @@ func (s *RecurringJobService) EvaluateStashChanges(job *RecurringJob) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), job.EndDate.Sub(time.Now()))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Until(*job.EndDate))
 	job.Cancel = cancel
 	return StashLoop(ctx, s.poeClient, event)
 }
@@ -82,7 +82,7 @@ func (s *RecurringJobService) FetchStashChanges(job *RecurringJob) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), job.EndDate.Sub(time.Now()))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Until(*job.EndDate))
 	job.Cancel = cancel
 	FetchLoop(ctx, event, s.poeClient)
 	return nil

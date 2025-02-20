@@ -20,7 +20,7 @@ type TwitchClient struct {
 	mu           sync.Mutex
 }
 
-type Stream struct {
+type TwitchStream struct {
 	ID           string   `json:"id"`
 	UserID       string   `json:"user_id"`
 	UserLogin    string   `json:"user_login"`
@@ -41,7 +41,7 @@ type Stream struct {
 }
 
 type StreamResponse struct {
-	Data       []*Stream `json:"data"`
+	Data       []*TwitchStream `json:"data"`
 	Pagination struct {
 		Cursor string `json:"cursor"`
 	} `json:"pagination"`
@@ -58,8 +58,8 @@ func NewTwitchClient(token string) *TwitchClient {
 	}
 }
 
-func (t *TwitchClient) GetAllStreams(userIds []string) ([]*Stream, error) {
-	streamChannel := make(chan []*Stream)
+func (t *TwitchClient) GetAllStreams(userIds []string) ([]*TwitchStream, error) {
+	streamChannel := make(chan []*TwitchStream)
 	var wg sync.WaitGroup
 	for userBatch := range utils.BatchIterator(userIds, 100) {
 		func(ids []string) {
@@ -77,16 +77,16 @@ func (t *TwitchClient) GetAllStreams(userIds []string) ([]*Stream, error) {
 		close(streamChannel)
 	}()
 
-	allStreams := make([]*Stream, 0)
+	allStreams := make([]*TwitchStream, 0)
 	for streams := range streamChannel {
 		allStreams = append(allStreams, streams...)
 	}
 	return allStreams, nil
 }
 
-func (t *TwitchClient) GetStreams(userIds []string, cursor *string, limit int) []*Stream {
+func (t *TwitchClient) GetStreams(userIds []string, cursor *string, limit int) []*TwitchStream {
 	if limit == 0 {
-		return make([]*Stream, 0)
+		return make([]*TwitchStream, 0)
 	}
 	query := make(url.Values)
 	for _, id := range userIds {
@@ -114,13 +114,13 @@ func (t *TwitchClient) GetStreams(userIds []string, cursor *string, limit int) [
 
 	resp, err := t.client.Do(req)
 	if err != nil {
-		return make([]*Stream, 0)
+		return make([]*TwitchStream, 0)
 	}
 	defer resp.Body.Close()
 	streams := &StreamResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&streams)
 	if err != nil {
-		return make([]*Stream, 0)
+		return make([]*TwitchStream, 0)
 	}
 	data := streams.Data
 	if len(data) == 100 && streams.Pagination.Cursor != "" {

@@ -23,8 +23,8 @@ func NewTeamController() *TeamController {
 	}
 }
 
-func toTeamResponse(team *repository.Team) *TeamResponse {
-	return &TeamResponse{
+func toTeamResponse(team *repository.Team) *Team {
+	return &Team{
 		ID:             team.ID,
 		Name:           team.Name,
 		AllowedClasses: team.AllowedClasses,
@@ -53,7 +53,7 @@ func setupTeamController() []RouteInfo {
 // @Tags team
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 200 {array} TeamResponse
+// @Success 200 {array} Team
 // @Router /events/{event_id}/teams [get]
 func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -82,7 +82,7 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 201 {object} TeamResponse
+// @Success 201 {object} Team
 // @Router /events/{event_id}/teams [put]
 func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -114,7 +114,7 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 // @Produce json
 // @Param event_id path int true "Event ID"
 // @Param team_id path int true "Team ID"
-// @Success 200 {object} TeamResponse
+// @Success 200 {object} Team
 // @Router /events/{event_id}/teams/{team_id} [get]
 func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -212,12 +212,7 @@ type TeamCreate struct {
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 }
 
-type TeamUpdate struct {
-	Name           string   `json:"name"`
-	AllowedClasses []string `json:"allowed_classes"`
-}
-
-type TeamResponse struct {
+type Team struct {
 	ID             int      `json:"id" binding:"required"`
 	Name           string   `json:"name" binding:"required"`
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`

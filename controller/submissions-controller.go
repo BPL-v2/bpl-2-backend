@@ -46,7 +46,7 @@ func setupSubmissionController() []RouteInfo {
 // @Tags submission
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 200 {array} SubmissionResponse
+// @Success 200 {array} Submission
 // @Router /events/{event_id}/submissions [get]
 func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -70,7 +70,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, utils.Map(submissions, func(submission *repository.Submission) *SubmissionResponse {
+		c.JSON(200, utils.Map(submissions, func(submission *repository.Submission) *Submission {
 			return toSubmissionResponse(submission, teamUsers)
 		}))
 	}
@@ -82,7 +82,8 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 201 {object} SubmissionResponse
+// @Param body body SubmissionCreate true "Submission to create"
+// @Success 201 {object} Submission
 // @Router /events/{event_id}/submissions [put]
 func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -151,7 +152,8 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 // @Produce json
 // @Param event_id path int true "Event ID"
 // @Param submission_id path int true "Submission ID"
-// @Success 200 {object} SubmissionResponse
+// @Param submission body SubmissionReview true "Submission review"
+// @Success 200 {object} Submission
 // @Router /events/{event_id}/submissions/{submission_id}/review [put]
 func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -223,22 +225,22 @@ func (s *SubmissionReview) toModel() *repository.Submission {
 	}
 }
 
-type SubmissionResponse struct {
+type Submission struct {
 	ID             int                       `json:"id" binding:"required"`
-	Objective      *ObjectiveResponse        `json:"objective"`
+	Objective      *Objective                `json:"objective"`
 	Number         int                       `json:"number" binding:"required"`
 	Proof          string                    `json:"proof" binding:"required"`
 	Timestamp      time.Time                 `json:"timestamp" binding:"required"`
 	ApprovalStatus repository.ApprovalStatus `json:"approval_status" binding:"required"`
 	Comment        string                    `json:"comment" binding:"required"`
-	User           *NonSensitiveUserResponse `json:"user"`
+	User           *NonSensitiveUser         `json:"user"`
 	TeamID         *int                      `json:"team_id"`
 	ReviewComment  *string                   `json:"review_comment"`
 	ReviewerID     *int                      `json:"reviewer_id"`
 }
 
-func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]int) *SubmissionResponse {
-	response := &SubmissionResponse{
+func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]int) *Submission {
+	response := &Submission{
 		ID:             submission.ID,
 		Objective:      toObjectiveResponse(submission.Objective),
 		Number:         submission.Number,
