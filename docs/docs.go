@@ -34,7 +34,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.EventResponse"
+                                "$ref": "#/definitions/Event"
                             }
                         }
                     }
@@ -59,7 +59,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.EventCreate"
+                            "$ref": "#/definitions/EventCreate"
                         }
                     }
                 ],
@@ -67,7 +67,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.EventResponse"
+                            "$ref": "#/definitions/Event"
                         }
                     }
                 }
@@ -87,7 +87,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.EventResponse"
+                            "$ref": "#/definitions/Event"
                         }
                     }
                 }
@@ -119,7 +119,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.EventResponse"
+                            "$ref": "#/definitions/Event"
                         }
                     }
                 }
@@ -142,6 +142,35 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/rules": {
+            "get": {
+                "description": "Fetches the rules for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "GetRulesForEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Category"
+                        }
                     }
                 }
             }
@@ -169,10 +198,38 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/controller.ScoreResponse"
-                            }
+                            "$ref": "#/definitions/ScoreMap"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/scores/ws": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Websocket for score updates. Once connected, the client will receive score updates in real-time.",
+                "tags": [
+                    "scores"
+                ],
+                "operationId": "ScoreWebSocket",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ScoreDiff"
                         }
                     }
                 }
@@ -203,7 +260,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.ScoringPresetResponse"
+                                "$ref": "#/definitions/ScoringPreset"
                             }
                         }
                     }
@@ -237,7 +294,7 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/definitions/controller.SignupResponse"
+                                    "$ref": "#/definitions/Signup"
                                 }
                             }
                         }
@@ -268,7 +325,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.SignupResponse"
+                            "$ref": "#/definitions/Signup"
                         }
                     }
                 }
@@ -298,7 +355,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.SignupResponse"
+                            "$ref": "#/definitions/Signup"
                         }
                     }
                 }
@@ -354,7 +411,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.EventStatusResponse"
+                            "$ref": "#/definitions/EventStatus"
                         }
                     }
                 }
@@ -385,7 +442,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.SubmissionResponse"
+                                "$ref": "#/definitions/Submission"
                             }
                         }
                     }
@@ -410,13 +467,22 @@ const docTemplate = `{
                         "name": "event_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Submission to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SubmissionCreate"
+                        }
                     }
                 ],
                 "responses": {
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.SubmissionResponse"
+                            "$ref": "#/definitions/Submission"
                         }
                     }
                 }
@@ -482,13 +548,22 @@ const docTemplate = `{
                         "name": "submission_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Submission review",
+                        "name": "submission",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SubmissionReview"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.SubmissionResponse"
+                            "$ref": "#/definitions/Submission"
                         }
                     }
                 }
@@ -519,7 +594,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.TeamResponse"
+                                "$ref": "#/definitions/Team"
                             }
                         }
                     }
@@ -550,7 +625,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.TeamResponse"
+                            "$ref": "#/definitions/Team"
                         }
                     }
                 }
@@ -616,7 +691,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.TeamResponse"
+                            "$ref": "#/definitions/Team"
                         }
                     }
                 }
@@ -680,8 +755,34 @@ const docTemplate = `{
                             "additionalProperties": {
                                 "type": "array",
                                 "items": {
-                                    "$ref": "#/definitions/controller.MinimalUserResponse"
+                                    "$ref": "#/definitions/MinimalUser"
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs": {
+            "get": {
+                "description": "Get all recurring jobs",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "jobs"
+                ],
+                "operationId": "GetJobs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/RecurringJob"
                             }
                         }
                     }
@@ -706,7 +807,7 @@ const docTemplate = `{
         },
         "/oauth2/discord/bot-login": {
             "post": {
-                "description": "Logs in the discord bot",
+                "description": "Logs in the discord bot (only for internal use)",
                 "consumes": [
                     "application/json"
                 ],
@@ -724,7 +825,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.DiscordBotLoginBody"
+                            "$ref": "#/definitions/DiscordBotLoginBody"
                         }
                     }
                 ],
@@ -787,23 +888,34 @@ const docTemplate = `{
             }
         },
         "/scoring/categories": {
-            "get": {
-                "description": "Fetches the rules for the current event",
+            "put": {
+                "description": "Creates a new scoring category",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "scoring"
                 ],
-                "operationId": "GetRulesForEvent",
-                "responses": {
-                    "200": {
-                        "description": "OK",
+                "operationId": "CreateCategory",
+                "parameters": [
+                    {
+                        "description": "Category to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/controller.CategoryResponse"
-                            }
+                            "$ref": "#/definitions/CategoryCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Category"
                         }
                     }
                 }
@@ -832,7 +944,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.CategoryResponse"
+                            "$ref": "#/definitions/Category"
                         }
                     }
                 }
@@ -882,7 +994,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.ConditionCreate"
+                            "$ref": "#/definitions/ConditionCreate"
                         }
                     }
                 ],
@@ -890,7 +1002,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.ConditionResponse"
+                            "$ref": "#/definitions/Condition"
                         }
                     }
                 }
@@ -935,7 +1047,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.ObjectiveCreate"
+                            "$ref": "#/definitions/ObjectiveCreate"
                         }
                     }
                 ],
@@ -943,7 +1055,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/controller.ObjectiveResponse"
+                            "$ref": "#/definitions/Objective"
                         }
                     }
                 }
@@ -972,7 +1084,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.ObjectiveResponse"
+                            "$ref": "#/definitions/Objective"
                         }
                     }
                 }
@@ -1022,7 +1134,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.ScoringPresetCreate"
+                            "$ref": "#/definitions/ScoringPresetCreate"
                         }
                     }
                 ],
@@ -1030,7 +1142,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.ScoringPresetResponse"
+                            "$ref": "#/definitions/ScoringPreset"
                         }
                     }
                 }
@@ -1059,7 +1171,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.ScoringPresetResponse"
+                            "$ref": "#/definitions/ScoringPreset"
                         }
                     }
                 }
@@ -1105,7 +1217,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/client.Stream"
+                                "$ref": "#/definitions/TwitchStream"
                             }
                         }
                     }
@@ -1133,7 +1245,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/controller.UserAdminResponse"
+                                "$ref": "#/definitions/User"
                             }
                         }
                     }
@@ -1190,7 +1302,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.UserResponse"
+                            "$ref": "#/definitions/User"
                         }
                     }
                 }
@@ -1215,7 +1327,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.UserResponse"
+                            "$ref": "#/definitions/User"
                         }
                     }
                 }
@@ -1244,7 +1356,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/controller.UserUpdate"
+                            "$ref": "#/definitions/UserUpdate"
                         }
                     }
                 ],
@@ -1252,7 +1364,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/controller.UserResponse"
+                            "$ref": "#/definitions/User"
                         }
                     }
                 }
@@ -1292,21 +1404,54 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/repository.Permission"
+                                "$ref": "#/definitions/Permission"
                             }
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
-        "client.Stream": {
+        "JobType": {
+            "type": "string",
+            "enum": [
+                "FetchStashChanges",
+                "EvaluateStashChanges",
+                "FetchCharacterData"
+            ],
+            "x-enum-varnames": [
+                "FetchStashChanges",
+                "EvaluateStashChanges",
+                "FetchCharacterData"
+            ]
+        },
+        "RecurringJob": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "job_type": {
+                    "$ref": "#/definitions/JobType"
+                },
+                "sleep_after_each_run_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "TwitchStream": {
             "type": "object",
             "properties": {
                 "backend_user_id": {
@@ -1365,7 +1510,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.ApplicationStatus": {
+        "ApplicationStatus": {
             "type": "string",
             "enum": [
                 "applied",
@@ -1380,7 +1525,42 @@ const docTemplate = `{
                 "ApplicationStatusNone"
             ]
         },
-        "controller.CategoryCreate": {
+        "Category": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "objectives",
+                "sub_categories"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "objectives": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Objective"
+                    }
+                },
+                "scoring_preset": {
+                    "$ref": "#/definitions/ScoringPreset"
+                },
+                "scoring_preset_id": {
+                    "type": "integer"
+                },
+                "sub_categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Category"
+                    }
+                }
+            }
+        },
+        "CategoryCreate": {
             "type": "object",
             "required": [
                 "name",
@@ -1401,39 +1581,30 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.CategoryResponse": {
+        "Condition": {
             "type": "object",
             "required": [
+                "field",
                 "id",
-                "name",
-                "objectives",
-                "sub_categories"
+                "operator",
+                "value"
             ],
             "properties": {
+                "field": {
+                    "$ref": "#/definitions/ItemField"
+                },
                 "id": {
                     "type": "integer"
                 },
-                "name": {
+                "operator": {
+                    "$ref": "#/definitions/Operator"
+                },
+                "value": {
                     "type": "string"
-                },
-                "objectives": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controller.ObjectiveResponse"
-                    }
-                },
-                "scoring_preset_id": {
-                    "type": "integer"
-                },
-                "sub_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controller.CategoryResponse"
-                    }
                 }
             }
         },
-        "controller.ConditionCreate": {
+        "ConditionCreate": {
             "type": "object",
             "required": [
                 "field",
@@ -1460,7 +1631,7 @@ const docTemplate = `{
                     ],
                     "allOf": [
                         {
-                            "$ref": "#/definitions/repository.ItemField"
+                            "$ref": "#/definitions/ItemField"
                         }
                     ]
                 },
@@ -1488,7 +1659,7 @@ const docTemplate = `{
                     ],
                     "allOf": [
                         {
-                            "$ref": "#/definitions/repository.Operator"
+                            "$ref": "#/definitions/Operator"
                         }
                     ]
                 },
@@ -1497,30 +1668,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.ConditionResponse": {
-            "type": "object",
-            "required": [
-                "field",
-                "id",
-                "operator",
-                "value"
-            ],
-            "properties": {
-                "field": {
-                    "$ref": "#/definitions/repository.ItemField"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "operator": {
-                    "$ref": "#/definitions/repository.Operator"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.DiscordBotLoginBody": {
+        "DiscordBotLoginBody": {
             "type": "object",
             "required": [
                 "token"
@@ -1531,45 +1679,13 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.EventCreate": {
+        "Event": {
             "type": "object",
             "required": [
                 "application_start_time",
                 "event_end_time",
                 "event_start_time",
-                "max_size",
-                "name"
-            ],
-            "properties": {
-                "application_start_time": {
-                    "type": "string"
-                },
-                "event_end_time": {
-                    "type": "string"
-                },
-                "event_start_time": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "is_current": {
-                    "type": "boolean"
-                },
-                "max_size": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.EventResponse": {
-            "type": "object",
-            "required": [
-                "application_start_time",
-                "event_end_time",
-                "event_start_time",
+                "game_version",
                 "id",
                 "is_current",
                 "max_size",
@@ -1586,6 +1702,9 @@ const docTemplate = `{
                 },
                 "event_start_time": {
                     "type": "string"
+                },
+                "game_version": {
+                    "$ref": "#/definitions/GameVersion"
                 },
                 "id": {
                     "type": "integer"
@@ -1605,26 +1724,83 @@ const docTemplate = `{
                 "teams": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/controller.TeamResponse"
+                        "$ref": "#/definitions/Team"
                     }
                 }
             }
         },
-        "controller.EventStatusResponse": {
+        "EventCreate": {
+            "type": "object",
+            "required": [
+                "application_start_time",
+                "event_end_time",
+                "event_start_time",
+                "game_version",
+                "max_size",
+                "name"
+            ],
+            "properties": {
+                "application_start_time": {
+                    "type": "string"
+                },
+                "event_end_time": {
+                    "type": "string"
+                },
+                "event_start_time": {
+                    "type": "string"
+                },
+                "game_version": {
+                    "$ref": "#/definitions/GameVersion"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_current": {
+                    "type": "boolean"
+                },
+                "max_size": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "EventStatus": {
             "type": "object",
             "required": [
                 "application_status"
             ],
             "properties": {
                 "application_status": {
-                    "$ref": "#/definitions/controller.ApplicationStatus"
+                    "$ref": "#/definitions/ApplicationStatus"
                 },
                 "team_id": {
                     "type": "integer"
                 }
             }
         },
-        "controller.MinimalUserResponse": {
+        "JobCreate": {
+            "type": "object",
+            "properties": {
+                "duration_in_seconds": {
+                    "type": "integer"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "job_type": {
+                    "$ref": "#/definitions/JobType"
+                },
+                "sleep_after_each_run_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "MinimalUser": {
             "type": "object",
             "required": [
                 "display_name",
@@ -1639,7 +1815,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.NonSensitiveUserResponse": {
+        "NonSensitiveUser": {
             "type": "object",
             "required": [
                 "display_name",
@@ -1669,60 +1845,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.ObjectiveCreate": {
-            "type": "object",
-            "required": [
-                "aggregation",
-                "category_id",
-                "conditions",
-                "name",
-                "number_field",
-                "objective_type",
-                "required_number"
-            ],
-            "properties": {
-                "aggregation": {
-                    "$ref": "#/definitions/repository.AggregationType"
-                },
-                "category_id": {
-                    "type": "integer"
-                },
-                "conditions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/controller.ConditionCreate"
-                    }
-                },
-                "extra": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "number_field": {
-                    "$ref": "#/definitions/repository.NumberField"
-                },
-                "objective_type": {
-                    "$ref": "#/definitions/repository.ObjectiveType"
-                },
-                "required_number": {
-                    "type": "integer"
-                },
-                "scoring_preset_id": {
-                    "type": "integer"
-                },
-                "valid_from": {
-                    "type": "string"
-                },
-                "valid_to": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.ObjectiveResponse": {
+        "Objective": {
             "type": "object",
             "required": [
                 "aggregation",
@@ -1737,7 +1860,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "aggregation": {
-                    "$ref": "#/definitions/repository.AggregationType"
+                    "$ref": "#/definitions/AggregationType"
                 },
                 "category_id": {
                     "type": "integer"
@@ -1745,7 +1868,7 @@ const docTemplate = `{
                 "conditions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/controller.ConditionResponse"
+                        "$ref": "#/definitions/Condition"
                     }
                 },
                 "extra": {
@@ -1758,10 +1881,126 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "number_field": {
-                    "$ref": "#/definitions/repository.NumberField"
+                    "$ref": "#/definitions/NumberField"
                 },
                 "objective_type": {
-                    "$ref": "#/definitions/repository.ObjectiveType"
+                    "$ref": "#/definitions/ObjectiveType"
+                },
+                "required_number": {
+                    "type": "integer"
+                },
+                "scoring_preset": {
+                    "$ref": "#/definitions/ScoringPreset"
+                },
+                "scoring_preset_id": {
+                    "type": "integer"
+                },
+                "valid_from": {
+                    "type": "string"
+                },
+                "valid_to": {
+                    "type": "string"
+                }
+            }
+        },
+        "ObjectiveConditionCreate": {
+            "type": "object",
+            "required": [
+                "field",
+                "operator",
+                "value"
+            ],
+            "properties": {
+                "field": {
+                    "enum": [
+                        "BASE_TYPE",
+                        "NAME",
+                        "TYPE_LINE",
+                        "RARITY",
+                        "ILVL",
+                        "FRAME_TYPE",
+                        "TALISMAN_TIER",
+                        "ENCHANT_MODS",
+                        "EXPLICIT_MODS",
+                        "IMPLICIT_MODS",
+                        "CRAFTED_MODS",
+                        "FRACTURED_MODS",
+                        "SIX_LINK"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ItemField"
+                        }
+                    ]
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "operator": {
+                    "enum": [
+                        "EQ",
+                        "NEQ",
+                        "GT",
+                        "GTE",
+                        "LT",
+                        "LTE",
+                        "IN",
+                        "NOT_IN",
+                        "MATCHES",
+                        "CONTAINS",
+                        "CONTAINS_ALL",
+                        "CONTAINS_MATCH",
+                        "CONTAINS_ALL_MATCHES"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/Operator"
+                        }
+                    ]
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "ObjectiveCreate": {
+            "type": "object",
+            "required": [
+                "aggregation",
+                "category_id",
+                "conditions",
+                "name",
+                "number_field",
+                "objective_type",
+                "required_number"
+            ],
+            "properties": {
+                "aggregation": {
+                    "$ref": "#/definitions/AggregationType"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "conditions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ObjectiveConditionCreate"
+                    }
+                },
+                "extra": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "number_field": {
+                    "$ref": "#/definitions/NumberField"
+                },
+                "objective_type": {
+                    "$ref": "#/definitions/ObjectiveType"
                 },
                 "required_number": {
                     "type": "integer"
@@ -1777,25 +2016,19 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.ScoreResponse": {
+        "Score": {
             "type": "object",
             "required": [
                 "finished",
-                "id",
                 "number",
                 "points",
                 "rank",
-                "team_id",
                 "timestamp",
-                "type",
                 "user_id"
             ],
             "properties": {
                 "finished": {
                     "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
                 },
                 "number": {
                     "type": "integer"
@@ -1806,57 +2039,43 @@ const docTemplate = `{
                 "rank": {
                     "type": "integer"
                 },
-                "team_id": {
-                    "type": "integer"
-                },
                 "timestamp": {
                     "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/scoring.ScoreType"
                 },
                 "user_id": {
                     "type": "integer"
                 }
             }
         },
-        "controller.ScoringPresetCreate": {
+        "ScoreDiff": {
             "type": "object",
             "required": [
-                "event_id",
-                "name",
-                "points",
-                "scoring_method",
-                "type"
+                "diff_type",
+                "field_diff",
+                "score"
             ],
             "properties": {
-                "description": {
-                    "type": "string"
+                "diff_type": {
+                    "$ref": "#/definitions/Difftype"
                 },
-                "event_id": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "points": {
+                "field_diff": {
                     "type": "array",
                     "items": {
-                        "type": "number"
+                        "type": "string"
                     }
                 },
-                "scoring_method": {
-                    "$ref": "#/definitions/repository.ScoringMethod"
-                },
-                "type": {
-                    "$ref": "#/definitions/repository.ScoringPresetType"
+                "score": {
+                    "$ref": "#/definitions/Score"
                 }
             }
         },
-        "controller.ScoringPresetResponse": {
+        "ScoreMap": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/ScoreDiff"
+            }
+        },
+        "ScoringPreset": {
             "type": "object",
             "required": [
                 "description",
@@ -1883,14 +2102,50 @@ const docTemplate = `{
                     }
                 },
                 "scoring_method": {
-                    "$ref": "#/definitions/repository.ScoringMethod"
+                    "$ref": "#/definitions/ScoringMethod"
                 },
                 "type": {
-                    "$ref": "#/definitions/repository.ScoringPresetType"
+                    "$ref": "#/definitions/ScoringPresetType"
                 }
             }
         },
-        "controller.SignupResponse": {
+        "ScoringPresetCreate": {
+            "type": "object",
+            "required": [
+                "event_id",
+                "name",
+                "points",
+                "scoring_method",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "scoring_method": {
+                    "$ref": "#/definitions/ScoringMethod"
+                },
+                "type": {
+                    "$ref": "#/definitions/ScoringPresetType"
+                }
+            }
+        },
+        "Signup": {
             "type": "object",
             "required": [
                 "expected_playtime",
@@ -1900,7 +2155,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "expected_playtime": {
-                    "$ref": "#/definitions/repository.ExpectedPlayTime"
+                    "$ref": "#/definitions/ExpectedPlayTime"
                 },
                 "id": {
                     "type": "integer"
@@ -1912,11 +2167,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/controller.NonSensitiveUserResponse"
+                    "$ref": "#/definitions/NonSensitiveUser"
                 }
             }
         },
-        "controller.SubmissionResponse": {
+        "Submission": {
             "type": "object",
             "required": [
                 "approval_status",
@@ -1928,7 +2183,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "approval_status": {
-                    "$ref": "#/definitions/repository.ApprovalStatus"
+                    "$ref": "#/definitions/ApprovalStatus"
                 },
                 "comment": {
                     "type": "string"
@@ -1940,7 +2195,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "objective": {
-                    "$ref": "#/definitions/controller.ObjectiveResponse"
+                    "$ref": "#/definitions/Objective"
                 },
                 "proof": {
                     "type": "string"
@@ -1958,11 +2213,61 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/controller.NonSensitiveUserResponse"
+                    "$ref": "#/definitions/NonSensitiveUser"
                 }
             }
         },
-        "controller.TeamResponse": {
+        "SubmissionCreate": {
+            "type": "object",
+            "required": [
+                "objective_id",
+                "timestamp"
+            ],
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "objective_id": {
+                    "type": "integer"
+                },
+                "proof": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        },
+        "SubmissionReview": {
+            "type": "object",
+            "required": [
+                "approval_status"
+            ],
+            "properties": {
+                "approval_status": {
+                    "enum": [
+                        "APPROVED",
+                        "PENDING",
+                        "REJECTED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ApprovalStatus"
+                        }
+                    ]
+                },
+                "review_comment": {
+                    "type": "string"
+                }
+            }
+        },
+        "Team": {
             "type": "object",
             "required": [
                 "allowed_classes",
@@ -1988,7 +2293,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.UserAdminResponse": {
+        "User": {
             "type": "object",
             "required": [
                 "display_name",
@@ -2014,43 +2319,7 @@ const docTemplate = `{
                 "permissions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/repository.Permission"
-                    }
-                },
-                "twitch_id": {
-                    "type": "string"
-                },
-                "twitch_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "controller.UserResponse": {
-            "type": "object",
-            "required": [
-                "display_name",
-                "id"
-            ],
-            "properties": {
-                "account_name": {
-                    "type": "string"
-                },
-                "discord_id": {
-                    "type": "string"
-                },
-                "discord_name": {
-                    "type": "string"
-                },
-                "display_name": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "permissions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/repository.Permission"
+                        "$ref": "#/definitions/Permission"
                     }
                 },
                 "token_expiry_timestamp": {
@@ -2064,7 +2333,7 @@ const docTemplate = `{
                 }
             }
         },
-        "controller.UserUpdate": {
+        "UserUpdate": {
             "type": "object",
             "required": [
                 "display_name"
@@ -2075,7 +2344,7 @@ const docTemplate = `{
                 }
             }
         },
-        "repository.AggregationType": {
+        "AggregationType": {
             "type": "string",
             "enum": [
                 "SUM_LATEST",
@@ -2092,7 +2361,7 @@ const docTemplate = `{
                 "MINIMUM"
             ]
         },
-        "repository.ApprovalStatus": {
+        "ApprovalStatus": {
             "type": "string",
             "enum": [
                 "APPROVED",
@@ -2105,7 +2374,7 @@ const docTemplate = `{
                 "PENDING"
             ]
         },
-        "repository.ExpectedPlayTime": {
+        "ExpectedPlayTime": {
             "type": "string",
             "enum": [
                 "VERY_LOW",
@@ -2126,7 +2395,18 @@ const docTemplate = `{
                 "NoLife"
             ]
         },
-        "repository.ItemField": {
+        "GameVersion": {
+            "type": "string",
+            "enum": [
+                "poe1",
+                "poe2"
+            ],
+            "x-enum-varnames": [
+                "PoE1",
+                "PoE2"
+            ]
+        },
+        "ItemField": {
             "type": "string",
             "enum": [
                 "BASE_TYPE",
@@ -2159,7 +2439,7 @@ const docTemplate = `{
                 "SIX_LINK"
             ]
         },
-        "repository.NumberField": {
+        "NumberField": {
             "type": "string",
             "enum": [
                 "STACK_SIZE",
@@ -2174,7 +2454,7 @@ const docTemplate = `{
                 "SUBMISSION_VALUE"
             ]
         },
-        "repository.ObjectiveType": {
+        "ObjectiveType": {
             "type": "string",
             "enum": [
                 "ITEM",
@@ -2187,7 +2467,7 @@ const docTemplate = `{
                 "SUBMISSION"
             ]
         },
-        "repository.Operator": {
+        "Operator": {
             "type": "string",
             "enum": [
                 "EQ",
@@ -2220,7 +2500,7 @@ const docTemplate = `{
                 "CONTAINS_ALL_MATCHES"
             ]
         },
-        "repository.Permission": {
+        "Permission": {
             "type": "string",
             "enum": [
                 "admin",
@@ -2231,7 +2511,7 @@ const docTemplate = `{
                 "PermissionCommandTeam"
             ]
         },
-        "repository.ScoringMethod": {
+        "ScoringMethod": {
             "type": "string",
             "enum": [
                 "PRESENCE",
@@ -2252,7 +2532,7 @@ const docTemplate = `{
                 "BONUS_PER_COMPLETION"
             ]
         },
-        "repository.ScoringPresetType": {
+        "ScoringPresetType": {
             "type": "string",
             "enum": [
                 "OBJECTIVE",
@@ -2263,15 +2543,19 @@ const docTemplate = `{
                 "CATEGORY"
             ]
         },
-        "scoring.ScoreType": {
+        "Difftype": {
             "type": "string",
             "enum": [
-                "OBJECTIVE",
-                "CATEGORY"
+                "Added",
+                "Removed",
+                "Changed",
+                "Unchanged"
             ],
             "x-enum-varnames": [
-                "OBJECTIVE",
-                "CATEGORY"
+                "Added",
+                "Removed",
+                "Changed",
+                "Unchanged"
             ]
         }
     },

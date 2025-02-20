@@ -39,10 +39,10 @@ func (j *JobCreate) toJob() (*service.RecurringJob, error) {
 		j.EndDate = &endDate
 	}
 	return &service.RecurringJob{
-		JobType:           j.JobType,
-		SleepAfterEachRun: time.Duration(j.SleepAfterEachRunSeconds) * time.Second,
-		EndDate:           j.EndDate,
-		EventId:           j.EventId,
+		JobType:                  j.JobType,
+		SleepAfterEachRunSeconds: j.SleepAfterEachRunSeconds,
+		EndDate:                  j.EndDate,
+		EventId:                  j.EventId,
 	}, nil
 }
 
@@ -81,7 +81,7 @@ func setupRecurringJobsController() []RouteInfo {
 // @Tags jobs
 // @Accept json
 // @Produce json
-// @Success 200 {array} RecurringJob
+// @Success 200 {array} service.RecurringJob
 // @Router /jobs [get]
 func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -103,7 +103,7 @@ func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param job body JobCreate true "Job to create"
-// @Success 201 {object} JobCreate
+// @Success 201 {object} service.RecurringJob
 func (c *RecurringJobsController) startJobHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var jobCreate JobCreate

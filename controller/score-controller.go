@@ -56,6 +56,13 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// @id ScoreWebSocket
+// @Description Websocket for score updates. Once connected, the client will receive score updates in real-time.
+// @Tags scores
+// @Router /events/{event_id}/scores/ws [get]
+// @Param event_id path int true "Event ID"
+// @Security ApiKeyAuth
+// @Success 200 {object} ScoreDiff
 func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	eventID, err := strconv.Atoi(c.Param("event_id"))
 	if err != nil {
@@ -138,7 +145,7 @@ func (e *ScoreController) StartScoreUpdater() {
 // @Description Fetches the latest scores for the current event
 // @Tags scores
 // @Produce json
-// @Success 200 {array} ScoreResponse
+// @Success 200 {object} ScoreMap
 // @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/scores/latest [get]
 func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
@@ -157,7 +164,7 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	}
 }
 
-type ScoreResponse struct {
+type Score struct {
 	Points    int       `json:"points" binding:"required"`
 	UserID    int       `json:"user_id" binding:"required"`
 	Rank      int       `json:"rank" binding:"required"`
@@ -166,32 +173,32 @@ type ScoreResponse struct {
 	Finished  bool      `json:"finished" binding:"required"`
 }
 
-type ScoreDiffResponse struct {
-	Score     *ScoreResponse   `json:"score"`
-	FieldDiff []string         `json:"field_diff"`
-	DiffType  service.Difftype `json:"diff_type"`
+type ScoreDiff struct {
+	Score     *Score           `json:"score" binding:"required"`
+	FieldDiff []string         `json:"field_diff" binding:"required"`
+	DiffType  service.Difftype `json:"diff_type" binding:"required"`
 }
 
-type ScoreMapResponse map[string]*ScoreDiffResponse
+type ScoreMap map[string]*ScoreDiff
 
-func toScoreDiffResponse(scoreDiff *service.ScoreDifference) *ScoreDiffResponse {
-	return &ScoreDiffResponse{
+func toScoreDiffResponse(scoreDiff *service.ScoreDifference) *ScoreDiff {
+	return &ScoreDiff{
 		Score:     toScoreResponse(scoreDiff.Score),
 		FieldDiff: scoreDiff.FieldDiff,
 		DiffType:  scoreDiff.DiffType,
 	}
 }
 
-func toScoreMapResponse(scoreMap service.ScoreMap) ScoreMapResponse {
-	response := make(ScoreMapResponse)
+func toScoreMapResponse(scoreMap service.ScoreMap) ScoreMap {
+	response := make(ScoreMap)
 	for id, score := range scoreMap {
 		response[id] = toScoreDiffResponse(score)
 	}
 	return response
 }
 
-func toScoreResponse(score *scoring.Score) *ScoreResponse {
-	return &ScoreResponse{
+func toScoreResponse(score *scoring.Score) *Score {
+	return &Score{
 		Points:    score.Points,
 		UserID:    score.UserID,
 		Rank:      score.Rank,

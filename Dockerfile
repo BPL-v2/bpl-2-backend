@@ -15,6 +15,7 @@ RUN go mod download
 COPY . .
 # Generate Swagger documentation
 RUN swag init
+RUN ./cleanup-swagger.sh
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o server
 

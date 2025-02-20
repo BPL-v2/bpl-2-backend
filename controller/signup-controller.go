@@ -42,7 +42,7 @@ func setupSignupController() []RouteInfo {
 // @Description Fetches an authenticated user's signup for the event
 // @Tags signup
 // @Produce json
-// @Success 200 {object} SignupResponse
+// @Success 200 {object} Signup
 // @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/signups/self [get]
 func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
@@ -75,7 +75,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Accept json
 // @Produce json
-// @Success 201 {object} SignupResponse
+// @Success 201 {object} Signup
 // @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
@@ -147,7 +147,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 // @Description Fetches all signups for the event
 // @Tags signup
 // @Produce json
-// @Success 200 {object} map[int][]SignupResponse
+// @Success 200 {object} map[int][]Signup
 // @Param event_id path int true "Event ID"
 // @Router /events/{event_id}/signups [get]
 func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
@@ -162,7 +162,7 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		signupsResponse := make(map[int][]*SignupResponse, 0)
+		signupsResponse := make(map[int][]*Signup, 0)
 		for teamID, teamSignups := range signups {
 			signupsResponse[teamID] = utils.Map(teamSignups, toSignupResponse)
 		}
@@ -170,23 +170,24 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 	}
 }
 
-type SignupResponse struct {
+type Signup struct {
 	ID               int                         `json:"id" binding:"required"`
-	User             *NonSensitiveUserResponse   `json:"user" binding:"required"`
+	User             *NonSensitiveUser           `json:"user" binding:"required"`
 	Timestamp        time.Time                   `json:"timestamp" binding:"required"`
 	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`
 	TeamID           *int                        `json:"team_id"`
 }
+
 type SignupCreate struct {
 	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`
 }
 
-func toSignupResponse(signup *repository.Signup) *SignupResponse {
+func toSignupResponse(signup *repository.Signup) *Signup {
 	if signup == nil {
 		return nil
 	}
 
-	return &SignupResponse{
+	return &Signup{
 		ID:               signup.ID,
 		User:             toNonSensitiveUserResponse(signup.User),
 		Timestamp:        signup.Timestamp,

@@ -48,7 +48,7 @@ func setupUserController() []RouteInfo {
 // @Description Fetches all users
 // @Tags user
 // @Produce json
-// @Success 200 {array} UserAdminResponse
+// @Success 200 {array} User
 // @Security ApiKeyAuth
 // @Router /users [get]
 func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
@@ -58,7 +58,7 @@ func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, utils.Map(users, toUserAdminResponse))
+		c.JSON(200, utils.Map(users, toUserResponse))
 	}
 }
 
@@ -69,7 +69,7 @@ func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 // @Produce json
 // @Param userId path int true "User ID"
 // @Param permissions body repository.Permissions true "Permissions"
-// @Success 200
+// @Success 200 {object} User
 // @Security ApiKeyAuth
 // @Router /users/{userId} [patch]
 func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
@@ -84,12 +84,12 @@ func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.userService.ChangePermissions(userId, permissions)
+		user, err := e.userService.ChangePermissions(userId, permissions)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, nil)
+		c.JSON(200, toUserResponse(user))
 	}
 }
 
@@ -97,7 +97,7 @@ func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 // @Description Fetches the authenticated user
 // @Tags user
 // @Produce json
-// @Success 200 {object} UserResponse
+// @Success 200 {object} User
 // @Security ApiKeyAuth
 // @Router /users/self [get]
 func (e *UserController) getUserHandler() gin.HandlerFunc {
@@ -133,7 +133,7 @@ func (e *UserController) logoutHandler() gin.HandlerFunc {
 // @Tags user
 // @Produce json
 // @Param provider query string true "Provider"
-// @Success 200 {object} UserResponse
+// @Success 200 {object} User
 // @Security ApiKeyAuth
 // @Router /users/remove-auth [post]
 func (e *UserController) removeAuthHandler() gin.HandlerFunc {
@@ -169,7 +169,7 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 // @Tags user
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 200 {object} map[int][]MinimalUserResponse
+// @Success 200 {object} map[int][]MinimalUser
 // @Router /events/{event_id}/users [get]
 func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -187,9 +187,9 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		teamUsers := make(map[int][]*MinimalUserResponse)
+		teamUsers := make(map[int][]*MinimalUser)
 		for _, team := range event.Teams {
-			teamUsers[team.ID] = make([]*MinimalUserResponse, 0)
+			teamUsers[team.ID] = make([]*MinimalUser, 0)
 			for _, user := range team.Users {
 				teamUsers[team.ID] = append(teamUsers[team.ID], toMinimalUserResponse(user))
 			}
@@ -204,7 +204,7 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param user body UserUpdate true "User"
-// @Success 200 {object} UserResponse
+// @Success 200 {object} User
 // @Security ApiKeyAuth
 // @Router /users/self [patch]
 func (e *UserController) updateUserHandler() gin.HandlerFunc {
@@ -233,7 +233,7 @@ type UserUpdate struct {
 	DisplayName string `json:"display_name" binding:"required"`
 }
 
-type UserResponse struct {
+type User struct {
 	ID                   int        `json:"id" binding:"required"`
 	DisplayName          string     `json:"display_name" binding:"required"`
 	AcountName           *string    `json:"account_name"`
@@ -243,10 +243,10 @@ type UserResponse struct {
 	TwitchName           *string    `json:"twitch_name"`
 	TokenExpiryTimestamp *time.Time `json:"token_expiry_timestamp"`
 
-	Permissions []repository.Permission `json:"permissions"`
+	Permissions []repository.Permission `json:"permissions" binding:"required"`
 }
 
-type NonSensitiveUserResponse struct {
+type NonSensitiveUser struct {
 	ID          int     `json:"id" binding:"required"`
 	DisplayName string  `json:"display_name" binding:"required"`
 	AcountName  *string `json:"account_name"`
@@ -256,24 +256,13 @@ type NonSensitiveUserResponse struct {
 	TwitchName  *string `json:"twitch_name"`
 }
 
-type UserAdminResponse struct {
-	ID          int                     `json:"id" binding:"required"`
-	DisplayName string                  `json:"display_name" binding:"required"`
-	AcountName  *string                 `json:"account_name"`
-	DiscordID   *string                 `json:"discord_id"`
-	DiscordName *string                 `json:"discord_name"`
-	TwitchName  *string                 `json:"twitch_name"`
-	TwitchID    *string                 `json:"twitch_id"`
-	Permissions []repository.Permission `json:"permissions" binding:"required"`
-}
-
-type MinimalUserResponse struct {
+type MinimalUser struct {
 	ID          int    `json:"id" binding:"required"`
 	DisplayName string `json:"display_name" binding:"required"`
 }
 
-func toUserResponse(user *repository.User) *UserResponse {
-	response := &UserResponse{
+func toUserResponse(user *repository.User) *User {
+	response := &User{
 		ID:          user.ID,
 		DisplayName: user.DisplayName,
 		Permissions: user.Permissions,
@@ -296,11 +285,11 @@ func toUserResponse(user *repository.User) *UserResponse {
 	return response
 }
 
-func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse {
+func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUser {
 	if user == nil {
 		return nil
 	}
-	response := &NonSensitiveUserResponse{
+	response := &NonSensitiveUser{
 		ID:          user.ID,
 		DisplayName: user.DisplayName,
 	}
@@ -319,34 +308,8 @@ func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUserResponse
 	return response
 }
 
-func toUserAdminResponse(user *repository.User) *UserAdminResponse {
-	permissions := make([]repository.Permission, len(user.Permissions))
-	for i, perm := range user.Permissions {
-		permissions[i] = repository.Permission(perm)
-	}
-
-	response := &UserAdminResponse{
-		ID:          user.ID,
-		DisplayName: user.DisplayName,
-		Permissions: permissions,
-	}
-	for _, oauth := range user.OauthAccounts {
-		switch oauth.Provider {
-		case repository.ProviderDiscord:
-			response.DiscordID = &oauth.AccountID
-			response.DiscordName = &oauth.Name
-		case repository.ProviderTwitch:
-			response.TwitchID = &oauth.AccountID
-			response.TwitchName = &oauth.Name
-		case repository.ProviderPoE:
-			response.AcountName = &oauth.AccountID
-		}
-	}
-	return response
-}
-
-func toMinimalUserResponse(user *repository.User) *MinimalUserResponse {
-	return &MinimalUserResponse{
+func toMinimalUserResponse(user *repository.User) *MinimalUser {
+	return &MinimalUser{
 		ID:          user.ID,
 		DisplayName: user.DisplayName,
 	}

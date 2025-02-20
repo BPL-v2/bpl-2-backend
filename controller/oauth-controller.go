@@ -50,7 +50,7 @@ type DiscordBotLoginBody struct {
 }
 
 // @id LoginDiscordBot
-// @Description Logs in the discord bot
+// @Description Logs in the discord bot (only for internal use)
 // @Tags oauth
 // @Accept json
 // @Param body body DiscordBotLoginBody true "Discord bot login body"

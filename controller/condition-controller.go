@@ -36,7 +36,7 @@ func setupConditionController() []RouteInfo {
 // @Accept json
 // @Produce json
 // @Param condition body ConditionCreate true "Condition to create"
-// @Success 201 {object} ConditionResponse
+// @Success 201 {object} Condition
 // @Router /scoring/conditions [put]
 func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -94,7 +94,7 @@ type ConditionCreate struct {
 	ObjectiveID int                  `json:"objective_id" binding:"required"`
 }
 
-type ConditionResponse struct {
+type Condition struct {
 	Operator   repository.Operator  `json:"operator" binding:"required"`
 	ItemField  repository.ItemField `json:"field" binding:"required"`
 	FieldValue string               `json:"value" binding:"required"`
@@ -111,11 +111,11 @@ func (e *ConditionCreate) toModel() *repository.Condition {
 	}
 }
 
-func toConditionResponse(condition *repository.Condition) *ConditionResponse {
+func toConditionResponse(condition *repository.Condition) *Condition {
 	if condition == nil {
 		return nil
 	}
-	return &ConditionResponse{
+	return &Condition{
 		Operator:   condition.Operator,
 		ItemField:  condition.Field,
 		FieldValue: condition.Value,

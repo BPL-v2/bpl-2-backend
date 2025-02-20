@@ -32,8 +32,9 @@ func setupScoringCategoryController() []RouteInfo {
 // @Description Fetches the rules for the current event
 // @Tags scoring
 // @Produce json
-// @Success 200 {array} CategoryResponse
-// @Router /scoring/categories [get]
+// @Param event_id path int true "Event ID"
+// @Success 200 {object} Category
+// @Router /events/{event_id}/rules [get]
 func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event_id, err := strconv.Atoi(c.Param("event_id"))
@@ -55,7 +56,7 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 // @Tags scoring
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 200 {object} CategoryResponse
+// @Success 200 {object} Category
 // @Router /scoring/categories/{id} [get]
 func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -83,7 +84,8 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 // @Accept json
 // @Produce json
 // @Param body body CategoryCreate true "Category to create"
-// @Success 201 {object} CategoryResponse
+// @Success 201 {object} Category
+// @Router /scoring/categories [put]
 func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var categoryCreate CategoryCreate
@@ -140,12 +142,13 @@ type CategoryCreate struct {
 	ScoringId *int   `json:"scoring_preset_id"`
 }
 
-type CategoryResponse struct {
-	ID              int                  `json:"id" binding:"required"`
-	Name            string               `json:"name" binding:"required"`
-	SubCategories   []*CategoryResponse  `json:"sub_categories" binding:"required"`
-	Objectives      []*ObjectiveResponse `json:"objectives" binding:"required"`
-	ScoringPresetID *int                 `json:"scoring_preset_id"`
+type Category struct {
+	ID              int            `json:"id" binding:"required"`
+	Name            string         `json:"name" binding:"required"`
+	SubCategories   []*Category    `json:"sub_categories" binding:"required"`
+	Objectives      []*Objective   `json:"objectives" binding:"required"`
+	ScoringPresetID *int           `json:"scoring_preset_id"`
+	ScoringPreset   *ScoringPreset `json:"scoring_preset"`
 }
 
 func (e *CategoryCreate) toModel() *repository.ScoringCategory {
@@ -160,16 +163,16 @@ func (e *CategoryCreate) toModel() *repository.ScoringCategory {
 	return category
 }
 
-type ScoringMethodResponse struct {
+type ScoringMethod struct {
 	Type   repository.ScoringMethod `json:"type" binding:"required"`
 	Points []int                    `json:"points" binding:"required"`
 }
 
-func toCategoryResponse(category *repository.ScoringCategory) *CategoryResponse {
+func toCategoryResponse(category *repository.ScoringCategory) *Category {
 	if category == nil {
 		return nil
 	}
-	return &CategoryResponse{
+	return &Category{
 		ID:              category.ID,
 		Name:            category.Name,
 		SubCategories:   utils.Map(category.SubCategories, toCategoryResponse),
@@ -177,15 +180,16 @@ func toCategoryResponse(category *repository.ScoringCategory) *CategoryResponse 
 		ScoringPresetID: category.ScoringId,
 	}
 }
-func toPublicCategoryResponse(category *repository.ScoringCategory) *CategoryResponse {
+func toPublicCategoryResponse(category *repository.ScoringCategory) *Category {
 	if category == nil {
 		return nil
 	}
-	return &CategoryResponse{
+	return &Category{
 		ID:              category.ID,
 		Name:            category.Name,
 		SubCategories:   utils.Map(category.SubCategories, toPublicCategoryResponse),
 		Objectives:      utils.Map(category.Objectives, toPublicObjectiveResponse),
 		ScoringPresetID: category.ScoringId,
+		ScoringPreset:   toScoringPresetResponse(category.ScoringPreset),
 	}
 }

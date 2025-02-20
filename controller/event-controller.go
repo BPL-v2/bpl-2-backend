@@ -49,7 +49,7 @@ func setupEventController() []RouteInfo {
 // @Description Fetches all events
 // @Tags event
 // @Produce json
-// @Success 200 {array} EventResponse
+// @Success 200 {array} Event
 // @Router /events [get]
 func (e *EventController) getEventsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -66,7 +66,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 // @Description Fetches the current event
 // @Tags event
 // @Produce json
-// @Success 200 {object} EventResponse
+// @Success 200 {object} Event
 // @Router /events/current [get]
 func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -85,7 +85,7 @@ func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event body EventCreate true "Event to create"
-// @Success 201 {object} EventResponse
+// @Success 201 {object} Event
 // @Router /events [post]
 func (e *EventController) createEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -109,7 +109,7 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 201 {object} EventResponse
+// @Success 201 {object} Event
 // @Router /events/{event_id} [get]
 func (e *EventController) getEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -163,7 +163,7 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
-// @Success 200 {object} EventStatusResponse
+// @Success 200 {object} EventStatus
 // @Router /events/{event_id}/status [get]
 func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -177,7 +177,7 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		response := EventStatusResponse{}
+		response := EventStatus{}
 
 		team, err := e.teamService.GetTeamForUser(eventId, user.ID)
 		if err != nil && err != gorm.ErrRecordNotFound {
@@ -213,14 +213,14 @@ type EventCreate struct {
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
 }
 
-type EventResponse struct {
+type Event struct {
 	ID                   int                    `json:"id" binding:"required"`
 	Name                 string                 `json:"name" binding:"required"`
 	ScoringCategoryID    int                    `json:"scoring_category_id" binding:"required"`
 	IsCurrent            bool                   `json:"is_current" binding:"required"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
-	Teams                []*TeamResponse        `json:"teams" binding:"required"`
+	Teams                []*Team                `json:"teams" binding:"required"`
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
 	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
@@ -242,11 +242,11 @@ func (e *EventCreate) toModel() *repository.Event {
 	return event
 }
 
-func toEventResponse(event *repository.Event) *EventResponse {
+func toEventResponse(event *repository.Event) *Event {
 	if event == nil {
 		return nil
 	}
-	return &EventResponse{
+	return &Event{
 		ID:                   event.ID,
 		Name:                 event.Name,
 		ScoringCategoryID:    event.ScoringCategoryID,
@@ -260,7 +260,7 @@ func toEventResponse(event *repository.Event) *EventResponse {
 	}
 }
 
-type EventStatusResponse struct {
+type EventStatus struct {
 	TeamID            *int              `json:"team_id"`
 	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
 }

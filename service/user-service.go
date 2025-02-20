@@ -76,14 +76,13 @@ func (s *UserService) GetUserFromToken(tokenString string) (*repository.User, er
 	return nil, jwt.ErrInvalidKey
 }
 
-func (s *UserService) ChangePermissions(userId int, permissions []repository.Permission) error {
+func (s *UserService) ChangePermissions(userId int, permissions []repository.Permission) (*repository.User, error) {
 	user, err := s.GetUserById(userId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	user.Permissions = permissions
-	_, err = s.UserRepository.SaveUser(user)
-	return err
+	return s.UserRepository.SaveUser(user)
 }
 
 func (s *UserService) RemoveProvider(user *repository.User, provider repository.Provider) (*repository.User, error) {
