@@ -86,7 +86,7 @@ func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
 // @Produce json
 // @Param event body EventCreate true "Event to create"
 // @Success 201 {object} Event
-// @Router /events [post]
+// @Router /events [put]
 func (e *EventController) createEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var eventCreate EventCreate

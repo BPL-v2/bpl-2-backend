@@ -101,9 +101,9 @@ func (f *FetchingService) FilterStashChanges() {
 
 			stashes := make([]client.PublicStashChange, 0)
 			for _, stash := range stashChange.Stashes {
-				// if stash.League != nil && *stash.League == event.Name {
-				stashes = append(stashes, stash)
-				// // }
+				if stash.League != nil && *stash.League == f.event.Name {
+					stashes = append(stashes, stash)
+				}
 			}
 			message := config.StashChangeMessage{
 				ChangeID:     stashChange.ChangeID,

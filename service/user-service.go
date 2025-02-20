@@ -6,25 +6,29 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
+	"math/rand/v2"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserService struct {
-	UserRepository  *repository.UserRepository
-	OauthRepository *repository.OauthRepository
+	userRepository  *repository.UserRepository
+	oauthRepository *repository.OauthRepository
+	teamService     *TeamService
 }
 
 func NewUserService() *UserService {
 	return &UserService{
-		UserRepository:  repository.NewUserRepository(),
-		OauthRepository: repository.NewOauthRepository(),
+		userRepository:  repository.NewUserRepository(),
+		oauthRepository: repository.NewOauthRepository(),
+		teamService:     NewTeamService(),
 	}
 }
 
 func (s *UserService) GetUserByDiscordId(discordId string) (*repository.User, error) {
-	oauth, err := s.OauthRepository.GetOauthByProviderAndAccountID(repository.ProviderDiscord, discordId)
+	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountID(repository.ProviderDiscord, discordId)
 	if err != nil {
 		return nil, err
 	}
@@ -32,23 +36,23 @@ func (s *UserService) GetUserByDiscordId(discordId string) (*repository.User, er
 }
 
 func (s *UserService) GetUserByPoEAccount(poeAccount string) (*repository.User, error) {
-	return s.UserRepository.GetUserByPoEAccount(poeAccount)
+	return s.userRepository.GetUserByPoEAccount(poeAccount)
 }
 
 func (s *UserService) GetUserByTwitchId(twitchId string) (*repository.User, error) {
-	return s.UserRepository.GetUserByTwitchId(twitchId)
+	return s.userRepository.GetUserByTwitchId(twitchId)
 }
 
 func (s *UserService) SaveUser(user *repository.User) (*repository.User, error) {
-	return s.UserRepository.SaveUser(user)
+	return s.userRepository.SaveUser(user)
 }
 
 func (s *UserService) GetUsers(preloads ...string) ([]*repository.User, error) {
-	return s.UserRepository.GetUsers(preloads...)
+	return s.userRepository.GetUsers(preloads...)
 }
 
 func (s *UserService) GetUserById(id int, preloads ...string) (*repository.User, error) {
-	return s.UserRepository.GetUserById(id, preloads...)
+	return s.userRepository.GetUserById(id, preloads...)
 }
 
 func (s *UserService) GetUserFromAuthCookie(c *gin.Context) (*repository.User, error) {
@@ -82,7 +86,7 @@ func (s *UserService) ChangePermissions(userId int, permissions []repository.Per
 		return nil, err
 	}
 	user.Permissions = permissions
-	return s.UserRepository.SaveUser(user)
+	return s.userRepository.SaveUser(user)
 }
 
 func (s *UserService) RemoveProvider(user *repository.User, provider repository.Provider) (*repository.User, error) {
@@ -94,7 +98,7 @@ func (s *UserService) RemoveProvider(user *repository.User, provider repository.
 	for _, oauth := range user.OauthAccounts {
 		if oauth.Provider == provider {
 
-			s.OauthRepository.DB.Delete(oauth)
+			s.oauthRepository.DB.Delete(oauth)
 		}
 	}
 	return s.GetUserById(user.ID, "OauthAccounts")
@@ -113,4 +117,32 @@ func (s *UserService) DiscordServerCheck(user *repository.User) error {
 		}
 	}
 	return fmt.Errorf("you do not have a discord account linked")
+}
+
+func (s *UserService) AddUserFromStashchange(userName string, event *repository.Event) (*repository.User, error) {
+	// should only be used for testing
+	user := &repository.User{
+		DisplayName: userName,
+		Permissions: []repository.Permission{},
+	}
+	u, err := s.SaveUser(user)
+	if err != nil {
+		return nil, err
+	}
+	oauth := &repository.Oauth{
+		UserID:      u.ID,
+		Provider:    repository.ProviderPoE,
+		AccessToken: "dummy",
+		AccountID:   userName,
+		Name:        userName,
+		Expiry:      time.Now(),
+	}
+	err = s.oauthRepository.DB.Save(oauth).Error
+	if err != nil {
+		return nil, err
+	}
+	u.OauthAccounts = append(u.OauthAccounts, oauth)
+	team := event.Teams[rand.IntN(len(event.Teams))]
+	s.teamService.AddUsersToTeams([]*repository.TeamUser{{TeamID: team.ID, UserID: u.ID}}, event)
+	return u, nil
 }

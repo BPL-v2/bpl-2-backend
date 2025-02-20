@@ -842,7 +842,7 @@ paths:
             type: array
       tags:
       - event
-    post:
+    put:
       consumes:
       - application/json
       description: Creates or updates an event
