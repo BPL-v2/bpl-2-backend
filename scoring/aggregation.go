@@ -135,16 +135,12 @@ func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int, eve
 
 	go func() {
 		defer wg.Done()
-		t := time.Now()
 		freshMatches, err1 = getFreshMatches(db, objectiveIds, teamIds, eventId)
-		fmt.Println("Fresh matches took", time.Since(t))
 	}()
 
 	go func() {
 		defer wg.Done()
-		t := time.Now()
 		firstMatches, err2 = handleEarliest(db, objectiveIds, teamIds, eventId)
-		fmt.Println("Earliest matches took", time.Since(t))
 	}()
 
 	wg.Wait()

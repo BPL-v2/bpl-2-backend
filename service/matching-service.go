@@ -58,7 +58,7 @@ func (m *MatchingService) getUserMap() map[string]int {
 		for _, user := range team.Users {
 			for account := range user.OauthAccounts {
 				if user.OauthAccounts[account].Provider == repository.ProviderPoE {
-					userMap[user.OauthAccounts[account].AccessToken] = user.ID
+					userMap[user.OauthAccounts[account].Name] = user.ID
 				}
 			}
 
