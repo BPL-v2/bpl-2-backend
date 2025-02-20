@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand/v2"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -18,6 +17,7 @@ type MatchingService struct {
 	ctx                   context.Context
 	objectiveMatchService *ObjectiveMatchService
 	objectiveService      *ObjectiveService
+	userService           *UserService
 	lastChangeId          *string
 	event                 *repository.Event
 }
@@ -25,9 +25,11 @@ type MatchingService struct {
 func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
 	objectiveMatchService := NewObjectiveMatchService()
 	objectiveService := NewObjectiveService()
+	userService := NewUserService()
 	matchingService := &MatchingService{
 		objectiveMatchService: objectiveMatchService,
 		objectiveService:      objectiveService,
+		userService:           userService,
 		event:                 event,
 		ctx:                   ctx,
 	}
@@ -69,22 +71,22 @@ func (m *MatchingService) getMatches(stashChange config.StashChangeMessage, user
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 	for _, stash := range stashChange.Stashes {
-		userId := rand.IntN(4) + 1
-		// if stash.League != nil && *stash.League == m.event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
-		// 	userId := userMap[*stash.AccountName]
-		completions := make(map[int]int)
-		for _, item := range stash.Items {
 
-			for _, result := range itemChecker.CheckForCompletions(&item) {
-				// while syncing we only update the completions for objectives that are desynced
-				if syncFinished || utils.Contains(desyncedObjectiveIds, result.ObjectiveId) {
-					completions[result.ObjectiveId] += result.Number
+		if stash.League != nil && *stash.League == m.event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
+			userId := userMap[*stash.AccountName]
+			completions := make(map[int]int)
+			for _, item := range stash.Items {
+
+				for _, result := range itemChecker.CheckForCompletions(&item) {
+					// while syncing we only update the completions for objectives that are desynced
+					if syncFinished || utils.Contains(desyncedObjectiveIds, result.ObjectiveId) {
+						completions[result.ObjectiveId] += result.Number
+					}
 				}
 			}
-		}
 
-		matches = append(matches, m.objectiveMatchService.CreateMatches(completions, userId, stash.StashChangeID, m.event.ID, stashChange.Timestamp)...)
-		// }
+			matches = append(matches, m.objectiveMatchService.CreateMatches(completions, userId, stash.StashChangeID, m.event.ID, stashChange.Timestamp)...)
+		}
 	}
 	return matches
 }
@@ -162,6 +164,20 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				// once we reach the starting change id the sync is finished
 				m.objectiveService.SetSynced(desyncedObjectiveIds)
 				syncing = false
+			}
+
+			// this is used for testing, remove this once we have actual users
+			for _, stash := range stashChange.Stashes {
+				if stash.League != nil && *stash.League == m.event.Name {
+					if stash.AccountName != nil && userMap[*stash.AccountName] == 0 {
+						user, err := m.userService.AddUserFromStashchange(*stash.AccountName, m.event)
+						if err != nil {
+							fmt.Println(err)
+							continue
+						}
+						userMap[*stash.AccountName] = user.ID
+					}
+				}
 			}
 
 			matches = append(matches, m.getMatches(stashChange, userMap, itemChecker, desyncedObjectiveIds)...)

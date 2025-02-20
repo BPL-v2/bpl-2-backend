@@ -29,7 +29,7 @@ type ErrorResponse struct {
 }
 
 func NewPoEClient(userAgent string, maxRequestsPerSecond float64, raiseForStatus bool, timeOutSeconds int) *PoEClient {
-	baseURL := &url.URL{Scheme: "https", Host: "www.pathofexile.com", Path: "/api"}
+	baseURL := &url.URL{Scheme: "https", Host: "api.pathofexile.com"}
 	return &PoEClient{
 		Client:         NewAsyncHttpClient(baseURL, userAgent, maxRequestsPerSecond),
 		TimeOutSeconds: timeOutSeconds,

@@ -40,7 +40,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "post": {
+            "put": {
                 "description": "Creates or updates an event",
                 "consumes": [
                     "application/json"
