@@ -62,7 +62,7 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 
 	result := query.First(&event, eventId)
 	if result.Error != nil {
-		return nil, fmt.Errorf("event with id %d not found", eventId)
+		return nil, fmt.Errorf("failed to find event: %v", result.Error)
 	}
 	return &event, nil
 }
