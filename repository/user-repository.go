@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/utils"
 	"database/sql/driver"
 	"fmt"
 
@@ -119,8 +120,7 @@ type Streamer struct {
 	TwitchID string
 }
 
-func (r *UserRepository) GetStreamersForCurrentEvent() ([]*Streamer, error) {
-	var streamers []*Streamer
+func (r *UserRepository) GetStreamersForCurrentEvent() (streamers []*Streamer, err error) {
 
 	query := `
 		SELECT 
@@ -139,5 +139,40 @@ func (r *UserRepository) GetStreamersForCurrentEvent() ([]*Streamer, error) {
 	}
 
 	return streamers, nil
+
+}
+
+type UserTeam struct {
+	UserID      int
+	TeamID      int
+	DisplayName string
+}
+
+func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
+	var users []*UserTeam
+	query := `
+		SELECT
+			users.id as user_id,
+			users.display_name as display_name,	
+			team_users.team_id as team_id
+		FROM users
+		JOIN team_users ON team_users.user_id = users.id
+		WHERE team_users.team_id IN ?		
+		`
+	err := DB.Raw(query, utils.Map(event.Teams, func(team *Team) int {
+		return team.ID
+	})).Scan(&users).Error
+	if err != nil {
+		fmt.Println(err)
+		return fmt.Errorf("failed to load users into event: %v", err)
+	}
+	for _, user := range users {
+		for _, team := range event.Teams {
+			if team.ID == user.TeamID {
+				team.Users = append(team.Users, &User{ID: user.UserID, DisplayName: user.DisplayName})
+			}
+		}
+	}
+	return nil
 
 }

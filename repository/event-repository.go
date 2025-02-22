@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/utils"
 	"fmt"
 	"time"
 
@@ -38,10 +39,13 @@ func NewEventRepository() *EventRepository {
 }
 
 func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
-	var event Event
+	var event *Event
 	query := r.DB
 
 	for _, preload := range preloads {
+		if preload == "Teams.Users" {
+			continue
+		}
 		query = query.Preload(preload)
 	}
 
@@ -49,14 +53,21 @@ func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
 	if result.Error != nil {
 		return nil, fmt.Errorf("no current event found: %v", result.Error)
 	}
-	return &event, nil
+	if len(preloads) > 0 && utils.Contains(preloads, "Teams.Users") {
+		LoadUsersIntoEvent(r.DB, event)
+	}
+
+	return event, nil
 }
 
 func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event, error) {
-	var event Event
+	var event *Event
 	query := r.DB
 
 	for _, preload := range preloads {
+		if preload == "Teams.Users" {
+			continue
+		}
 		query = query.Preload(preload)
 	}
 
@@ -64,7 +75,11 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to find event: %v", result.Error)
 	}
-	return &event, nil
+	if len(preloads) > 0 && utils.Contains(preloads, "Teams.Users") {
+		fmt.Println("loading users")
+		LoadUsersIntoEvent(r.DB, event)
+	}
+	return event, nil
 }
 
 func (r *EventRepository) Save(event *Event) (*Event, error) {
