@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
-	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -54,7 +53,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		objectiveMap[objective.ID] = *objective
 		aggregations[objective.ID] = make(TeamMatches)
 	}
-	wg := sync.WaitGroup{}
+	// wg := sync.WaitGroup{}
 	for _, aggregation := range []repository.AggregationType{
 		repository.EARLIEST_FRESH_ITEM,
 		repository.EARLIEST,
@@ -62,21 +61,21 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		repository.MINIMUM,
 		repository.SUM_LATEST,
 	} {
-		wg.Add(1)
-		go func(aggregation repository.AggregationType) {
-			defer wg.Done()
-			matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds, event.ID)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			for _, match := range matches {
-				match.Finished = objectiveMap[match.ObjectiveID].RequiredAmount <= match.Number
-				aggregations[match.ObjectiveID][match.TeamID] = match
-			}
-		}(aggregation)
+		// wg.Add(1)
+		// go func(aggregation repository.AggregationType) {
+		// 	defer wg.Done()
+		matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds, event.ID)
+		if err != nil {
+			fmt.Println(err)
+			return nil, err
+		}
+		for _, match := range matches {
+			match.Finished = objectiveMap[match.ObjectiveID].RequiredAmount <= match.Number
+			aggregations[match.ObjectiveID][match.TeamID] = match
+		}
+		// }(aggregation)
 	}
-	wg.Wait()
+	// wg.Wait()
 	return aggregations, nil
 }
 
@@ -126,24 +125,24 @@ func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int)
 }
 
 func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 	var freshMatches FreshMatches
 	var firstMatches []*Match
 	var err1, err2 error
 
-	wg.Add(2)
+	// wg.Add(2)
 
-	go func() {
-		defer wg.Done()
-		freshMatches, err1 = getFreshMatches(db, objectiveIds, teamIds, eventId)
-	}()
+	// go func() {
+	// 	defer wg.Done()
+	freshMatches, err1 = getFreshMatches(db, objectiveIds, teamIds, eventId)
+	// }()
 
-	go func() {
-		defer wg.Done()
-		firstMatches, err2 = handleEarliest(db, objectiveIds, teamIds, eventId)
-	}()
+	// go func() {
+	// 	defer wg.Done()
+	firstMatches, err2 = handleEarliest(db, objectiveIds, teamIds, eventId)
+	// }()
 
-	wg.Wait()
+	// wg.Wait()
 
 	if err1 != nil {
 		return nil, err1
