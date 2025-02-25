@@ -46,6 +46,7 @@ func (f *FetchingService) FetchStashChanges() error {
 
 	changeId := initialStashChange
 	count := 0
+	consecutiveErrors := 0
 	for {
 		select {
 		case <-f.ctx.Done():
@@ -54,27 +55,32 @@ func (f *FetchingService) FetchStashChanges() error {
 			fmt.Println("Fetching stashes with change id:", changeId)
 			response, err := f.poeClient.GetPublicStashes(token, "pc", changeId)
 			if err != nil {
+				consecutiveErrors++
+				if consecutiveErrors > 5 {
+					fmt.Println("Too many consecutive errors, exiting")
+					return fmt.Errorf("too many consecutive errors")
+				}
 				if err.StatusCode == 429 {
 					fmt.Println(err.ResponseHeaders)
 					retryAfter, err := strconv.Atoi(err.ResponseHeaders.Get("Retry-After"))
 					if err != nil {
-						fmt.Println(err)
-						return fmt.Errorf("failed to parse Retry-After header: %s", err)
+						retryAfter = 60
 					}
 					<-time.After((time.Duration(retryAfter) + 1) * time.Second)
 				} else {
 					fmt.Println(err)
-					return fmt.Errorf("failed to fetch public stashes: %s", err.Description)
+					<-time.After(60 * time.Second)
 				}
 				continue
 			}
+			consecutiveErrors = 0
 			f.stashChannel <- config.StashChangeMessage{ChangeID: changeId, NextChangeID: response.NextChangeID, Stashes: response.Stashes}
 			changeId = response.NextChangeID
-			count++
 			if count%100 == 0 {
 				diff := f.stashChangeService.GetNinjaDifference(changeId)
 				fmt.Printf("Difference between ninja and poe change ids: %d\n", diff)
 			}
+			count++
 		}
 	}
 }
