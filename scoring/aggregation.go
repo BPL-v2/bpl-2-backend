@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"gorm.io/gorm"
 )
 
@@ -40,8 +42,14 @@ var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []
 	repository.MAXIMUM:             handleMaximum,
 	repository.MINIMUM:             handleMinimum,
 }
+var scoreAggregationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	Name: "score_aggregation_duration_ms",
+	Help: "Duration of Aggregation step during scoring",
+}, []string{"scoring"})
 
 func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) (ObjectiveTeamMatches, error) {
+	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("aggregate_matches"))
+	defer timer.ObserveDuration()
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {
 		return team.ID
@@ -275,7 +283,6 @@ func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
 	query := `
     WITH latest AS (
         SELECT 
-            stash_id, 
             MAX(id) AS id
         FROM stash_changes
 		WHERE event_id = @eventId

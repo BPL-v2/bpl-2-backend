@@ -47,8 +47,30 @@ func (s *UserService) SaveUser(user *repository.User) (*repository.User, error) 
 	return s.userRepository.SaveUser(user)
 }
 
-func (s *UserService) GetUsers(preloads ...string) ([]*repository.User, error) {
-	return s.userRepository.GetUsers(preloads...)
+func (s *UserService) GetAllUsers(preloads ...string) ([]*repository.User, error) {
+	users, err := s.userRepository.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+	if len(preloads) > 0 && utils.Contains(preloads, "OauthAccounts") {
+		oauths, err := s.oauthRepository.GetAllOauths()
+		if err != nil {
+			return nil, err
+		}
+		userOauthMap := make(map[int][]*repository.Oauth)
+		for _, oauth := range oauths {
+			if _, ok := userOauthMap[oauth.UserID]; !ok {
+				userOauthMap[oauth.UserID] = []*repository.Oauth{}
+			}
+			userOauthMap[oauth.UserID] = append(userOauthMap[oauth.UserID], oauth)
+		}
+		for _, user := range users {
+			if oauths, ok := userOauthMap[user.ID]; ok {
+				user.OauthAccounts = oauths
+			}
+		}
+	}
+	return users, nil
 }
 
 func (s *UserService) GetUserById(id int, preloads ...string) (*repository.User, error) {

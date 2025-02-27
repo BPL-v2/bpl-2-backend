@@ -43,3 +43,12 @@ func (r *OauthRepository) GetOauthByProviderAndAccountID(provider Provider, acco
 	}
 	return &oauth, nil
 }
+
+func (r *OauthRepository) GetAllOauths() ([]*Oauth, error) {
+	var oauths []*Oauth
+	result := r.DB.Find(&oauths)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return oauths, nil
+}
