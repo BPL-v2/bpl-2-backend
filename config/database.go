@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 
@@ -31,16 +30,11 @@ func DatabaseConnection() *gorm.DB {
 	return db
 }
 
-func InitDB() (*gorm.DB, error) {
+func InitDB(host string, port string, user string, password string, dbname string) (*gorm.DB, error) {
 	var err error
 	once.Do(func() {
 		sqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable search_path=bpl2",
-			os.Getenv("DATABASE_HOST"),
-			os.Getenv("DATABASE_PORT"),
-			os.Getenv("POSTGRES_USER"),
-			os.Getenv("POSTGRES_PASSWORD"),
-			os.Getenv("DATABASE_NAME"))
-
+			host, port, user, password, dbname)
 		db, err = gorm.Open(postgres.Open(sqlInfo), &gorm.Config{
 			NamingStrategy: schema.NamingStrategy{
 				TablePrefix:   "bpl2.",

@@ -6,7 +6,10 @@ import (
 	"bpl/docs"
 	"bpl/repository"
 	"log"
+	"os"
 	"time"
+
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -31,7 +34,13 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	db, err := config.InitDB()
+	db, err := config.InitDB(
+		os.Getenv("DATABASE_HOST"),
+		os.Getenv("DATABASE_PORT"),
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("DATABASE_NAME"),
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -57,6 +66,7 @@ func main() {
 	}
 
 	r := gin.Default()
+
 	r.LoadHTMLGlob("templates/*")
 	r.Use(gin.Recovery())
 	r.Use(cors.New(cors.Config{
@@ -67,8 +77,20 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	docs.SwaggerInfo.BasePath = "/api"
-	r.GET("/api/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	addMetrics(r)
+	addDocs(r)
+
 	controller.SetRoutes(r)
 	r.Run(":8000")
+}
+
+func addMetrics(r *gin.Engine) {
+	p := ginprometheus.NewPrometheus("gin")
+	p.MetricsPath = "/api/metrics"
+	p.Use(r)
+}
+
+func addDocs(r *gin.Engine) {
+	docs.SwaggerInfo.BasePath = "/api"
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

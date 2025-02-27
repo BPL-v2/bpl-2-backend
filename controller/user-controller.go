@@ -53,7 +53,7 @@ func setupUserController() []RouteInfo {
 // @Router /users [get]
 func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := e.userService.GetUsers("OauthAccounts")
+		users, err := e.userService.GetAllUsers("OauthAccounts")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
