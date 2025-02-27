@@ -4,6 +4,7 @@ import (
 	"bpl/client"
 	"bpl/repository"
 	"bpl/utils"
+	"log"
 )
 
 type StreamService struct {
@@ -15,13 +16,19 @@ type StreamService struct {
 
 func NewStreamService() *StreamService {
 	oauthService := NewOauthService()
-	token, _ := oauthService.GetApplicationToken("twitch")
-	return &StreamService{
+	s := &StreamService{
 		user_repository: repository.NewUserRepository(),
 		team_repository: repository.NewTeamRepository(),
-		twitchClient:    client.NewTwitchClient(*token),
 		oauthService:    oauthService,
 	}
+	token, err := oauthService.GetApplicationToken("twitch")
+	if err != nil {
+		log.Fatalf("Failed to get twitch token: %v", err)
+		return s
+	}
+	s.twitchClient = client.NewTwitchClient(*token)
+	return s
+
 }
 
 func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.TwitchStream, error) {
