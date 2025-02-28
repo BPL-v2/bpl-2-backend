@@ -10,8 +10,30 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/segmentio/kafka-go"
 )
+
+var stashCounterTotal = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "stash_counter_total",
+	Help: "The total number of stashes processed",
+})
+
+var stashCounterFiltered = promauto.NewCounter(prometheus.CounterOpts{
+	Name: "stash_counter_filtered",
+	Help: "The total number of stashes filtered",
+})
+
+var changeIdGauge = promauto.NewGauge(prometheus.GaugeOpts{
+	Name: "change_id",
+	Help: "The current change id",
+})
+
+var ninjaChangeIdGauge = promauto.NewGauge(prometheus.GaugeOpts{
+	Name: "ninja_change_id",
+	Help: "The current change id from the poe.ninja api",
+})
 
 type FetchingService struct {
 	ctx                context.Context
@@ -76,9 +98,13 @@ func (f *FetchingService) FetchStashChanges() error {
 			consecutiveErrors = 0
 			f.stashChannel <- config.StashChangeMessage{ChangeID: changeId, NextChangeID: response.NextChangeID, Stashes: response.Stashes}
 			changeId = response.NextChangeID
-			if count%100 == 0 {
-				diff := f.stashChangeService.GetNinjaDifference(changeId)
-				fmt.Printf("Difference between ninja and poe change ids: %d\n", diff)
+			changeIdGauge.Add(float64(ChangeIdToInt(changeId)))
+			if count%20 == 0 {
+				ninjaId, err := f.stashChangeService.GetNinjaChangeId()
+				if err == nil {
+					ninjaChangeIdGauge.Add(float64(ChangeIdToInt(ninjaId)))
+				}
+
 			}
 			count++
 		}
@@ -107,9 +133,12 @@ func (f *FetchingService) FilterStashChanges() {
 
 			stashes := make([]client.PublicStashChange, 0)
 			for _, stash := range stashChange.Stashes {
+				stashCounterTotal.Inc()
 				if stash.League != nil && *stash.League == f.event.Name {
 					stashes = append(stashes, stash)
+					stashCounterFiltered.Inc()
 				}
+
 			}
 			message := config.StashChangeMessage{
 				ChangeID:     stashChange.ChangeID,

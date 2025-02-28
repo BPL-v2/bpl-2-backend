@@ -69,7 +69,7 @@ func (s *StashChangeService) GetInitialChangeId(event *repository.Event) (string
 	return s.GetNinjaChangeId()
 }
 
-func toInt(changeId string) int {
+func ChangeIdToInt(changeId string) int {
 	sum := 0
 	for _, str := range strings.Split(changeId, "-") {
 		i, err := strconv.Atoi(str)
@@ -87,5 +87,5 @@ func (s *StashChangeService) GetNinjaDifference(changeId string) int {
 	if err != nil {
 		return 0
 	}
-	return toInt(ninjaId) - toInt(changeId)
+	return ChangeIdToInt(ninjaId) - ChangeIdToInt(changeId)
 }
