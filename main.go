@@ -7,6 +7,8 @@ import (
 	"bpl/repository"
 	"log"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	ginprometheus "github.com/zsais/go-gin-prometheus"
@@ -86,6 +88,11 @@ func main() {
 
 func addMetrics(r *gin.Engine) {
 	p := ginprometheus.NewPrometheus("gin")
+	re := regexp.MustCompile(`\d+`)
+	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
+		url := re.ReplaceAllString(c.Request.URL.String(), "?")
+		return strings.TrimPrefix(url, "/api")
+	}
 	p.MetricsPath = "/api/metrics"
 	p.Use(r)
 }
