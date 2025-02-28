@@ -98,13 +98,12 @@ func (f *FetchingService) FetchStashChanges() error {
 			consecutiveErrors = 0
 			f.stashChannel <- config.StashChangeMessage{ChangeID: changeId, NextChangeID: response.NextChangeID, Stashes: response.Stashes}
 			changeId = response.NextChangeID
-			changeIdGauge.Add(float64(ChangeIdToInt(changeId)))
+			changeIdGauge.Set(float64(ChangeIdToInt(changeId)))
 			if count%20 == 0 {
 				ninjaId, err := f.stashChangeService.GetNinjaChangeId()
 				if err == nil {
-					ninjaChangeIdGauge.Add(float64(ChangeIdToInt(ninjaId)))
+					ninjaChangeIdGauge.Set(float64(ChangeIdToInt(ninjaId)))
 				}
-
 			}
 			count++
 		}
