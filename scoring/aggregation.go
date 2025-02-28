@@ -42,13 +42,16 @@ var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []
 	repository.MAXIMUM:             handleMaximum,
 	repository.MINIMUM:             handleMinimum,
 }
-var scoreAggregationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-	Name: "score_aggregation_duration_ms",
+var scoreAggregationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+	Name: "score_aggregation_duration_s",
 	Help: "Duration of Aggregation step during scoring",
-}, []string{"scoring"})
+	Buckets: []float64{
+		0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 60,
+	},
+})
 
 func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) (ObjectiveTeamMatches, error) {
-	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("aggregate_matches"))
+	timer := prometheus.NewTimer(scoreAggregationDuration)
 	defer timer.ObserveDuration()
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {

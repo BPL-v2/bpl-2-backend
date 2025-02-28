@@ -6,6 +6,9 @@ import (
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type ScoreType string
@@ -35,7 +38,17 @@ func (s *Score) Identifier() string {
 	}
 }
 
+var scoreEvaluationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+	Name: "score_evaluation_duration_s",
+	Help: "Duration of Evaluation step during scoring",
+	Buckets: []float64{
+		0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10,
+	},
+})
+
 func EvaluateAggregations(category *repository.ScoringCategory, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+	timer := prometheus.NewTimer(scoreEvaluationDuration)
+	defer timer.ObserveDuration()
 	scores := make([]*Score, 0)
 
 	for _, objective := range category.Objectives {
