@@ -183,7 +183,7 @@ func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccoun
 	var users []*TeamUserWithPoEAccountName
 	query := `
 		SELECT
-			users.id as id,
+			users.id as user_id,
 			oauths.name as account_name,
 			team_users.team_id as team_id
 		FROM users
