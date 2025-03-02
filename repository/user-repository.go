@@ -184,13 +184,13 @@ func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccoun
 	query := `
 		SELECT
 			users.id as id,
-			oauth.name as account_name,
+			oauths.name as account_name,
 			team_users.team_id as team_id
 		FROM users
-		JOIN oauth ON oauth.user_id = users.id
+		JOIN oauths ON oauths.user_id = users.id
 		JOIN team_users ON team_users.user_id = users.id
 		JOIN teams ON teams.id = team_users.team_id
-		WHERE teams.event_id = ? AND oauth.provider = 'poe'
+		WHERE teams.event_id = ? AND oauths.provider = 'poe'
 	`
 	result := r.DB.Raw(query, eventId).Scan(&users)
 	if result.Error != nil {
