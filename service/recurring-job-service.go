@@ -63,7 +63,7 @@ func (s *RecurringJobService) EvaluateStashChanges(job *RecurringJob) error {
 	if job.EventId == nil {
 		return fmt.Errorf("EventId is required")
 	}
-	event, err := s.eventService.GetEventById(*job.EventId, "Teams", "Teams.Users")
+	event, err := s.eventService.GetEventById(*job.EventId, "Teams")
 	if err != nil {
 		return err
 	}

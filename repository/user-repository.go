@@ -172,3 +172,29 @@ func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
 	return nil
 
 }
+
+type TeamUserWithPoEAccountName struct {
+	TeamID      int
+	UserID      int
+	AccountName string
+}
+
+func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccountName, error) {
+	var users []*TeamUserWithPoEAccountName
+	query := `
+		SELECT
+			users.id as id,
+			oauth.name as account_name,
+			team_users.team_id as team_id
+		FROM users
+		JOIN oauth ON oauth.user_id = users.id
+		JOIN team_users ON team_users.user_id = users.id
+		JOIN teams ON teams.id = team_users.team_id
+		WHERE teams.event_id = ? AND oauth.provider = 'poe'
+	`
+	result := r.DB.Raw(query, eventId).Scan(&users)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get users for event: %v", result.Error)
+	}
+	return users, nil
+}
