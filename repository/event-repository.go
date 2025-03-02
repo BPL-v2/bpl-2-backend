@@ -76,7 +76,6 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 		return nil, fmt.Errorf("failed to find event: %v", result.Error)
 	}
 	if len(preloads) > 0 && utils.Contains(preloads, "Teams.Users") {
-		fmt.Println("loading users")
 		LoadUsersIntoEvent(r.DB, event)
 	}
 	return event, nil
