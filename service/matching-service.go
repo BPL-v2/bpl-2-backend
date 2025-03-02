@@ -9,7 +9,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -21,6 +24,11 @@ type MatchingService struct {
 	lastChangeId          *string
 	event                 *repository.Event
 }
+
+var teamMatchesTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+	Name: "team_matches_total",
+	Help: "The number of matches for each team",
+}, []string{"team"})
 
 func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
 	objectiveMatchService := NewObjectiveMatchService()
@@ -52,22 +60,7 @@ func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange conf
 	return stashChange, nil
 }
 
-func (m *MatchingService) getUserMap() map[string]int {
-	userMap := make(map[string]int)
-	for _, team := range m.event.Teams {
-		for _, user := range team.Users {
-			for account := range user.OauthAccounts {
-				if user.OauthAccounts[account].Provider == repository.ProviderPoE {
-					userMap[user.OauthAccounts[account].Name] = user.ID
-				}
-			}
-
-		}
-	}
-	return userMap
-}
-
-func (m *MatchingService) getMatches(stashChange config.StashChangeMessage, userMap map[string]int, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
+func (m *MatchingService) getMatches(stashChange config.StashChangeMessage, userMap map[string]int, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 	for _, stash := range stashChange.Stashes {
@@ -84,7 +77,7 @@ func (m *MatchingService) getMatches(stashChange config.StashChangeMessage, user
 					}
 				}
 			}
-
+			teamMatchesTotal.WithLabelValues(teamMap[*stash.AccountName]).Add(float64(len(completions)))
 			matches = append(matches, m.objectiveMatchService.CreateMatches(completions, userId, stash.StashChangeID, m.event.ID, stashChange.Timestamp)...)
 		}
 	}
@@ -116,7 +109,22 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 
 func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, objectives []*repository.Objective) {
 
-	userMap := m.getUserMap()
+	users, err := m.userService.GetUsersForEvent(m.event.ID)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	userMap := make(map[string]int)
+	teamMap := make(map[string]string)
+	teamNames := make(map[int]string)
+	for _, team := range m.event.Teams {
+		teamNames[team.ID] = team.Name
+	}
+
+	for _, user := range users {
+		userMap[user.AccountName] = user.UserID
+		teamMap[user.AccountName] = teamNames[user.TeamID]
+	}
 	desyncedObjectiveIds := make([]int, 0)
 	for _, objective := range objectives {
 		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ITEM {
@@ -125,7 +133,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	}
 	reader, err := m.GetReader(desyncedObjectiveIds)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return
 	}
 	defer reader.Close()
@@ -136,12 +144,12 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		m.objectiveService.StartSync(desyncedObjectiveIds)
 	}
 	if m.lastChangeId == nil {
-		fmt.Println("No last change id found")
+		log.Println("No last change id found")
 		// this means we dont have any earlier changes, so we assume there are no desynced objectives
 		m.objectiveService.SetSynced(desyncedObjectiveIds)
 		desyncedObjectiveIds = make([]int, 0)
 	}
-	fmt.Println("desyncedObjectiveIds", desyncedObjectiveIds)
+	log.Println("desyncedObjectiveIds", desyncedObjectiveIds)
 	count := 0
 	for {
 		select {
@@ -150,16 +158,16 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		default:
 			stashChange, err := m.GetStashChange(reader)
 			if err != nil {
-				fmt.Println(err)
+				log.Fatal(err)
 				return
 			}
 			count++
 			if count%100 == 0 {
-				fmt.Printf("Processed %d changes\n", count)
+				log.Printf("Processed %d changes\n", count)
 			}
-			fmt.Println("Processing change", stashChange.ChangeID)
+			log.Println("Processing change", stashChange.ChangeID)
 			if m.lastChangeId != nil && stashChange.ChangeID == *m.lastChangeId {
-				fmt.Println("Reached last change id")
+				log.Println("Reached last change id")
 				// once we reach the starting change id the sync is finished
 				m.objectiveService.SetSynced(desyncedObjectiveIds)
 				syncing = false
@@ -179,11 +187,11 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 			// 	}
 			// }
 
-			matches = append(matches, m.getMatches(stashChange, userMap, itemChecker, desyncedObjectiveIds)...)
+			matches = append(matches, m.getMatches(stashChange, userMap, teamMap, itemChecker, desyncedObjectiveIds)...)
 			if !syncing {
 				err = m.objectiveMatchService.SaveMatches(matches, desyncedObjectiveIds)
 				if err != nil {
-					fmt.Println(err)
+					log.Fatal(err)
 				}
 				desyncedObjectiveIds = make([]int, 0)
 				matches = make([]*repository.ObjectiveMatch, 0)
@@ -196,7 +204,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 func StashLoop(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) error {
 	m, err := NewMatchingService(ctx, poeClient, event)
 	if err != nil {
-		fmt.Println("Failed to create matching service:", err)
+		log.Fatal("Failed to create matching service:", err)
 		return err
 	}
 
