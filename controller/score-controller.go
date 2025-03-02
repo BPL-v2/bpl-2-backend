@@ -76,13 +76,6 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	e.mu.Lock()
-	if _, ok := e.connections[eventID]; !ok {
-		e.connections[eventID] = make(map[*websocket.Conn]bool)
-	}
-	e.connections[eventID][conn] = true
-	e.mu.Unlock()
-
 	if _, ok := e.scoreService.LatestScores[eventID]; !ok {
 		e.scoreService.LatestScores[eventID] = make(service.ScoreMap)
 	}
@@ -95,6 +88,13 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	if err := conn.WriteMessage(websocket.TextMessage, serialized); err != nil {
 		return
 	}
+
+	e.mu.Lock()
+	if _, ok := e.connections[eventID]; !ok {
+		e.connections[eventID] = make(map[*websocket.Conn]bool)
+	}
+	e.connections[eventID][conn] = true
+	e.mu.Unlock()
 
 	for {
 		_, _, err := conn.ReadMessage()
