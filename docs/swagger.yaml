@@ -525,6 +525,13 @@ definitions:
     - timestamp
     - user
     type: object
+  SignupCreate:
+    properties:
+      expected_playtime:
+        $ref: '#/definitions/ExpectedPlayTime'
+    required:
+    - expected_playtime
+    type: object
   Submission:
     properties:
       approval_status:
@@ -606,6 +613,31 @@ definitions:
     - event_id
     - id
     - name
+    type: object
+  TeamCreate:
+    properties:
+      allowed_classes:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+    required:
+    - allowed_classes
+    - name
+    type: object
+  TeamUserCreate:
+    properties:
+      is_team_lead:
+        type: boolean
+      team_id:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - user_id
     type: object
   User:
     properties:
@@ -1046,6 +1078,12 @@ paths:
         name: event_id
         required: true
         type: integer
+      - description: Signup
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SignupCreate'
       produces:
       - application/json
       responses:
@@ -1209,6 +1247,12 @@ paths:
         name: event_id
         required: true
         type: integer
+      - description: Team to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TeamCreate'
       produces:
       - application/json
       responses:
@@ -1275,6 +1319,14 @@ paths:
         name: event_id
         required: true
         type: integer
+      - description: Users to add to teams
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/TeamUserCreate'
+          type: array
       produces:
       - application/json
       responses:

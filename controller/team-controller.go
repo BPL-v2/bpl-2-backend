@@ -82,6 +82,7 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
+// @Param body body TeamCreate true "Team to create"
 // @Success 201 {object} Team
 // @Router /events/{event_id}/teams [put]
 func (e *TeamController) createTeamHandler() gin.HandlerFunc {
@@ -170,6 +171,7 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
+// @Param body body []TeamUserCreate true "Users to add to teams"
 // @Success 204
 // @Router /events/{event_id}/teams/users [put]
 func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
