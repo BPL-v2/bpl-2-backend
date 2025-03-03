@@ -77,6 +77,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 // @Produce json
 // @Success 201 {object} Signup
 // @Param event_id path int true "Event ID"
+// @Param body body SignupCreate true "Signup"
 // @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

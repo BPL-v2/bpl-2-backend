@@ -99,5 +99,5 @@ func addMetrics(r *gin.Engine) {
 
 func addDocs(r *gin.Engine) {
 	docs.SwaggerInfo.BasePath = "/api"
-	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	r.GET("/api/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

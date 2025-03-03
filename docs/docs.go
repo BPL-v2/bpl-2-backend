@@ -349,6 +349,15 @@ const docTemplate = `{
                         "name": "event_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Signup",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SignupCreate"
+                        }
                     }
                 ],
                 "responses": {
@@ -619,6 +628,15 @@ const docTemplate = `{
                         "name": "event_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Team to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TeamCreate"
+                        }
                     }
                 ],
                 "responses": {
@@ -652,6 +670,18 @@ const docTemplate = `{
                         "name": "event_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Users to add to teams",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TeamUserCreate"
+                            }
+                        }
                     }
                 ],
                 "responses": {
@@ -2171,6 +2201,17 @@ const docTemplate = `{
                 }
             }
         },
+        "SignupCreate": {
+            "type": "object",
+            "required": [
+                "expected_playtime"
+            ],
+            "properties": {
+                "expected_playtime": {
+                    "$ref": "#/definitions/ExpectedPlayTime"
+                }
+            }
+        },
         "Submission": {
             "type": "object",
             "required": [
@@ -2290,6 +2331,44 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "TeamCreate": {
+            "type": "object",
+            "required": [
+                "allowed_classes",
+                "name"
+            ],
+            "properties": {
+                "allowed_classes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "TeamUserCreate": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "is_team_lead": {
+                    "type": "boolean"
+                },
+                "team_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },
