@@ -817,6 +817,38 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "description": "Start a recurring job",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "jobs"
+                ],
+                "operationId": "StartJob",
+                "parameters": [
+                    {
+                        "description": "Job to create",
+                        "name": "job",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/JobCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/RecurringJob"
+                        }
+                    }
+                }
             }
         },
         "/oauth2/discord": {
@@ -2622,6 +2654,12 @@ const docTemplate = `{
         },
         "RecurringJob": {
             "type": "object",
+            "required": [
+                "end_date",
+                "event_id",
+                "job_type",
+                "sleep_after_each_run_seconds"
+            ],
             "properties": {
                 "end_date": {
                     "type": "string"

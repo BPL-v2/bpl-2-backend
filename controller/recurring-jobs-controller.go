@@ -102,6 +102,7 @@ func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 // @Produce json
 // @Param job body JobCreate true "Job to create"
 // @Success 201 {object} service.RecurringJob
+// @Router /jobs [post]
 func (c *RecurringJobsController) startJobHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var jobCreate JobCreate
