@@ -1,25 +1,4 @@
 definitions:
-  JobType:
-    enum:
-    - FetchStashChanges
-    - EvaluateStashChanges
-    - FetchCharacterData
-    type: string
-    x-enum-varnames:
-    - FetchStashChanges
-    - EvaluateStashChanges
-    - FetchCharacterData
-  RecurringJob:
-    properties:
-      end_date:
-        type: string
-      event_id:
-        type: integer
-      job_type:
-        $ref: '#/definitions/JobType'
-      sleep_after_each_run_seconds:
-        type: integer
-    type: object
   TwitchStream:
     properties:
       backend_user_id:
@@ -753,6 +732,16 @@ definitions:
     - CRAFTED_MODS
     - FRACTURED_MODS
     - SIX_LINK
+  JobType:
+    enum:
+    - FetchStashChanges
+    - EvaluateStashChanges
+    - FetchCharacterData
+    type: string
+    x-enum-varnames:
+    - FetchStashChanges
+    - EvaluateStashChanges
+    - FetchCharacterData
   NumberField:
     enum:
     - STACK_SIZE
@@ -851,6 +840,17 @@ definitions:
     - Removed
     - Changed
     - Unchanged
+  RecurringJob:
+    properties:
+      end_date:
+        type: string
+      event_id:
+        type: integer
+      job_type:
+        $ref: '#/definitions/JobType'
+      sleep_after_each_run_seconds:
+        type: integer
+    type: object
 info:
   contact:
     email: Liberatorist@gmail.com

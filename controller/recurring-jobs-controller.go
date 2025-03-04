@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bpl/client"
+	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
 	"fmt"
@@ -12,16 +13,15 @@ import (
 )
 
 type RecurringJobsController struct {
-	recurringJobService *service.RecurringJobService
-	jobMap              map[service.JobType]*service.RecurringJob
+	service *service.RecurringJobService
 }
 
 type JobCreate struct {
-	JobType                  service.JobType `json:"job_type"`
-	SleepAfterEachRunSeconds int             `json:"sleep_after_each_run_seconds"`
-	DurationInSeconds        *int            `json:"duration_in_seconds"`
-	EndDate                  *time.Time      `json:"end_date"`
-	EventId                  *int            `json:"event_id"`
+	JobType                  repository.JobType `json:"job_type"`
+	SleepAfterEachRunSeconds int                `json:"sleep_after_each_run_seconds"`
+	EventId                  int                `json:"event_id"`
+	DurationInSeconds        *int               `json:"duration_in_seconds"`
+	EndDate                  *time.Time         `json:"end_date"`
 }
 
 func (j *JobCreate) toJob() (*service.RecurringJob, error) {
@@ -41,23 +41,22 @@ func (j *JobCreate) toJob() (*service.RecurringJob, error) {
 	return &service.RecurringJob{
 		JobType:                  j.JobType,
 		SleepAfterEachRunSeconds: j.SleepAfterEachRunSeconds,
-		EndDate:                  j.EndDate,
+		EndDate:                  *j.EndDate,
 		EventId:                  j.EventId,
 	}, nil
 }
 
-var jobList = []service.JobType{
-	service.FetchStashChanges,
-	service.EvaluateStashChanges,
+var jobList = []repository.JobType{
+	repository.FetchStashChanges,
+	repository.EvaluateStashChanges,
 	// service.CalculateScores,
-	service.FetchCharacterData,
+	repository.FetchCharacterData,
 }
 
 func NewRecurringJobsController() *RecurringJobsController {
 	poeClient := client.NewPoEClient(os.Getenv("POE_CLIENT_AGENT"), 10, false, 10)
 	controller := &RecurringJobsController{
-		recurringJobService: service.NewRecurringJobService(poeClient),
-		jobMap:              make(map[service.JobType]*service.RecurringJob),
+		service: service.NewRecurringJobService(poeClient),
 	}
 	// controller.StartScoreUpdater()
 	return controller
@@ -67,8 +66,8 @@ func setupRecurringJobsController() []RouteInfo {
 	c := NewRecurringJobsController()
 	baseUrl := "jobs"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "/", HandlerFunc: c.getJobsHandler()},
-		{Method: "POST", Path: "/", HandlerFunc: c.startJobHandler()},
+		{Method: "GET", Path: "", HandlerFunc: c.getJobsHandler()},
+		{Method: "POST", Path: "", HandlerFunc: c.startJobHandler()},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -87,13 +86,12 @@ func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		jobs := make([]*service.RecurringJob, 0)
 		for _, jobType := range jobList {
-			job, ok := c.jobMap[jobType]
+			job, ok := c.service.Jobs[jobType]
 			if ok {
 				jobs = append(jobs, job)
 			}
 		}
 		ctx.JSON(200, jobs)
-
 	}
 }
 
@@ -111,20 +109,17 @@ func (c *RecurringJobsController) startJobHandler() gin.HandlerFunc {
 			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		if existingJob, ok := c.jobMap[jobCreate.JobType]; ok {
-			existingJob.Cancel()
-		}
+
 		job, err := jobCreate.toJob()
 		if err != nil {
 			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = c.recurringJobService.StartJob(job)
+		err = c.service.StartJob(job)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.jobMap[jobCreate.JobType] = job
 		ctx.JSON(201, job)
 	}
 }

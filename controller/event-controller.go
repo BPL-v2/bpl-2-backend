@@ -96,7 +96,11 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 		}
 		dbevent, err := e.eventService.CreateEvent(eventCreate.toModel())
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "Event not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
 			return
 		}
 		c.JSON(201, toEventResponse(dbevent))

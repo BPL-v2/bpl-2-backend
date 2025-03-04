@@ -1451,36 +1451,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "JobType": {
-            "type": "string",
-            "enum": [
-                "FetchStashChanges",
-                "EvaluateStashChanges",
-                "FetchCharacterData"
-            ],
-            "x-enum-varnames": [
-                "FetchStashChanges",
-                "EvaluateStashChanges",
-                "FetchCharacterData"
-            ]
-        },
-        "RecurringJob": {
-            "type": "object",
-            "properties": {
-                "end_date": {
-                    "type": "string"
-                },
-                "event_id": {
-                    "type": "integer"
-                },
-                "job_type": {
-                    "$ref": "#/definitions/JobType"
-                },
-                "sleep_after_each_run_seconds": {
-                    "type": "integer"
-                }
-            }
-        },
         "TwitchStream": {
             "type": "object",
             "properties": {
@@ -2518,6 +2488,19 @@ const docTemplate = `{
                 "SIX_LINK"
             ]
         },
+        "JobType": {
+            "type": "string",
+            "enum": [
+                "FetchStashChanges",
+                "EvaluateStashChanges",
+                "FetchCharacterData"
+            ],
+            "x-enum-varnames": [
+                "FetchStashChanges",
+                "EvaluateStashChanges",
+                "FetchCharacterData"
+            ]
+        },
         "NumberField": {
             "type": "string",
             "enum": [
@@ -2636,6 +2619,23 @@ const docTemplate = `{
                 "Changed",
                 "Unchanged"
             ]
+        },
+        "RecurringJob": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "job_type": {
+                    "$ref": "#/definitions/JobType"
+                },
+                "sleep_after_each_run_seconds": {
+                    "type": "integer"
+                }
+            }
         }
     },
     "securityDefinitions": {
