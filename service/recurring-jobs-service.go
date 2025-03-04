@@ -10,11 +10,11 @@ import (
 )
 
 type RecurringJob struct {
-	JobType                  repository.JobType `json:"job_type"`
-	SleepAfterEachRunSeconds int                `json:"sleep_after_each_run_seconds"`
+	JobType                  repository.JobType `json:"job_type" binding:"required"`
+	SleepAfterEachRunSeconds int                `json:"sleep_after_each_run_seconds" binding:"required"`
 	Cancel                   context.CancelFunc `json:"-"`
-	EndDate                  time.Time          `json:"end_date"`
-	EventId                  int                `json:"event_id"`
+	EndDate                  time.Time          `json:"end_date" binding:"required"`
+	EventId                  int                `json:"event_id" binding:"required"`
 }
 
 type RecurringJobService struct {

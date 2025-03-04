@@ -850,6 +850,11 @@ definitions:
         $ref: '#/definitions/JobType'
       sleep_after_each_run_seconds:
         type: integer
+    required:
+    - end_date
+    - event_id
+    - job_type
+    - sleep_after_each_run_seconds
     type: object
 info:
   contact:
@@ -1386,6 +1391,27 @@ paths:
             items:
               $ref: '#/definitions/RecurringJob'
             type: array
+      tags:
+      - jobs
+    post:
+      consumes:
+      - application/json
+      description: Start a recurring job
+      operationId: StartJob
+      parameters:
+      - description: Job to create
+        in: body
+        name: job
+        required: true
+        schema:
+          $ref: '#/definitions/JobCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/RecurringJob'
       tags:
       - jobs
   /oauth2/discord:
