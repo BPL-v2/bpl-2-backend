@@ -6,6 +6,7 @@ import (
 	"bpl/repository"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -65,7 +66,7 @@ func (s *StashChangeService) GetInitialChangeId(event *repository.Event) (string
 	if err == nil {
 		return stashChange, nil
 	}
-	fmt.Println("Initial change id not found, fetching from poe.ninja")
+	log.Print("Initial change id not found, fetching from poe.ninja")
 	return s.GetNinjaChangeId()
 }
 
@@ -74,7 +75,6 @@ func ChangeIdToInt(changeId string) int {
 	for _, str := range strings.Split(changeId, "-") {
 		i, err := strconv.Atoi(str)
 		if err != nil {
-			fmt.Println(err)
 			return 0
 		}
 		sum += i

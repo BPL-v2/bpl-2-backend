@@ -6,6 +6,7 @@ import (
 	"bpl/repository"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -62,7 +63,7 @@ func (f *FetchingService) FetchStashChanges() error {
 	}
 	initialStashChange, err := f.stashChangeService.GetInitialChangeId(f.event)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return nil
 	}
 
@@ -74,23 +75,22 @@ func (f *FetchingService) FetchStashChanges() error {
 		case <-f.ctx.Done():
 			return nil
 		default:
-			fmt.Println("Fetching stashes with change id:", changeId)
 			response, err := f.poeClient.GetPublicStashes(token, "pc", changeId)
 			if err != nil {
 				consecutiveErrors++
 				if consecutiveErrors > 5 {
-					fmt.Println("Too many consecutive errors, exiting")
+					log.Print("Too many consecutive errors, exiting")
 					return fmt.Errorf("too many consecutive errors")
 				}
 				if err.StatusCode == 429 {
-					fmt.Println(err.ResponseHeaders)
+					log.Print(err.ResponseHeaders)
 					retryAfter, err := strconv.Atoi(err.ResponseHeaders.Get("Retry-After"))
 					if err != nil {
 						retryAfter = 60
 					}
 					<-time.After((time.Duration(retryAfter) + 1) * time.Second)
 				} else {
-					fmt.Println(err)
+					log.Print(err)
 					<-time.After(60 * time.Second)
 				}
 				continue
@@ -113,13 +113,13 @@ func (f *FetchingService) FetchStashChanges() error {
 func (f *FetchingService) FilterStashChanges() {
 	err := config.CreateTopic(f.event.ID)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 
 	writer, err := config.GetWriter(f.event.ID)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 	defer writer.Close()
@@ -144,7 +144,6 @@ func (f *FetchingService) FilterStashChanges() {
 				NextChangeID: stashChange.NextChangeID,
 				Timestamp:    time.Now(),
 			}
-			fmt.Printf("Found %d stashes\n", len(stashes))
 			// make sure that stash changes are only saved if the messages are successfully written to kafka
 			f.stashChangeService.SaveStashChangesConditionally(stashes, message, f.event.ID,
 				func(data []byte) error {
