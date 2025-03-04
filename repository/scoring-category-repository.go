@@ -140,7 +140,30 @@ func (r *ScoringCategoryRepository) SaveCategory(category *ScoringCategory) (*Sc
 	return category, nil
 }
 
-func (r *ScoringCategoryRepository) DeleteCategory(categoryId int) error {
-	result := r.DB.Delete(&ScoringCategory{}, "id = ?", categoryId)
+func (r *ScoringCategoryRepository) DeleteCategoryById(categoryId int) error {
+	category, err := r.GetNestedCategories(categoryId, "Objectives", "Objectives.Conditions")
+	if err != nil {
+		return err
+	}
+	for _, subCategory := range category.SubCategories {
+		if err := r.DeleteCategory(subCategory); err != nil {
+			return err
+		}
+	}
+	return r.DeleteCategory(category)
+}
+func (r *ScoringCategoryRepository) DeleteCategory(category *ScoringCategory) error {
+	for _, objective := range category.Objectives {
+		for _, condition := range objective.Conditions {
+			if err := r.DB.Delete(&condition).Error; err != nil {
+				return err
+			}
+		}
+
+		if err := r.DB.Delete(&objective).Error; err != nil {
+			return err
+		}
+	}
+	result := r.DB.Delete(&category)
 	return result.Error
 }

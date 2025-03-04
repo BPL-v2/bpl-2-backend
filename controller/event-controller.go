@@ -12,18 +12,22 @@ import (
 )
 
 type EventController struct {
-	eventService  *service.EventService
-	teamService   *service.TeamService
-	userService   *service.UserService
-	signupService *service.SignupService
+	eventService           *service.EventService
+	teamService            *service.TeamService
+	userService            *service.UserService
+	signupService          *service.SignupService
+	scoringCategoryService *service.ScoringCategoryService
+	scoringPresetService   *service.ScoringPresetService
 }
 
 func NewEventController() *EventController {
 	return &EventController{
-		eventService:  service.NewEventService(),
-		teamService:   service.NewTeamService(),
-		userService:   service.NewUserService(),
-		signupService: service.NewSignupService(),
+		eventService:           service.NewEventService(),
+		teamService:            service.NewTeamService(),
+		userService:            service.NewUserService(),
+		signupService:          service.NewSignupService(),
+		scoringCategoryService: service.NewScoringCategoryService(),
+		scoringPresetService:   service.NewScoringPresetsService(),
 	}
 }
 
@@ -36,6 +40,7 @@ func setupEventController() []RouteInfo {
 		{Method: "GET", Path: "/current", HandlerFunc: e.getCurrentEventHandler()},
 
 		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEventHandler()},
+		{Method: "POST", Path: "/:event_id/duplicate", HandlerFunc: e.duplicateEventHandler()},
 		{Method: "GET", Path: "/:event_id/status", HandlerFunc: e.getEventStatusForUser(), Authenticated: true},
 		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
@@ -203,6 +208,60 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 
 		}
 		c.JSON(200, response)
+	}
+}
+
+// @id DuplicateEvent
+// @Description Duplicates an event's configuration
+// @Tags event
+// @Accept json
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Param event body EventCreate true "Event to create"
+// @Success 201 {object} Event
+// @Router /events/{event_id}/duplicate [post]
+func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		eventId, err := strconv.Atoi(c.Param("event_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		var eventCreate EventCreate
+		if err := c.BindJSON(&eventCreate); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		eventCreate.ID = nil
+		event := eventCreate.toModel()
+		event, err = e.eventService.CreateEvent(event)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		presetIdMap, err := e.scoringPresetService.DuplicatePresets(eventId, event.ID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		newCategory, err := e.scoringCategoryService.DuplicateScoringCategories(eventId, presetIdMap)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		oldCategoryID := event.ScoringCategoryID
+		event.ScoringCategory = newCategory
+		event, err = e.eventService.SaveEvent(event)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		err = e.scoringCategoryService.DeleteCategoryById(oldCategoryID)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(201, toEventResponse(event))
 	}
 }
 

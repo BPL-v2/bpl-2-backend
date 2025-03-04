@@ -11,7 +11,7 @@ import (
 )
 
 type ScoringPresetController struct {
-	service *service.ScoringPresetsService
+	service *service.ScoringPresetService
 }
 
 func NewScoringPresetController() *ScoringPresetController {
