@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -90,7 +91,7 @@ func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) 
 	}
 
 	if response.StatusCode >= 400 {
-		fmt.Println(string(respBody))
+		log.Print(string(respBody))
 		errorBody := &ErrorResponse{}
 		err = json.Unmarshal(respBody, errorBody)
 		if err != nil {

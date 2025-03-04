@@ -4,8 +4,6 @@ import (
 	"bpl/config"
 	"bpl/scoring"
 	"fmt"
-	"log"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -95,7 +93,6 @@ func Diff(scoreMap map[string]*ScoreDifference, scores []*scoring.Score) (ScoreM
 }
 
 func (s *ScoreService) GetNewDiff(eventID int) (ScoreMap, error) {
-	t := time.Now()
 	newScores, err := s.calcScores(eventID)
 	if err != nil {
 		return nil, err
@@ -103,9 +100,7 @@ func (s *ScoreService) GetNewDiff(eventID int) (ScoreMap, error) {
 	oldScore := s.LatestScores[eventID]
 	newScoreMap, diff := Diff(oldScore, newScores)
 	s.LatestScores[eventID] = newScoreMap
-	log.Printf("Calculated scores for event %d in %d milliseconds", eventID, time.Since(t).Milliseconds())
 	if len(diff) == 0 {
-		log.Printf("No changes in scores")
 		return nil, fmt.Errorf("no changes in scores")
 	}
 	return diff, nil

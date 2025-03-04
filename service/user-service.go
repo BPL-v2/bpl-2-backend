@@ -130,7 +130,6 @@ func (s *UserService) DiscordServerCheck(user *repository.User) error {
 	for _, oauth := range user.OauthAccounts {
 		if oauth.Provider == repository.ProviderDiscord {
 			memberIds, err := client.NewLocalDiscordClient().GetServerMemberIds()
-			fmt.Println(memberIds)
 			if err != nil || utils.Contains(memberIds, oauth.AccountID) {
 				return nil
 			} else {

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"bpl/config"
-	"fmt"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -46,12 +46,11 @@ func (r *ObjectiveMatchRepository) OverwriteMatches(objectiveMatches []*Objectiv
 		if err != nil {
 			return err
 		}
-		fmt.Println("Saving new matches")
 		err = r.SaveMatches(objectiveMatches)
 		if err != nil {
 			return err
 		}
-		fmt.Println("Overwrite took", time.Since(t))
+		log.Printf("Overwrite took %s", time.Since(t))
 		return nil
 	})
 }

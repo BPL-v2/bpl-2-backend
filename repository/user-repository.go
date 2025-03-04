@@ -5,6 +5,7 @@ import (
 	"bpl/utils"
 	"database/sql/driver"
 	"fmt"
+	"log"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -159,7 +160,7 @@ func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
 		return team.ID
 	})).Scan(&users).Error
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return fmt.Errorf("failed to load users into event: %v", err)
 	}
 	for _, user := range users {

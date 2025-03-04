@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -77,7 +78,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		// 	defer wg.Done()
 		matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds, event.ID)
 		if err != nil {
-			fmt.Println(err)
+			log.Print(err)
 			return nil, err
 		}
 		for _, match := range matches {

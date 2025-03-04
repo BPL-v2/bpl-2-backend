@@ -8,7 +8,6 @@ import (
 	"bpl/utils"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,7 +42,7 @@ func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event 
 	}
 	changeId, err := NewStashChangeService().GetCurrentChangeIdForEvent(event)
 	if err == nil {
-		fmt.Println("Last change id:", changeId)
+		log.Printf("Last change id: %s", changeId)
 		matchingService.lastChangeId = &changeId
 	}
 	return matchingService, nil
@@ -99,7 +98,7 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 		consumer.GroupID += 1
 		err = m.objectiveMatchService.SaveKafkaConsumerId(consumer)
 		if err != nil {
-			fmt.Println(err)
+			log.Print(err)
 		}
 	}
 
@@ -142,6 +141,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	matches := make([]*repository.ObjectiveMatch, 0)
 	if syncing {
 		m.objectiveService.StartSync(desyncedObjectiveIds)
+		log.Printf("Catching up on desynced objectives: %v", desyncedObjectiveIds)
 	}
 	if m.lastChangeId == nil {
 		log.Println("No last change id found")
@@ -149,8 +149,6 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		m.objectiveService.SetSynced(desyncedObjectiveIds)
 		desyncedObjectiveIds = make([]int, 0)
 	}
-	log.Println("desyncedObjectiveIds", desyncedObjectiveIds)
-	count := 0
 	for {
 		select {
 		case <-m.ctx.Done():
@@ -161,13 +159,8 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				log.Fatal(err)
 				return
 			}
-			count++
-			if count%100 == 0 {
-				log.Printf("Processed %d changes\n", count)
-			}
-			log.Println("Processing change", stashChange.ChangeID)
 			if m.lastChangeId != nil && stashChange.ChangeID == *m.lastChangeId {
-				log.Println("Reached last change id")
+				log.Println("Sync finished")
 				// once we reach the starting change id the sync is finished
 				m.objectiveService.SetSynced(desyncedObjectiveIds)
 				syncing = false
