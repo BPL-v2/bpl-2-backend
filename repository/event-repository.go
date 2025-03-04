@@ -118,11 +118,7 @@ func (r *EventRepository) InvalidateCurrentEvent() error {
 	return nil
 }
 
-func (r *EventRepository) Delete(eventId int) error {
-	event, err := r.GetEventById(eventId)
-	if err != nil {
-		return err
-	}
+func (r *EventRepository) Delete(event *Event) error {
 	return r.DB.Delete(&event).Error
 }
 

@@ -6,60 +6,78 @@ import (
 )
 
 type EventService struct {
-	event_repository            *repository.EventRepository
-	scoring_category_repository *repository.ScoringCategoryRepository
+	eventRepository           *repository.EventRepository
+	scoringCategoryRepository *repository.ScoringCategoryRepository
+	scoringPresetRepository   *repository.ScoringPresetRepository
 }
 
 func NewEventService() *EventService {
 	return &EventService{
-		event_repository:            repository.NewEventRepository(),
-		scoring_category_repository: repository.NewScoringCategoryRepository(),
+		eventRepository:           repository.NewEventRepository(),
+		scoringCategoryRepository: repository.NewScoringCategoryRepository(),
+		scoringPresetRepository:   repository.NewScoringPresetRepository(),
 	}
 }
 
 func (e *EventService) GetAllEvents(preloads ...string) ([]*repository.Event, error) {
-	return e.event_repository.FindAll(preloads...)
+	return e.eventRepository.FindAll(preloads...)
 }
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
 	if event.ID == 0 {
-		category, err := e.scoring_category_repository.SaveCategory(&repository.ScoringCategory{Name: "default"})
+		category, err := e.scoringCategoryRepository.SaveCategory(&repository.ScoringCategory{Name: "default"})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create default scoring category: %v", err)
 		}
 		event.ScoringCategory = category
 	} else {
-		currentEvent, err := e.event_repository.GetEventById(event.ID)
+		currentEvent, err := e.eventRepository.GetEventById(event.ID)
 		if err != nil {
 			return nil, fmt.Errorf("event with this id does not exist: %v", err)
 		}
 		event.ScoringCategoryID = currentEvent.ScoringCategoryID
 	}
 	if event.IsCurrent {
-		err := e.event_repository.InvalidateCurrentEvent()
+		err := e.eventRepository.InvalidateCurrentEvent()
 		if err != nil {
 			return nil, err
 		}
 	}
-	result := e.event_repository.DB.Save(event)
+	result := e.eventRepository.DB.Save(event)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to save event: %v", result.Error)
 	}
 	return event, nil
 }
 
+func (e *EventService) SaveEvent(event *repository.Event) (*repository.Event, error) {
+	return e.eventRepository.Save(event)
+}
+
 func (e *EventService) GetEventById(eventId int, preloads ...string) (*repository.Event, error) {
-	return e.event_repository.GetEventById(eventId, preloads...)
+	return e.eventRepository.GetEventById(eventId, preloads...)
 }
 
 func (e *EventService) GetCurrentEvent(preloads ...string) (*repository.Event, error) {
-	return e.event_repository.GetCurrentEvent(preloads...)
+	return e.eventRepository.GetCurrentEvent(preloads...)
 }
 
 func (e *EventService) UpdateEvent(eventId int, updateEvent *repository.Event) (*repository.Event, error) {
-	return e.event_repository.Update(eventId, updateEvent)
+	return e.eventRepository.Update(eventId, updateEvent)
 }
 
 func (e *EventService) DeleteEvent(eventId int) error {
-	return e.event_repository.Delete(eventId)
+	event, err := e.eventRepository.GetEventById(eventId)
+	if err != nil {
+		return err
+	}
+	err = e.eventRepository.Delete(event)
+	if err != nil {
+		return err
+	}
+	err = e.scoringCategoryRepository.DeleteCategoryById(event.ScoringCategoryID)
+	if err != nil {
+		return err
+	}
+	return e.scoringPresetRepository.DeletePresetsForEvent(eventId)
 }

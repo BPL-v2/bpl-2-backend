@@ -935,6 +935,33 @@ paths:
             $ref: '#/definitions/Event'
       tags:
       - event
+  /events/{event_id}/duplicate:
+    post:
+      consumes:
+      - application/json
+      description: Duplicates an event's configuration
+      operationId: DuplicateEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Event to create
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/EventCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Event'
+      tags:
+      - event
   /events/{event_id}/rules:
     get:
       description: Fetches the rules for the current event
