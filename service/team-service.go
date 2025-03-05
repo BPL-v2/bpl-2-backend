@@ -5,21 +5,21 @@ import (
 )
 
 type TeamService struct {
-	team_repository *repository.TeamRepository
+	teamRepository *repository.TeamRepository
 }
 
 func NewTeamService() *TeamService {
 	return &TeamService{
-		team_repository: repository.NewTeamRepository(),
+		teamRepository: repository.NewTeamRepository(),
 	}
 }
 
 func (e *TeamService) GetAllTeams() ([]repository.Team, error) {
-	return e.team_repository.FindAll()
+	return e.teamRepository.FindAll()
 }
 
 func (e *TeamService) SaveTeam(team *repository.Team) (*repository.Team, error) {
-	team, err := e.team_repository.Save(team)
+	team, err := e.teamRepository.Save(team)
 	if err != nil {
 		return nil, err
 	}
@@ -27,27 +27,27 @@ func (e *TeamService) SaveTeam(team *repository.Team) (*repository.Team, error) 
 }
 
 func (e *TeamService) GetTeamById(teamId int) (*repository.Team, error) {
-	return e.team_repository.GetTeamById(teamId)
+	return e.teamRepository.GetTeamById(teamId)
 }
 
 func (e *TeamService) UpdateTeam(teamId int, updateTeam *repository.Team) (*repository.Team, error) {
-	return e.team_repository.Update(teamId, updateTeam)
+	return e.teamRepository.Update(teamId, updateTeam)
 }
 
 func (e *TeamService) DeleteTeam(teamId int) error {
-	return e.team_repository.Delete(teamId)
+	return e.teamRepository.Delete(teamId)
 }
 
 func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser, event *repository.Event) error {
-	err := e.team_repository.RemoveTeamUsersForEvent(teamUsers, event)
+	err := e.teamRepository.RemoveTeamUsersForEvent(teamUsers, event)
 	if err != nil {
 		return err
 	}
-	return e.team_repository.AddUsersToTeams(teamUsers)
+	return e.teamRepository.AddUsersToTeams(teamUsers)
 }
 
 func (e *TeamService) GetTeamUsersForEvent(event *repository.Event) ([]*repository.TeamUser, error) {
-	return e.team_repository.GetTeamUsersForEvent(event)
+	return e.teamRepository.GetTeamUsersForEvent(event)
 }
 
 func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error) {
@@ -57,11 +57,11 @@ func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]
 	}
 	userToTeam := make(map[int]int)
 	for _, teamUser := range teamUsers {
-		userToTeam[teamUser.UserID] = teamUser.TeamID
+		userToTeam[teamUser.UserId] = teamUser.TeamId
 	}
 	return &userToTeam, nil
 }
 
 func (e *TeamService) GetTeamForUser(eventId int, userId int) (*repository.Team, error) {
-	return e.team_repository.GetTeamForUser(eventId, userId)
+	return e.teamRepository.GetTeamForUser(eventId, userId)
 }

@@ -24,18 +24,18 @@ func (e *EventService) GetAllEvents(preloads ...string) ([]*repository.Event, er
 }
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
-	if event.ID == 0 {
+	if event.Id == 0 {
 		category, err := e.scoringCategoryRepository.SaveCategory(&repository.ScoringCategory{Name: "default"})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create default scoring category: %v", err)
 		}
 		event.ScoringCategory = category
 	} else {
-		currentEvent, err := e.eventRepository.GetEventById(event.ID)
+		currentEvent, err := e.eventRepository.GetEventById(event.Id)
 		if err != nil {
 			return nil, fmt.Errorf("event with this id does not exist: %v", err)
 		}
-		event.ScoringCategoryID = currentEvent.ScoringCategoryID
+		event.ScoringCategoryId = currentEvent.ScoringCategoryId
 	}
 	if event.IsCurrent {
 		err := e.eventRepository.InvalidateCurrentEvent()
@@ -75,7 +75,7 @@ func (e *EventService) DeleteEvent(eventId int) error {
 	if err != nil {
 		return err
 	}
-	err = e.scoringCategoryRepository.DeleteCategoryById(event.ScoringCategoryID)
+	err = e.scoringCategoryRepository.DeleteCategoryById(event.ScoringCategoryId)
 	if err != nil {
 		return err
 	}

@@ -6,42 +6,42 @@ import (
 )
 
 type ObjectiveMatchService struct {
-	objective_match_repository *repository.ObjectiveMatchRepository
+	objectiveMatchRepository *repository.ObjectiveMatchRepository
 }
 
 func NewObjectiveMatchService() *ObjectiveMatchService {
 	return &ObjectiveMatchService{
-		objective_match_repository: repository.NewObjectiveMatchRepository(),
+		objectiveMatchRepository: repository.NewObjectiveMatchRepository(),
 	}
 }
 
-func (e *ObjectiveMatchService) CreateMatches(matches map[int]int, userId int, stashChangeID int, eventId int, timestamp time.Time) []*repository.ObjectiveMatch {
+func (e *ObjectiveMatchService) CreateMatches(matches map[int]int, userId int, stashChangeId int, eventId int, timestamp time.Time) []*repository.ObjectiveMatch {
 	objectiveMatches := make([]*repository.ObjectiveMatch, 0)
 	for objectiveId, number := range matches {
 		objectiveMatch := &repository.ObjectiveMatch{
-			ObjectiveID:   objectiveId,
+			ObjectiveId:   objectiveId,
 			Timestamp:     timestamp,
 			Number:        number,
-			UserID:        userId,
+			UserId:        userId,
 			EventId:       eventId,
-			StashChangeID: &stashChangeID,
+			StashChangeId: &stashChangeId,
 		}
 		objectiveMatches = append(objectiveMatches, objectiveMatch)
 	}
 	return objectiveMatches
 }
 
-func (e *ObjectiveMatchService) SaveMatches(matches []*repository.ObjectiveMatch, desyncedObjectIDs []int) error {
-	if len(desyncedObjectIDs) > 0 {
-		return e.objective_match_repository.OverwriteMatches(matches, desyncedObjectIDs)
+func (e *ObjectiveMatchService) SaveMatches(matches []*repository.ObjectiveMatch, desyncedObjectIds []int) error {
+	if len(desyncedObjectIds) > 0 {
+		return e.objectiveMatchRepository.OverwriteMatches(matches, desyncedObjectIds)
 	}
-	return e.objective_match_repository.SaveMatches(matches)
+	return e.objectiveMatchRepository.SaveMatches(matches)
 }
 
 func (e *ObjectiveMatchService) GetKafkaConsumer(eventId int) (*repository.KafkaConsumer, error) {
-	return e.objective_match_repository.GetKafkaConsumer(eventId)
+	return e.objectiveMatchRepository.GetKafkaConsumer(eventId)
 }
 
 func (e *ObjectiveMatchService) SaveKafkaConsumerId(consumer *repository.KafkaConsumer) error {
-	return e.objective_match_repository.SaveKafkaConsumer(consumer)
+	return e.objectiveMatchRepository.SaveKafkaConsumer(consumer)
 }

@@ -45,7 +45,7 @@ func setupSubmissionController() []RouteInfo {
 // @Description Fetches all submissions for an event
 // @Tags submission
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Success 200 {array} Submission
 // @Router /events/{event_id}/submissions [get]
 func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
@@ -81,7 +81,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 // @Tags submission
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Param body body SubmissionCreate true "Submission to create"
 // @Success 201 {object} Submission
 // @Router /events/{event_id}/submissions [put]
@@ -94,13 +94,13 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 			return
 		}
 		submission := submissionCreate.toModel()
-		submission.EventID, _ = strconv.Atoi(c.Param("event_id"))
+		submission.EventId, _ = strconv.Atoi(c.Param("event_id"))
 		user, err := e.userService.GetUserFromAuthCookie(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		_, err = e.teamService.GetTeamForUser(submission.EventID, user.ID)
+		_, err = e.teamService.GetTeamForUser(submission.EventId, user.Id)
 		if err != nil {
 			c.JSON(403, gin.H{"error": "User does not participate in event"})
 			return
@@ -119,8 +119,8 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 // @Description Deletes a submission
 // @Tags submission
 // @Produce json
-// @Param event_id path int true "Event ID"
-// @Param submission_id path int true "Submission ID"
+// @Param event_id path int true "Event Id"
+// @Param submission_id path int true "Submission Id"
 // @Success 204
 // @Router /events/{event_id}/submissions/{submission_id} [delete]
 func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
@@ -150,8 +150,8 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 // @Tags submission
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
-// @Param submission_id path int true "Submission ID"
+// @Param event_id path int true "Event Id"
+// @Param submission_id path int true "Submission Id"
 // @Param submission body SubmissionReview true "Submission review"
 // @Success 200 {object} Submission
 // @Router /events/{event_id}/submissions/{submission_id}/review [put]
@@ -179,7 +179,7 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 			return
 		}
 		model := submissionReview.toModel()
-		model.EventID = eventId
+		model.EventId = eventId
 
 		submission, err := e.submissionService.ReviewSubmission(submissionId, model, user)
 		if err != nil {
@@ -191,8 +191,8 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 }
 
 type SubmissionCreate struct {
-	ID          *int      `json:"id"`
-	ObjectiveID int       `json:"objective_id" binding:"required"`
+	Id          *int      `json:"id"`
+	ObjectiveId int       `json:"objective_id" binding:"required"`
 	Timestamp   time.Time `json:"timestamp" binding:"required"`
 	Number      int       `json:"number"`
 	Proof       string    `json:"proof"`
@@ -206,14 +206,14 @@ type SubmissionReview struct {
 
 func (s *SubmissionCreate) toModel() *repository.Submission {
 	submission := &repository.Submission{
-		ObjectiveID: s.ObjectiveID,
+		ObjectiveId: s.ObjectiveId,
 		Number:      s.Number,
 		Proof:       s.Proof,
 		Timestamp:   s.Timestamp,
 		Comment:     s.Comment,
 	}
-	if s.ID != nil {
-		submission.ID = *s.ID
+	if s.Id != nil {
+		submission.Id = *s.Id
 	}
 	return submission
 }
@@ -226,7 +226,7 @@ func (s *SubmissionReview) toModel() *repository.Submission {
 }
 
 type Submission struct {
-	ID             int                       `json:"id" binding:"required"`
+	Id             int                       `json:"id" binding:"required"`
 	Objective      *Objective                `json:"objective"`
 	Number         int                       `json:"number" binding:"required"`
 	Proof          string                    `json:"proof" binding:"required"`
@@ -234,14 +234,14 @@ type Submission struct {
 	ApprovalStatus repository.ApprovalStatus `json:"approval_status" binding:"required"`
 	Comment        string                    `json:"comment" binding:"required"`
 	User           *NonSensitiveUser         `json:"user"`
-	TeamID         *int                      `json:"team_id"`
+	TeamId         *int                      `json:"team_id"`
 	ReviewComment  *string                   `json:"review_comment"`
-	ReviewerID     *int                      `json:"reviewer_id"`
+	ReviewerId     *int                      `json:"reviewer_id"`
 }
 
 func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]int) *Submission {
 	response := &Submission{
-		ID:             submission.ID,
+		Id:             submission.Id,
 		Objective:      toObjectiveResponse(submission.Objective),
 		Number:         submission.Number,
 		Proof:          submission.Proof,
@@ -250,12 +250,12 @@ func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]
 		Comment:        submission.Comment,
 		User:           toNonSensitiveUserResponse(submission.User),
 		ReviewComment:  submission.ReviewComment,
-		ReviewerID:     submission.ReviewerID,
+		ReviewerId:     submission.ReviewerId,
 	}
 	if teamUsers != nil {
-		teamID, ok := (*teamUsers)[submission.UserID]
+		teamId, ok := (*teamUsers)[submission.UserId]
 		if ok {
-			response.TeamID = &teamID
+			response.TeamId = &teamId
 		}
 	}
 	return response

@@ -17,14 +17,14 @@ const (
 )
 
 type Event struct {
-	ID                   int              `gorm:"primaryKey"`
+	Id                   int              `gorm:"primaryKey"`
 	Name                 string           `gorm:"not null"`
-	ScoringCategoryID    int              `gorm:"not null"`
-	Teams                []*Team          `gorm:"foreignKey:EventID;constraint:OnDelete:CASCADE"`
+	ScoringCategoryId    int              `gorm:"not null"`
+	Teams                []*Team          `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
 	IsCurrent            bool             `gorm:"not null"`
 	GameVersion          GameVersion      `gorm:"null"`
 	MaxSize              int              `gorm:"not null"`
-	ScoringCategory      *ScoringCategory `gorm:"foreignKey:ScoringCategoryID;constraint:OnDelete:CASCADE"`
+	ScoringCategory      *ScoringCategory `gorm:"foreignKey:ScoringCategoryId;constraint:OnDelete:CASCADE"`
 	ApplicationStartTime time.Time        `gorm:"null"`
 	EventStartTime       time.Time        `gorm:"null"`
 	EventEndTime         time.Time        `gorm:"null"`

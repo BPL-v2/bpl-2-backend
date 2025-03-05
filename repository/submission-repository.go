@@ -17,32 +17,32 @@ const (
 )
 
 type Submission struct {
-	ID             int            `gorm:"primaryKey"`
-	ObjectiveID    int            `gorm:"not null;references:objectives(id)"`
+	Id             int            `gorm:"primaryKey"`
+	ObjectiveId    int            `gorm:"not null;references:objectives(id)"`
 	Timestamp      time.Time      `gorm:"not null"`
 	Number         int            `gorm:"not null"`
-	UserID         int            `gorm:"not null;references:users(id)"`
+	UserId         int            `gorm:"not null;references:users(id)"`
 	Proof          string         `gorm:"not null"`
 	Comment        string         `gorm:"not null"`
 	ApprovalStatus ApprovalStatus `gorm:"not null;type:bpl2.approval_status"`
 	ReviewComment  *string        `gorm:"null"`
-	ReviewerID     *int           `gorm:"null;references:users(id)"`
-	MatchID        *int           `gorm:"null;references:objective_matches(id)"`
-	EventID        int            `gorm:"not null;references:events(id)"`
+	ReviewerId     *int           `gorm:"null;references:users(id)"`
+	MatchId        *int           `gorm:"null;references:objective_matches(id)"`
+	EventId        int            `gorm:"not null;references:events(id)"`
 
-	Match     *ObjectiveMatch `gorm:"foreignKey:MatchID;constraint:OnDelete:CASCADE;"`
-	Objective *Objective      `gorm:"foreignKey:ObjectiveID;constraint:OnDelete:CASCADE;"`
-	User      *User           `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
-	Reviewer  *User           `gorm:"foreignKey:ReviewerID;constraint:OnDelete:CASCADE;"`
+	Match     *ObjectiveMatch `gorm:"foreignKey:MatchId;constraint:OnDelete:CASCADE;"`
+	Objective *Objective      `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE;"`
+	User      *User           `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
+	Reviewer  *User           `gorm:"foreignKey:ReviewerId;constraint:OnDelete:CASCADE;"`
 }
 
 func (s *Submission) ToObjectiveMatch() *ObjectiveMatch {
 	return &ObjectiveMatch{
-		ObjectiveID: s.ObjectiveID,
+		ObjectiveId: s.ObjectiveId,
 		Timestamp:   s.Timestamp,
 		Number:      s.Number,
-		UserID:      s.UserID,
-		EventId:     s.EventID,
+		UserId:      s.UserId,
+		EventId:     s.EventId,
 	}
 }
 
@@ -56,7 +56,7 @@ func NewSubmissionRepository() *SubmissionRepository {
 
 func (r *SubmissionRepository) GetSubmissionsForObjectives(objectives []*Objective) ([]*Submission, error) {
 	var submissions []*Submission
-	result := r.DB.Preload("Objective").Preload("User").Find(&submissions, "objective_id IN ?", utils.Map(objectives, func(o *Objective) int { return o.ID }))
+	result := r.DB.Preload("Objective").Preload("User").Find(&submissions, "objective_id IN ?", utils.Map(objectives, func(o *Objective) int { return o.Id }))
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -81,12 +81,12 @@ func (r *SubmissionRepository) SaveSubmission(submission *Submission) (*Submissi
 }
 
 func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission) (*Submission, error) {
-	if submission.MatchID == nil {
+	if submission.MatchId == nil {
 		return submission, nil
 	}
 	tx := r.DB.Begin()
-	matchId := *submission.MatchID
-	submission.MatchID = nil
+	matchId := *submission.MatchId
+	submission.MatchId = nil
 	result := r.DB.Save(submission)
 	if result.Error != nil {
 		tx.Rollback()

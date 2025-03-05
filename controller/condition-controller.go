@@ -63,17 +63,17 @@ func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 // @id DeleteCondition
 // @Description Deletes a condition
 // @Tags condition
-// @Param id path int true "Condition ID"
+// @Param id path int true "Condition Id"
 // @Router /scoring/conditions/{id} [delete]
 func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		condition_id, err := strconv.Atoi(c.Param("id"))
+		conditionId, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		err = e.service.DeleteCondition(condition_id)
+		err = e.service.DeleteCondition(conditionId)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Condition not found"})
@@ -90,24 +90,24 @@ type ConditionCreate struct {
 	Operator    repository.Operator  `json:"operator" binding:"required,oneof=EQ NEQ GT GTE LT LTE IN NOT_IN MATCHES CONTAINS CONTAINS_ALL CONTAINS_MATCH CONTAINS_ALL_MATCHES"`
 	ItemField   repository.ItemField `json:"field" binding:"required,oneof=BASE_TYPE NAME TYPE_LINE RARITY ILVL FRAME_TYPE TALISMAN_TIER ENCHANT_MODS EXPLICIT_MODS IMPLICIT_MODS CRAFTED_MODS FRACTURED_MODS SIX_LINK"`
 	FieldValue  string               `json:"value" binding:"required"`
-	ID          int                  `json:"id"`
-	ObjectiveID int                  `json:"objective_id" binding:"required"`
+	Id          int                  `json:"id"`
+	ObjectiveId int                  `json:"objective_id" binding:"required"`
 }
 
 type Condition struct {
 	Operator   repository.Operator  `json:"operator" binding:"required"`
 	ItemField  repository.ItemField `json:"field" binding:"required"`
 	FieldValue string               `json:"value" binding:"required"`
-	ID         int                  `json:"id" binding:"required"`
+	Id         int                  `json:"id" binding:"required"`
 }
 
 func (e *ConditionCreate) toModel() *repository.Condition {
 	return &repository.Condition{
-		ID:          e.ID,
+		Id:          e.Id,
 		Operator:    repository.Operator(e.Operator),
 		Field:       repository.ItemField(e.ItemField),
 		Value:       e.FieldValue,
-		ObjectiveID: e.ObjectiveID,
+		ObjectiveId: e.ObjectiveId,
 	}
 }
 
@@ -119,6 +119,6 @@ func toConditionResponse(condition *repository.Condition) *Condition {
 		Operator:   condition.Operator,
 		ItemField:  condition.Field,
 		FieldValue: condition.Value,
-		ID:         condition.ID,
+		Id:         condition.Id,
 	}
 }

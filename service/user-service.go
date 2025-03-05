@@ -28,7 +28,7 @@ func NewUserService() *UserService {
 }
 
 func (s *UserService) GetUserByDiscordId(discordId string) (*repository.User, error) {
-	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountID(repository.ProviderDiscord, discordId)
+	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountId(repository.ProviderDiscord, discordId)
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +59,13 @@ func (s *UserService) GetAllUsers(preloads ...string) ([]*repository.User, error
 		}
 		userOauthMap := make(map[int][]*repository.Oauth)
 		for _, oauth := range oauths {
-			if _, ok := userOauthMap[oauth.UserID]; !ok {
-				userOauthMap[oauth.UserID] = []*repository.Oauth{}
+			if _, ok := userOauthMap[oauth.UserId]; !ok {
+				userOauthMap[oauth.UserId] = []*repository.Oauth{}
 			}
-			userOauthMap[oauth.UserID] = append(userOauthMap[oauth.UserID], oauth)
+			userOauthMap[oauth.UserId] = append(userOauthMap[oauth.UserId], oauth)
 		}
 		for _, user := range users {
-			if oauths, ok := userOauthMap[user.ID]; ok {
+			if oauths, ok := userOauthMap[user.Id]; ok {
 				user.OauthAccounts = oauths
 			}
 		}
@@ -97,7 +97,7 @@ func (s *UserService) GetUserFromToken(tokenString string) (*repository.User, er
 		if err := claims.Valid(); err != nil {
 			return nil, err
 		}
-		return s.GetUserById(claims.UserID, "OauthAccounts")
+		return s.GetUserById(claims.UserId, "OauthAccounts")
 	}
 	return nil, jwt.ErrInvalidKey
 }
@@ -123,14 +123,14 @@ func (s *UserService) RemoveProvider(user *repository.User, provider repository.
 			s.oauthRepository.DB.Delete(oauth)
 		}
 	}
-	return s.GetUserById(user.ID, "OauthAccounts")
+	return s.GetUserById(user.Id, "OauthAccounts")
 }
 
 func (s *UserService) DiscordServerCheck(user *repository.User) error {
 	for _, oauth := range user.OauthAccounts {
 		if oauth.Provider == repository.ProviderDiscord {
 			memberIds, err := client.NewLocalDiscordClient().GetServerMemberIds()
-			if err != nil || utils.Contains(memberIds, oauth.AccountID) {
+			if err != nil || utils.Contains(memberIds, oauth.AccountId) {
 				return nil
 			} else {
 				return fmt.Errorf("you have not joined the discord server")
@@ -151,10 +151,10 @@ func (s *UserService) AddUserFromStashchange(userName string, event *repository.
 		return nil, err
 	}
 	oauth := &repository.Oauth{
-		UserID:      u.ID,
+		UserId:      u.Id,
 		Provider:    repository.ProviderPoE,
 		AccessToken: "dummy",
-		AccountID:   userName,
+		AccountId:   userName,
 		Name:        userName,
 		Expiry:      time.Now(),
 	}
@@ -164,7 +164,7 @@ func (s *UserService) AddUserFromStashchange(userName string, event *repository.
 	}
 	u.OauthAccounts = append(u.OauthAccounts, oauth)
 	team := event.Teams[rand.IntN(len(event.Teams))]
-	s.teamService.AddUsersToTeams([]*repository.TeamUser{{TeamID: team.ID, UserID: u.ID}}, event)
+	s.teamService.AddUsersToTeams([]*repository.TeamUser{{TeamId: team.Id, UserId: u.Id}}, event)
 	return u, nil
 }
 

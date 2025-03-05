@@ -44,7 +44,7 @@ func (s *ScoringPresetService) DuplicatePresets(oldEventId int, newEventId int) 
 	presetMap := make(map[int]int)
 	for _, preset := range presets {
 		newPreset := &repository.ScoringPreset{
-			EventID:       newEventId,
+			EventId:       newEventId,
 			Name:          preset.Name,
 			Description:   preset.Description,
 			Points:        preset.Points,
@@ -55,7 +55,7 @@ func (s *ScoringPresetService) DuplicatePresets(oldEventId int, newEventId int) 
 		if err != nil {
 			return nil, err
 		}
-		presetMap[preset.ID] = newPreset.ID
+		presetMap[preset.Id] = newPreset.Id
 	}
 	return presetMap, nil
 }

@@ -43,11 +43,11 @@ func setupSignupController() []RouteInfo {
 // @Tags signup
 // @Produce json
 // @Success 200 {object} Signup
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups/self [get]
 func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventID, err := strconv.Atoi(c.Param("event_id"))
+		eventId, err := strconv.Atoi(c.Param("event_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -57,7 +57,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		signup, err := e.signupService.GetSignupForUser(user.ID, eventID)
+		signup, err := e.signupService.GetSignupForUser(user.Id, eventId)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Not signed up"})
@@ -76,12 +76,12 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} Signup
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Param body body SignupCreate true "Signup"
 // @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventID, err := strconv.Atoi(c.Param("event_id"))
+		eventId, err := strconv.Atoi(c.Param("event_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -102,8 +102,8 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			return
 		}
 		signup := &repository.Signup{
-			UserID:           user.ID,
-			EventID:          eventID,
+			UserId:           user.Id,
+			EventId:          eventId,
 			Timestamp:        time.Now(),
 			ExpectedPlayTime: signupCreate.ExpectedPlaytime,
 		}
@@ -121,11 +121,11 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Produce json
 // @Success 204
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups/self [delete]
 func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventID, err := strconv.Atoi(c.Param("event_id"))
+		eventId, err := strconv.Atoi(c.Param("event_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -135,7 +135,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		err = e.signupService.RemoveSignup(user.ID, eventID)
+		err = e.signupService.RemoveSignup(user.Id, eventId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -149,34 +149,34 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Produce json
 // @Success 200 {object} map[int][]Signup
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups [get]
 func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventID, err := strconv.Atoi(c.Param("event_id"))
+		eventId, err := strconv.Atoi(c.Param("event_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		signups, err := e.signupService.GetSignupsForEvent(eventID)
+		signups, err := e.signupService.GetSignupsForEvent(eventId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		signupsResponse := make(map[int][]*Signup, 0)
-		for teamID, teamSignups := range signups {
-			signupsResponse[teamID] = utils.Map(teamSignups, toSignupResponse)
+		for teamId, teamSignups := range signups {
+			signupsResponse[teamId] = utils.Map(teamSignups, toSignupResponse)
 		}
 		c.JSON(200, signupsResponse)
 	}
 }
 
 type Signup struct {
-	ID               int                         `json:"id" binding:"required"`
+	Id               int                         `json:"id" binding:"required"`
 	User             *NonSensitiveUser           `json:"user" binding:"required"`
 	Timestamp        time.Time                   `json:"timestamp" binding:"required"`
 	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`
-	TeamID           *int                        `json:"team_id"`
+	TeamId           *int                        `json:"team_id"`
 }
 
 type SignupCreate struct {
@@ -189,7 +189,7 @@ func toSignupResponse(signup *repository.Signup) *Signup {
 	}
 
 	return &Signup{
-		ID:               signup.ID,
+		Id:               signup.Id,
 		User:             toNonSensitiveUserResponse(signup.User),
 		Timestamp:        signup.Timestamp,
 		ExpectedPlaytime: signup.ExpectedPlayTime,

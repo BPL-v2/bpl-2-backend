@@ -12,7 +12,7 @@ import (
 var secretKey = []byte(os.Getenv("JWT_SECRET"))
 
 type Claims struct {
-	UserID      int      `json:"user_id"`
+	UserId      int      `json:"user_id"`
 	Permissions []string `json:"permissions"`
 	Exp         int64    `json:"exp"`
 }
@@ -25,7 +25,7 @@ func (claims *Claims) FromJWTClaims(jwtClaims jwt.Claims) {
 		}
 	}
 	claims.Permissions = permissions
-	claims.UserID = int(jwtClaims.(jwt.MapClaims)["user_id"].(float64))
+	claims.UserId = int(jwtClaims.(jwt.MapClaims)["user_id"].(float64))
 	claims.Exp = int64(jwtClaims.(jwt.MapClaims)["exp"].(float64))
 }
 
@@ -39,7 +39,7 @@ func (claims *Claims) Valid() error {
 func CreateToken(user *repository.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"user_id":     user.ID,
+			"user_id":     user.Id,
 			"permissions": user.Permissions,
 			"exp":         time.Now().Add(time.Hour * 24 * 7).Unix(),
 		})

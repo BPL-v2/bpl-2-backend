@@ -16,15 +16,15 @@ const (
 )
 
 type Oauth struct {
-	UserID       int       `gorm:"primaryKey"`
+	UserId       int       `gorm:"primaryKey"`
 	Provider     Provider  `gorm:"primaryKey"`
 	AccessToken  string    `gorm:"not null"`
 	RefreshToken string    `gorm:"null"`
 	Expiry       time.Time `gorm:"not null"`
 	Name         string    `gorm:"not null"`
-	AccountID    string    `gorm:"not null"`
+	AccountId    string    `gorm:"not null"`
 
-	User *User `gorm:"foreignKey:UserID"`
+	User *User `gorm:"foreignKey:UserId"`
 }
 
 type OauthRepository struct {
@@ -35,9 +35,9 @@ func NewOauthRepository() *OauthRepository {
 	return &OauthRepository{DB: config.DatabaseConnection()}
 }
 
-func (r *OauthRepository) GetOauthByProviderAndAccountID(provider Provider, accountID string) (*Oauth, error) {
+func (r *OauthRepository) GetOauthByProviderAndAccountId(provider Provider, accountId string) (*Oauth, error) {
 	var oauth Oauth
-	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, "provider = ? AND account_id = ?", provider, accountID)
+	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, "provider = ? AND account_id = ?", provider, accountId)
 	if result.Error != nil {
 		return nil, result.Error
 	}

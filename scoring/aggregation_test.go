@@ -120,7 +120,7 @@ func TearDown() {
 func SetUp() *repository.Event {
 	event := &repository.Event{
 		Name:                 "event1",
-		ScoringCategoryID:    1,
+		ScoringCategoryId:    1,
 		MaxSize:              10,
 		IsCurrent:            true,
 		ApplicationStartTime: time.Now(),
@@ -172,7 +172,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.EARLIEST_FRESH_ITEM,
 		RequiredAmount: 1,
-		CategoryID:     event.ScoringCategory.ID,
+		CategoryId:     event.ScoringCategory.Id,
 		ObjectiveType:  repository.ITEM,
 		NumberField:    repository.STACK_SIZE,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -184,28 +184,28 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 	now := time.Now()
 	stashChanges := []*repository.StashChange{
 		{
-			StashID:      "stash1",
-			NextChangeID: "1",
-			EventID:      event.ID,
+			StashId:      "stash1",
+			NextChangeId: "1",
+			EventId:      event.Id,
 			Timestamp:    now,
 		},
 		{
-			StashID:      "stash2",
-			NextChangeID: "1",
-			EventID:      event.ID,
+			StashId:      "stash2",
+			NextChangeId: "1",
+			EventId:      event.Id,
 			Timestamp:    now,
 		},
 		// stashes is found again in another change later
 		{
-			StashID:      "stash1",
-			NextChangeID: "2",
-			EventID:      event.ID,
+			StashId:      "stash1",
+			NextChangeId: "2",
+			EventId:      event.Id,
 			Timestamp:    now.Add(time.Hour),
 		},
 		{
-			StashID:      "stash2",
-			NextChangeID: "2",
-			EventID:      event.ID,
+			StashId:      "stash2",
+			NextChangeId: "2",
+			EventId:      event.Id,
 			Timestamp:    now.Add(time.Hour),
 		},
 	}
@@ -214,29 +214,29 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 	objectiveMatches := []*repository.ObjectiveMatch{
 		// objective match is found in the first stash in the first change
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now,
 			Number:        1,
-			UserID:        event.Teams[0].Users[0].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[0].ID,
+			UserId:        event.Teams[0].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[0].Id,
 		},
 		// objective match is found in the second stash in the first change
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now,
 			Number:        1,
-			UserID:        event.Teams[1].Users[0].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[1].ID,
+			UserId:        event.Teams[1].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[1].Id,
 		},
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now.Add(time.Hour),
 			Number:        1,
-			UserID:        event.Teams[1].Users[0].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[2].ID,
+			UserId:        event.Teams[1].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[2].Id,
 		},
 	}
 	db.Create(objectiveMatches)
@@ -245,11 +245,11 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error in AggregateMatches: %v", err)
 	}
-	objMatches, ok := matches[objective.ID]
+	objMatches, ok := matches[objective.Id]
 	assert.True(t, ok, "Objective should be found in matches")
-	_, ok = objMatches[event.Teams[0].ID]
+	_, ok = objMatches[event.Teams[0].Id]
 	assert.False(t, ok, "Team1 should not have a match since no match was found in the first stash change")
-	team2Match, ok := objMatches[event.Teams[1].ID]
+	team2Match, ok := objMatches[event.Teams[1].Id]
 	assert.True(t, ok, "Team2 should have a match")
 	assert.InDelta(t, now.Unix(), team2Match.Timestamp.Unix(), 1, "match should have the timestamp of the match when it was first found")
 }
@@ -262,7 +262,7 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.EARLIEST_FRESH_ITEM,
 		RequiredAmount: 1,
-		CategoryID:     event.ScoringCategory.ID,
+		CategoryId:     event.ScoringCategory.Id,
 		ObjectiveType:  repository.ITEM,
 		NumberField:    repository.STACK_SIZE,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -274,21 +274,21 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 	now := time.Now()
 	stashChanges := []*repository.StashChange{
 		{
-			StashID:      "stash1",
-			NextChangeID: "1",
-			EventID:      event.ID,
+			StashId:      "stash1",
+			NextChangeId: "1",
+			EventId:      event.Id,
 			Timestamp:    now,
 		},
 		{
-			StashID:      "stash1",
-			NextChangeID: "1",
-			EventID:      event.ID,
+			StashId:      "stash1",
+			NextChangeId: "1",
+			EventId:      event.Id,
 			Timestamp:    now.Add(time.Hour),
 		},
 		{
-			StashID:      "stash2",
-			NextChangeID: "2",
-			EventID:      event.ID,
+			StashId:      "stash2",
+			NextChangeId: "2",
+			EventId:      event.Id,
 			Timestamp:    now.Add(time.Hour),
 		},
 	}
@@ -297,21 +297,21 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 	objectiveMatches := []*repository.ObjectiveMatch{
 		// objective match is found in stash of user1 of team 1
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now,
 			Number:        1,
-			UserID:        event.Teams[0].Users[0].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[0].ID,
+			UserId:        event.Teams[0].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[0].Id,
 		},
 		// objective match is found later only in stash of user2 of team 1
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now.Add(time.Hour),
 			Number:        1,
-			UserID:        event.Teams[0].Users[1].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[2].ID,
+			UserId:        event.Teams[0].Users[1].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[2].Id,
 		},
 	}
 	db.Create(objectiveMatches)
@@ -320,16 +320,16 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error in AggregateMatches: %v", err)
 	}
-	objMatches, ok := matches[objective.ID]
+	objMatches, ok := matches[objective.Id]
 	assert.True(t, ok, "Objective should be found in matches")
-	match, ok := objMatches[event.Teams[0].ID]
+	match, ok := objMatches[event.Teams[0].Id]
 	assert.True(t, ok, "Team1 still has a match")
 	if !ok {
 		return
 	}
 
 	assert.InDelta(t, now.Unix(), match.Timestamp.Unix(), 1, "match should have the timestamp of the match when it was first found")
-	assert.Equal(t, event.Teams[0].Users[0].ID, match.UserID, "match should be for user1 of team1 since that was the first match found")
+	assert.Equal(t, event.Teams[0].Users[0].Id, match.UserId, "match should be for user1 of team1 since that was the first match found")
 }
 
 func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
@@ -340,7 +340,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.EARLIEST_FRESH_ITEM,
 		RequiredAmount: 100,
-		CategoryID:     event.ScoringCategory.ID,
+		CategoryId:     event.ScoringCategory.Id,
 		ObjectiveType:  repository.ITEM,
 		NumberField:    repository.STACK_SIZE,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -352,21 +352,21 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 	now := time.Now()
 	stashChanges := []*repository.StashChange{
 		{
-			StashID:      "stash1",
-			NextChangeID: "1",
-			EventID:      event.ID,
+			StashId:      "stash1",
+			NextChangeId: "1",
+			EventId:      event.Id,
 			Timestamp:    now,
 		},
 		{
-			StashID:      "stash1",
-			NextChangeID: "2",
-			EventID:      event.ID,
+			StashId:      "stash1",
+			NextChangeId: "2",
+			EventId:      event.Id,
 			Timestamp:    now.Add(time.Hour),
 		},
 		{
-			StashID:      "stash1",
-			NextChangeID: "3",
-			EventID:      event.ID,
+			StashId:      "stash1",
+			NextChangeId: "3",
+			EventId:      event.Id,
 			Timestamp:    now.Add(2 * time.Hour),
 		},
 	}
@@ -374,29 +374,29 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 
 	objectiveMatches := []*repository.ObjectiveMatch{
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now,
 			Number:        20,
-			UserID:        event.Teams[0].Users[0].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[0].ID,
+			UserId:        event.Teams[0].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[0].Id,
 		},
 		// finished the objective in the second stash change
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now.Add(time.Hour),
 			Number:        101,
-			UserID:        event.Teams[0].Users[0].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[1].ID,
+			UserId:        event.Teams[0].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[1].Id,
 		},
 		{
-			ObjectiveID:   objective.ID,
+			ObjectiveId:   objective.Id,
 			Timestamp:     now.Add(2 * time.Hour),
 			Number:        200,
-			UserID:        event.Teams[0].Users[0].ID,
-			EventId:       event.ID,
-			StashChangeID: &stashChanges[2].ID,
+			UserId:        event.Teams[0].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[2].Id,
 		},
 	}
 	db.Create(objectiveMatches)
@@ -405,9 +405,9 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error in AggregateMatches: %v", err)
 	}
-	objMatches, ok := matches[objective.ID]
+	objMatches, ok := matches[objective.Id]
 	assert.True(t, ok, "Objective should be found in matches")
-	match, ok := objMatches[event.Teams[0].ID]
+	match, ok := objMatches[event.Teams[0].Id]
 	assert.True(t, ok, "Team1 has a match")
 	if !ok {
 		return

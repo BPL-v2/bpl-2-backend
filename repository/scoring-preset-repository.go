@@ -57,8 +57,8 @@ const (
 )
 
 type ScoringPreset struct {
-	ID            int                  `gorm:"primaryKey"`
-	EventID       int                  `gorm:"not null;references events(id)"`
+	Id            int                  `gorm:"primaryKey"`
+	EventId       int                  `gorm:"not null;references events(id)"`
 	Name          string               `gorm:"not null"`
 	Description   string               `gorm:"not null"`
 	Points        ExtendingNumberSlice `gorm:"type:numeric[];not null"`

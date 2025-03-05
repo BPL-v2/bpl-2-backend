@@ -9,18 +9,18 @@ const (
 )
 
 type LeagueRule struct {
-	ID          string  `json:"id"`
+	Id          string  `json:"id"`
 	Name        string  `json:"name"`
 	Description *string `json:"description,omitempty"`
 }
 
 type LeagueCategory struct {
-	ID      string `json:"id"`
+	Id      string `json:"id"`
 	Current *bool  `json:"current,omitempty"`
 }
 
 type League struct {
-	ID            string          `json:"id"`
+	Id            string          `json:"id"`
 	Realm         *Realm          `json:"realm,omitempty"`
 	Description   *string         `json:"description,omitempty"`
 	Category      *LeagueCategory `json:"category,omitempty"`
@@ -42,7 +42,7 @@ type LadderEntryCharacterDepth struct {
 }
 
 type LadderEntryCharacter struct {
-	ID         string                     `json:"id"`
+	Id         string                     `json:"id"`
 	Name       string                     `json:"name"`
 	Level      int                        `json:"level"`
 	Class      string                     `json:"class"`
@@ -93,7 +93,7 @@ type AccountTwitch struct {
 }
 
 type Guild struct {
-	ID   int    `json:"id"`
+	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Tag  string `json:"tag"`
 }
@@ -123,7 +123,7 @@ type PvPLadderTeamEntry struct {
 }
 
 type PvPMatch struct {
-	ID            string  `json:"id"`
+	Id            string  `json:"id"`
 	Realm         *Realm  `json:"realm,omitempty"`
 	StartAt       *string `json:"startAt,omitempty"`
 	EndAt         *string `json:"endAt,omitempty"`
@@ -139,7 +139,7 @@ type PvPMatch struct {
 }
 
 type PublicStashChange struct {
-	ID                string  `json:"id"`
+	Id                string  `json:"id"`
 	Public            bool    `json:"public"`
 	AccountName       *string `json:"accountName,omitempty"`
 	Stash             *string `json:"stash,omitempty"`
@@ -148,7 +148,7 @@ type PublicStashChange struct {
 	League            *string `json:"league,omitempty"`
 	Items             []Item  `json:"items"`
 	// not included in the ggg response, but we use this field to store the db stashchange pk
-	StashChangeID int `json:"stash_change_id"`
+	StashChangeId int `json:"stash_change_id"`
 }
 
 type Ladder struct {
@@ -178,7 +178,7 @@ type ProfileTwitch struct {
 }
 
 type Profile struct {
-	UUID   string         `json:"uuid"`
+	UUId   string         `json:"uuid"`
 	Name   string         `json:"name"`
 	Realm  *Realm         `json:"realm,omitempty"`
 	Guild  *ProfileGuild  `json:"guild,omitempty"`
@@ -192,7 +192,7 @@ type ItemFilterValidation struct {
 }
 
 type ItemFilter struct {
-	ID          string                `json:"id"`
+	Id          string                `json:"id"`
 	FilterName  string                `json:"filter_name"`
 	Realm       Realm                 `json:"realm"`
 	Description string                `json:"description"`
@@ -236,7 +236,7 @@ type ItemReward struct {
 }
 
 type ItemLogbookModFaction struct {
-	ID   string `json:"id"`
+	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -344,7 +344,7 @@ type Item struct {
 	// MaxStackSize          *int                `json:"maxStackSize,omitempty"`
 	// StackSizeText         *string             `json:"stackSizeText,omitempty"`
 	// League                string              `json:"league"`
-	// ID                    string              `json:"id"`
+	// Id                    string              `json:"id"`
 	// Influences            *ItemInfluences     `json:"influences,omitempty"`
 	// Identified            bool                `json:"identified"`
 	// Note                  *string             `json:"note,omitempty"`
@@ -406,7 +406,7 @@ type StashTabMetadata struct {
 }
 
 type StashTab struct {
-	ID       string           `json:"id"`
+	Id       string           `json:"id"`
 	Parent   *string          `json:"parent,omitempty"`
 	Name     string           `json:"name"`
 	Type     string           `json:"type"`
@@ -504,7 +504,7 @@ type CrucibleNode struct {
 }
 
 type PvPCharacter struct {
-	ID     string  `json:"id"`
+	Id     string  `json:"id"`
 	Name   string  `json:"name"`
 	Level  int     `json:"level"`
 	Class  string  `json:"class"`
@@ -513,7 +513,7 @@ type PvPCharacter struct {
 }
 
 type Character struct {
-	ID         string   `json:"id"`
+	Id         string   `json:"id"`
 	Name       string   `json:"name"`
 	Realm      Realm    `json:"realm"`
 	Class      string   `json:"class"`
@@ -533,7 +533,7 @@ type Character struct {
 }
 
 type MinimalCharacter struct {
-	ID         string  `json:"id"`
+	Id         string  `json:"id"`
 	Name       string  `json:"name"`
 	Realm      Realm   `json:"realm"`
 	Class      string  `json:"class"`
@@ -591,7 +591,7 @@ type GetPvPMatchLadderResponse struct {
 }
 
 type GetAccountProfileResponse struct {
-	UUID   string  `json:"uuid"`
+	UUId   string  `json:"uuid"`
 	Name   string  `json:"name"`
 	Realm  *Realm  `json:"realm"`
 	Guild  *Guild  `json:"guild"`
@@ -660,7 +660,7 @@ type GetGuildStashResponse struct {
 }
 
 type GetPublicStashTabsResponse struct {
-	NextChangeID string              `json:"next_change_id"`
+	NextChangeId string              `json:"next_change_id"`
 	Stashes      []PublicStashChange `json:"stashes"`
 }
 

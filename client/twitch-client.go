@@ -12,7 +12,7 @@ import (
 
 type TwitchClient struct {
 	Token        string
-	clientID     string
+	clientId     string
 	clientSecret string
 	client       *http.Client
 	baseURL      string
@@ -21,11 +21,11 @@ type TwitchClient struct {
 }
 
 type TwitchStream struct {
-	ID           string   `json:"id"`
-	UserID       string   `json:"user_id"`
+	Id           string   `json:"id"`
+	UserId       string   `json:"user_id"`
 	UserLogin    string   `json:"user_login"`
 	UserName     string   `json:"user_name"`
-	GameID       string   `json:"game_id"`
+	GameId       string   `json:"game_id"`
 	GameName     string   `json:"game_name"`
 	Type         string   `json:"type"`
 	Title        string   `json:"title"`
@@ -34,7 +34,7 @@ type TwitchStream struct {
 	StartedAt    string   `json:"started_at"`
 	Language     string   `json:"language"`
 	ThumbnailURL string   `json:"thumbnail_url"`
-	TagIDs       []string `json:"tag_ids"`
+	TagIds       []string `json:"tag_ids"`
 	IsMature     bool     `json:"is_mature"`
 
 	BackendUserId int `json:"backend_user_id"`
@@ -49,7 +49,7 @@ type StreamResponse struct {
 
 func NewTwitchClient(token string) *TwitchClient {
 	return &TwitchClient{
-		clientID:     os.Getenv("TWITCH_CLIENT_ID"),
+		clientId:     os.Getenv("TWITCH_CLIENT_ID"),
 		clientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
 		Token:        token,
 		client:       &http.Client{},
@@ -105,7 +105,7 @@ func (t *TwitchClient) GetStreams(userIds []string, cursor *string, limit int) [
 		},
 		Header: http.Header{
 			"Authorization": {"Bearer " + t.Token},
-			"Client-Id":     {t.clientID},
+			"Client-Id":     {t.clientId},
 		},
 	}
 	t.mu.Lock()

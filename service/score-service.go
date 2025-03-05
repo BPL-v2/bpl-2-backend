@@ -55,8 +55,8 @@ func GetScoreDifference(prevDiff *ScoreDifference, scoreA *scoring.Score) *Score
 	if scoreB.Points != scoreA.Points {
 		fieldDiff = append(fieldDiff, "Points")
 	}
-	if scoreB.UserID != scoreA.UserID {
-		fieldDiff = append(fieldDiff, "UserID")
+	if scoreB.UserId != scoreA.UserId {
+		fieldDiff = append(fieldDiff, "UserId")
 	}
 	if scoreB.Rank != scoreA.Rank {
 		fieldDiff = append(fieldDiff, "Rank")
@@ -92,14 +92,14 @@ func Diff(scoreMap map[string]*ScoreDifference, scores []*scoring.Score) (ScoreM
 	return newMap, diffMap
 }
 
-func (s *ScoreService) GetNewDiff(eventID int) (ScoreMap, error) {
-	newScores, err := s.calcScores(eventID)
+func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
+	newScores, err := s.calcScores(eventId)
 	if err != nil {
 		return nil, err
 	}
-	oldScore := s.LatestScores[eventID]
+	oldScore := s.LatestScores[eventId]
 	newScoreMap, diff := Diff(oldScore, newScores)
-	s.LatestScores[eventID] = newScoreMap
+	s.LatestScores[eventId] = newScoreMap
 	if len(diff) == 0 {
 		return nil, fmt.Errorf("no changes in scores")
 	}
@@ -112,11 +112,11 @@ func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err erro
 	if err != nil {
 		return nil, err
 	}
-	rules, err := s.scoringCategoryService.GetRulesForEvent(event.ID, "Objectives", "Objectives.Conditions", "ScoringPreset", "Objectives.ScoringPreset")
+	rules, err := s.scoringCategoryService.GetRulesForEvent(event.Id, "Objectives", "Objectives.Conditions", "ScoringPreset", "Objectives.ScoringPreset")
 	if err != nil {
 		return nil, err
 	}
-	objectives, err := s.objectiveService.GetObjectivesByEventId(event.ID)
+	objectives, err := s.objectiveService.GetObjectivesByEventId(event.Id)
 	if err != nil {
 		return nil, err
 	}

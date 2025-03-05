@@ -9,18 +9,18 @@ import (
 )
 
 type ObjectiveMatch struct {
-	ID            int       `gorm:"primaryKey"`
-	ObjectiveID   int       `gorm:"index:obj_match_obj;index:obj_match_obj_user;not null;references:objectives(id)"`
+	Id            int       `gorm:"primaryKey"`
+	ObjectiveId   int       `gorm:"index:obj_match_obj;index:obj_match_obj_user;not null;references:objectives(id)"`
 	Timestamp     time.Time `gorm:"not null"`
 	Number        int       `gorm:"not null"`
-	UserID        int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
+	UserId        int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
 	EventId       int       `gorm:"index:obj_match_event;not null;references:events(id)"`
-	StashChangeID *int      `gorm:"index:obj_match_stash_change;references:stash_change(id)"`
+	StashChangeId *int      `gorm:"index:obj_match_stash_change;references:stash_change(id)"`
 }
 
 type KafkaConsumer struct {
-	EventID int `gorm:"primaryKey;not null;references events(id)"`
-	GroupID int `gorm:"not null"`
+	EventId int `gorm:"primaryKey;not null;references events(id)"`
+	GroupId int `gorm:"not null"`
 }
 
 type ObjectiveMatchRepository struct {
@@ -67,8 +67,8 @@ func (r *ObjectiveMatchRepository) GetKafkaConsumer(eventId int) (*KafkaConsumer
 	var consumer *KafkaConsumer
 	result := r.DB.Where("event_id = ?", eventId).First(&consumer)
 	if result.Error != nil {
-		consumer.EventID = eventId
-		consumer.GroupID = 1
+		consumer.EventId = eventId
+		consumer.GroupId = 1
 		result = r.DB.Create(consumer)
 		if result.Error != nil {
 			return nil, result.Error

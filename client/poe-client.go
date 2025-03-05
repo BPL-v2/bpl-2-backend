@@ -301,13 +301,13 @@ func (c *PoEClient) ListAccountStashes(token string, league string) (*ListAccoun
 	)
 }
 
-func (c *PoEClient) GetAccountStash(token string, league string, stashID string, substashID *string) (*GetAccountStashResponse, *ClientError) {
+func (c *PoEClient) GetAccountStash(token string, league string, stashId string, substashId *string) (*GetAccountStashResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetAccountStash"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetAccountStash").Inc()
-	endpoint := fmt.Sprintf("stash/%s/%s", league, stashID)
-	if substashID != nil {
-		endpoint += fmt.Sprintf("/%s", *substashID)
+	endpoint := fmt.Sprintf("stash/%s/%s", league, stashId)
+	if substashId != nil {
+		endpoint += fmt.Sprintf("/%s", *substashId)
 	}
 	return sendRequest[GetAccountStashResponse](c, RequestArgs{
 		Endpoint: endpoint,
@@ -329,12 +329,12 @@ func (c *PoEClient) ListItemFilters(token string) (*ListItemFiltersResponse, *Cl
 	)
 }
 
-func (c *PoEClient) GetItemFilter(token string, filterID string) (*GetItemFilterResponse, *ClientError) {
+func (c *PoEClient) GetItemFilter(token string, filterId string) (*GetItemFilterResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetItemFilter"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetItemFilter").Inc()
 	return sendRequest[GetItemFilterResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("item-filter/%s", filterID),
+		Endpoint: fmt.Sprintf("item-filter/%s", filterId),
 		Token:    token,
 		Method:   "GET",
 	},
@@ -357,12 +357,12 @@ func (c *PoEClient) CreateItemFilter(token string, body CreateFilterBody, valida
 	)
 }
 
-func (c *PoEClient) UpdateItemFilter(token string, filterID string, body UpdateFilterBody, validate string) (*UpdateItemFilterResponse, *ClientError) {
+func (c *PoEClient) UpdateItemFilter(token string, filterId string, body UpdateFilterBody, validate string) (*UpdateItemFilterResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("UpdateItemFilter"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("UpdateItemFilter").Inc()
 	return sendRequest[UpdateItemFilterResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("item-filter/%s", filterID),
+		Endpoint: fmt.Sprintf("item-filter/%s", filterId),
 		Token:    token,
 		Method:   "POST",
 		QueryParams: map[string]string{
@@ -397,13 +397,13 @@ func (c *PoEClient) ListGuildStashes(token string, league string) (*ListGuildSta
 	)
 }
 
-func (c *PoEClient) GetGuildStash(token string, league string, stashID string, substashID *string) (*GetGuildStashResponse, *ClientError) {
+func (c *PoEClient) GetGuildStash(token string, league string, stashId string, substashId *string) (*GetGuildStashResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetGuildStash"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetGuildStash").Inc()
-	endpoint := fmt.Sprintf("guild/stash/%s/%s", league, stashID)
-	if substashID != nil {
-		endpoint += fmt.Sprintf("/%s", *substashID)
+	endpoint := fmt.Sprintf("guild/stash/%s/%s", league, stashId)
+	if substashId != nil {
+		endpoint += fmt.Sprintf("/%s", *substashId)
 	}
 	return sendRequest[GetGuildStashResponse](c, RequestArgs{
 		Endpoint: endpoint,
@@ -434,13 +434,13 @@ func (c *PoEClient) GetPublicStashes(token string, realm string, id string) (*Ge
 	)
 }
 
-func (c *PoEClient) GetClientCredentials(clientID string, clientSecret string, scope string) (*ClientCredentialsGrantResponse, *ClientError) {
+func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string, scope string) (*ClientCredentialsGrantResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetClientCredentials"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetClientCredentials").Inc()
 	form := url.Values{
 		"grant_type":    {"client_credentials"},
-		"client_id":     {clientID},
+		"client_id":     {clientId},
 		"client_secret": {clientSecret},
 		"scope":         {scope},
 	}
@@ -454,13 +454,13 @@ func (c *PoEClient) GetClientCredentials(clientID string, clientSecret string, s
 	)
 }
 
-func (c *PoEClient) RefreshAccessToken(clientID string, clientSecret string, refreshToken string) (*RefreshTokenGrantResponse, *ClientError) {
+func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, refreshToken string) (*RefreshTokenGrantResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("RefreshAccessToken"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("RefreshAccessToken").Inc()
 	form := url.Values{
 		"grant_type":    {"refresh_token"},
-		"client_id":     {clientID},
+		"client_id":     {clientId},
 		"client_secret": {clientSecret},
 		"refresh_token": {refreshToken},
 	}

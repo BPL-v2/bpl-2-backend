@@ -20,11 +20,11 @@ const (
 )
 
 type Signup struct {
-	ID               int              `gorm:"primaryKey"`
-	EventID          int              `gorm:"not null;references:event(id)"`
-	UserID           int              `gorm:"not null;references:event(id)"`
+	Id               int              `gorm:"primaryKey"`
+	EventId          int              `gorm:"not null;references:event(id)"`
+	UserId           int              `gorm:"not null;references:event(id)"`
 	Timestamp        time.Time        `gorm:"not null"`
-	User             *User            `gorm:"foreignKey:UserID;references:ID"`
+	User             *User            `gorm:"foreignKey:UserId;references:Id"`
 	ExpectedPlayTime ExpectedPlayTime `gorm:"not null"`
 }
 
@@ -44,13 +44,13 @@ func (r *SignupRepository) CreateSignup(signup *Signup) (*Signup, error) {
 	return signup, nil
 }
 
-func (r *SignupRepository) RemoveSignup(userID int, eventID int) error {
-	result := r.DB.Delete(&Signup{}, "user_id = ? and event_id = ?", userID, eventID)
+func (r *SignupRepository) RemoveSignup(userId int, eventId int) error {
+	result := r.DB.Delete(&Signup{}, "user_id = ? and event_id = ?", userId, eventId)
 	return result.Error
 }
-func (r *SignupRepository) GetSignupForUser(userID int, eventID int) (*Signup, error) {
+func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, error) {
 	signup := Signup{}
-	result := r.DB.First(&signup, "user_id = ? and event_id = ?", userID, eventID)
+	result := r.DB.First(&signup, "user_id = ? and event_id = ?", userId, eventId)
 	if result.Error != nil {
 		return nil, result.Error
 	}

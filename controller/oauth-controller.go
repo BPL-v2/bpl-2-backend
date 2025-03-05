@@ -68,7 +68,7 @@ func (e *OauthController) loginDiscordBotHandler() gin.HandlerFunc {
 
 		authToken, _ := auth.CreateToken(
 			&repository.User{
-				ID:          0,
+				Id:          0,
 				DisplayName: "bot",
 				Permissions: []repository.Permission{repository.PermissionAdmin},
 			},

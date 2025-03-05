@@ -430,7 +430,7 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 				valueToChecker[discriminator.value] = append(
 					valueToChecker[discriminator.value],
 					&ObjectiveChecker{
-						ObjectiveId: objective.ID,
+						ObjectiveId: objective.Id,
 						Function:    fn,
 					})
 			} else {
