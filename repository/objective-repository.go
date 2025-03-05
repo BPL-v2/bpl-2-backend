@@ -43,19 +43,19 @@ const (
 )
 
 type Objective struct {
-	ID             int             `gorm:"primaryKey"`
+	Id             int             `gorm:"primaryKey"`
 	Name           string          `gorm:"not null"`
 	Extra          string          `gorm:"null"`
 	RequiredAmount int             `gorm:"not null"`
-	Conditions     []*Condition    `gorm:"foreignKey:ObjectiveID;constraint:OnDelete:CASCADE"`
-	CategoryID     int             `gorm:"not null"`
+	Conditions     []*Condition    `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE"`
+	CategoryId     int             `gorm:"not null"`
 	ObjectiveType  ObjectiveType   `gorm:"not null;type:bpl2.objective_type"`
 	NumberField    NumberField     `gorm:"not null;type:bpl2.number_field"`
 	Aggregation    AggregationType `gorm:"not null"`
 	ValidFrom      *time.Time      `gorm:"null"`
 	ValidTo        *time.Time      `gorm:"null"`
 	ScoringId      *int            `gorm:"null;references:scoring_presets(id)"`
-	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:ID"`
+	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:Id"`
 	SyncStatus     SyncStatus
 }
 

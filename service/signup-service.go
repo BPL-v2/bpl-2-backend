@@ -5,28 +5,28 @@ import (
 )
 
 type SignupService struct {
-	event_repository  *repository.EventRepository
-	signup_repository *repository.SignupRepository
-	team_repository   *repository.TeamRepository
+	eventRepository  *repository.EventRepository
+	signupRepository *repository.SignupRepository
+	teamRepository   *repository.TeamRepository
 }
 
 func NewSignupService() *SignupService {
 	return &SignupService{
-		signup_repository: repository.NewSignupRepository(),
-		event_repository:  repository.NewEventRepository(),
-		team_repository:   repository.NewTeamRepository(),
+		signupRepository: repository.NewSignupRepository(),
+		eventRepository:  repository.NewEventRepository(),
+		teamRepository:   repository.NewTeamRepository(),
 	}
 }
 
 func (r *SignupService) CreateSignup(signup *repository.Signup) (*repository.Signup, error) {
-	return r.signup_repository.CreateSignup(signup)
+	return r.signupRepository.CreateSignup(signup)
 }
 
-func (r *SignupService) RemoveSignup(userID int, eventID int) error {
-	return r.signup_repository.RemoveSignup(userID, eventID)
+func (r *SignupService) RemoveSignup(userId int, eventId int) error {
+	return r.signupRepository.RemoveSignup(userId, eventId)
 }
-func (r *SignupService) GetSignupForUser(userID int, eventID int) (*repository.Signup, error) {
-	return r.signup_repository.GetSignupForUser(userID, eventID)
+func (r *SignupService) GetSignupForUser(userId int, eventId int) (*repository.Signup, error) {
+	return r.signupRepository.GetSignupForUser(userId, eventId)
 }
 
 type SignupWithUser struct {
@@ -36,29 +36,29 @@ type SignupWithUser struct {
 
 func (r *SignupService) GetSignupsForEvent(eventId int) (map[int][]*repository.Signup, error) {
 
-	event, err := r.event_repository.GetEventById(eventId, "Teams")
+	event, err := r.eventRepository.GetEventById(eventId, "Teams")
 	if err != nil {
 		return nil, err
 	}
-	teamUsers, err := r.team_repository.GetTeamUsersForEvent(event)
+	teamUsers, err := r.teamRepository.GetTeamUsersForEvent(event)
 	if err != nil {
 		return nil, err
 	}
-	signups, err := r.signup_repository.GetSignupsForEvent(eventId, event.MaxSize)
+	signups, err := r.signupRepository.GetSignupsForEvent(eventId, event.MaxSize)
 	if err != nil {
 		return nil, err
 	}
 	userToTeam := make(map[int]int)
 	for _, teamUser := range teamUsers {
-		userToTeam[teamUser.UserID] = teamUser.TeamID
+		userToTeam[teamUser.UserId] = teamUser.TeamId
 	}
 	teamSignups := make(map[int][]*repository.Signup)
 	for _, signup := range signups {
-		teamID, ok := userToTeam[signup.UserID]
+		teamId, ok := userToTeam[signup.UserId]
 		if !ok {
-			teamID = 0
+			teamId = 0
 		}
-		teamSignups[teamID] = append(teamSignups[teamID], signup)
+		teamSignups[teamId] = append(teamSignups[teamId], signup)
 	}
 
 	return teamSignups, nil

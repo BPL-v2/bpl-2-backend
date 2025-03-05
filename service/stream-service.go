@@ -8,18 +8,18 @@ import (
 )
 
 type StreamService struct {
-	team_repository *repository.TeamRepository
-	user_repository *repository.UserRepository
-	twitchClient    *client.TwitchClient
-	oauthService    *OauthService
+	teamRepository *repository.TeamRepository
+	userRepository *repository.UserRepository
+	twitchClient   *client.TwitchClient
+	oauthService   *OauthService
 }
 
 func NewStreamService() *StreamService {
 	oauthService := NewOauthService()
 	s := &StreamService{
-		user_repository: repository.NewUserRepository(),
-		team_repository: repository.NewTeamRepository(),
-		oauthService:    oauthService,
+		userRepository: repository.NewUserRepository(),
+		teamRepository: repository.NewTeamRepository(),
+		oauthService:   oauthService,
 	}
 	token, err := oauthService.GetApplicationToken("twitch")
 	if err != nil {
@@ -32,7 +32,7 @@ func NewStreamService() *StreamService {
 }
 
 func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.TwitchStream, error) {
-	streamers, err := e.user_repository.GetStreamersForCurrentEvent()
+	streamers, err := e.userRepository.GetStreamersForCurrentEvent()
 	if err != nil {
 		return nil, err
 	}
@@ -44,18 +44,18 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.TwitchStream, err
 
 	userMap := make(map[string]int)
 	for _, streamer := range streamers {
-		userMap[streamer.TwitchID] = streamer.UserID
+		userMap[streamer.TwitchId] = streamer.UserId
 	}
 
 	streams, err := e.twitchClient.GetAllStreams(utils.Map(streamers, func(user *repository.Streamer) string {
-		return user.TwitchID
+		return user.TwitchId
 	}))
 	if err != nil {
 		return nil, err
 	}
 	for _, stream := range streams {
-		if userID, ok := userMap[stream.UserID]; ok {
-			stream.BackendUserId = userID
+		if userId, ok := userMap[stream.UserId]; ok {
+			stream.BackendUserId = userId
 		}
 	}
 	return streams, nil

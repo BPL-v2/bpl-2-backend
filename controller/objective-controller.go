@@ -71,7 +71,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 // @Description Deletes an objective
 // @Tags objective
 // @Produce json
-// @Param id path int true "Objective ID"
+// @Param id path int true "Objective Id"
 // @Success 204
 // @Router /scoring/objectives/{id} [delete]
 func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
@@ -99,7 +99,7 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 // @Description Gets an objective by id
 // @Tags objective
 // @Produce json
-// @Param id path int true "Objective ID"
+// @Param id path int true "Objective Id"
 // @Success 200 {object} Objective
 // @Router /scoring/objectives/{id} [get]
 func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
@@ -130,7 +130,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		parser, err := e.service.GetParser(currentEvent.ScoringCategoryID)
+		parser, err := e.service.GetParser(currentEvent.ScoringCategoryId)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -151,7 +151,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 }
 
 type ObjectiveConditionCreate struct {
-	ID         int                  `json:"id"`
+	Id         int                  `json:"id"`
 	Operator   repository.Operator  `json:"operator" binding:"required,oneof=EQ NEQ GT GTE LT LTE IN NOT_IN MATCHES CONTAINS CONTAINS_ALL CONTAINS_MATCH CONTAINS_ALL_MATCHES"`
 	ItemField  repository.ItemField `json:"field" binding:"required,oneof=BASE_TYPE NAME TYPE_LINE RARITY ILVL FRAME_TYPE TALISMAN_TIER ENCHANT_MODS EXPLICIT_MODS IMPLICIT_MODS CRAFTED_MODS FRACTURED_MODS SIX_LINK"`
 	FieldValue string               `json:"value" binding:"required"`
@@ -159,7 +159,7 @@ type ObjectiveConditionCreate struct {
 
 func (e *ObjectiveConditionCreate) toModel() *repository.Condition {
 	return &repository.Condition{
-		ID:       e.ID,
+		Id:       e.Id,
 		Operator: e.Operator,
 		Field:    e.ItemField,
 		Value:    e.FieldValue,
@@ -167,7 +167,7 @@ func (e *ObjectiveConditionCreate) toModel() *repository.Condition {
 }
 
 type ObjectiveCreate struct {
-	ID             int                        `json:"id"`
+	Id             int                        `json:"id"`
 	Name           string                     `json:"name" binding:"required"`
 	Extra          string                     `json:"extra"`
 	RequiredNumber int                        `json:"required_number" binding:"required"`
@@ -182,16 +182,16 @@ type ObjectiveCreate struct {
 }
 
 type Objective struct {
-	ID              int                        `json:"id" binding:"required"`
+	Id              int                        `json:"id" binding:"required"`
 	Name            string                     `json:"name" binding:"required"`
 	Extra           string                     `json:"extra" binding:"required"`
 	RequiredNumber  int                        `json:"required_number" binding:"required"`
-	CategoryID      int                        `json:"category_id" binding:"required"`
+	CategoryId      int                        `json:"category_id" binding:"required"`
 	ObjectiveType   repository.ObjectiveType   `json:"objective_type" binding:"required"`
 	Conditions      []*Condition               `json:"conditions" binding:"required"`
 	ValidFrom       *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo         *time.Time                 `json:"valid_to" binding:"omitempty"`
-	ScoringPresetID *int                       `json:"scoring_preset_id"`
+	ScoringPresetId *int                       `json:"scoring_preset_id"`
 	ScoringPreset   *ScoringPreset             `json:"scoring_preset"`
 	NumberField     repository.NumberField     `json:"number_field" binding:"required"`
 	Aggregation     repository.AggregationType `json:"aggregation" binding:"required"`
@@ -199,7 +199,7 @@ type Objective struct {
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {
 	return &repository.Objective{
-		ID:             e.ID,
+		Id:             e.Id,
 		Name:           e.Name,
 		Extra:          e.Extra,
 		RequiredAmount: e.RequiredNumber,
@@ -209,7 +209,7 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 		Conditions:     utils.Map(e.Conditions, func(c ObjectiveConditionCreate) *repository.Condition { return c.toModel() }),
 		ValidFrom:      e.ValidFrom,
 		ValidTo:        e.ValidTo,
-		CategoryID:     e.CategoryId,
+		CategoryId:     e.CategoryId,
 		ScoringId:      e.ScoringId,
 	}
 }
@@ -219,18 +219,18 @@ func toObjectiveResponse(objective *repository.Objective) *Objective {
 		return nil
 	}
 	return &Objective{
-		ID:              objective.ID,
+		Id:              objective.Id,
 		Name:            objective.Name,
 		Extra:           objective.Extra,
 		RequiredNumber:  objective.RequiredAmount,
-		CategoryID:      objective.CategoryID,
+		CategoryId:      objective.CategoryId,
 		ObjectiveType:   objective.ObjectiveType,
 		ValidFrom:       objective.ValidFrom,
 		ValidTo:         objective.ValidTo,
 		Conditions:      utils.Map(objective.Conditions, toConditionResponse),
 		NumberField:     objective.NumberField,
 		Aggregation:     objective.Aggregation,
-		ScoringPresetID: objective.ScoringId,
+		ScoringPresetId: objective.ScoringId,
 		ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
 	}
 }
@@ -243,7 +243,7 @@ func toPublicObjectiveResponse(objective *repository.Objective) *Objective {
 	if objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &Objective{
 			Name:       fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
-			CategoryID: objective.CategoryID,
+			CategoryId: objective.CategoryId,
 			ValidFrom:  objective.ValidFrom,
 			ValidTo:    objective.ValidTo,
 		}

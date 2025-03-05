@@ -40,11 +40,11 @@ func (p Permissions) Value() (driver.Value, error) {
 }
 
 type User struct {
-	ID          int         `gorm:"primaryKey autoIncrement"`
+	Id          int         `gorm:"primaryKey autoIncrement"`
 	DisplayName string      `gorm:"not null"`
 	Permissions Permissions `gorm:"type:text[];not null;default:'{}'"`
 
-	OauthAccounts []*Oauth `gorm:"foreignKey:UserID"`
+	OauthAccounts []*Oauth `gorm:"foreignKey:UserId"`
 }
 
 type UserRepository struct {
@@ -113,8 +113,8 @@ func (r *UserRepository) GetAllUsers() ([]*User, error) {
 }
 
 type Streamer struct {
-	UserID   int
-	TwitchID string
+	UserId   int
+	TwitchId string
 }
 
 func (r *UserRepository) GetStreamersForCurrentEvent() (streamers []*Streamer, err error) {
@@ -140,8 +140,8 @@ func (r *UserRepository) GetStreamersForCurrentEvent() (streamers []*Streamer, e
 }
 
 type UserTeam struct {
-	UserID      int
-	TeamID      int
+	UserId      int
+	TeamId      int
 	DisplayName string
 }
 
@@ -157,7 +157,7 @@ func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
 		WHERE team_users.team_id IN ?		
 		`
 	err := DB.Raw(query, utils.Map(event.Teams, func(team *Team) int {
-		return team.ID
+		return team.Id
 	})).Scan(&users).Error
 	if err != nil {
 		log.Print(err)
@@ -165,8 +165,8 @@ func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
 	}
 	for _, user := range users {
 		for _, team := range event.Teams {
-			if team.ID == user.TeamID {
-				team.Users = append(team.Users, &User{ID: user.UserID, DisplayName: user.DisplayName})
+			if team.Id == user.TeamId {
+				team.Users = append(team.Users, &User{Id: user.UserId, DisplayName: user.DisplayName})
 			}
 		}
 	}
@@ -175,8 +175,8 @@ func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
 }
 
 type TeamUserWithPoEAccountName struct {
-	TeamID      int
-	UserID      int
+	TeamId      int
+	UserId      int
 	AccountName string
 }
 

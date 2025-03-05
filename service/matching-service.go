@@ -77,7 +77,7 @@ func (m *MatchingService) getMatches(stashChange config.StashChangeMessage, user
 				}
 			}
 			teamMatchesTotal.WithLabelValues(teamMap[*stash.AccountName]).Add(float64(len(completions)))
-			matches = append(matches, m.objectiveMatchService.CreateMatches(completions, userId, stash.StashChangeID, m.event.ID, stashChange.Timestamp)...)
+			matches = append(matches, m.objectiveMatchService.CreateMatches(completions, userId, stash.StashChangeId, m.event.Id, stashChange.Timestamp)...)
 		}
 	}
 	return matches
@@ -89,26 +89,26 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 		return nil, err
 	}
 
-	consumer, err := m.objectiveMatchService.GetKafkaConsumer(m.event.ID)
+	consumer, err := m.objectiveMatchService.GetKafkaConsumer(m.event.Id)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(desyncedObjectiveIds) > 0 {
-		consumer.GroupID += 1
+		consumer.GroupId += 1
 		err = m.objectiveMatchService.SaveKafkaConsumerId(consumer)
 		if err != nil {
 			log.Print(err)
 		}
 	}
 
-	return config.GetReader(m.event.ID, consumer.GroupID)
+	return config.GetReader(m.event.Id, consumer.GroupId)
 
 }
 
 func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, objectives []*repository.Objective) {
 
-	users, err := m.userService.GetUsersForEvent(m.event.ID)
+	users, err := m.userService.GetUsersForEvent(m.event.Id)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -117,17 +117,17 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	teamMap := make(map[string]string)
 	teamNames := make(map[int]string)
 	for _, team := range m.event.Teams {
-		teamNames[team.ID] = team.Name
+		teamNames[team.Id] = team.Name
 	}
 
 	for _, user := range users {
-		userMap[user.AccountName] = user.UserID
-		teamMap[user.AccountName] = teamNames[user.TeamID]
+		userMap[user.AccountName] = user.UserId
+		teamMap[user.AccountName] = teamNames[user.TeamId]
 	}
 	desyncedObjectiveIds := make([]int, 0)
 	for _, objective := range objectives {
 		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ITEM {
-			desyncedObjectiveIds = append(desyncedObjectiveIds, objective.ID)
+			desyncedObjectiveIds = append(desyncedObjectiveIds, objective.Id)
 		}
 	}
 	reader, err := m.GetReader(desyncedObjectiveIds)
@@ -159,7 +159,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				log.Fatal(err)
 				return
 			}
-			if m.lastChangeId != nil && stashChange.ChangeID == *m.lastChangeId {
+			if m.lastChangeId != nil && stashChange.ChangeId == *m.lastChangeId {
 				log.Println("Sync finished")
 				// once we reach the starting change id the sync is finished
 				m.objectiveService.SetSynced(desyncedObjectiveIds)
@@ -175,7 +175,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 			// 				fmt.Println(err)
 			// 				continue
 			// 			}
-			// 			userMap[*stash.AccountName] = user.ID
+			// 			userMap[*stash.AccountName] = user.Id
 			// 		}
 			// 	}
 			// }
@@ -201,7 +201,7 @@ func StashLoop(ctx context.Context, poeClient *client.PoEClient, event *reposito
 		return err
 	}
 
-	objectives, err := m.objectiveService.GetObjectivesByEventId(event.ID)
+	objectives, err := m.objectiveService.GetObjectivesByEventId(event.Id)
 	if err != nil {
 		return err
 	}

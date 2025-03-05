@@ -14,17 +14,17 @@ import (
 // message object
 type StashChangeMessage struct {
 	Stashes      []client.PublicStashChange
-	ChangeID     string
-	NextChangeID string
+	ChangeId     string
+	NextChangeId string
 	Timestamp    time.Time
 }
 
-func CreateTopic(eventID int) error {
+func CreateTopic(eventId int) error {
 	broker := os.Getenv("KAFKA_BROKER")
 	if broker == "" {
 		return fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
-	topic := fmt.Sprintf("stash-changes-%d", eventID)
+	topic := fmt.Sprintf("stash-changes-%d", eventId)
 
 	conn, err := kafka.Dial("tcp", broker)
 	if err != nil {
@@ -70,12 +70,12 @@ func CreateTopic(eventID int) error {
 	return controllerConn.CreateTopics(topicConfig)
 }
 
-func GetWriter(eventID int) (*kafka.Writer, error) {
+func GetWriter(eventId int) (*kafka.Writer, error) {
 	broker := os.Getenv("KAFKA_BROKER")
 	if broker == "" {
 		return nil, fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
-	topic := fmt.Sprintf("stash-changes-%d", eventID)
+	topic := fmt.Sprintf("stash-changes-%d", eventId)
 	return kafka.NewWriter(kafka.WriterConfig{
 		Brokers:          []string{broker},
 		Topic:            topic,
@@ -84,14 +84,14 @@ func GetWriter(eventID int) (*kafka.Writer, error) {
 	}), nil
 }
 
-func GetReader(eventID int, consumerId int) (*kafka.Reader, error) {
+func GetReader(eventId int, consumerId int) (*kafka.Reader, error) {
 	broker := os.Getenv("KAFKA_BROKER")
 	if broker == "" {
 		return nil, fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
-	topic := fmt.Sprintf("stash-changes-%d", eventID)
+	topic := fmt.Sprintf("stash-changes-%d", eventId)
 
-	err := CreateTopic(eventID)
+	err := CreateTopic(eventId)
 	if err != nil {
 		return nil, err
 	}

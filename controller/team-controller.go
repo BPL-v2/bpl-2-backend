@@ -25,10 +25,10 @@ func NewTeamController() *TeamController {
 
 func toTeamResponse(team *repository.Team) *Team {
 	return &Team{
-		ID:             team.ID,
+		Id:             team.Id,
 		Name:           team.Name,
 		AllowedClasses: team.AllowedClasses,
-		EventID:        team.EventID,
+		EventId:        team.EventId,
 	}
 }
 
@@ -52,7 +52,7 @@ func setupTeamController() []RouteInfo {
 // @Description Fetches all teams for an event
 // @Tags team
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Success 200 {array} Team
 // @Router /events/{event_id}/teams [get]
 func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
@@ -81,7 +81,7 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 // @Tags team
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Param body body TeamCreate true "Team to create"
 // @Success 201 {object} Team
 // @Router /events/{event_id}/teams [put]
@@ -99,7 +99,7 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 			return
 		}
 		teamModel := team.toModel()
-		teamModel.EventID = event_id
+		teamModel.EventId = event_id
 		dbteam, err := e.teamService.SaveTeam(teamModel)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -113,8 +113,8 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 // @Description Fetches a team by id
 // @Tags team
 // @Produce json
-// @Param event_id path int true "Event ID"
-// @Param team_id path int true "Team ID"
+// @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
 // @Success 200 {object} Team
 // @Router /events/{event_id}/teams/{team_id} [get]
 func (e *TeamController) getTeamHandler() gin.HandlerFunc {
@@ -141,8 +141,8 @@ func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 // @Description Deletes a team
 // @Tags team
 // @Produce json
-// @Param event_id path int true "Event ID"
-// @Param team_id path int true "Team ID"
+// @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
 // @Success 204
 // @Router /events/{event_id}/teams/{team_id} [delete]
 func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
@@ -170,7 +170,7 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 // @Tags team, user
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Param body body []TeamUserCreate true "Users to add to teams"
 // @Success 204
 // @Router /events/{event_id}/teams/users [put]
@@ -203,28 +203,28 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 }
 
 type TeamUserCreate struct {
-	TeamID     int  `json:"team_id"`
-	UserID     int  `json:"user_id" binding:"required"`
+	TeamId     int  `json:"team_id"`
+	UserId     int  `json:"user_id" binding:"required"`
 	IsTeamLead bool `json:"is_team_lead"`
 }
 
 type TeamCreate struct {
-	ID             *int     `json:"id"`
+	Id             *int     `json:"id"`
 	Name           string   `json:"name" binding:"required"`
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 }
 
 type Team struct {
-	ID             int      `json:"id" binding:"required"`
+	Id             int      `json:"id" binding:"required"`
 	Name           string   `json:"name" binding:"required"`
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
-	EventID        int      `json:"event_id" binding:"required"`
+	EventId        int      `json:"event_id" binding:"required"`
 }
 
 func teamUserCreateToModel(teamUserCreate TeamUserCreate) *repository.TeamUser {
 	return &repository.TeamUser{
-		TeamID:     teamUserCreate.TeamID,
-		UserID:     teamUserCreate.UserID,
+		TeamId:     teamUserCreate.TeamId,
+		UserId:     teamUserCreate.UserId,
 		IsTeamLead: teamUserCreate.IsTeamLead,
 	}
 }
@@ -234,8 +234,8 @@ func (e *TeamCreate) toModel() *repository.Team {
 		Name:           e.Name,
 		AllowedClasses: e.AllowedClasses,
 	}
-	if e.ID != nil {
-		team.ID = *e.ID
+	if e.Id != nil {
+		team.Id = *e.Id
 	}
 	return team
 }

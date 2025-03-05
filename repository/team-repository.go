@@ -9,16 +9,16 @@ import (
 )
 
 type Team struct {
-	ID             int            `gorm:"primaryKey"`
+	Id             int            `gorm:"primaryKey"`
 	Name           string         `gorm:"not null"`
 	AllowedClasses pq.StringArray `gorm:"not null;type:text[]"`
-	EventID        int            `gorm:"not null;references events(id)"`
+	EventId        int            `gorm:"not null;references events(id)"`
 	Users          []*User        `gorm:"many2many:team_users"`
 }
 
 type TeamUser struct {
-	TeamID     int  `gorm:"index;primaryKey"`
-	UserID     int  `gorm:"index;primaryKey"`
+	TeamId     int  `gorm:"index;primaryKey"`
+	UserId     int  `gorm:"index;primaryKey"`
 	IsTeamLead bool `gorm:"not null;default:false"`
 }
 
@@ -79,7 +79,7 @@ func (r *TeamRepository) FindAll() ([]Team, error) {
 func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error) {
 	teamUsers := make([]*TeamUser, 0)
 	result := r.DB.Find(&teamUsers, "team_id in ?", utils.Map(event.Teams, func(team *Team) int {
-		return team.ID
+		return team.Id
 	}))
 	if result.Error != nil {
 		return nil, result.Error
@@ -89,9 +89,9 @@ func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error)
 
 func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *Event) error {
 	result := r.DB.Where("team_id in ? AND user_id in ?", utils.Map(event.Teams, func(team *Team) int {
-		return team.ID
+		return team.Id
 	}), utils.Map(teamUsers, func(user *TeamUser) int {
-		return user.UserID
+		return user.UserId
 	})).Delete(&TeamUser{})
 
 	return result.Error
@@ -99,16 +99,16 @@ func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *E
 
 func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
 	validTeamUsers := utils.Filter(teamUsers, func(teamUser *TeamUser) bool {
-		return teamUser.TeamID != 0
+		return teamUser.TeamId != 0
 	})
 	result := r.DB.CreateInBatches(validTeamUsers, len(validTeamUsers))
 	return result.Error
 }
 
-func (r *TeamRepository) GetTeamForUser(eventID int, userId int) (*Team, error) {
+func (r *TeamRepository) GetTeamForUser(eventId int, userId int) (*Team, error) {
 	team := &Team{}
 	result := r.DB.Joins("JOIN bpl2.team_users ON team_users.team_id = teams.id").
-		Where("team_users.user_id = ? AND teams.event_id = ?", userId, eventID).
+		Where("team_users.user_id = ? AND teams.event_id = ?", userId, eventId).
 		First(team)
 	if result.Error != nil {
 		return nil, result.Error

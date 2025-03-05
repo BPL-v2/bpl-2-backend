@@ -13,10 +13,10 @@ type StashChangeRepository struct {
 	DB *gorm.DB
 }
 type StashChange struct {
-	ID           int    `gorm:"primaryKey;autoIncrement"`
-	StashID      string `gorm:"not null"`
-	NextChangeID string `gorm:"not null"`
-	EventID      int    `gorm:"index;not null;references events(id)"`
+	Id           int    `gorm:"primaryKey;autoIncrement"`
+	StashId      string `gorm:"not null"`
+	NextChangeId string `gorm:"not null"`
+	EventId      int    `gorm:"index;not null;references events(id)"`
 	Timestamp    time.Time
 }
 
@@ -29,9 +29,9 @@ func (r *StashChangeRepository) SaveStashChangesConditionally(publicStashChanges
 		dbStashChanges := make([]StashChange, 0)
 		for _, stashChange := range publicStashChanges {
 			dbStashChanges = append(dbStashChanges, StashChange{
-				StashID:      stashChange.ID,
-				EventID:      eventId,
-				NextChangeID: message.NextChangeID,
+				StashId:      stashChange.Id,
+				EventId:      eventId,
+				NextChangeId: message.NextChangeId,
 				Timestamp:    message.Timestamp,
 			})
 		}
@@ -42,10 +42,10 @@ func (r *StashChangeRepository) SaveStashChangesConditionally(publicStashChanges
 		}
 		idMap := make(map[string]int)
 		for _, stashChange := range dbStashChanges {
-			idMap[stashChange.StashID] = stashChange.ID
+			idMap[stashChange.StashId] = stashChange.Id
 		}
 		for i, s := range publicStashChanges {
-			publicStashChanges[i].StashChangeID = idMap[s.ID]
+			publicStashChanges[i].StashChangeId = idMap[s.Id]
 		}
 		message.Stashes = publicStashChanges
 
@@ -59,12 +59,12 @@ func (r *StashChangeRepository) SaveStashChangesConditionally(publicStashChanges
 }
 func (r *StashChangeRepository) GetNextChangeIdForEvent(event *Event) (changeId string, err error) {
 	query := "SELECT DISTINCT next_change_id FROM stash_changes WHERE event_id = ? ORDER BY next_change_id desc LIMIT 1"
-	err = r.DB.Raw(query, event.ID).First(&changeId).Error
+	err = r.DB.Raw(query, event.Id).First(&changeId).Error
 	return changeId, err
 }
 
 func (r *StashChangeRepository) GetCurrentChangeIdForEvent(event *Event) (changeId string, err error) {
 	query := "SELECT DISTINCT next_change_id FROM stash_changes WHERE event_id = ? ORDER BY next_change_id desc OFFSET 1 LIMIT 1"
-	err = r.DB.Raw(query, event.ID).First(&changeId).Error
+	err = r.DB.Raw(query, event.Id).First(&changeId).Error
 	return changeId, err
 }

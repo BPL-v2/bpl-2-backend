@@ -42,8 +42,8 @@ const (
 )
 
 type Condition struct {
-	ID          int       `gorm:"primaryKey;autoIncrement"`
-	ObjectiveID int       `gorm:"not null"`
+	Id          int       `gorm:"primaryKey;autoIncrement"`
+	ObjectiveId int       `gorm:"not null"`
 	Field       ItemField `gorm:"type:bpl2.item_field"`
 	Operator    Operator  `gorm:"type:bpl2.operator"`
 	Value       string    `gorm:"not null"`
@@ -57,9 +57,9 @@ func NewConditionRepository() *ConditionRepository {
 	return &ConditionRepository{DB: config.DatabaseConnection()}
 }
 
-func (r *ConditionRepository) GetConditionByPK(objectiveID int, field ItemField, operator Operator) (*Condition, error) {
+func (r *ConditionRepository) GetConditionByPK(objectiveId int, field ItemField, operator Operator) (*Condition, error) {
 	var condition Condition
-	result := r.DB.First(&condition, "objective_id = ? AND field = ? AND operator = ?", objectiveID, field, operator)
+	result := r.DB.First(&condition, "objective_id = ? AND field = ? AND operator = ?", objectiveId, field, operator)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -67,7 +67,7 @@ func (r *ConditionRepository) GetConditionByPK(objectiveID int, field ItemField,
 }
 
 func (r *ConditionRepository) SaveCondition(condition *Condition) (*Condition, error) {
-	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveID).Update("sync_status", SyncStatusDesynced)
+	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveId).Update("sync_status", SyncStatusDesynced)
 	result := r.DB.Save(condition)
 	if result.Error != nil {
 		return nil, result.Error
@@ -78,7 +78,7 @@ func (r *ConditionRepository) SaveCondition(condition *Condition) (*Condition, e
 func (r *ConditionRepository) DeleteCondition(conditionId int) error {
 	condition := Condition{}
 	r.DB.First(&condition, "id = ?", conditionId)
-	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveID).Update("sync_status", SyncStatusDesynced)
+	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveId).Update("sync_status", SyncStatusDesynced)
 	result := r.DB.Delete(&Condition{}, "id = ?", conditionId)
 	return result.Error
 }

@@ -109,7 +109,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -133,7 +133,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -162,7 +162,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -200,7 +200,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -229,7 +229,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -260,7 +260,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -289,7 +289,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -321,7 +321,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -356,7 +356,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -386,7 +386,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -422,7 +422,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -451,7 +451,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -480,7 +480,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -513,7 +513,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -551,14 +551,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Submission ID",
+                        "description": "Submission Id",
                         "name": "submission_id",
                         "in": "path",
                         "required": true
@@ -587,14 +587,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Submission ID",
+                        "description": "Submission Id",
                         "name": "submission_id",
                         "in": "path",
                         "required": true
@@ -632,7 +632,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -665,7 +665,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -707,7 +707,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -745,14 +745,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Team ID",
+                        "description": "Team Id",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -779,14 +779,14 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "Team ID",
+                        "description": "Team Id",
                         "name": "team_id",
                         "in": "path",
                         "required": true
@@ -812,7 +812,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event ID",
+                        "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
                         "required": true
@@ -1037,7 +1037,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Category ID",
+                        "description": "Category Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1064,7 +1064,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Category ID",
+                        "description": "Category Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1121,7 +1121,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Condition ID",
+                        "description": "Condition Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1177,7 +1177,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Objective ID",
+                        "description": "Objective Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1204,7 +1204,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Objective ID",
+                        "description": "Objective Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1264,7 +1264,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Preset ID",
+                        "description": "Preset Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1291,7 +1291,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Preset ID",
+                        "description": "Preset Id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -1494,7 +1494,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "User ID",
+                        "description": "User Id",
                         "name": "userId",
                         "in": "path",
                         "required": true

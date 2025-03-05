@@ -96,8 +96,8 @@ func (f *FetchingService) FetchStashChanges() error {
 				continue
 			}
 			consecutiveErrors = 0
-			f.stashChannel <- config.StashChangeMessage{ChangeID: changeId, NextChangeID: response.NextChangeID, Stashes: response.Stashes}
-			changeId = response.NextChangeID
+			f.stashChannel <- config.StashChangeMessage{ChangeId: changeId, NextChangeId: response.NextChangeId, Stashes: response.Stashes}
+			changeId = response.NextChangeId
 			changeIdGauge.Set(float64(ChangeIdToInt(changeId)))
 			if count%20 == 0 {
 				ninjaId, err := f.stashChangeService.GetNinjaChangeId()
@@ -111,13 +111,13 @@ func (f *FetchingService) FetchStashChanges() error {
 }
 
 func (f *FetchingService) FilterStashChanges() {
-	err := config.CreateTopic(f.event.ID)
+	err := config.CreateTopic(f.event.Id)
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	writer, err := config.GetWriter(f.event.ID)
+	writer, err := config.GetWriter(f.event.Id)
 	if err != nil {
 		log.Print(err)
 		return
@@ -140,12 +140,12 @@ func (f *FetchingService) FilterStashChanges() {
 
 			}
 			message := config.StashChangeMessage{
-				ChangeID:     stashChange.ChangeID,
-				NextChangeID: stashChange.NextChangeID,
+				ChangeId:     stashChange.ChangeId,
+				NextChangeId: stashChange.NextChangeId,
 				Timestamp:    time.Now(),
 			}
 			// make sure that stash changes are only saved if the messages are successfully written to kafka
-			f.stashChangeService.SaveStashChangesConditionally(stashes, message, f.event.ID,
+			f.stashChangeService.SaveStashChangesConditionally(stashes, message, f.event.Id,
 				func(data []byte) error {
 					return writer.WriteMessages(context.Background(),
 						kafka.Message{

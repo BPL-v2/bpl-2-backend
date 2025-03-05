@@ -7,14 +7,14 @@ import (
 )
 
 type ScoringCategory struct {
-	ID        int    `gorm:"primaryKey foreignKey:CategoryID references:ID on:objectives"`
+	Id        int    `gorm:"primaryKey foreignKey:CategoryId references:Id on:objectives"`
 	Name      string `gorm:"not null"`
-	ParentID  *int   `gorm:"null;references:scoring_category(id)"`
+	ParentId  *int   `gorm:"null;references:scoring_category(id)"`
 	ScoringId *int   `gorm:"null;references:scoring_presets(id)"`
 
-	SubCategories []*ScoringCategory `gorm:"foreignKey:ParentID;constraint:OnDelete:CASCADE"`
-	Objectives    []*Objective       `gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE"`
-	ScoringPreset *ScoringPreset     `gorm:"foreignKey:ScoringId;references:ID"`
+	SubCategories []*ScoringCategory `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
+	Objectives    []*Objective       `gorm:"foreignKey:CategoryId;constraint:OnDelete:CASCADE"`
+	ScoringPreset *ScoringPreset     `gorm:"foreignKey:ScoringId;references:Id"`
 }
 
 type ScoringCategoryRepository struct {
@@ -31,7 +31,7 @@ func (r *ScoringCategoryRepository) GetRulesForEvent(eventId int, preloads ...st
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return r.GetNestedCategories(event.ScoringCategoryID, preloads...)
+	return r.GetNestedCategories(event.ScoringCategoryId, preloads...)
 }
 
 func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int, preloads ...string) (*ScoringCategory, error) {
@@ -62,12 +62,12 @@ func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int, preloads
 	}
 	categoryMap := make(map[int]*ScoringCategory)
 	for _, category := range scoringCategories {
-		categoryMap[category.ID] = &category
+		categoryMap[category.Id] = &category
 	}
 
 	for _, category := range categoryMap {
 		for _, relation := range relations {
-			if relation.ParentID == category.ID {
+			if relation.ParentId == category.Id {
 				category.SubCategories = append(category.SubCategories, categoryMap[relation.ChildId])
 			}
 		}
@@ -79,10 +79,10 @@ func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int, preloads
 
 type CategoryRelation struct {
 	ChildId  int
-	ParentID int
+	ParentId int
 }
 
-func (r *ScoringCategoryRepository) GetTreeStructure(parentID int) ([]CategoryRelation, error) {
+func (r *ScoringCategoryRepository) GetTreeStructure(parentId int) ([]CategoryRelation, error) {
 	var categories []CategoryRelation
 	query := `
         WITH RECURSIVE Relations AS (
@@ -102,7 +102,7 @@ func (r *ScoringCategoryRepository) GetTreeStructure(parentID int) ([]CategoryRe
             FROM
                 bpl2.scoring_categories category
             INNER JOIN
-                Relations relation ON category.parent_id = relation.ID
+                Relations relation ON category.parent_id = relation.Id
         )
         SELECT
 			id as child_id,
@@ -111,7 +111,7 @@ func (r *ScoringCategoryRepository) GetTreeStructure(parentID int) ([]CategoryRe
         	Relations;
     `
 
-	if err := r.DB.Raw(query, parentID).Scan(&categories).Error; err != nil {
+	if err := r.DB.Raw(query, parentId).Scan(&categories).Error; err != nil {
 		return nil, err
 	}
 

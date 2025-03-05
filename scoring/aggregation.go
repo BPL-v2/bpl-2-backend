@@ -13,22 +13,22 @@ import (
 )
 
 type ObjectiveIdTeamId struct {
-	ObjectiveID int
-	TeamID      int
+	ObjectiveId int
+	TeamId      int
 }
 
 type FreshMatches map[ObjectiveIdTeamId]bool
 
 func (f FreshMatches) contains(match *Match) bool {
-	return f[ObjectiveIdTeamId{ObjectiveID: match.ObjectiveID, TeamID: match.TeamID}]
+	return f[ObjectiveIdTeamId{ObjectiveId: match.ObjectiveId, TeamId: match.TeamId}]
 }
 
 type Match struct {
-	ObjectiveID int
+	ObjectiveId int
 	Number      int
 	Timestamp   time.Time
-	UserID      int
-	TeamID      int
+	UserId      int
+	TeamId      int
 	Finished    bool
 }
 
@@ -56,14 +56,14 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 	defer timer.ObserveDuration()
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {
-		return team.ID
+		return team.Id
 	})
 	objectiveMap := make(map[int]repository.Objective)
 	objectiveIdLists := make(map[repository.AggregationType][]int)
 	for _, objective := range objectives {
-		objectiveIdLists[objective.Aggregation] = append(objectiveIdLists[objective.Aggregation], objective.ID)
-		objectiveMap[objective.ID] = *objective
-		aggregations[objective.ID] = make(TeamMatches)
+		objectiveIdLists[objective.Aggregation] = append(objectiveIdLists[objective.Aggregation], objective.Id)
+		objectiveMap[objective.Id] = *objective
+		aggregations[objective.Id] = make(TeamMatches)
 	}
 	// wg := sync.WaitGroup{}
 	for _, aggregation := range []repository.AggregationType{
@@ -76,14 +76,14 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		// wg.Add(1)
 		// go func(aggregation repository.AggregationType) {
 		// 	defer wg.Done()
-		matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds, event.ID)
+		matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds, event.Id)
 		if err != nil {
 			log.Print(err)
 			return nil, err
 		}
 		for _, match := range matches {
-			match.Finished = objectiveMap[match.ObjectiveID].RequiredAmount <= match.Number
-			aggregations[match.ObjectiveID][match.TeamID] = match
+			match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
+			aggregations[match.ObjectiveId][match.TeamId] = match
 		}
 		// }(aggregation)
 	}

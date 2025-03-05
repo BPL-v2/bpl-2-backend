@@ -30,7 +30,7 @@ type OauthService struct {
 }
 
 type DiscordUserResponse struct {
-	ID                   string `json:"id"`
+	Id                   string `json:"id"`
 	Username             string `json:"username"`
 	Avatar               string `json:"avatar"`
 	Discriminator        string `json:"discriminator"`
@@ -62,7 +62,7 @@ type TwitchUserResponse struct {
 
 type TwitchExtendedUserResponse struct {
 	Data []struct {
-		ID              string `json:"id"`
+		Id              string `json:"id"`
 		Login           string `json:"login"`
 		DisplayName     string `json:"display_name"`
 		Type            string `json:"type"`
@@ -169,7 +169,7 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	if verifier.User != nil {
 		user = verifier.User
 	} else {
-		user, err = e.userService.GetUserByDiscordId(discordUser.ID)
+		user, err = e.userService.GetUserByDiscordId(discordUser.Id)
 		if err != nil {
 			user = &repository.User{
 				Permissions:   []repository.Permission{},
@@ -187,7 +187,7 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 
 	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
 		Provider:     repository.ProviderDiscord,
-		AccountID:    discordUser.ID,
+		AccountId:    discordUser.Id,
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 		Expiry:       token.Expiry,
@@ -260,7 +260,7 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 	}
 	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
 		Provider:     repository.ProviderTwitch,
-		AccountID:    twitchId,
+		AccountId:    twitchId,
 		AccessToken:  token.AccessToken,
 		RefreshToken: token.RefreshToken,
 		Expiry:       token.Expiry,
@@ -296,6 +296,6 @@ func (e *OauthService) GetApplicationToken(provider repository.Provider) (*strin
 	return &credentials.AccessToken, nil
 }
 
-func (e *OauthService) GetOauthByProviderAndAccountID(provider repository.Provider, accountID string) (*repository.Oauth, error) {
-	return e.oauthRepository.GetOauthByProviderAndAccountID(provider, accountID)
+func (e *OauthService) GetOauthByProviderAndAccountId(provider repository.Provider, accountId string) (*repository.Oauth, error) {
+	return e.oauthRepository.GetOauthByProviderAndAccountId(provider, accountId)
 }

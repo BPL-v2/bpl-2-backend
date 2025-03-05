@@ -905,7 +905,7 @@ paths:
       description: Deletes an event
       operationId: DeleteEvent
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -921,7 +921,7 @@ paths:
       description: Gets an event by id
       operationId: GetEvent
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -942,7 +942,7 @@ paths:
       description: Duplicates an event's configuration
       operationId: DuplicateEvent
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -967,7 +967,7 @@ paths:
       description: Fetches the rules for the current event
       operationId: GetRulesForEvent
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -986,7 +986,7 @@ paths:
       description: Fetches the latest scores for the current event
       operationId: GetLatestScoresForEvent
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1006,7 +1006,7 @@ paths:
         score updates in real-time.
       operationId: ScoreWebSocket
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1025,7 +1025,7 @@ paths:
       description: Fetches the scoring presets for the current event
       operationId: GetScoringPresetsForEvent
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1046,7 +1046,7 @@ paths:
       description: Fetches all signups for the event
       operationId: GetEventSignups
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1069,7 +1069,7 @@ paths:
       description: Deletes the authenticated user's signup for the event
       operationId: DeleteSignup
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1085,7 +1085,7 @@ paths:
       description: Fetches an authenticated user's signup for the event
       operationId: GetPersonalSignup
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1105,7 +1105,7 @@ paths:
       description: Creates a signup for the authenticated user
       operationId: CreateSignup
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1132,7 +1132,7 @@ paths:
       description: Gets the users application status for an event
       operationId: GetEventStatusForUser
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1151,7 +1151,7 @@ paths:
       description: Fetches all submissions for an event
       operationId: GetSubmissions
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1173,7 +1173,7 @@ paths:
       description: Submits a bounty for an event
       operationId: SubmitBounty
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1198,12 +1198,12 @@ paths:
       description: Deletes a submission
       operationId: DeleteSubmission
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
         type: integer
-      - description: Submission ID
+      - description: Submission Id
         in: path
         name: submission_id
         required: true
@@ -1222,12 +1222,12 @@ paths:
       description: Reviews a submission
       operationId: ReviewSubmission
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
         type: integer
-      - description: Submission ID
+      - description: Submission Id
         in: path
         name: submission_id
         required: true
@@ -1252,7 +1252,7 @@ paths:
       description: Fetches all teams for an event
       operationId: GetTeams
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1274,7 +1274,7 @@ paths:
       description: Creates a team for an event
       operationId: CreateTeam
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1299,12 +1299,12 @@ paths:
       description: Deletes a team
       operationId: DeleteTeam
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
         type: integer
-      - description: Team ID
+      - description: Team Id
         in: path
         name: team_id
         required: true
@@ -1320,12 +1320,12 @@ paths:
       description: Fetches a team by id
       operationId: GetTeam
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
         type: integer
-      - description: Team ID
+      - description: Team Id
         in: path
         name: team_id
         required: true
@@ -1346,7 +1346,7 @@ paths:
       description: Adds users to teams
       operationId: AddUsersToTeams
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1372,7 +1372,7 @@ paths:
       description: Fetches all users for an event
       operationId: GetUsersForEvent
       parameters:
-      - description: Event ID
+      - description: Event Id
         in: path
         name: event_id
         required: true
@@ -1530,7 +1530,7 @@ paths:
       description: Deletes a scoring category
       operationId: DeleteCategory
       parameters:
-      - description: Category ID
+      - description: Category Id
         in: path
         name: id
         required: true
@@ -1546,7 +1546,7 @@ paths:
       description: Fetches a scoring category by id
       operationId: GetScoringCategory
       parameters:
-      - description: Category ID
+      - description: Category Id
         in: path
         name: id
         required: true
@@ -1587,7 +1587,7 @@ paths:
       description: Deletes a condition
       operationId: DeleteCondition
       parameters:
-      - description: Condition ID
+      - description: Condition Id
         in: path
         name: id
         required: true
@@ -1622,7 +1622,7 @@ paths:
       description: Deletes an objective
       operationId: DeleteObjective
       parameters:
-      - description: Objective ID
+      - description: Objective Id
         in: path
         name: id
         required: true
@@ -1638,7 +1638,7 @@ paths:
       description: Gets an objective by id
       operationId: GetObjective
       parameters:
-      - description: Objective ID
+      - description: Objective Id
         in: path
         name: id
         required: true
@@ -1679,7 +1679,7 @@ paths:
       description: Deletes a scoring preset by id
       operationId: DeleteScoringPreset
       parameters:
-      - description: Preset ID
+      - description: Preset Id
         in: path
         name: id
         required: true
@@ -1695,7 +1695,7 @@ paths:
       description: Fetches a scoring preset by id
       operationId: GetScoringPreset
       parameters:
-      - description: Preset ID
+      - description: Preset Id
         in: path
         name: id
         required: true
@@ -1748,7 +1748,7 @@ paths:
       description: Changes the permissions of a user
       operationId: ChangePermissions
       parameters:
-      - description: User ID
+      - description: User Id
         in: path
         name: userId
         required: true

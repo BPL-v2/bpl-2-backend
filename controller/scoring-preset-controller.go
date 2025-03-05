@@ -35,7 +35,7 @@ func setupScoringPresetController() []RouteInfo {
 // @Description Fetches the scoring presets for the current event
 // @Tags scoring
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Success 200 {array} ScoringPreset
 // @Router /events/{event_id}/scoring-presets [get]
 func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.HandlerFunc {
@@ -59,7 +59,7 @@ func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.Handler
 // @Description Fetches a scoring preset by id
 // @Tags scoring
 // @Produce json
-// @Param id path int true "Preset ID"
+// @Param id path int true "Preset Id"
 // @Success 200 {object} ScoringPreset
 // @Router /scoring/presets/{id} [get]
 func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
@@ -111,7 +111,7 @@ func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 // @Description Deletes a scoring preset by id
 // @Tags scoring
 // @Produce json
-// @Param id path int true "Preset ID"
+// @Param id path int true "Preset Id"
 // @Success 200
 // @Router /scoring/presets/{id} [delete]
 func (e *ScoringPresetController) deleteScoringPresetHandler() gin.HandlerFunc {
@@ -136,13 +136,13 @@ func (e *ScoringPresetController) deleteScoringPresetHandler() gin.HandlerFunc {
 }
 
 type ScoringPresetCreate struct {
-	ID            *int                         `json:"id"`
+	Id            *int                         `json:"id"`
 	Name          string                       `json:"name" binding:"required"`
 	Description   string                       `json:"description"`
 	Points        []float64                    `json:"points" binding:"required"`
 	ScoringMethod repository.ScoringMethod     `json:"scoring_method" binding:"required"`
 	Type          repository.ScoringPresetType `json:"type" binding:"required"`
-	EventID       int                          `json:"event_id" binding:"required"`
+	EventId       int                          `json:"event_id" binding:"required"`
 }
 
 func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
@@ -152,16 +152,16 @@ func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
 		Points:        e.Points,
 		ScoringMethod: e.ScoringMethod,
 		Type:          e.Type,
-		EventID:       e.EventID,
+		EventId:       e.EventId,
 	}
-	if e.ID != nil {
-		preset.ID = *e.ID
+	if e.Id != nil {
+		preset.Id = *e.Id
 	}
 	return preset
 }
 
 type ScoringPreset struct {
-	ID            int                          `json:"id" binding:"required"`
+	Id            int                          `json:"id" binding:"required"`
 	Name          string                       `json:"name" binding:"required"`
 	Description   string                       `json:"description" binding:"required"`
 	Points        []float64                    `json:"points" binding:"required"`
@@ -174,7 +174,7 @@ func toScoringPresetResponse(preset *repository.ScoringPreset) *ScoringPreset {
 		return nil
 	}
 	return &ScoringPreset{
-		ID:            preset.ID,
+		Id:            preset.Id,
 		Name:          preset.Name,
 		Description:   preset.Description,
 		Points:        preset.Points,

@@ -117,7 +117,7 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Success 201 {object} Event
 // @Router /events/{event_id} [get]
 func (e *EventController) getEventHandler() gin.HandlerFunc {
@@ -143,7 +143,7 @@ func (e *EventController) getEventHandler() gin.HandlerFunc {
 // @id DeleteEvent
 // @Description Deletes an event
 // @Tags event
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Success 204
 // @Router /events/{event_id} [delete]
 func (e *EventController) deleteEventHandler() gin.HandlerFunc {
@@ -171,7 +171,7 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Success 200 {object} EventStatus
 // @Router /events/{event_id}/status [get]
 func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
@@ -188,18 +188,18 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 		}
 		response := EventStatus{}
 
-		team, err := e.teamService.GetTeamForUser(eventId, user.ID)
+		team, err := e.teamService.GetTeamForUser(eventId, user.Id)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
 		if team != nil {
-			response.TeamID = &team.ID
+			response.TeamId = &team.Id
 			response.ApplicationStatus = ApplicationStatusAccepted
 		} else {
 
-			signup, _ := e.signupService.GetSignupForUser(user.ID, eventId)
+			signup, _ := e.signupService.GetSignupForUser(user.Id, eventId)
 			if signup != nil {
 				response.ApplicationStatus = ApplicationStatusApplied
 			} else {
@@ -216,7 +216,7 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Param event body EventCreate true "Event to create"
 // @Success 201 {object} Event
 // @Router /events/{event_id}/duplicate [post]
@@ -232,14 +232,14 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		eventCreate.ID = nil
+		eventCreate.Id = nil
 		event := eventCreate.toModel()
 		event, err = e.eventService.CreateEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		presetIdMap, err := e.scoringPresetService.DuplicatePresets(eventId, event.ID)
+		presetIdMap, err := e.scoringPresetService.DuplicatePresets(eventId, event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -249,14 +249,14 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		oldCategoryID := event.ScoringCategoryID
+		oldCategoryId := event.ScoringCategoryId
 		event.ScoringCategory = newCategory
 		event, err = e.eventService.SaveEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.scoringCategoryService.DeleteCategoryById(oldCategoryID)
+		err = e.scoringCategoryService.DeleteCategoryById(oldCategoryId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -266,7 +266,7 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 }
 
 type EventCreate struct {
-	ID                   *int                   `json:"id"`
+	Id                   *int                   `json:"id"`
 	Name                 string                 `json:"name" binding:"required"`
 	IsCurrent            bool                   `json:"is_current"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
@@ -277,9 +277,9 @@ type EventCreate struct {
 }
 
 type Event struct {
-	ID                   int                    `json:"id" binding:"required"`
+	Id                   int                    `json:"id" binding:"required"`
 	Name                 string                 `json:"name" binding:"required"`
-	ScoringCategoryID    int                    `json:"scoring_category_id" binding:"required"`
+	ScoringCategoryId    int                    `json:"scoring_category_id" binding:"required"`
 	IsCurrent            bool                   `json:"is_current" binding:"required"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
@@ -299,8 +299,8 @@ func (e *EventCreate) toModel() *repository.Event {
 		EventEndTime:         e.EventEndTime,
 		ApplicationStartTime: e.ApplicationStartTime,
 	}
-	if e.ID != nil {
-		event.ID = *e.ID
+	if e.Id != nil {
+		event.Id = *e.Id
 	}
 	return event
 }
@@ -310,9 +310,9 @@ func toEventResponse(event *repository.Event) *Event {
 		return nil
 	}
 	return &Event{
-		ID:                   event.ID,
+		Id:                   event.Id,
 		Name:                 event.Name,
-		ScoringCategoryID:    event.ScoringCategoryID,
+		ScoringCategoryId:    event.ScoringCategoryId,
 		GameVersion:          event.GameVersion,
 		IsCurrent:            event.IsCurrent,
 		MaxSize:              event.MaxSize,
@@ -324,7 +324,7 @@ func toEventResponse(event *repository.Event) *Event {
 }
 
 type EventStatus struct {
-	TeamID            *int              `json:"team_id"`
+	TeamId            *int              `json:"team_id"`
 	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
 }
 

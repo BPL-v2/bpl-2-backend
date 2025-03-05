@@ -13,8 +13,8 @@ import (
 )
 
 type NinjaResponse struct {
-	ID                      int    `json:"id"`
-	NextChangeID            string `json:"next_change_id"`
+	Id                      int    `json:"id"`
+	NextChangeId            string `json:"next_change_id"`
 	APIBytesDownloaded      int    `json:"api_bytes_downloaded"`
 	StashTabsProcessed      int    `json:"stash_tabs_processed"`
 	APICalls                int    `json:"api_calls"`
@@ -58,7 +58,7 @@ func (s *StashChangeService) GetNinjaChangeId() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to decode ninja change id response: %s", err)
 	}
-	return ninjaResponse.NextChangeID, nil
+	return ninjaResponse.NextChangeId, nil
 }
 
 func (s *StashChangeService) GetInitialChangeId(event *repository.Event) (string, error) {

@@ -67,7 +67,7 @@ func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 // @Tags user
 // @Accept json
 // @Produce json
-// @Param userId path int true "User ID"
+// @Param userId path int true "User Id"
 // @Param permissions body repository.Permissions true "Permissions"
 // @Success 200 {object} User
 // @Security ApiKeyAuth
@@ -168,7 +168,7 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 // @Description Fetches all users for an event
 // @Tags user
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Success 200 {object} map[int][]MinimalUser
 // @Router /events/{event_id}/users [get]
 func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
@@ -189,9 +189,9 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 		}
 		teamUsers := make(map[int][]*MinimalUser)
 		for _, team := range event.Teams {
-			teamUsers[team.ID] = make([]*MinimalUser, 0)
+			teamUsers[team.Id] = make([]*MinimalUser, 0)
 			for _, user := range team.Users {
-				teamUsers[team.ID] = append(teamUsers[team.ID], toMinimalUserResponse(user))
+				teamUsers[team.Id] = append(teamUsers[team.Id], toMinimalUserResponse(user))
 			}
 		}
 		c.JSON(200, teamUsers)
@@ -234,12 +234,12 @@ type UserUpdate struct {
 }
 
 type User struct {
-	ID                   int        `json:"id" binding:"required"`
+	Id                   int        `json:"id" binding:"required"`
 	DisplayName          string     `json:"display_name" binding:"required"`
 	AcountName           *string    `json:"account_name"`
-	DiscordID            *string    `json:"discord_id"`
+	DiscordId            *string    `json:"discord_id"`
 	DiscordName          *string    `json:"discord_name"`
-	TwitchID             *string    `json:"twitch_id"`
+	TwitchId             *string    `json:"twitch_id"`
 	TwitchName           *string    `json:"twitch_name"`
 	TokenExpiryTimestamp *time.Time `json:"token_expiry_timestamp"`
 
@@ -247,36 +247,36 @@ type User struct {
 }
 
 type NonSensitiveUser struct {
-	ID          int     `json:"id" binding:"required"`
+	Id          int     `json:"id" binding:"required"`
 	DisplayName string  `json:"display_name" binding:"required"`
 	AcountName  *string `json:"account_name"`
-	DiscordID   *string `json:"discord_id"`
+	DiscordId   *string `json:"discord_id"`
 	DiscordName *string `json:"discord_name"`
-	TwitchID    *string `json:"twitch_id"`
+	TwitchId    *string `json:"twitch_id"`
 	TwitchName  *string `json:"twitch_name"`
 }
 
 type MinimalUser struct {
-	ID          int    `json:"id" binding:"required"`
+	Id          int    `json:"id" binding:"required"`
 	DisplayName string `json:"display_name" binding:"required"`
 }
 
 func toUserResponse(user *repository.User) *User {
 	response := &User{
-		ID:          user.ID,
+		Id:          user.Id,
 		DisplayName: user.DisplayName,
 		Permissions: user.Permissions,
 	}
 	for _, oauth := range user.OauthAccounts {
 		switch oauth.Provider {
 		case repository.ProviderDiscord:
-			response.DiscordID = &oauth.AccountID
+			response.DiscordId = &oauth.AccountId
 			response.DiscordName = &oauth.Name
 		case repository.ProviderTwitch:
-			response.TwitchID = &oauth.AccountID
+			response.TwitchId = &oauth.AccountId
 			response.TwitchName = &oauth.Name
 		case repository.ProviderPoE:
-			response.AcountName = &oauth.AccountID
+			response.AcountName = &oauth.AccountId
 			response.TokenExpiryTimestamp = &oauth.Expiry
 
 		}
@@ -290,19 +290,19 @@ func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUser {
 		return nil
 	}
 	response := &NonSensitiveUser{
-		ID:          user.ID,
+		Id:          user.Id,
 		DisplayName: user.DisplayName,
 	}
 	for _, oauth := range user.OauthAccounts {
 		switch oauth.Provider {
 		case repository.ProviderDiscord:
-			response.DiscordID = &oauth.AccountID
+			response.DiscordId = &oauth.AccountId
 			response.DiscordName = &oauth.Name
 		case repository.ProviderTwitch:
-			response.TwitchID = &oauth.AccountID
+			response.TwitchId = &oauth.AccountId
 			response.TwitchName = &oauth.Name
 		case repository.ProviderPoE:
-			response.AcountName = &oauth.AccountID
+			response.AcountName = &oauth.AccountId
 		}
 	}
 	return response
@@ -310,7 +310,7 @@ func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUser {
 
 func toMinimalUserResponse(user *repository.User) *MinimalUser {
 	return &MinimalUser{
-		ID:          user.ID,
+		Id:          user.Id,
 		DisplayName: user.DisplayName,
 	}
 }

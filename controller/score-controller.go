@@ -60,13 +60,13 @@ var upgrader = websocket.Upgrader{
 // @Description Websocket for score updates. Once connected, the client will receive score updates in real-time.
 // @Tags scores
 // @Router /events/{event_id}/scores/ws [get]
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Security ApiKeyAuth
 // @Success 200 {object} ScoreDiff
 func (e *ScoreController) WebSocketHandler(c *gin.Context) {
-	eventID, err := strconv.Atoi(c.Param("event_id"))
+	eventId, err := strconv.Atoi(c.Param("event_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event Id"})
 		return
 	}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -76,11 +76,11 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	if _, ok := e.scoreService.LatestScores[eventID]; !ok {
-		e.scoreService.LatestScores[eventID] = make(service.ScoreMap)
+	if _, ok := e.scoreService.LatestScores[eventId]; !ok {
+		e.scoreService.LatestScores[eventId] = make(service.ScoreMap)
 	}
 	// Send the latest score to the new subscriber
-	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[eventID]))
+	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[eventId]))
 	if err != nil {
 		return
 	}
@@ -90,19 +90,19 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	}
 
 	e.mu.Lock()
-	if _, ok := e.connections[eventID]; !ok {
-		e.connections[eventID] = make(map[*websocket.Conn]bool)
+	if _, ok := e.connections[eventId]; !ok {
+		e.connections[eventId] = make(map[*websocket.Conn]bool)
 	}
-	e.connections[eventID][conn] = true
+	e.connections[eventId][conn] = true
 	e.mu.Unlock()
 
 	for {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
 			e.mu.Lock()
-			delete(e.connections[eventID], conn)
-			if len(e.connections[eventID]) == 0 {
-				delete(e.connections, eventID)
+			delete(e.connections[eventId], conn)
+			if len(e.connections[eventId]) == 0 {
+				delete(e.connections, eventId)
 			}
 			e.mu.Unlock()
 			return
@@ -115,11 +115,11 @@ func (e *ScoreController) StartScoreUpdater() {
 		for {
 			e.mu.Lock()
 			// calculate scores for events with active websocket connections
-			for eventID, conns := range e.connections {
+			for eventId, conns := range e.connections {
 				if len(utils.Values(conns)) == 0 {
 					continue
 				}
-				diff, err := e.scoreService.GetNewDiff(eventID)
+				diff, err := e.scoreService.GetNewDiff(eventId)
 				if err != nil {
 					continue
 				}
@@ -146,16 +146,16 @@ func (e *ScoreController) StartScoreUpdater() {
 // @Tags scores
 // @Produce json
 // @Success 200 {object} ScoreMap
-// @Param event_id path int true "Event ID"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/scores/latest [get]
 func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventID, err := strconv.Atoi(c.Param("event_id"))
+		eventId, err := strconv.Atoi(c.Param("event_id"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event ID"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event Id"})
 			return
 		}
-		scores := e.scoreService.LatestScores[eventID]
+		scores := e.scoreService.LatestScores[eventId]
 		if scores == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "No scores found for event"})
 			return
@@ -166,7 +166,7 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 
 type Score struct {
 	Points    int       `json:"points" binding:"required"`
-	UserID    int       `json:"user_id" binding:"required"`
+	UserId    int       `json:"user_id" binding:"required"`
 	Rank      int       `json:"rank" binding:"required"`
 	Timestamp time.Time `json:"timestamp" binding:"required"`
 	Number    int       `json:"number" binding:"required"`
@@ -200,7 +200,7 @@ func toScoreMapResponse(scoreMap service.ScoreMap) ScoreMap {
 func toScoreResponse(score *scoring.Score) *Score {
 	return &Score{
 		Points:    score.Points,
-		UserID:    score.UserID,
+		UserId:    score.UserId,
 		Rank:      score.Rank,
 		Timestamp: score.Timestamp,
 		Number:    score.Number,

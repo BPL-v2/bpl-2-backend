@@ -7,12 +7,12 @@ import (
 )
 
 type SubmissionService struct {
-	submission_repository *repository.SubmissionRepository
+	submissionRepository *repository.SubmissionRepository
 }
 
 func NewSubmissionService() *SubmissionService {
 	return &SubmissionService{
-		submission_repository: repository.NewSubmissionRepository(),
+		submissionRepository: repository.NewSubmissionRepository(),
 	}
 }
 
@@ -22,24 +22,24 @@ func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submissio
 	if err != nil {
 		return nil, err
 	}
-	return e.submission_repository.GetSubmissionsForObjectives(objectives)
+	return e.submissionRepository.GetSubmissionsForObjectives(objectives)
 }
 
 func (e *SubmissionService) SaveSubmission(submission *repository.Submission, submitter *repository.User) (*repository.Submission, error) {
-	if submission.ID != 0 {
-		existingSubmission, err := e.submission_repository.GetSubmissionById(submission.ID)
+	if submission.Id != 0 {
+		existingSubmission, err := e.submissionRepository.GetSubmissionById(submission.Id)
 		if err != nil {
 			return nil, err
 		}
-		if existingSubmission.UserID != submitter.ID {
+		if existingSubmission.UserId != submitter.Id {
 			return nil, fmt.Errorf("you are not allowed to edit this submission")
 		}
 
-		existingSubmission, err = e.submission_repository.RemoveMatchFromSubmission(existingSubmission)
+		existingSubmission, err = e.submissionRepository.RemoveMatchFromSubmission(existingSubmission)
 		if err != nil {
 			return nil, err
 		}
-		existingSubmission.ObjectiveID = submission.ObjectiveID
+		existingSubmission.ObjectiveId = submission.ObjectiveId
 		existingSubmission.Timestamp = submission.Timestamp
 		existingSubmission.Number = submission.Number
 		existingSubmission.Proof = submission.Proof
@@ -47,16 +47,16 @@ func (e *SubmissionService) SaveSubmission(submission *repository.Submission, su
 		if existingSubmission.ApprovalStatus == repository.APPROVED {
 			existingSubmission.ApprovalStatus = repository.PENDING
 		}
-		return e.submission_repository.SaveSubmission(existingSubmission)
+		return e.submissionRepository.SaveSubmission(existingSubmission)
 	}
 	submission.ApprovalStatus = repository.PENDING
 	submission.User = submitter
-	submission.UserID = submitter.ID
-	return e.submission_repository.SaveSubmission(submission)
+	submission.UserId = submitter.Id
+	return e.submissionRepository.SaveSubmission(submission)
 }
 
 func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview *repository.Submission, reviewer *repository.User) (*repository.Submission, error) {
-	submission, err := e.submission_repository.GetSubmissionById(submissionId)
+	submission, err := e.submissionRepository.GetSubmissionById(submissionId)
 
 	if err != nil {
 		return nil, err
@@ -65,9 +65,9 @@ func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview 
 		return nil, fmt.Errorf("you are not allowed to review submissions")
 	}
 
-	if submission.MatchID != nil {
+	if submission.MatchId != nil {
 		if submissionReview.ApprovalStatus != repository.APPROVED {
-			submission, err = e.submission_repository.RemoveMatchFromSubmission(submission)
+			submission, err = e.submissionRepository.RemoveMatchFromSubmission(submission)
 			if err != nil {
 				return nil, err
 			}
@@ -81,17 +81,17 @@ func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview 
 	}
 	submission.ApprovalStatus = submissionReview.ApprovalStatus
 	submission.ReviewComment = submissionReview.ReviewComment
-	submission.ReviewerID = &reviewer.ID
-	return e.submission_repository.SaveSubmission(submission)
+	submission.ReviewerId = &reviewer.Id
+	return e.submissionRepository.SaveSubmission(submission)
 }
 
 func (e *SubmissionService) DeleteSubmission(id int, user *repository.User) error {
-	submission, err := e.submission_repository.GetSubmissionById(id)
+	submission, err := e.submissionRepository.GetSubmissionById(id)
 	if err != nil {
 		return err
 	}
-	if submission.UserID != user.ID {
+	if submission.UserId != user.Id {
 		return fmt.Errorf("you are not allowed to delete this submission")
 	}
-	return e.submission_repository.DeleteSubmission(id)
+	return e.submissionRepository.DeleteSubmission(id)
 }

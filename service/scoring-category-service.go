@@ -6,19 +6,19 @@ import (
 )
 
 type ScoringCategoryService struct {
-	rules_repository *repository.ScoringCategoryRepository
-	event_repository *repository.EventRepository
+	rulesRepository *repository.ScoringCategoryRepository
+	eventRepository *repository.EventRepository
 }
 
 func NewScoringCategoryService() *ScoringCategoryService {
 	return &ScoringCategoryService{
-		rules_repository: repository.NewScoringCategoryRepository(),
-		event_repository: repository.NewEventRepository(),
+		rulesRepository: repository.NewScoringCategoryRepository(),
+		eventRepository: repository.NewEventRepository(),
 	}
 }
 
 func (e *ScoringCategoryService) GetCategoryById(categoryId int, preloads ...string) (*repository.ScoringCategory, error) {
-	category, err := e.rules_repository.GetNestedCategories(categoryId, preloads...)
+	category, err := e.rulesRepository.GetNestedCategories(categoryId, preloads...)
 	if err != nil {
 		return nil, err
 	}
@@ -26,16 +26,16 @@ func (e *ScoringCategoryService) GetCategoryById(categoryId int, preloads ...str
 }
 
 func (e *ScoringCategoryService) GetRulesForEvent(eventId int, preloads ...string) (*repository.ScoringCategory, error) {
-	event, err := e.event_repository.GetEventById(eventId)
+	event, err := e.eventRepository.GetEventById(eventId)
 	if err != nil {
 		return nil, err
 	}
 
-	return e.rules_repository.GetNestedCategories(event.ScoringCategoryID, preloads...)
+	return e.rulesRepository.GetNestedCategories(event.ScoringCategoryId, preloads...)
 }
 
 func (e *ScoringCategoryService) CreateCategory(category *repository.ScoringCategory) (*repository.ScoringCategory, error) {
-	category, err := e.rules_repository.SaveCategory(category)
+	category, err := e.rulesRepository.SaveCategory(category)
 	if err != nil {
 		return nil, err
 	}
@@ -43,31 +43,31 @@ func (e *ScoringCategoryService) CreateCategory(category *repository.ScoringCate
 }
 
 func (e *ScoringCategoryService) UpdateCategory(categoryUpdate *repository.ScoringCategory) (*repository.ScoringCategory, error) {
-	category, err := e.rules_repository.GetCategoryById(categoryUpdate.ID)
+	category, err := e.rulesRepository.GetCategoryById(categoryUpdate.Id)
 	if err != nil {
 		return nil, err
 	}
 	if categoryUpdate.Name != "" {
 		category.Name = categoryUpdate.Name
 	}
-	return e.rules_repository.SaveCategory(category)
+	return e.rulesRepository.SaveCategory(category)
 }
 
 func (e *ScoringCategoryService) DeleteCategoryById(categoryId int) error {
-	return e.rules_repository.DeleteCategoryById(categoryId)
+	return e.rulesRepository.DeleteCategoryById(categoryId)
 }
 
-func (e *ScoringCategoryService) DuplicateScoringCategories(eventID int, scoringPresetMap map[int]int) (*repository.ScoringCategory, error) {
-	event, err := e.event_repository.GetEventById(eventID)
+func (e *ScoringCategoryService) DuplicateScoringCategories(eventId int, scoringPresetMap map[int]int) (*repository.ScoringCategory, error) {
+	event, err := e.eventRepository.GetEventById(eventId)
 	if err != nil {
 		return nil, err
 	}
-	scoringCategories, err := e.rules_repository.GetNestedCategories(event.ScoringCategoryID, "Objectives", "Objectives.Conditions")
+	scoringCategories, err := e.rulesRepository.GetNestedCategories(event.ScoringCategoryId, "Objectives", "Objectives.Conditions")
 	if err != nil {
 		return nil, err
 	}
 	newCategory := StripCategory(scoringCategories, scoringPresetMap)
-	e.rules_repository.SaveCategory(newCategory)
+	e.rulesRepository.SaveCategory(newCategory)
 	return newCategory, nil
 }
 
