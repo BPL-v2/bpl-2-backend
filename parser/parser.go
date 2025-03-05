@@ -2,8 +2,11 @@ package parser
 
 import (
 	clientModel "bpl/client"
+	"bpl/repository"
 	dbModel "bpl/repository"
+	"bpl/utils"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,6 +14,27 @@ import (
 )
 
 type checkerFun func(item *clientModel.Item) bool
+
+func BoolFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) bool, error) {
+	switch field {
+	case dbModel.IS_CORRUPTED:
+		return func(item *clientModel.Item) bool {
+			if item.Corrupted != nil {
+				return *item.Corrupted
+			}
+			return false
+		}, nil
+	case dbModel.IS_VAAL:
+		return func(item *clientModel.Item) bool {
+			if item.Hybrid != nil && item.Hybrid.IsVaalGem != nil {
+				return *item.Hybrid.IsVaalGem
+			}
+			return false
+		}, nil
+	default:
+		return nil, fmt.Errorf("%s is not a valid boolean field", field)
+	}
+}
 
 func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) string, error) {
 	switch field {
@@ -33,6 +57,31 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 			}
 			return ""
 		}, nil
+	case dbModel.SOCKETS:
+		return func(item *clientModel.Item) string {
+			if item.Sockets != nil {
+				socketString := ""
+				for _, socket := range *item.Sockets {
+					if socket.SColour != nil {
+						socketString += *socket.SColour
+					}
+				}
+				return socketString
+			}
+			return ""
+		}, nil
+
+	case dbModel.RITUAL_MAP:
+		return func(item *clientModel.Item) string {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "From" {
+						return property.Values[0].Name()
+					}
+				}
+			}
+			return ""
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid string field", field)
 	}
@@ -40,21 +89,21 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 
 func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) []string, error) {
 	switch field {
-	case dbModel.ENCHANT_MODS:
+	case dbModel.ENCHANTS:
 		return func(item *clientModel.Item) []string {
 			if item.EnchantMods != nil {
 				return *item.EnchantMods
 			}
 			return []string{}
 		}, nil
-	case dbModel.EXPLICIT_MODS:
+	case dbModel.EXPLICITS:
 		return func(item *clientModel.Item) []string {
 			if item.ExplicitMods != nil {
 				return *item.ExplicitMods
 			}
 			return []string{}
 		}, nil
-	case dbModel.IMPLICIT_MODS:
+	case dbModel.IMPLICITS:
 		return func(item *clientModel.Item) []string {
 			if item.ImplicitMods != nil {
 				return *item.ImplicitMods
@@ -74,6 +123,49 @@ func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Ite
 				return *item.FracturedMods
 			}
 			return []string{}
+		}, nil
+	case dbModel.SANCTUM_MODS:
+		return func(item *clientModel.Item) []string {
+			mods := make([]string, 0)
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if utils.Contains([]string{"Minor Afflictions", "Major Afflictions", "Minor Boons", "Major Boons"}, property.Name) {
+						for _, value := range property.Values {
+							mods = append(mods, value.Name())
+						}
+					}
+				}
+			}
+			return mods
+		}, nil
+	case dbModel.TEMPLE_ROOMS:
+		return func(item *clientModel.Item) []string {
+			rooms := make([]string, 0)
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Type != nil && *property.Type == 49 {
+						// we can also only look for open rooms by requiring value.ID == 0
+						for _, value := range property.Values {
+							rooms = append(rooms, value.Name())
+						}
+					}
+				}
+			}
+			return rooms
+		}, nil
+	case dbModel.RITUAL_BOSSES:
+		return func(item *clientModel.Item) []string {
+			bosses := make([]string, 0)
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Monsters:\n{0}" {
+						for _, value := range property.Values {
+							bosses = append(bosses, value.Name())
+						}
+					}
+				}
+			}
+			return bosses
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid string array field", field)
@@ -100,26 +192,79 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 			}
 			return 0
 		}, nil
+	case dbModel.MAX_LINKS:
+		return func(item *clientModel.Item) int {
+			if item.Sockets != nil {
+				groups := make(map[int]int)
+				for _, socket := range *item.Sockets {
+					groups[socket.Group]++
+				}
+				return utils.Max(utils.Values(groups))
+			}
+			return 0
+		}, nil
+	case dbModel.INCUBATOR_KILLS:
+		return func(item *clientModel.Item) int {
+			if item.IncubatedItem != nil {
+				return item.IncubatedItem.Progress
+			}
+			return 0
+		}, nil
+	case dbModel.QUALITY:
+		return func(item *clientModel.Item) int {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Quality" {
+						quality, err := strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(property.Values[0].Name(), "%", ""), "+", ""))
+						if err != nil {
+							log.Printf("Error parsing quality %s", property.Values[0].Name())
+							return 0
+						}
+						return quality
+					}
+				}
+			}
+			return 0
+		}, nil
+	case dbModel.LEVEL:
+		return func(item *clientModel.Item) int {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Level" {
+						level, err := strconv.Atoi(strings.ReplaceAll(property.Values[0].Name(), " (Max)", ""))
+						if err != nil {
+							log.Printf("Error parsing level %s", property.Values[0].Name())
+							return 0
+						}
+						return level
+					}
+				}
+			}
+			return 0
+		}, nil
+
 	default:
 		return nil, fmt.Errorf("%s is not a valid integer field", field)
 	}
 }
 
-var fieldToComparator = map[dbModel.ItemField]func(*dbModel.Condition) (checkerFun, error){
-	dbModel.BASE_TYPE: StringComparator,
-	dbModel.NAME:      StringComparator,
-	dbModel.TYPE_LINE: StringComparator,
-	dbModel.RARITY:    StringComparator,
-
-	dbModel.ILVL:          IntComparator,
-	dbModel.FRAME_TYPE:    IntComparator,
-	dbModel.TALISMAN_TIER: IntComparator,
-
-	dbModel.ENCHANT_MODS:   StringArrayComparator,
-	dbModel.EXPLICIT_MODS:  StringArrayComparator,
-	dbModel.IMPLICIT_MODS:  StringArrayComparator,
-	dbModel.CRAFTED_MODS:   StringArrayComparator,
-	dbModel.FRACTURED_MODS: StringArrayComparator,
+func BoolComparator(condition *dbModel.Condition) (checkerFun, error) {
+	getter, err := BoolFieldGetter(condition.Field)
+	if err != nil {
+		return nil, err
+	}
+	switch condition.Operator {
+	case dbModel.EQ:
+		return func(item *clientModel.Item) bool {
+			return getter(item)
+		}, nil
+	case dbModel.NEQ:
+		return func(item *clientModel.Item) bool {
+			return !getter(item)
+		}, nil
+	default:
+		return nil, fmt.Errorf("%s is an invalid operator for boolean field %s", condition.Operator, condition.Field)
+	}
 }
 
 func IntComparator(condition *dbModel.Condition) (checkerFun, error) {
@@ -151,17 +296,9 @@ func IntComparator(condition *dbModel.Condition) (checkerFun, error) {
 		return func(item *clientModel.Item) bool {
 			return getter(item) > intValue
 		}, nil
-	case dbModel.GTE:
-		return func(item *clientModel.Item) bool {
-			return getter(item) >= intValue
-		}, nil
 	case dbModel.LT:
 		return func(item *clientModel.Item) bool {
 			return getter(item) < intValue
-		}, nil
-	case dbModel.LTE:
-		return func(item *clientModel.Item) bool {
-			return getter(item) <= intValue
 		}, nil
 	case dbModel.IN:
 		return func(item *clientModel.Item) bool {
@@ -234,6 +371,30 @@ func StringComparator(condition *dbModel.Condition) (checkerFun, error) {
 		return func(item *clientModel.Item) bool {
 			return strings.Contains(getter(item), condition.Value)
 		}, nil
+	case dbModel.LENGTH_EQ:
+		length, err := strconv.Atoi(condition.Value)
+		if err != nil {
+			return nil, err
+		}
+		return func(item *clientModel.Item) bool {
+			return len(getter(item)) == length
+		}, nil
+	case dbModel.LENGTH_GT:
+		length, err := strconv.Atoi(condition.Value)
+		if err != nil {
+			return nil, err
+		}
+		return func(item *clientModel.Item) bool {
+			return len(getter(item)) > length
+		}, nil
+	case dbModel.LENGTH_LT:
+		length, err := strconv.Atoi(condition.Value)
+		if err != nil {
+			return nil, err
+		}
+		return func(item *clientModel.Item) bool {
+			return len(getter(item)) < length
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for string field %s", condition.Operator, condition.Field)
 	}
@@ -244,7 +405,6 @@ func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
 	if err != nil {
 		return nil, err
 	}
-	values := strings.Split(condition.Value, ",")
 	switch condition.Operator {
 	case dbModel.CONTAINS:
 		return func(item *clientModel.Item) bool {
@@ -254,23 +414,6 @@ func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
 				}
 			}
 			return false
-		}, nil
-	case dbModel.CONTAINS_ALL:
-		return func(item *clientModel.Item) bool {
-			fieldValues := getter(item)
-			for _, v := range values {
-				found := false
-				for _, fv := range fieldValues {
-					if strings.Contains(fv, v) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					return false
-				}
-			}
-			return true
 		}, nil
 	case dbModel.CONTAINS_MATCH:
 		expression := regexp.MustCompile(condition.Value)
@@ -282,26 +425,29 @@ func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
 			}
 			return false
 		}, nil
-	case dbModel.CONTAINS_ALL_MATCHES:
-		expressions := make([]*regexp.Regexp, len(values))
-		for i, v := range values {
-			expressions[i] = regexp.MustCompile(v)
+	case dbModel.LENGTH_EQ:
+		length, err := strconv.Atoi(condition.Value)
+		if err != nil {
+			return nil, err
 		}
 		return func(item *clientModel.Item) bool {
-			fieldValues := getter(item)
-			for _, expression := range expressions {
-				found := false
-				for _, fv := range fieldValues {
-					if expression.MatchString(fv) {
-						found = true
-						break
-					}
-				}
-				if !found {
-					return false
-				}
-			}
-			return true
+			return len(getter(item)) == length
+		}, nil
+	case dbModel.LENGTH_GT:
+		length, err := strconv.Atoi(condition.Value)
+		if err != nil {
+			return nil, err
+		}
+		return func(item *clientModel.Item) bool {
+			return len(getter(item)) > length
+		}, nil
+	case dbModel.LENGTH_LT:
+		length, err := strconv.Atoi(condition.Value)
+		if err != nil {
+			return nil, err
+		}
+		return func(item *clientModel.Item) bool {
+			return len(getter(item)) < length
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for string array field %s", condition.Operator, condition.Field)
@@ -309,10 +455,18 @@ func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
 }
 
 func Comparator(condition *dbModel.Condition) (checkerFun, error) {
-	if f, ok := fieldToComparator[condition.Field]; ok {
-		return f(condition)
+	switch repository.FieldToType[condition.Field] {
+	case dbModel.Bool:
+		return BoolComparator(condition)
+	case dbModel.String:
+		return StringComparator(condition)
+	case dbModel.StringArray:
+		return StringArrayComparator(condition)
+	case dbModel.Int:
+		return IntComparator(condition)
+	default:
+		return nil, fmt.Errorf("Comparator: invalid field type %s", condition.Field)
 	}
-	return nil, fmt.Errorf("Comparator: invalid field %s", condition.Field)
 }
 
 func ComperatorFromConditions(conditions []*dbModel.Condition) (checkerFun, error) {

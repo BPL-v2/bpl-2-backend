@@ -152,6 +152,22 @@ definitions:
     - operator
     - value
     type: object
+  ConditionMappings:
+    properties:
+      field_to_type:
+        additionalProperties:
+          $ref: '#/definitions/FieldType'
+        type: object
+      valid_operators:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/Operator'
+          type: array
+        type: object
+    required:
+    - field_to_type
+    - valid_operators
+    type: object
   DiscordBotLoginBody:
     properties:
       token:
@@ -694,6 +710,18 @@ definitions:
     - VeryHigh
     - Extreme
     - NoLife
+  FieldType:
+    enum:
+    - string
+    - int
+    - bool
+    - string[]
+    type: string
+    x-enum-varnames:
+    - String
+    - Int
+    - Bool
+    - StringArray
   GameVersion:
     enum:
     - poe1
@@ -707,6 +735,8 @@ definitions:
     - BASE_TYPE
     - NAME
     - TYPE_LINE
+    - QUALITY
+    - LEVEL
     - RARITY
     - ILVL
     - FRAME_TYPE
@@ -716,22 +746,42 @@ definitions:
     - IMPLICIT_MODS
     - CRAFTED_MODS
     - FRACTURED_MODS
-    - SIX_LINK
+    - MAX_LINKS
+    - SOCKETS
+    - INCUBATOR_KILLS
+    - IS_CORRUPTED
+    - IS_VAAL
+    - SANCTUM_AFFLICTIONS
+    - TEMPLE_ROOMS
+    - RITUAL_VESSEL_BOSSES
+    - RITUAL_VESSEL_MAP
     type: string
+    x-enum-comments:
+      SOCKETS: as string like "RGGB"
     x-enum-varnames:
     - BASE_TYPE
     - NAME
     - TYPE_LINE
+    - QUALITY
+    - LEVEL
     - RARITY
     - ILVL
     - FRAME_TYPE
     - TALISMAN_TIER
-    - ENCHANT_MODS
-    - EXPLICIT_MODS
-    - IMPLICIT_MODS
+    - ENCHANTS
+    - EXPLICITS
+    - IMPLICITS
     - CRAFTED_MODS
     - FRACTURED_MODS
-    - SIX_LINK
+    - MAX_LINKS
+    - SOCKETS
+    - INCUBATOR_KILLS
+    - IS_CORRUPTED
+    - IS_VAAL
+    - SANCTUM_MODS
+    - TEMPLE_ROOMS
+    - RITUAL_BOSSES
+    - RITUAL_MAP
   JobType:
     enum:
     - FetchStashChanges
@@ -769,31 +819,29 @@ definitions:
     - EQ
     - NEQ
     - GT
-    - GTE
     - LT
-    - LTE
     - IN
     - NOT_IN
     - MATCHES
     - CONTAINS
-    - CONTAINS_ALL
     - CONTAINS_MATCH
-    - CONTAINS_ALL_MATCHES
+    - LENGTH_EQ
+    - LENGTH_GT
+    - LENGTH_LT
     type: string
     x-enum-varnames:
     - EQ
     - NEQ
     - GT
-    - GTE
     - LT
-    - LTE
     - IN
     - NOT_IN
     - MATCHES
     - CONTAINS
-    - CONTAINS_ALL
     - CONTAINS_MATCH
-    - CONTAINS_ALL_MATCHES
+    - LENGTH_EQ
+    - LENGTH_GT
+    - LENGTH_LT
   Permission:
     enum:
     - admin
@@ -1593,6 +1641,19 @@ paths:
         required: true
         type: integer
       responses: {}
+      tags:
+      - condition
+  /scoring/conditions/valid-mappings:
+    get:
+      description: Get valid mappings for conditions
+      operationId: GetValidMappings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ConditionMappings'
       tags:
       - condition
   /scoring/objectives:
