@@ -23,6 +23,7 @@ func setupConditionController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler()},
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteConditionHandler()},
+		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler()},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -86,6 +87,21 @@ func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetValidMappings
+// @Description Get valid mappings for conditions
+// @Tags condition
+// @Produce json
+// @Success 200 {object} ConditionMappings
+// @Router /scoring/conditions/valid-mappings [get]
+func (e *ConditionController) getValidMappingsHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, ConditionMappings{
+			FieldToType:    repository.FieldToType,
+			ValidOperators: repository.OperatorsForTypes,
+		})
+	}
+}
+
 type ConditionCreate struct {
 	Operator    repository.Operator  `json:"operator" binding:"required,oneof=EQ NEQ GT GTE LT LTE IN NOT_IN MATCHES CONTAINS CONTAINS_ALL CONTAINS_MATCH CONTAINS_ALL_MATCHES"`
 	ItemField   repository.ItemField `json:"field" binding:"required,oneof=BASE_TYPE NAME TYPE_LINE RARITY ILVL FRAME_TYPE TALISMAN_TIER ENCHANT_MODS EXPLICIT_MODS IMPLICIT_MODS CRAFTED_MODS FRACTURED_MODS SIX_LINK"`
@@ -121,4 +137,9 @@ func toConditionResponse(condition *repository.Condition) *Condition {
 		FieldValue: condition.Value,
 		Id:         condition.Id,
 	}
+}
+
+type ConditionMappings struct {
+	FieldToType    map[repository.ItemField]repository.FieldType  `json:"field_to_type" binding:"required"`
+	ValidOperators map[repository.FieldType][]repository.Operator `json:"valid_operators" binding:"required"`
 }

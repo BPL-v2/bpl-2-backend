@@ -1111,6 +1111,26 @@ const docTemplate = `{
                 }
             }
         },
+        "/scoring/conditions/valid-mappings": {
+            "get": {
+                "description": "Get valid mappings for conditions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "condition"
+                ],
+                "operationId": "GetValidMappings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ConditionMappings"
+                        }
+                    }
+                }
+            }
+        },
         "/scoring/conditions/{id}": {
             "delete": {
                 "description": "Deletes a condition",
@@ -1738,6 +1758,30 @@ const docTemplate = `{
                 },
                 "value": {
                     "type": "string"
+                }
+            }
+        },
+        "ConditionMappings": {
+            "type": "object",
+            "required": [
+                "field_to_type",
+                "valid_operators"
+            ],
+            "properties": {
+                "field_to_type": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/FieldType"
+                    }
+                },
+                "valid_operators": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/Operator"
+                        }
+                    }
                 }
             }
         },
@@ -2517,6 +2561,21 @@ const docTemplate = `{
                 "NoLife"
             ]
         },
+        "FieldType": {
+            "type": "string",
+            "enum": [
+                "string",
+                "int",
+                "bool",
+                "string[]"
+            ],
+            "x-enum-varnames": [
+                "String",
+                "Int",
+                "Bool",
+                "StringArray"
+            ]
+        },
         "GameVersion": {
             "type": "string",
             "enum": [
@@ -2534,6 +2593,8 @@ const docTemplate = `{
                 "BASE_TYPE",
                 "NAME",
                 "TYPE_LINE",
+                "QUALITY",
+                "LEVEL",
                 "RARITY",
                 "ILVL",
                 "FRAME_TYPE",
@@ -2543,22 +2604,43 @@ const docTemplate = `{
                 "IMPLICIT_MODS",
                 "CRAFTED_MODS",
                 "FRACTURED_MODS",
-                "SIX_LINK"
+                "MAX_LINKS",
+                "SOCKETS",
+                "INCUBATOR_KILLS",
+                "IS_CORRUPTED",
+                "IS_VAAL",
+                "SANCTUM_AFFLICTIONS",
+                "TEMPLE_ROOMS",
+                "RITUAL_VESSEL_BOSSES",
+                "RITUAL_VESSEL_MAP"
             ],
+            "x-enum-comments": {
+                "SOCKETS": "as string like \"RGGB\""
+            },
             "x-enum-varnames": [
                 "BASE_TYPE",
                 "NAME",
                 "TYPE_LINE",
+                "QUALITY",
+                "LEVEL",
                 "RARITY",
                 "ILVL",
                 "FRAME_TYPE",
                 "TALISMAN_TIER",
-                "ENCHANT_MODS",
-                "EXPLICIT_MODS",
-                "IMPLICIT_MODS",
+                "ENCHANTS",
+                "EXPLICITS",
+                "IMPLICITS",
                 "CRAFTED_MODS",
                 "FRACTURED_MODS",
-                "SIX_LINK"
+                "MAX_LINKS",
+                "SOCKETS",
+                "INCUBATOR_KILLS",
+                "IS_CORRUPTED",
+                "IS_VAAL",
+                "SANCTUM_MODS",
+                "TEMPLE_ROOMS",
+                "RITUAL_BOSSES",
+                "RITUAL_MAP"
             ]
         },
         "JobType": {
@@ -2608,31 +2690,29 @@ const docTemplate = `{
                 "EQ",
                 "NEQ",
                 "GT",
-                "GTE",
                 "LT",
-                "LTE",
                 "IN",
                 "NOT_IN",
                 "MATCHES",
                 "CONTAINS",
-                "CONTAINS_ALL",
                 "CONTAINS_MATCH",
-                "CONTAINS_ALL_MATCHES"
+                "LENGTH_EQ",
+                "LENGTH_GT",
+                "LENGTH_LT"
             ],
             "x-enum-varnames": [
                 "EQ",
                 "NEQ",
                 "GT",
-                "GTE",
                 "LT",
-                "LTE",
                 "IN",
                 "NOT_IN",
                 "MATCHES",
                 "CONTAINS",
-                "CONTAINS_ALL",
                 "CONTAINS_MATCH",
-                "CONTAINS_ALL_MATCHES"
+                "LENGTH_EQ",
+                "LENGTH_GT",
+                "LENGTH_LT"
             ]
         },
         "Permission": {

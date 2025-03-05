@@ -214,13 +214,23 @@ type ItemSocket struct {
 	SColour *string `json:"sColour,omitempty"`
 }
 
+type ItemValue []any
+
+func (v ItemValue) Name() string {
+	return v[0].(string)
+}
+
+func (v ItemValue) Id() int {
+	return v[1].(int)
+}
+
 type ItemProperty struct {
-	Name        string          `json:"name"`
-	Values      [][]interface{} `json:"values"`
-	DisplayMode *int            `json:"displayMode,omitempty"`
-	Progress    *float64        `json:"progress,omitempty"`
-	Type        *int            `json:"type,omitempty"`
-	Suffix      *string         `json:"suffix,omitempty"`
+	Name        string      `json:"name"`
+	Values      []ItemValue `json:"values"`
+	DisplayMode *int        `json:"displayMode,omitempty"`
+	Progress    *float64    `json:"progress,omitempty"`
+	Type        *int        `json:"type,omitempty"`
+	Suffix      *string     `json:"suffix,omitempty"`
 }
 
 type ItemInfluences struct {
