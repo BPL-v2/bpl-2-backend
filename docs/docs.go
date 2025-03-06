@@ -1765,6 +1765,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "field_to_type",
+                "objective_type_to_number_fields",
                 "valid_operators"
             ],
             "properties": {
@@ -1772,6 +1773,15 @@ const docTemplate = `{
                     "type": "object",
                     "additionalProperties": {
                         "$ref": "#/definitions/FieldType"
+                    }
+                },
+                "objective_type_to_number_fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/NumberField"
+                        }
                     }
                 },
                 "valid_operators": {
@@ -2661,13 +2671,19 @@ const docTemplate = `{
             "enum": [
                 "STACK_SIZE",
                 "PLAYER_LEVEL",
-                "PLAYER_XP",
+                "DELVE_DEPTH",
+                "PANTHEON",
+                "ASCENDANCY",
+                "PLAYER_SCORE",
                 "SUBMISSION_VALUE"
             ],
             "x-enum-varnames": [
                 "STACK_SIZE",
                 "PLAYER_LEVEL",
-                "PLAYER_XP",
+                "DELVE_DEPTH",
+                "PANTHEON",
+                "ASCENDANCY",
+                "PLAYER_SCORE",
                 "SUBMISSION_VALUE"
             ]
         },

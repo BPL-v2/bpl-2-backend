@@ -456,14 +456,14 @@ type PassiveNodeMasteryEffect struct {
 }
 
 type PassiveNodeExpansionJewel struct {
-	Size   *int `json:"size,omitempty"`
-	Index  *int `json:"index,omitempty"`
-	Proxy  *int `json:"proxy,omitempty"`
-	Parent *int `json:"parent,omitempty"`
+	Size   *int    `json:"size,omitempty"`
+	Index  *int    `json:"index,omitempty"`
+	Proxy  *string `json:"proxy,omitempty"`
+	Parent *string `json:"parent,omitempty"`
 }
 
 type PassiveNode struct {
-	Skill                  *int                        `json:"skill,omitempty"`
+	Skill                  *string                     `json:"skill,omitempty"` // actually an int but it's a string in the ggg response
 	Name                   *string                     `json:"name,omitempty"`
 	Icon                   *string                     `json:"icon,omitempty"`
 	IsKeystone             *bool                       `json:"isKeystone,omitempty"`

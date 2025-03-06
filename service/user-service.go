@@ -171,3 +171,7 @@ func (s *UserService) AddUserFromStashchange(userName string, event *repository.
 func (s *UserService) GetUsersForEvent(eventId int) ([]*repository.TeamUserWithPoEAccountName, error) {
 	return s.userRepository.GetUsersForEvent(eventId)
 }
+
+func (s *UserService) GetAuthenticatedUsersForEvent(eventId int) ([]*repository.TeamUserWithPoEAccountName, error) {
+	return s.userRepository.GetUsersForEvent(eventId)
+}

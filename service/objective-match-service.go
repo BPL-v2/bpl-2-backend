@@ -15,7 +15,7 @@ func NewObjectiveMatchService() *ObjectiveMatchService {
 	}
 }
 
-func (e *ObjectiveMatchService) CreateMatches(matches map[int]int, userId int, stashChangeId int, eventId int, timestamp time.Time) []*repository.ObjectiveMatch {
+func (e *ObjectiveMatchService) CreateItemMatches(matches map[int]int, userId int, stashChangeId int, eventId int, timestamp time.Time) []*repository.ObjectiveMatch {
 	objectiveMatches := make([]*repository.ObjectiveMatch, 0)
 	for objectiveId, number := range matches {
 		objectiveMatch := &repository.ObjectiveMatch{

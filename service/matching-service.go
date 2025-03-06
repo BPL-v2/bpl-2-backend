@@ -59,7 +59,7 @@ func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange conf
 	return stashChange, nil
 }
 
-func (m *MatchingService) getMatches(stashChange config.StashChangeMessage, userMap map[string]int, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
+func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, userMap map[string]int, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 	for _, stash := range stashChange.Stashes {
@@ -77,7 +77,7 @@ func (m *MatchingService) getMatches(stashChange config.StashChangeMessage, user
 				}
 			}
 			teamMatchesTotal.WithLabelValues(teamMap[*stash.AccountName]).Add(float64(len(completions)))
-			matches = append(matches, m.objectiveMatchService.CreateMatches(completions, userId, stash.StashChangeId, m.event.Id, stashChange.Timestamp)...)
+			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, userId, stash.StashChangeId, m.event.Id, stashChange.Timestamp)...)
 		}
 	}
 	return matches
@@ -180,7 +180,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 			// 	}
 			// }
 
-			matches = append(matches, m.getMatches(stashChange, userMap, teamMap, itemChecker, desyncedObjectiveIds)...)
+			matches = append(matches, m.getItemMatches(stashChange, userMap, teamMap, itemChecker, desyncedObjectiveIds)...)
 			if !syncing {
 				err = m.objectiveMatchService.SaveMatches(matches, desyncedObjectiveIds)
 				if err != nil {

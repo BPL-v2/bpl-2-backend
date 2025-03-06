@@ -180,6 +180,12 @@ type TeamUserWithPoEAccountName struct {
 	AccountName string
 }
 
+type TeamUserWithPoEToken struct {
+	TeamId int
+	UserId int
+	Token  string
+}
+
 func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccountName, error) {
 	var users []*TeamUserWithPoEAccountName
 	query := `
@@ -192,6 +198,26 @@ func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccoun
 		JOIN team_users ON team_users.user_id = users.id
 		JOIN teams ON teams.id = team_users.team_id
 		WHERE teams.event_id = ? AND oauths.provider = 'poe'
+	`
+	result := r.DB.Raw(query, eventId).Scan(&users)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get users for event: %v", result.Error)
+	}
+	return users, nil
+}
+
+func (r *UserRepository) GetAuthenticatedUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error) {
+	var users []*TeamUserWithPoEToken
+	query := `
+		SELECT
+			users.id as user_id,
+			oauths.access_token as token,
+			team_users.team_id as team_id
+		FROM users
+		JOIN oauths ON oauths.user_id = users.id
+		JOIN team_users ON team_users.user_id = users.id
+		JOIN teams ON teams.id = team_users.team_id
+		WHERE teams.event_id = ? AND oauths.provider = 'poe' AND oauths.expiry > now()
 	`
 	result := r.DB.Raw(query, eventId).Scan(&users)
 	if result.Error != nil {
