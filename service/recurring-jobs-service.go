@@ -131,5 +131,13 @@ func (s *RecurringJobService) FetchStashChanges(job *RecurringJob) error {
 }
 
 func (s *RecurringJobService) FetchCharacterData(job *RecurringJob) error {
-	return fmt.Errorf("not implemented")
+	event, err := s.eventService.GetEventById(job.EventId)
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
+	job.Cancel = cancel
+	go PlayerFetchLoop(ctx, event, s.poeClient)
+	return nil
 }

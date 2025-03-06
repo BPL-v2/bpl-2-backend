@@ -28,11 +28,22 @@ const (
 type NumberField string
 
 const (
-	STACK_SIZE       NumberField = "STACK_SIZE"
-	PLAYER_LEVEL     NumberField = "PLAYER_LEVEL"
-	PLAYER_XP        NumberField = "PLAYER_XP"
+	STACK_SIZE NumberField = "STACK_SIZE"
+
+	PLAYER_LEVEL NumberField = "PLAYER_LEVEL"
+	DELVE_DEPTH  NumberField = "DELVE_DEPTH"
+	PANTHEON     NumberField = "PANTHEON"
+	ASCENDANCY   NumberField = "ASCENDANCY"
+	PLAYER_SCORE NumberField = "PLAYER_SCORE"
+
 	SUBMISSION_VALUE NumberField = "SUBMISSION_VALUE"
 )
+
+var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
+	ITEM:       {STACK_SIZE},
+	PLAYER:     {PLAYER_LEVEL, DELVE_DEPTH, PANTHEON, ASCENDANCY, PLAYER_SCORE},
+	SUBMISSION: {SUBMISSION_VALUE},
+}
 
 type SyncStatus string
 

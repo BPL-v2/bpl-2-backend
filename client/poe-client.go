@@ -97,7 +97,7 @@ func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) 
 		if err != nil {
 			return nil, &ClientError{
 				StatusCode:      response.StatusCode,
-				Error:           "bpl2_client_response_body_read_error",
+				Error:           "bpl2_client_response_error_body_parse_error",
 				Description:     err.Error(),
 				ResponseHeaders: response.Header,
 			}
@@ -113,9 +113,10 @@ func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) 
 	result := new(T)
 	err = json.Unmarshal(respBody, result)
 	if err != nil {
+		fmt.Println(string(respBody))
 		return nil, &ClientError{
 			StatusCode:      response.StatusCode,
-			Error:           "bpl2_client_response_body_read_error",
+			Error:           "bpl2_client_response_body_parse_error",
 			Description:     err.Error(),
 			ResponseHeaders: response.Header,
 		}

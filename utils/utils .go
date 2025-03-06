@@ -8,6 +8,18 @@ func Map[A any, B any](input []A, mapper func(A) B) []B {
 	return output
 }
 
+func FlatMap[A any, B any](input []A, mapper func(A) []B) []B {
+	return Flatten(Map(input, mapper))
+}
+
+func Flatten[A any](input [][]A) []A {
+	output := make([]A, 0)
+	for _, item := range input {
+		output = append(output, item...)
+	}
+	return output
+}
+
 func Filter[A any](input []A, filter func(A) bool) []A {
 	output := make([]A, 0)
 	for _, item := range input {

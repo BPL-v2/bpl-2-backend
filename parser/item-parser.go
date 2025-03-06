@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type checkerFun func(item *clientModel.Item) bool
+type itemChecker func(item *clientModel.Item) bool
 
 func BoolFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) bool, error) {
 	switch field {
@@ -248,7 +248,7 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 	}
 }
 
-func BoolComparator(condition *dbModel.Condition) (checkerFun, error) {
+func BoolComparator(condition *dbModel.Condition) (itemChecker, error) {
 	getter, err := BoolFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
@@ -267,7 +267,7 @@ func BoolComparator(condition *dbModel.Condition) (checkerFun, error) {
 	}
 }
 
-func IntComparator(condition *dbModel.Condition) (checkerFun, error) {
+func IntComparator(condition *dbModel.Condition) (itemChecker, error) {
 	getter, err := IntFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
@@ -325,7 +325,7 @@ func IntComparator(condition *dbModel.Condition) (checkerFun, error) {
 	}
 }
 
-func StringComparator(condition *dbModel.Condition) (checkerFun, error) {
+func StringComparator(condition *dbModel.Condition) (itemChecker, error) {
 	getter, err := StringFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
@@ -400,7 +400,7 @@ func StringComparator(condition *dbModel.Condition) (checkerFun, error) {
 	}
 }
 
-func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
+func StringArrayComparator(condition *dbModel.Condition) (itemChecker, error) {
 	getter, err := StringArrayFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
@@ -454,7 +454,7 @@ func StringArrayComparator(condition *dbModel.Condition) (checkerFun, error) {
 	}
 }
 
-func Comparator(condition *dbModel.Condition) (checkerFun, error) {
+func Comparator(condition *dbModel.Condition) (itemChecker, error) {
 	switch repository.FieldToType[condition.Field] {
 	case dbModel.Bool:
 		return BoolComparator(condition)
@@ -469,7 +469,7 @@ func Comparator(condition *dbModel.Condition) (checkerFun, error) {
 	}
 }
 
-func ComperatorFromConditions(conditions []*dbModel.Condition) (checkerFun, error) {
+func ComperatorFromConditions(conditions []*dbModel.Condition) (itemChecker, error) {
 	if len(conditions) == 0 {
 		return func(item *clientModel.Item) bool {
 			return true
@@ -478,7 +478,7 @@ func ComperatorFromConditions(conditions []*dbModel.Condition) (checkerFun, erro
 	if len(conditions) == 1 {
 		return Comparator(conditions[0])
 	}
-	checkers := make([]checkerFun, len(conditions))
+	checkers := make([]itemChecker, len(conditions))
 	for i, condition := range conditions {
 		checker, err := Comparator(condition)
 		if err != nil {
@@ -538,14 +538,14 @@ func ValidateConditions(conditions []*dbModel.Condition) error {
 	return nil
 }
 
-type ObjectiveChecker struct {
+type ItemObjectiveChecker struct {
 	ObjectiveId int
-	Function    checkerFun
+	Function    itemChecker
 	ValidFrom   *time.Time
 	ValidTo     *time.Time
 }
 
-func (oc *ObjectiveChecker) Check(item *clientModel.Item) bool {
+func (oc *ItemObjectiveChecker) Check(item *clientModel.Item) bool {
 	now := time.Now()
 	if (oc.ValidFrom != nil && oc.ValidFrom.After(now)) || (oc.ValidTo != nil && oc.ValidTo.Before(now)) {
 		return false
@@ -559,13 +559,13 @@ type CheckResult struct {
 }
 
 type ItemChecker struct {
-	Funcmap map[dbModel.ItemField]map[string][]*ObjectiveChecker
+	Funcmap map[dbModel.ItemField]map[string][]*ItemObjectiveChecker
 }
 
 func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
-	funcMap := map[dbModel.ItemField]map[string][]*ObjectiveChecker{
-		dbModel.BASE_TYPE: make(map[string][]*ObjectiveChecker),
-		dbModel.NAME:      make(map[string][]*ObjectiveChecker),
+	funcMap := map[dbModel.ItemField]map[string][]*ItemObjectiveChecker{
+		dbModel.BASE_TYPE: make(map[string][]*ItemObjectiveChecker),
+		dbModel.NAME:      make(map[string][]*ItemObjectiveChecker),
 	}
 	for _, objective := range objectives {
 		if objective.ObjectiveType != dbModel.ITEM {
@@ -583,7 +583,7 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 			if valueToChecker, ok := funcMap[discriminator.field]; ok {
 				valueToChecker[discriminator.value] = append(
 					valueToChecker[discriminator.value],
-					&ObjectiveChecker{
+					&ItemObjectiveChecker{
 						ObjectiveId: objective.Id,
 						Function:    fn,
 					})
@@ -610,7 +610,7 @@ func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResul
 	return results
 }
 
-func applyCheckers(checkers []*ObjectiveChecker, item *clientModel.Item) []*CheckResult {
+func applyCheckers(checkers []*ItemObjectiveChecker, item *clientModel.Item) []*CheckResult {
 	results := make([]*CheckResult, 0)
 	for _, checker := range checkers {
 		if checker.Check(item) {

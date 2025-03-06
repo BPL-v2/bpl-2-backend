@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"bpl/client"
+	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
 	"strconv"
@@ -24,6 +26,7 @@ func setupConditionController() []RouteInfo {
 		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler()},
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteConditionHandler()},
 		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler()},
+		{Method: "POST", Path: "/test", HandlerFunc: e.testConditionHandler()},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -96,10 +99,44 @@ func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 func (e *ConditionController) getValidMappingsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(200, ConditionMappings{
-			FieldToType:    repository.FieldToType,
-			ValidOperators: repository.OperatorsForTypes,
+			FieldToType:                 repository.FieldToType,
+			ValidOperators:              repository.OperatorsForTypes,
+			ObjectiveTypeToNumberFields: repository.ObjectiveTypeToNumberFields,
 		})
 	}
+}
+
+func (e *ConditionController) testConditionHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var conditionTest ConditionTest
+		if err := c.BindJSON(&conditionTest); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		conditions := make([]*repository.Condition, 0, len(conditionTest.Conditions))
+		for _, condition := range conditionTest.Conditions {
+			conditions = append(conditions, &repository.Condition{
+				Operator: repository.Operator(condition.Operator),
+				Field:    repository.ItemField(condition.ItemField),
+				Value:    condition.FieldValue,
+			})
+		}
+		itemChecker, err := parser.ComperatorFromConditions(conditions)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, itemChecker(&conditionTest.Item))
+	}
+}
+
+type ConditionTest struct {
+	Conditions []struct {
+		Operator   repository.Operator  `json:"operator" binding:"required"`
+		ItemField  repository.ItemField `json:"field" binding:"required"`
+		FieldValue string               `json:"value" binding:"required"`
+	} `json:"conditions" binding:"required"`
+	Item client.Item `json:"item" binding:"required"`
 }
 
 type ConditionCreate struct {
@@ -140,6 +177,7 @@ func toConditionResponse(condition *repository.Condition) *Condition {
 }
 
 type ConditionMappings struct {
-	FieldToType    map[repository.ItemField]repository.FieldType  `json:"field_to_type" binding:"required"`
-	ValidOperators map[repository.FieldType][]repository.Operator `json:"valid_operators" binding:"required"`
+	FieldToType                 map[repository.ItemField]repository.FieldType         `json:"field_to_type" binding:"required"`
+	ValidOperators              map[repository.FieldType][]repository.Operator        `json:"valid_operators" binding:"required"`
+	ObjectiveTypeToNumberFields map[repository.ObjectiveType][]repository.NumberField `json:"objective_type_to_number_fields" binding:"required"`
 }

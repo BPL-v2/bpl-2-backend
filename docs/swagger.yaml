@@ -158,6 +158,12 @@ definitions:
         additionalProperties:
           $ref: '#/definitions/FieldType'
         type: object
+      objective_type_to_number_fields:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/NumberField'
+          type: array
+        type: object
       valid_operators:
         additionalProperties:
           items:
@@ -166,6 +172,7 @@ definitions:
         type: object
     required:
     - field_to_type
+    - objective_type_to_number_fields
     - valid_operators
     type: object
   DiscordBotLoginBody:
@@ -796,13 +803,19 @@ definitions:
     enum:
     - STACK_SIZE
     - PLAYER_LEVEL
-    - PLAYER_XP
+    - DELVE_DEPTH
+    - PANTHEON
+    - ASCENDANCY
+    - PLAYER_SCORE
     - SUBMISSION_VALUE
     type: string
     x-enum-varnames:
     - STACK_SIZE
     - PLAYER_LEVEL
-    - PLAYER_XP
+    - DELVE_DEPTH
+    - PANTHEON
+    - ASCENDANCY
+    - PLAYER_SCORE
     - SUBMISSION_VALUE
   ObjectiveType:
     enum:
