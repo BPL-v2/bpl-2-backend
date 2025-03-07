@@ -2,8 +2,8 @@ package controller
 
 import (
 	"bpl/client"
+	"bpl/cron"
 	"bpl/repository"
-	"bpl/service"
 	"bpl/utils"
 	"fmt"
 	"os"
@@ -13,7 +13,7 @@ import (
 )
 
 type RecurringJobsController struct {
-	service *service.RecurringJobService
+	service *cron.RecurringJobService
 }
 
 type JobCreate struct {
@@ -24,7 +24,7 @@ type JobCreate struct {
 	EndDate                  *time.Time         `json:"end_date"`
 }
 
-func (j *JobCreate) toJob() (*service.RecurringJob, error) {
+func (j *JobCreate) toJob() (*cron.RecurringJob, error) {
 	if !utils.Contains(jobList, j.JobType) {
 		return nil, fmt.Errorf("job type does not exist")
 	}
@@ -38,7 +38,7 @@ func (j *JobCreate) toJob() (*service.RecurringJob, error) {
 		endDate := time.Now().Add(time.Duration(*j.DurationInSeconds) * time.Second)
 		j.EndDate = &endDate
 	}
-	return &service.RecurringJob{
+	return &cron.RecurringJob{
 		JobType:                  j.JobType,
 		SleepAfterEachRunSeconds: j.SleepAfterEachRunSeconds,
 		EndDate:                  *j.EndDate,
@@ -56,7 +56,7 @@ var jobList = []repository.JobType{
 func NewRecurringJobsController() *RecurringJobsController {
 	poeClient := client.NewPoEClient(os.Getenv("POE_CLIENT_AGENT"), 10, false, 10)
 	controller := &RecurringJobsController{
-		service: service.NewRecurringJobService(poeClient),
+		service: cron.NewRecurringJobService(poeClient),
 	}
 	// controller.StartScoreUpdater()
 	return controller
@@ -84,7 +84,7 @@ func setupRecurringJobsController() []RouteInfo {
 // @Router /jobs [get]
 func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		jobs := make([]*service.RecurringJob, 0)
+		jobs := make([]*cron.RecurringJob, 0)
 		for _, jobType := range jobList {
 			job, ok := c.service.Jobs[jobType]
 			if ok {

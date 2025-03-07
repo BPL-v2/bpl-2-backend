@@ -1,9 +1,10 @@
-package service
+package cron
 
 import (
 	"bpl/client"
 	"bpl/parser"
 	"bpl/repository"
+	"bpl/service"
 	"bpl/utils"
 	"context"
 	"fmt"
@@ -13,8 +14,8 @@ import (
 
 type PlayerFetchingService struct {
 	userRepository        *repository.UserRepository
-	objectiveMatchService *ObjectiveMatchService
-	objectiveService      *ObjectiveService
+	objectiveMatchService *service.ObjectiveMatchService
+	objectiveService      *service.ObjectiveService
 
 	client *client.PoEClient
 	event  *repository.Event
@@ -23,8 +24,8 @@ type PlayerFetchingService struct {
 func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event) *PlayerFetchingService {
 	return &PlayerFetchingService{
 		userRepository:        repository.NewUserRepository(),
-		objectiveMatchService: NewObjectiveMatchService(),
-		objectiveService:      NewObjectiveService(),
+		objectiveMatchService: service.NewObjectiveMatchService(),
+		objectiveService:      service.NewObjectiveService(),
 		client:                client,
 		event:                 event,
 	}

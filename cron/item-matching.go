@@ -1,10 +1,11 @@
-package service
+package cron
 
 import (
 	"bpl/client"
 	"bpl/config"
 	"bpl/parser"
 	"bpl/repository"
+	"bpl/service"
 	"bpl/utils"
 	"context"
 	"encoding/json"
@@ -17,9 +18,9 @@ import (
 
 type MatchingService struct {
 	ctx                   context.Context
-	objectiveMatchService *ObjectiveMatchService
-	objectiveService      *ObjectiveService
-	userService           *UserService
+	objectiveMatchService *service.ObjectiveMatchService
+	objectiveService      *service.ObjectiveService
+	userService           *service.UserService
 	lastChangeId          *string
 	event                 *repository.Event
 }
@@ -30,9 +31,9 @@ var teamMatchesTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 }, []string{"team"})
 
 func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
-	objectiveMatchService := NewObjectiveMatchService()
-	objectiveService := NewObjectiveService()
-	userService := NewUserService()
+	objectiveMatchService := service.NewObjectiveMatchService()
+	objectiveService := service.NewObjectiveService()
+	userService := service.NewUserService()
 	matchingService := &MatchingService{
 		objectiveMatchService: objectiveMatchService,
 		objectiveService:      objectiveService,
@@ -40,7 +41,7 @@ func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event 
 		event:                 event,
 		ctx:                   ctx,
 	}
-	changeId, err := NewStashChangeService().GetCurrentChangeIdForEvent(event)
+	changeId, err := service.NewStashChangeService().GetCurrentChangeIdForEvent(event)
 	if err == nil {
 		log.Printf("Last change id: %s", changeId)
 		matchingService.lastChangeId = &changeId
@@ -194,7 +195,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	}
 }
 
-func StashLoop(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) error {
+func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) error {
 	m, err := NewMatchingService(ctx, poeClient, event)
 	if err != nil {
 		log.Fatal("Failed to create matching service:", err)

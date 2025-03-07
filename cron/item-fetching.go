@@ -1,9 +1,10 @@
-package service
+package cron
 
 import (
 	"bpl/client"
 	"bpl/config"
 	"bpl/repository"
+	"bpl/service"
 	"context"
 	"fmt"
 	"log"
@@ -40,12 +41,12 @@ type FetchingService struct {
 	ctx                context.Context
 	event              *repository.Event
 	poeClient          *client.PoEClient
-	stashChangeService *StashChangeService
+	stashChangeService *service.StashChangeService
 	stashChannel       chan config.StashChangeMessage
 }
 
 func NewFetchingService(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) *FetchingService {
-	stashChangeService := NewStashChangeService()
+	stashChangeService := service.NewStashChangeService()
 
 	return &FetchingService{
 		ctx:                ctx,
@@ -98,11 +99,11 @@ func (f *FetchingService) FetchStashChanges() error {
 			consecutiveErrors = 0
 			f.stashChannel <- config.StashChangeMessage{ChangeId: changeId, NextChangeId: response.NextChangeId, Stashes: response.Stashes}
 			changeId = response.NextChangeId
-			changeIdGauge.Set(float64(ChangeIdToInt(changeId)))
+			changeIdGauge.Set(float64(service.ChangeIdToInt(changeId)))
 			if count%20 == 0 {
 				ninjaId, err := f.stashChangeService.GetNinjaChangeId()
 				if err == nil {
-					ninjaChangeIdGauge.Set(float64(ChangeIdToInt(ninjaId)))
+					ninjaChangeIdGauge.Set(float64(service.ChangeIdToInt(ninjaId)))
 				}
 			}
 			count++
@@ -157,7 +158,7 @@ func (f *FetchingService) FilterStashChanges() {
 	}
 }
 
-func FetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
+func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	go fetchingService.FetchStashChanges()
 	go fetchingService.FilterStashChanges()
