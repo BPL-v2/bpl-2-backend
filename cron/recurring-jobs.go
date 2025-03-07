@@ -1,8 +1,9 @@
-package service
+package cron
 
 import (
 	"bpl/client"
 	"bpl/repository"
+	"bpl/service"
 	"context"
 	"fmt"
 	"log"
@@ -21,14 +22,14 @@ type RecurringJobService struct {
 	objectiveRepository       *repository.ObjectiveRepository
 	conditionRepository       *repository.ConditionRepository
 	scoringCategoryRepository *repository.ScoringCategoryRepository
-	eventService              *EventService
+	eventService              *service.EventService
 	poeClient                 *client.PoEClient
 	jobRepository             *repository.RecurringJobsRepository
 	Jobs                      map[repository.JobType]*RecurringJob
 }
 
 func NewRecurringJobService(poeClient *client.PoEClient) *RecurringJobService {
-	eventService := NewEventService()
+	eventService := service.NewEventService()
 
 	s := &RecurringJobService{
 		objectiveRepository:       repository.NewObjectiveRepository(),
@@ -115,7 +116,7 @@ func (s *RecurringJobService) EvaluateStashChanges(job *RecurringJob) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
 	job.Cancel = cancel
-	return StashLoop(ctx, s.poeClient, event)
+	return StashEvaluationLoop(ctx, s.poeClient, event)
 }
 
 func (s *RecurringJobService) FetchStashChanges(job *RecurringJob) error {
@@ -126,7 +127,7 @@ func (s *RecurringJobService) FetchStashChanges(job *RecurringJob) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
 	job.Cancel = cancel
-	FetchLoop(ctx, event, s.poeClient)
+	ItemFetchLoop(ctx, event, s.poeClient)
 	return nil
 }
 
