@@ -80,7 +80,7 @@ func setupRecurringJobsController() []RouteInfo {
 // @Tags jobs
 // @Accept json
 // @Produce json
-// @Success 200 {array} service.RecurringJob
+// @Success 200 {array} cron.RecurringJob
 // @Router /jobs [get]
 func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -101,7 +101,7 @@ func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param job body JobCreate true "Job to create"
-// @Success 201 {object} service.RecurringJob
+// @Success 201 {object} cron.RecurringJob
 // @Router /jobs [post]
 func (c *RecurringJobsController) startJobHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
