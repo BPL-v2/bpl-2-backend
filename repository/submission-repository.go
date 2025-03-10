@@ -24,7 +24,7 @@ type Submission struct {
 	UserId         int            `gorm:"not null;references:users(id)"`
 	Proof          string         `gorm:"not null"`
 	Comment        string         `gorm:"not null"`
-	ApprovalStatus ApprovalStatus `gorm:"not null;type:bpl2.approval_status"`
+	ApprovalStatus ApprovalStatus `gorm:"not null"`
 	ReviewComment  *string        `gorm:"null"`
 	ReviewerId     *int           `gorm:"null;references:users(id)"`
 	MatchId        *int           `gorm:"null;references:objective_matches(id)"`

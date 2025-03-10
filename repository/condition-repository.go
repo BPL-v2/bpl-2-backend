@@ -95,8 +95,8 @@ const (
 type Condition struct {
 	Id          int       `gorm:"primaryKey;autoIncrement"`
 	ObjectiveId int       `gorm:"not null"`
-	Field       ItemField `gorm:"type:bpl2.item_field"`
-	Operator    Operator  `gorm:"type:bpl2.operator"`
+	Field       ItemField `gorm:"not null"`
+	Operator    Operator  `gorm:"not null"`
 	Value       string    `gorm:"not null"`
 }
 
