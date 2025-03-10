@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -174,6 +176,28 @@ func (c *PoEClient) GetLeagueLadder(token string, league string, realm string, s
 		},
 	},
 	)
+}
+
+func (c *PoEClient) GetFullLadder(token string, league string) (*GetLeagueLadderResponse, *ClientError) {
+	response, err := c.GetLeagueLadder(token, league, "pc", "xp", 500, 0)
+	if err != nil {
+		return nil, err
+	}
+	Total := response.Ladder.Total
+	wg := sync.WaitGroup{}
+	for i := 1; i < int(math.Ceil(float64(Total)/500)); i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			newResp, err := c.GetLeagueLadder(token, league, "pc", "xp", 500, i*500)
+			if err != nil {
+				return
+			}
+			response.Ladder.Entries = append(response.Ladder.Entries, newResp.Ladder.Entries...)
+		}(i)
+	}
+	wg.Wait()
+	return response, nil
 }
 
 func (c *PoEClient) GetLeagueEventLadder(token string, league string, realm string, limit int, offset int) (*GetLeagueEventLadderResponse, *ClientError) {

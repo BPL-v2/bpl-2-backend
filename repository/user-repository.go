@@ -181,9 +181,10 @@ type TeamUserWithPoEAccountName struct {
 }
 
 type TeamUserWithPoEToken struct {
-	TeamId int
-	UserId int
-	Token  string
+	TeamId      int
+	UserId      int
+	AccountName string
+	Token       string
 }
 
 func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccountName, error) {
@@ -212,6 +213,7 @@ func (r *UserRepository) GetAuthenticatedUsersForEvent(eventId int) ([]*TeamUser
 		SELECT
 			users.id as user_id,
 			oauths.access_token as token,
+			oauths.name as account_name,
 			team_users.team_id as team_id
 		FROM users
 		JOIN oauths ON oauths.user_id = users.id

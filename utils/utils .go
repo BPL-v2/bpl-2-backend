@@ -8,6 +8,17 @@ func Map[A any, B any](input []A, mapper func(A) B) []B {
 	return output
 }
 
+func Reduce[A any](input []*A, reducer func(*A, *A) *A) *A {
+	if len(input) == 0 {
+		return nil
+	}
+	result := input[0]
+	for _, item := range input[1:] {
+		result = reducer(result, item)
+	}
+	return result
+}
+
 func FlatMap[A any, B any](input []A, mapper func(A) []B) []B {
 	return Flatten(Map(input, mapper))
 }
@@ -103,4 +114,25 @@ func Min[T Ordered](a []T) T {
 		}
 	}
 	return min
+}
+
+// mimic the python datatype
+type Set[T comparable] map[T]bool
+
+func ToSet[T comparable](a []T) Set[T] {
+	set := make(map[T]bool)
+	for _, v := range a {
+		set[v] = true
+	}
+	return set
+}
+
+func Intersection[T comparable](a Set[T], b []T) []T {
+	intersection := make([]T, 0)
+	for _, v := range b {
+		if a[v] {
+			intersection = append(intersection, v)
+		}
+	}
+	return intersection
 }
