@@ -80,7 +80,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate) {
 
 	player.New.CharacterLevel = characterResponse.Character.Level
 	player.New.Pantheon = characterResponse.Character.Passives.PantheonMajor != nil && characterResponse.Character.Passives.PantheonMinor != nil
-	player.New.AscendancyPoints = len(utils.Intersection(ascendancyNodes, characterResponse.Character.Passives.Hashes))
+	player.New.AscendancyPoints = len(ascendancyNodes.Intersection(utils.ToSet(characterResponse.Character.Passives.Hashes)))
 }
 
 func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate) {

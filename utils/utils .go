@@ -127,12 +127,33 @@ func ToSet[T comparable](a []T) Set[T] {
 	return set
 }
 
-func Intersection[T comparable](a Set[T], b []T) []T {
-	intersection := make([]T, 0)
-	for _, v := range b {
-		if a[v] {
-			intersection = append(intersection, v)
+func (s1 Set[T]) Intersection(s2 Set[T]) Set[T] {
+	intersection := make(map[T]bool)
+	for k := range s1 {
+		if _, ok := s2[k]; ok {
+			intersection[k] = true
 		}
 	}
 	return intersection
+}
+
+func (s1 Set[T]) Difference(s2 Set[T]) Set[T] {
+	difference := make(map[T]bool)
+	for k := range s1 {
+		if _, ok := s2[k]; !ok {
+			difference[k] = true
+		}
+	}
+	return difference
+}
+
+func (s1 Set[T]) Union(s2 Set[T]) Set[T] {
+	union := make(map[T]bool)
+	for k := range s1 {
+		union[k] = true
+	}
+	for k := range s2 {
+		union[k] = true
+	}
+	return union
 }

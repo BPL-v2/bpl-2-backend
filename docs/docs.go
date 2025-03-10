@@ -2520,6 +2520,29 @@ const docTemplate = `{
                 }
             }
         },
+        "RecurringJob": {
+            "type": "object",
+            "required": [
+                "end_date",
+                "event_id",
+                "job_type",
+                "sleep_after_each_run_seconds"
+            ],
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "job_type": {
+                    "$ref": "#/definitions/JobType"
+                },
+                "sleep_after_each_run_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
         "AggregationType": {
             "type": "string",
             "enum": [
@@ -2788,29 +2811,6 @@ const docTemplate = `{
                 "Changed",
                 "Unchanged"
             ]
-        },
-        "RecurringJob": {
-            "type": "object",
-            "required": [
-                "end_date",
-                "event_id",
-                "job_type",
-                "sleep_after_each_run_seconds"
-            ],
-            "properties": {
-                "end_date": {
-                    "type": "string"
-                },
-                "event_id": {
-                    "type": "integer"
-                },
-                "job_type": {
-                    "$ref": "#/definitions/JobType"
-                },
-                "sleep_after_each_run_seconds": {
-                    "type": "integer"
-                }
-            }
         }
     },
     "securityDefinitions": {
