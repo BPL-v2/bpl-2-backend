@@ -60,8 +60,8 @@ type Objective struct {
 	RequiredAmount int             `gorm:"not null"`
 	Conditions     []*Condition    `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE"`
 	CategoryId     int             `gorm:"not null"`
-	ObjectiveType  ObjectiveType   `gorm:"not null;type:bpl2.objective_type"`
-	NumberField    NumberField     `gorm:"not null;type:bpl2.number_field"`
+	ObjectiveType  ObjectiveType   `gorm:"not null"`
+	NumberField    NumberField     `gorm:"not null"`
 	Aggregation    AggregationType `gorm:"not null"`
 	ValidFrom      *time.Time      `gorm:"null"`
 	ValidTo        *time.Time      `gorm:"null"`
