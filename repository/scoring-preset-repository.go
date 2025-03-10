@@ -62,8 +62,8 @@ type ScoringPreset struct {
 	Name          string               `gorm:"not null"`
 	Description   string               `gorm:"not null"`
 	Points        ExtendingNumberSlice `gorm:"type:numeric[];not null"`
-	ScoringMethod ScoringMethod        `gorm:"not null;type:bpl2.scoring_method"`
-	Type          ScoringPresetType    `gorm:"not null;type:bpl2.scoring_preset_type"`
+	ScoringMethod ScoringMethod        `gorm:"not null"`
+	Type          ScoringPresetType    `gorm:"not null"`
 }
 
 func (s *ScoringPresetType) GetValidMethods() []ScoringMethod {

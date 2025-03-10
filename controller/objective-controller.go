@@ -27,7 +27,7 @@ func setupObjectiveController() []RouteInfo {
 	e := NewObjectiveController()
 	baseUrl := "/scoring/objectives"
 	routes := []RouteInfo{
-		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler()},
 		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler()},
