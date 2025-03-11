@@ -64,19 +64,10 @@ func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview 
 	if !utils.Contains(reviewer.Permissions, "admin") {
 		return nil, fmt.Errorf("you are not allowed to review submissions")
 	}
-
-	if submission.MatchId != nil {
-		if submissionReview.ApprovalStatus != repository.APPROVED {
-			submission, err = e.submissionRepository.RemoveMatchFromSubmission(submission)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-	} else {
-		if submissionReview.ApprovalStatus == repository.APPROVED {
-			match := submission.ToObjectiveMatch()
-			submission.Match = match
+	if submissionReview.ApprovalStatus != repository.APPROVED {
+		submission, err = e.submissionRepository.RemoveMatchFromSubmission(submission)
+		if err != nil {
+			return nil, err
 		}
 	}
 	submission.ApprovalStatus = submissionReview.ApprovalStatus
