@@ -15,6 +15,7 @@ type LadderEntry struct {
 	Level      int    `gorm:"not null"`
 	Delve      int    `gorm:"not null"`
 	Experience int    `gorm:"not null"`
+	Rank       int    `gorm:"not null"`
 	EventId    int    `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE;index;not null"`
 }
 
@@ -40,8 +41,9 @@ func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId in
 			Account:   entry.Account.Name,
 			EventId:   eventId,
 			UserId:    playerMap[entry.Character.Name],
+			Rank:      entry.Rank,
 		}
-		if entry.Character.Depth.Depth != nil {
+		if entry.Character.Depth != nil && entry.Character.Depth.Depth != nil {
 			dbEntry.Delve = *entry.Character.Depth.Depth
 		}
 		if entry.Character.Experience != nil {
