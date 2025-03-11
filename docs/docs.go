@@ -1971,6 +1971,7 @@ const docTemplate = `{
                 "delve",
                 "experience",
                 "level",
+                "rank",
                 "user_id"
             ],
             "properties": {
@@ -1990,6 +1991,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "level": {
+                    "type": "integer"
+                },
+                "rank": {
                     "type": "integer"
                 },
                 "user_id": {

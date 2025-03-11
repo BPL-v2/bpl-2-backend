@@ -1963,6 +1963,7 @@
                 "delve",
                 "experience",
                 "level",
+                "rank",
                 "user_id"
             ],
             "properties": {
@@ -1982,6 +1983,9 @@
                     "type": "integer"
                 },
                 "level": {
+                    "type": "integer"
+                },
+                "rank": {
                     "type": "integer"
                 },
                 "user_id": {
