@@ -62,6 +62,7 @@ func main() {
 		&repository.Oauth{},
 		&repository.KafkaConsumer{},
 		&repository.RecurringJob{},
+		&repository.LadderEntry{},
 	)
 
 	if err != nil {
