@@ -266,6 +266,31 @@ definitions:
       sleep_after_each_run_seconds:
         type: integer
     type: object
+  LadderEntry:
+    properties:
+      account_name:
+        type: string
+      character_class:
+        type: string
+      character_name:
+        type: string
+      delve:
+        type: integer
+      experience:
+        type: integer
+      level:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - account_name
+    - character_class
+    - character_name
+    - delve
+    - experience
+    - level
+    - user_id
+    type: object
   MinimalUser:
     properties:
       display_name:
@@ -1023,6 +1048,29 @@ paths:
             $ref: '#/definitions/Event'
       tags:
       - event
+  /events/{event_id}/ladder:
+    get:
+      consumes:
+      - application/json
+      description: Get the ladder for an event
+      operationId: GetLadder
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/LadderEntry'
+            type: array
+      tags:
+      - ladder
   /events/{event_id}/rules:
     get:
       description: Fetches the rules for the current event

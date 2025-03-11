@@ -187,6 +187,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/ladder": {
+            "get": {
+                "description": "Get the ladder for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ladder"
+                ],
+                "operationId": "GetLadder",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/LadderEntry"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/rules": {
             "get": {
                 "description": "Fetches the rules for the current event",
@@ -1923,6 +1958,41 @@ const docTemplate = `{
                     "$ref": "#/definitions/JobType"
                 },
                 "sleep_after_each_run_seconds": {
+                    "type": "integer"
+                }
+            }
+        },
+        "LadderEntry": {
+            "type": "object",
+            "required": [
+                "account_name",
+                "character_class",
+                "character_name",
+                "delve",
+                "experience",
+                "level",
+                "user_id"
+            ],
+            "properties": {
+                "account_name": {
+                    "type": "string"
+                },
+                "character_class": {
+                    "type": "string"
+                },
+                "character_name": {
+                    "type": "string"
+                },
+                "delve": {
+                    "type": "integer"
+                },
+                "experience": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "user_id": {
                     "type": "integer"
                 }
             }

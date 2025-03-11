@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -185,6 +186,7 @@ type TeamUserWithPoEToken struct {
 	UserId      int
 	AccountName string
 	Token       string
+	TokenExpiry time.Time
 }
 
 func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccountName, error) {
@@ -213,13 +215,14 @@ func (r *UserRepository) GetAuthenticatedUsersForEvent(eventId int) ([]*TeamUser
 		SELECT
 			users.id as user_id,
 			oauths.access_token as token,
+			oauths.expiry as token_expiry,
 			oauths.name as account_name,
 			team_users.team_id as team_id
 		FROM users
 		JOIN oauths ON oauths.user_id = users.id
 		JOIN team_users ON team_users.user_id = users.id
 		JOIN teams ON teams.id = team_users.team_id
-		WHERE teams.event_id = ? AND oauths.provider = 'poe' AND oauths.expiry > now()
+		WHERE teams.event_id = ? AND oauths.provider = 'poe'
 	`
 	result := r.DB.Raw(query, eventId).Scan(&users)
 	if result.Error != nil {

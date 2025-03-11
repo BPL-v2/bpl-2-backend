@@ -22,6 +22,7 @@ type PlayerUpdate struct {
 	AccountName string
 	TeamId      int
 	Token       string
+	TokenExpiry time.Time
 	Mu          sync.Mutex
 
 	New *Player

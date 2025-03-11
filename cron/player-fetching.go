@@ -8,6 +8,7 @@ import (
 	"bpl/utils"
 	"context"
 	"log"
+	"os"
 	"sync"
 	"time"
 )
@@ -18,9 +19,9 @@ type PlayerFetchingService struct {
 	userRepository        *repository.UserRepository
 	objectiveMatchService *service.ObjectiveMatchService
 	objectiveService      *service.ObjectiveService
-
-	client *client.PoEClient
-	event  *repository.Event
+	ladderService         *service.LadderService
+	client                *client.PoEClient
+	event                 *repository.Event
 }
 
 func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event) *PlayerFetchingService {
@@ -28,6 +29,7 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 		userRepository:        repository.NewUserRepository(),
 		objectiveMatchService: service.NewObjectiveMatchService(),
 		objectiveService:      service.NewObjectiveService(),
+		ladderService:         service.NewLadderService(),
 		client:                client,
 		event:                 event,
 	}
@@ -43,7 +45,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerU
 	playerUpdate.LastUpdateTimes.CharacterName = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
-			playerUpdate.Token = ""
+			playerUpdate.TokenExpiry = time.Now()
 			return
 		}
 		log.Print(err)
@@ -67,7 +69,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate) {
 	player.LastUpdateTimes.Character = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
-			player.Token = ""
+			player.TokenExpiry = time.Now()
 			return
 		}
 		if err.StatusCode == 404 {
@@ -93,7 +95,7 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 	player.LastUpdateTimes.LeagueAccount = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
-			player.Token = ""
+			player.TokenExpiry = time.Now()
 			return
 		}
 		log.Print(err)
@@ -105,25 +107,35 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 	// todo: once we have a token that allows us to request the ladder api
 	return
-	pMap := map[string]*parser.PlayerUpdate{}
+	token := os.Getenv("POE_CLIENT_TOKEN")
+	charToUpdate := map[string]*parser.PlayerUpdate{}
+	charToUserId := map[string]int{}
 	for _, player := range players {
-		pMap[player.New.CharacterName] = player
+		charToUpdate[player.New.CharacterName] = player
+		charToUserId[player.New.CharacterName] = player.UserId
 	}
 
-	resp, err := s.client.GetFullLadder("", s.event.Name)
-	if err != nil {
-		log.Print(err)
+	resp, clientErr := s.client.GetFullLadder(token, s.event.Name)
+	if clientErr != nil {
+		log.Print(clientErr)
 		return
 	}
+	entriesToPersist := make([]*client.LadderEntry, 0, len(resp.Ladder.Entries))
 	for _, entry := range resp.Ladder.Entries {
-		if player, ok := pMap[entry.Character.Name]; ok {
+		if player, ok := charToUpdate[entry.Character.Name]; ok {
+			entriesToPersist = append(entriesToPersist, &entry)
+			player.Mu.Lock()
 			player.New.CharacterLevel = entry.Character.Level
 			if entry.Character.Depth != nil && entry.Character.Depth.Depth != nil {
 				player.New.DelveDepth = *entry.Character.Depth.Depth
 			}
+			player.Mu.Unlock()
 		}
 	}
-
+	err := s.ladderService.UpsertLadder(entriesToPersist, s.event.Id, charToUserId)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
@@ -139,6 +151,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			TeamId:      user.TeamId,
 			AccountName: user.AccountName,
 			Token:       user.Token,
+			TokenExpiry: user.TokenExpiry,
 			New:         &parser.Player{},
 			Old:         &parser.Player{},
 			Mu:          sync.Mutex{},
@@ -166,6 +179,9 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 		default:
 			wg := sync.WaitGroup{}
 			for _, player := range players {
+				if player.TokenExpiry.Before(time.Now()) {
+					continue
+				}
 				wg.Add(3)
 				go func(player *parser.PlayerUpdate) {
 					defer wg.Done()
@@ -187,9 +203,6 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			}()
 			wg.Wait()
 
-			players = utils.Filter(players, func(player *parser.PlayerUpdate) bool {
-				return player.Token != ""
-			})
 			matches := utils.FlatMap(players, func(player *parser.PlayerUpdate) []*repository.ObjectiveMatch {
 				return service.GetPlayerMatches(player, playerChecker)
 			})
