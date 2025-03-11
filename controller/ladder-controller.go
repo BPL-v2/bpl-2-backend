@@ -21,6 +21,7 @@ type LadderEntry struct {
 	Class         string `json:"character_class" binding:"required"`
 	Experience    int    `json:"experience" binding:"required"`
 	Delve         int    `json:"delve" binding:"required"`
+	Rank          int    `json:"rank" binding:"required"`
 }
 
 func toLadderEntryResponse(entry *repository.LadderEntry) *LadderEntry {
@@ -34,6 +35,7 @@ func toLadderEntryResponse(entry *repository.LadderEntry) *LadderEntry {
 		Class:         entry.Class,
 		Experience:    entry.Experience,
 		Delve:         entry.Delve,
+		Rank:          entry.Rank,
 	}
 }
 
