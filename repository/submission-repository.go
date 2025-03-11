@@ -27,13 +27,11 @@ type Submission struct {
 	ApprovalStatus ApprovalStatus `gorm:"not null"`
 	ReviewComment  *string        `gorm:"null"`
 	ReviewerId     *int           `gorm:"null;references:users(id)"`
-	MatchId        *int           `gorm:"null;references:objective_matches(id)"`
 	EventId        int            `gorm:"not null;references:events(id)"`
 
-	Match     *ObjectiveMatch `gorm:"foreignKey:MatchId;constraint:OnDelete:CASCADE;"`
-	Objective *Objective      `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE;"`
-	User      *User           `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
-	Reviewer  *User           `gorm:"foreignKey:ReviewerId;constraint:OnDelete:CASCADE;"`
+	Objective *Objective `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE;"`
+	User      *User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
+	Reviewer  *User      `gorm:"foreignKey:ReviewerId;constraint:OnDelete:CASCADE;"`
 }
 
 func (s *Submission) ToObjectiveMatch() *ObjectiveMatch {
@@ -81,18 +79,14 @@ func (r *SubmissionRepository) SaveSubmission(submission *Submission) (*Submissi
 }
 
 func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission) (*Submission, error) {
-	if submission.MatchId == nil {
-		return submission, nil
-	}
+
 	tx := r.DB.Begin()
-	matchId := *submission.MatchId
-	submission.MatchId = nil
-	result := r.DB.Save(submission)
+	result := tx.Save(submission)
 	if result.Error != nil {
 		tx.Rollback()
 		return submission, result.Error
 	}
-	result = r.DB.Delete(&ObjectiveMatch{}, "id = ?", matchId)
+	result = tx.Delete(&ObjectiveMatch{}, "objective_id = ? AND user_id = ? AND event_id = ?", submission.ObjectiveId, submission.UserId, submission.EventId)
 	if result.Error != nil {
 		tx.Rollback()
 		return submission, result.Error

@@ -9,7 +9,6 @@ import (
 )
 
 type ObjectiveMatch struct {
-	Id            int       `gorm:"primaryKey"`
 	ObjectiveId   int       `gorm:"index:obj_match_obj;index:obj_match_obj_user;not null;references:objectives(id)"`
 	Timestamp     time.Time `gorm:"not null"`
 	Number        int       `gorm:"not null"`
