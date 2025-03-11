@@ -87,7 +87,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://discord.com/oauth2/authorize",
 					TokenURL: "https://discord.com/api/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("https://redirectmeto.com/%s/api/oauth2/discord/redirect", os.Getenv("PUBLIC_URL")),
+				RedirectURL: fmt.Sprintf("%s/api/oauth2/discord/redirect", os.Getenv("PUBLIC_URL")),
 			},
 			repository.ProviderTwitch: {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
@@ -97,7 +97,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 					TokenURL: "https://id.twitch.tv/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("https://redirectmeto.com/%s/api/oauth2/twitch/redirect", os.Getenv("PUBLIC_URL")),
+				RedirectURL: fmt.Sprintf("%s/api/oauth2/twitch/redirect", os.Getenv("PUBLIC_URL")),
 			},
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
