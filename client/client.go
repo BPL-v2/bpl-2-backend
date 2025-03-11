@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bpl/utils"
 	"context"
 	"fmt"
 	"net/http"
@@ -10,6 +11,42 @@ import (
 	"sync"
 	"time"
 )
+
+type PriorityMutex struct {
+	dataMutex         *sync.Mutex
+	nextToAccess      *sync.Mutex
+	lowPriorityAccess *sync.Mutex
+}
+
+func NewPriorityMutex() *PriorityMutex {
+	return &PriorityMutex{
+		dataMutex:         &sync.Mutex{},
+		nextToAccess:      &sync.Mutex{},
+		lowPriorityAccess: &sync.Mutex{},
+	}
+}
+
+func (m *PriorityMutex) Lock() {
+	m.lowPriorityAccess.Lock()
+	m.nextToAccess.Lock()
+	m.dataMutex.Lock()
+	m.nextToAccess.Unlock()
+}
+
+func (m *PriorityMutex) Unlock() {
+	m.dataMutex.Unlock()
+	m.lowPriorityAccess.Unlock()
+}
+
+func (m *PriorityMutex) PriorityLock() {
+	m.nextToAccess.Lock()
+	m.dataMutex.Lock()
+	m.nextToAccess.Unlock()
+}
+
+func (m *PriorityMutex) PriorityUnlock() {
+	m.dataMutex.Unlock()
+}
 
 type Policy struct {
 	MaxHits int
@@ -37,7 +74,7 @@ type RequestKey struct {
 }
 
 type AsyncHttpClient struct {
-	mu                   sync.Mutex
+	mu                   *PriorityMutex
 	requestTimestamps    map[RequestKey][]time.Time
 	rateLimitPolicies    map[RequestKey]map[string][]Policy
 	baseURL              *url.URL
@@ -48,6 +85,7 @@ type AsyncHttpClient struct {
 
 func NewAsyncHttpClient(baseURL *url.URL, userAgent string, maxRequestsPerSecond float64) *AsyncHttpClient {
 	return &AsyncHttpClient{
+		mu:                   NewPriorityMutex(),
 		requestTimestamps:    make(map[RequestKey][]time.Time),
 		rateLimitPolicies:    make(map[RequestKey]map[string][]Policy),
 		baseURL:              baseURL,
@@ -113,9 +151,6 @@ func (c *AsyncHttpClient) SendRequest(
 		}
 		requestUrl.RawQuery = query.Encode()
 	}
-	c.mu.Lock()
-	c.requestTimestamps[key] = append(c.requestTimestamps[key], time.Now())
-	c.mu.Unlock()
 
 	req := &http.Request{}
 	if requestArgs.Body != nil {
@@ -143,12 +178,14 @@ func (c *AsyncHttpClient) SendRequest(
 
 func (c *AsyncHttpClient) waitUntilRequestAllowed(ctx context.Context, key RequestKey) error {
 	for {
+		c.mu.Lock()
 		canMakeRequest := c.canMakeRequest(key)
-
 		if canMakeRequest {
+			c.requestTimestamps[key] = append(c.requestTimestamps[key], time.Now())
+			c.mu.Unlock()
 			return nil
 		}
-
+		c.mu.Unlock()
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -158,8 +195,8 @@ func (c *AsyncHttpClient) waitUntilRequestAllowed(ctx context.Context, key Reque
 }
 
 func (c *AsyncHttpClient) adjustPolicies(key RequestKey, headers http.Header) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.PriorityLock()
+	defer c.mu.PriorityUnlock()
 
 	delete(c.rateLimitPolicies[key], "dummy")
 
@@ -184,12 +221,14 @@ func (c *AsyncHttpClient) adjustPolicies(key RequestKey, headers http.Header) {
 		}
 		newPolicies[rule] = policies
 	}
+	// clear old timestamps > 10 minutes
+	c.requestTimestamps[key] = utils.Filter(timestamps, func(t time.Time) bool {
+		return t.After(now.Add(-600 * time.Second))
+	})
 	c.rateLimitPolicies[key] = newPolicies
 }
 
 func (c *AsyncHttpClient) canMakeRequest(key RequestKey) bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.ipIsRateLimited() {
 		return false
 	}
@@ -249,7 +288,7 @@ func (c *AsyncHttpClient) parsePolicies(rule string, headers http.Header) map[Po
 		maxHits, _ := strconv.Atoi(limit[0])
 		period, _ := strconv.Atoi(limit[1])
 		currentHits, _ := strconv.Atoi(state[0])
-		policies[Policy{MaxHits: maxHits, Period: time.Duration(period) * time.Second}] = currentHits
+		policies[Policy{MaxHits: maxHits, Period: time.Duration(float64(period)*1.1) * time.Second}] = currentHits
 	}
 	return policies
 }
