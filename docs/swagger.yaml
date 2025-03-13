@@ -998,30 +998,10 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       responses:
         "204":
           description: No Content
-      tags:
-      - event
-    get:
-      consumes:
-      - application/json
-      description: Gets an event by id
-      operationId: GetEvent
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/Event'
       tags:
       - event
   /events/{event_id}/duplicate:
@@ -1035,7 +1015,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Event to create
         in: body
         name: event
@@ -1062,7 +1042,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1083,7 +1063,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1102,7 +1082,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1122,7 +1102,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       responses:
         "200":
           description: OK
@@ -1141,7 +1121,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1162,7 +1142,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1185,7 +1165,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1201,7 +1181,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1221,7 +1201,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Signup
         in: body
         name: body
@@ -1248,7 +1228,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1267,7 +1247,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1289,7 +1269,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Submission to create
         in: body
         name: body
@@ -1314,7 +1294,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Submission Id
         in: path
         name: submission_id
@@ -1338,7 +1318,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Submission Id
         in: path
         name: submission_id
@@ -1368,7 +1348,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1390,7 +1370,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Team to create
         in: body
         name: body
@@ -1415,7 +1395,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Team Id
         in: path
         name: team_id
@@ -1436,7 +1416,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Team Id
         in: path
         name: team_id
@@ -1462,7 +1442,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       - description: Users to add to teams
         in: body
         name: body
@@ -1488,7 +1468,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -1502,19 +1482,6 @@ paths:
             type: object
       tags:
       - user
-  /events/current:
-    get:
-      description: Fetches the current event
-      operationId: GetCurrentEvent
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Event'
-      tags:
-      - event
   /jobs:
     get:
       consumes:

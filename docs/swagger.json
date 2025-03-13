@@ -65,57 +65,7 @@
                 }
             }
         },
-        "/events/current": {
-            "get": {
-                "description": "Fetches the current event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "event"
-                ],
-                "operationId": "GetCurrentEvent",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Event"
-                        }
-                    }
-                }
-            }
-        },
         "/events/{event_id}": {
-            "get": {
-                "description": "Gets an event by id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "event"
-                ],
-                "operationId": "GetEvent",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Event"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "description": "Deletes an event",
                 "tags": [
@@ -124,7 +74,7 @@
                 "operationId": "DeleteEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -153,7 +103,7 @@
                 "operationId": "DuplicateEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -194,7 +144,7 @@
                 "operationId": "GetLadder",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event ID",
                         "name": "event_id",
                         "in": "path",
@@ -226,7 +176,7 @@
                 "operationId": "GetRulesForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -255,7 +205,7 @@
                 "operationId": "GetLatestScoresForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -286,7 +236,7 @@
                 "operationId": "ScoreWebSocket",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -315,7 +265,7 @@
                 "operationId": "GetScoringPresetsForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -347,7 +297,7 @@
                 "operationId": "GetEventSignups",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -382,7 +332,7 @@
                 "operationId": "GetPersonalSignup",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -412,7 +362,7 @@
                 "operationId": "CreateSignup",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -448,7 +398,7 @@
                 "operationId": "DeleteSignup",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -477,7 +427,7 @@
                 "operationId": "GetEventStatusForUser",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -506,7 +456,7 @@
                 "operationId": "GetSubmissions",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -539,7 +489,7 @@
                 "operationId": "SubmitBounty",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -577,7 +527,7 @@
                 "operationId": "DeleteSubmission",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -613,7 +563,7 @@
                 "operationId": "ReviewSubmission",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -658,7 +608,7 @@
                 "operationId": "GetTeams",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -691,7 +641,7 @@
                 "operationId": "CreateTeam",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -733,7 +683,7 @@
                 "operationId": "AddUsersToTeams",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -771,7 +721,7 @@
                 "operationId": "GetTeam",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -805,7 +755,7 @@
                 "operationId": "DeleteTeam",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -838,7 +788,7 @@
                 "operationId": "GetUsersForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
