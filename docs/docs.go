@@ -73,57 +73,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/current": {
-            "get": {
-                "description": "Fetches the current event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "event"
-                ],
-                "operationId": "GetCurrentEvent",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Event"
-                        }
-                    }
-                }
-            }
-        },
         "/events/{event_id}": {
-            "get": {
-                "description": "Gets an event by id",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "event"
-                ],
-                "operationId": "GetEvent",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Event"
-                        }
-                    }
-                }
-            },
             "delete": {
                 "description": "Deletes an event",
                 "tags": [
@@ -132,7 +82,7 @@ const docTemplate = `{
                 "operationId": "DeleteEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -161,7 +111,7 @@ const docTemplate = `{
                 "operationId": "DuplicateEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -202,7 +152,7 @@ const docTemplate = `{
                 "operationId": "GetLadder",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event ID",
                         "name": "event_id",
                         "in": "path",
@@ -234,7 +184,7 @@ const docTemplate = `{
                 "operationId": "GetRulesForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -263,7 +213,7 @@ const docTemplate = `{
                 "operationId": "GetLatestScoresForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -294,7 +244,7 @@ const docTemplate = `{
                 "operationId": "ScoreWebSocket",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -323,7 +273,7 @@ const docTemplate = `{
                 "operationId": "GetScoringPresetsForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -355,7 +305,7 @@ const docTemplate = `{
                 "operationId": "GetEventSignups",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -390,7 +340,7 @@ const docTemplate = `{
                 "operationId": "GetPersonalSignup",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -420,7 +370,7 @@ const docTemplate = `{
                 "operationId": "CreateSignup",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -456,7 +406,7 @@ const docTemplate = `{
                 "operationId": "DeleteSignup",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -485,7 +435,7 @@ const docTemplate = `{
                 "operationId": "GetEventStatusForUser",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -514,7 +464,7 @@ const docTemplate = `{
                 "operationId": "GetSubmissions",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -547,7 +497,7 @@ const docTemplate = `{
                 "operationId": "SubmitBounty",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -585,7 +535,7 @@ const docTemplate = `{
                 "operationId": "DeleteSubmission",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -621,7 +571,7 @@ const docTemplate = `{
                 "operationId": "ReviewSubmission",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -666,7 +616,7 @@ const docTemplate = `{
                 "operationId": "GetTeams",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -699,7 +649,7 @@ const docTemplate = `{
                 "operationId": "CreateTeam",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -741,7 +691,7 @@ const docTemplate = `{
                 "operationId": "AddUsersToTeams",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -779,7 +729,7 @@ const docTemplate = `{
                 "operationId": "GetTeam",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -813,7 +763,7 @@ const docTemplate = `{
                 "operationId": "DeleteTeam",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
@@ -846,7 +796,7 @@ const docTemplate = `{
                 "operationId": "GetUsersForEvent",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Event Id",
                         "name": "event_id",
                         "in": "path",
