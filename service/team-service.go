@@ -18,6 +18,10 @@ func (e *TeamService) GetAllTeams() ([]repository.Team, error) {
 	return e.teamRepository.FindAll()
 }
 
+func (e *TeamService) GetTeamsForEvent(eventId int) ([]*repository.Team, error) {
+	return e.teamRepository.GetTeamsForEvent(eventId)
+}
+
 func (e *TeamService) SaveTeam(team *repository.Team) (*repository.Team, error) {
 	team, err := e.teamRepository.Save(team)
 	if err != nil {

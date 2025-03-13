@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -37,9 +36,7 @@ func setupEventController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventsHandler()},
 		{Method: "PUT", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/current", HandlerFunc: e.getCurrentEventHandler()},
 
-		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEventHandler()},
 		{Method: "POST", Path: "/:event_id/duplicate", HandlerFunc: e.duplicateEventHandler()},
 		{Method: "GET", Path: "/:event_id/status", HandlerFunc: e.getEventStatusForUser(), Authenticated: true},
 		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
@@ -64,23 +61,6 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, utils.Map(events, toEventResponse))
-	}
-}
-
-// @id GetCurrentEvent
-// @Description Fetches the current event
-// @Tags event
-// @Produce json
-// @Success 200 {object} Event
-// @Router /events/current [get]
-func (e *EventController) getCurrentEventHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		event, err := e.eventService.GetCurrentEvent("Teams")
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, toEventResponse(event))
 	}
 }
 
@@ -112,54 +92,21 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 	}
 }
 
-// @id GetEvent
-// @Description Gets an event by id
-// @Tags event
-// @Accept json
-// @Produce json
-// @Param event_id path int true "Event Id"
-// @Success 201 {object} Event
-// @Router /events/{event_id} [get]
-func (e *EventController) getEventHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		event, err := e.eventService.GetEventById(eventId, "Teams")
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Event not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
-			return
-		}
-		c.JSON(200, toEventResponse(event))
-	}
-}
-
 // @id DeleteEvent
 // @Description Deletes an event
 // @Tags event
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Success 204
 // @Router /events/{event_id} [delete]
 func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		err = e.eventService.DeleteEvent(eventId)
+		err := e.eventService.DeleteEvent(event)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Event not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(204, nil)
@@ -171,14 +118,13 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Success 200 {object} EventStatus
 // @Router /events/{event_id}/status [get]
 func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
 		user, err := e.userService.GetUserFromAuthCookie(c)
@@ -188,7 +134,7 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 		}
 		response := EventStatus{}
 
-		team, err := e.teamService.GetTeamForUser(eventId, user.Id)
+		team, err := e.teamService.GetTeamForUser(event.Id, user.Id)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -199,7 +145,7 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 			response.ApplicationStatus = ApplicationStatusAccepted
 		} else {
 
-			signup, _ := e.signupService.GetSignupForUser(user.Id, eventId)
+			signup, _ := e.signupService.GetSignupForUser(user.Id, event.Id)
 			if signup != nil {
 				response.ApplicationStatus = ApplicationStatusApplied
 			} else {
@@ -216,15 +162,14 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param event body EventCreate true "Event to create"
 // @Success 201 {object} Event
 // @Router /events/{event_id}/duplicate [post]
 func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		oldEvent := getEvent(c)
+		if oldEvent == nil {
 			return
 		}
 		var eventCreate EventCreate
@@ -234,17 +179,17 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 		}
 		eventCreate.Id = nil
 		event := eventCreate.toModel()
-		event, err = e.eventService.CreateEvent(event)
+		event, err := e.eventService.CreateEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		presetIdMap, err := e.scoringPresetService.DuplicatePresets(eventId, event.Id)
+		presetIdMap, err := e.scoringPresetService.DuplicatePresets(oldEvent.Id, event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		newCategory, err := e.scoringCategoryService.DuplicateScoringCategories(eventId, presetIdMap)
+		newCategory, err := e.scoringCategoryService.DuplicateScoringCategories(oldEvent.Id, presetIdMap)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

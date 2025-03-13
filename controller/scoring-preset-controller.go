@@ -11,12 +11,14 @@ import (
 )
 
 type ScoringPresetController struct {
-	service *service.ScoringPresetService
+	presetService *service.ScoringPresetService
+	eventService  *service.EventService
 }
 
 func NewScoringPresetController() *ScoringPresetController {
 	return &ScoringPresetController{
-		service: service.NewScoringPresetsService(),
+		presetService: service.NewScoringPresetsService(),
+		eventService:  service.NewEventService(),
 	}
 }
 
@@ -35,18 +37,16 @@ func setupScoringPresetController() []RouteInfo {
 // @Description Fetches the scoring presets for the current event
 // @Tags scoring
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Success 200 {array} ScoringPreset
 // @Router /events/{event_id}/scoring-presets [get]
 func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event_id, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-
-		presets, err := e.service.GetPresetsForEvent(event_id)
+		presets, err := e.presetService.GetPresetsForEvent(event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -70,7 +70,7 @@ func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
 			return
 		}
 
-		preset, err := e.service.GetPresetById(id)
+		preset, err := e.presetService.GetPresetById(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "preset not found"})
@@ -98,7 +98,7 @@ func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		preset, err := e.service.SavePreset(presetCreate.toModel())
+		preset, err := e.presetService.SavePreset(presetCreate.toModel())
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -122,7 +122,7 @@ func (e *ScoringPresetController) deleteScoringPresetHandler() gin.HandlerFunc {
 			return
 		}
 
-		err = e.service.DeletePreset(id)
+		err = e.presetService.DeletePreset(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "preset not found"})

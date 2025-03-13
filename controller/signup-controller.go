@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -43,13 +42,12 @@ func setupSignupController() []RouteInfo {
 // @Tags signup
 // @Produce json
 // @Success 200 {object} Signup
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Router /events/{event_id}/signups/self [get]
 func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
 		user, err := e.userService.GetUserFromAuthCookie(c)
@@ -57,7 +55,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		signup, err := e.signupService.GetSignupForUser(user.Id, eventId)
+		signup, err := e.signupService.GetSignupForUser(user.Id, event.Id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Not signed up"})
@@ -76,14 +74,13 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} Signup
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param body body SignupCreate true "Signup"
 // @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
 		user, err := e.userService.GetUserFromAuthCookie(c)
@@ -93,7 +90,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 		}
 		err = e.userService.DiscordServerCheck(user)
 		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			c.JSON(403, gin.H{"error": err.Error()})
 			return
 		}
 		var signupCreate SignupCreate
@@ -103,7 +100,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 		}
 		signup := &repository.Signup{
 			UserId:           user.Id,
-			EventId:          eventId,
+			EventId:          event.Id,
 			Timestamp:        time.Now(),
 			ExpectedPlayTime: signupCreate.ExpectedPlaytime,
 		}
@@ -121,13 +118,12 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Produce json
 // @Success 204
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Router /events/{event_id}/signups/self [delete]
 func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
 		user, err := e.userService.GetUserFromAuthCookie(c)
@@ -135,7 +131,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		err = e.signupService.RemoveSignup(user.Id, eventId)
+		err = e.signupService.RemoveSignup(user.Id, event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -149,16 +145,15 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Produce json
 // @Success 200 {object} map[int][]Signup
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Router /events/{event_id}/signups [get]
 func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		signups, err := e.signupService.GetSignupsForEvent(eventId)
+		signups, err := e.signupService.GetSignupsForEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

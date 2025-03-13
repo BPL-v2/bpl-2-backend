@@ -39,6 +39,15 @@ func (r *TeamRepository) GetTeamById(teamId int) (*Team, error) {
 	return &team, nil
 }
 
+func (r *TeamRepository) GetTeamsForEvent(eventId int) ([]*Team, error) {
+	var teams []*Team
+	result := r.DB.Find(&teams, "event_id = ?", eventId)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return teams, nil
+}
+
 func (r *TeamRepository) Save(team *Team) (*Team, error) {
 	result := r.DB.Save(team)
 	if result.Error != nil {
@@ -78,9 +87,13 @@ func (r *TeamRepository) FindAll() ([]Team, error) {
 
 func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error) {
 	teamUsers := make([]*TeamUser, 0)
-	result := r.DB.Find(&teamUsers, "team_id in ?", utils.Map(event.Teams, func(team *Team) int {
-		return team.Id
-	}))
+	query := `
+		SELECT *
+		FROM team_users
+		JOIN teams ON team_users.team_id = teams.id
+		WHERE teams.event_id = ?
+	`
+	result := r.DB.Find(&teamUsers, query, event.Id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -88,12 +101,18 @@ func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error)
 }
 
 func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *Event) error {
-	result := r.DB.Where("team_id in ? AND user_id in ?", utils.Map(event.Teams, func(team *Team) int {
-		return team.Id
-	}), utils.Map(teamUsers, func(user *TeamUser) int {
-		return user.UserId
-	})).Delete(&TeamUser{})
-
+	query := `
+		DELETE FROM team_users
+		WHERE team_id IN (
+			SELECT id
+			FROM teams
+			WHERE event_id = ?
+		)
+		AND user_id IN (?)
+	`
+	result := r.DB.Exec(query, event.Id, utils.Map(teamUsers, func(teamUser *TeamUser) int {
+		return teamUser.UserId
+	}))
 	return result.Error
 }
 

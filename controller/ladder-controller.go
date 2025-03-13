@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -60,18 +59,16 @@ func setupLadderController() []RouteInfo {
 // @Tags ladder
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event ID"
+// @Param event_id path string true "Event ID"
 // @Success 200 {array} LadderEntry
 // @Router /events/{event_id}/ladder [get]
 func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		eventId, err := strconv.Atoi(ctx.Param("event_id"))
-		if err != nil {
-			ctx.JSON(400, gin.H{"error": "Invalid event ID"})
+		event := getEvent(ctx)
+		if event == nil {
 			return
 		}
-
-		ladder, err := c.service.GetLadderForEvent(eventId)
+		ladder, err := c.service.GetLadderForEvent(event.Id)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return

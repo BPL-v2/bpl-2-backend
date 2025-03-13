@@ -66,12 +66,8 @@ func (e *EventService) UpdateEvent(eventId int, updateEvent *repository.Event) (
 	return e.eventRepository.Update(eventId, updateEvent)
 }
 
-func (e *EventService) DeleteEvent(eventId int) error {
-	event, err := e.eventRepository.GetEventById(eventId)
-	if err != nil {
-		return err
-	}
-	err = e.eventRepository.Delete(event)
+func (e *EventService) DeleteEvent(event *repository.Event) error {
+	err := e.eventRepository.Delete(event)
 	if err != nil {
 		return err
 	}
@@ -79,5 +75,5 @@ func (e *EventService) DeleteEvent(eventId int) error {
 	if err != nil {
 		return err
 	}
-	return e.scoringPresetRepository.DeletePresetsForEvent(eventId)
+	return e.scoringPresetRepository.DeletePresetsForEvent(event.Id)
 }

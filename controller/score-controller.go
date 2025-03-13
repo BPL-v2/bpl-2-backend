@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
 
@@ -60,13 +59,12 @@ var upgrader = websocket.Upgrader{
 // @Description Websocket for score updates. Once connected, the client will receive score updates in real-time.
 // @Tags scores
 // @Router /events/{event_id}/scores/ws [get]
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Security ApiKeyAuth
 // @Success 200 {object} ScoreDiff
 func (e *ScoreController) WebSocketHandler(c *gin.Context) {
-	eventId, err := strconv.Atoi(c.Param("event_id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event Id"})
+	event := getEvent(c)
+	if event == nil {
 		return
 	}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -76,11 +74,11 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	if _, ok := e.scoreService.LatestScores[eventId]; !ok {
-		e.scoreService.LatestScores[eventId] = make(service.ScoreMap)
+	if _, ok := e.scoreService.LatestScores[event.Id]; !ok {
+		e.scoreService.LatestScores[event.Id] = make(service.ScoreMap)
 	}
 	// Send the latest score to the new subscriber
-	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[eventId]))
+	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[event.Id]))
 	if err != nil {
 		return
 	}
@@ -90,19 +88,19 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	}
 
 	e.mu.Lock()
-	if _, ok := e.connections[eventId]; !ok {
-		e.connections[eventId] = make(map[*websocket.Conn]bool)
+	if _, ok := e.connections[event.Id]; !ok {
+		e.connections[event.Id] = make(map[*websocket.Conn]bool)
 	}
-	e.connections[eventId][conn] = true
+	e.connections[event.Id][conn] = true
 	e.mu.Unlock()
 
 	for {
 		_, _, err := conn.ReadMessage()
 		if err != nil {
 			e.mu.Lock()
-			delete(e.connections[eventId], conn)
-			if len(e.connections[eventId]) == 0 {
-				delete(e.connections, eventId)
+			delete(e.connections[event.Id], conn)
+			if len(e.connections[event.Id]) == 0 {
+				delete(e.connections, event.Id)
 			}
 			e.mu.Unlock()
 			return
@@ -146,16 +144,15 @@ func (e *ScoreController) StartScoreUpdater() {
 // @Tags scores
 // @Produce json
 // @Success 200 {object} ScoreMap
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Router /events/{event_id}/scores/latest [get]
 func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid event Id"})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		scores := e.scoreService.LatestScores[eventId]
+		scores := e.scoreService.LatestScores[event.Id]
 		if scores == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "No scores found for event"})
 			return

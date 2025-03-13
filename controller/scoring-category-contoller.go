@@ -11,11 +11,12 @@ import (
 )
 
 type ScoringCategoryController struct {
-	service *service.ScoringCategoryService
+	categoryService *service.ScoringCategoryService
+	eventService    *service.EventService
 }
 
 func NewScoringCategoryController() *ScoringCategoryController {
-	return &ScoringCategoryController{service: service.NewScoringCategoryService()}
+	return &ScoringCategoryController{categoryService: service.NewScoringCategoryService(), eventService: service.NewEventService()}
 }
 
 func setupScoringCategoryController() []RouteInfo {
@@ -33,17 +34,16 @@ func setupScoringCategoryController() []RouteInfo {
 // @Description Fetches the rules for the current event
 // @Tags scoring
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Success 200 {object} Category
 // @Router /events/{event_id}/rules [get]
 func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event_id, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		rules, err := e.service.GetRulesForEvent(event_id, "Objectives", "Objectives.Conditions")
+		rules, err := e.categoryService.GetRulesForEvent(event.Id, "Objectives", "Objectives.Conditions")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -66,7 +66,7 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		category, err := e.service.GetCategoryById(id, "Objectives", "Objectives.Conditions")
+		category, err := e.categoryService.GetCategoryById(id, "Objectives", "Objectives.Conditions")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -95,7 +95,7 @@ func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 			return
 		}
 
-		category, err := e.service.CreateCategory(categoryCreate.toModel())
+		category, err := e.categoryService.CreateCategory(categoryCreate.toModel())
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Parent category not found"})
@@ -123,7 +123,7 @@ func (e *ScoringCategoryController) deleteCategoryHandler() gin.HandlerFunc {
 			return
 		}
 
-		err = e.service.DeleteCategoryById(id)
+		err = e.categoryService.DeleteCategoryById(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
