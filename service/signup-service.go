@@ -34,17 +34,12 @@ type SignupWithUser struct {
 	TeamUser *repository.TeamUser
 }
 
-func (r *SignupService) GetSignupsForEvent(eventId int) (map[int][]*repository.Signup, error) {
-
-	event, err := r.eventRepository.GetEventById(eventId, "Teams")
-	if err != nil {
-		return nil, err
-	}
+func (r *SignupService) GetSignupsForEvent(event *repository.Event) (map[int][]*repository.Signup, error) {
 	teamUsers, err := r.teamRepository.GetTeamUsersForEvent(event)
 	if err != nil {
 		return nil, err
 	}
-	signups, err := r.signupRepository.GetSignupsForEvent(eventId, event.MaxSize)
+	signups, err := r.signupRepository.GetSignupsForEvent(event.Id, event.MaxSize)
 	if err != nil {
 		return nil, err
 	}

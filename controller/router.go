@@ -3,6 +3,8 @@ package controller
 import (
 	"bpl/auth"
 	"bpl/repository"
+	"bpl/service"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,8 +40,51 @@ func SetRoutes(r *gin.Engine) {
 			handlerfuncs = append(handlerfuncs, AuthMiddleware(route.RequiredRoles))
 		}
 		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
+		handlerfuncs = append(handlerfuncs, LoadEventMiddleware())
 		group.Handle(route.Method, route.Path, handlerfuncs...)
 	}
+}
+
+func LoadEventMiddleware() gin.HandlerFunc {
+	return func(r *gin.Context) {
+		eventParam := r.Param("event_id")
+		if eventParam == "" {
+			r.Next()
+			return
+		}
+		eventService := service.NewEventService()
+		if eventParam == "current" {
+			event, err := eventService.GetCurrentEvent()
+			if err != nil {
+				r.AbortWithStatus(404)
+				return
+			}
+			r.Set("event", event)
+			r.Next()
+			return
+		}
+		eventId, err := strconv.Atoi(eventParam)
+		if err != nil {
+			r.AbortWithStatus(400)
+			return
+		}
+		event, err := eventService.GetEventById(eventId)
+		if err != nil {
+			r.AbortWithStatus(404)
+			return
+		}
+		r.Set("event", event)
+		r.Next()
+	}
+}
+
+func getEvent(c *gin.Context) *repository.Event {
+	event, ok := c.Get("event")
+	if !ok {
+		c.AbortWithStatus(400)
+		return nil
+	}
+	return event.(*repository.Event)
 }
 
 func AuthMiddleware(roles []repository.Permission) gin.HandlerFunc {

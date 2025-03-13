@@ -52,27 +52,22 @@ func setupTeamController() []RouteInfo {
 // @Description Fetches all teams for an event
 // @Tags team
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Success 200 {array} Team
 // @Router /events/{event_id}/teams [get]
 func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event_id, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		event, err := e.eventService.GetEventById(event_id, "Teams")
+		teams, err := e.teamService.GetTeamsForEvent(event.Id)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Event not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(200, utils.Map(event.Teams, toTeamResponse))
+		c.JSON(200, utils.Map(teams, toTeamResponse))
 	}
 }
 
@@ -81,25 +76,23 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 // @Tags team
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param body body TeamCreate true "Team to create"
 // @Success 201 {object} Team
 // @Router /events/{event_id}/teams [put]
 func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event_id, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-
 		var team TeamCreate
 		if err := c.BindJSON(&team); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 		teamModel := team.toModel()
-		teamModel.EventId = event_id
+		teamModel.EventId = event.Id
 		dbteam, err := e.teamService.SaveTeam(teamModel)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -113,7 +106,7 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 // @Description Fetches a team by id
 // @Tags team
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param team_id path int true "Team Id"
 // @Success 200 {object} Team
 // @Router /events/{event_id}/teams/{team_id} [get]
@@ -141,7 +134,7 @@ func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 // @Description Deletes a team
 // @Tags team
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param team_id path int true "Team Id"
 // @Success 204
 // @Router /events/{event_id}/teams/{team_id} [delete]
@@ -170,20 +163,15 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 // @Tags team, user
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param body body []TeamUserCreate true "Users to add to teams"
 // @Success 204
 // @Router /events/{event_id}/teams/users [put]
 func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event_id, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
-		}
-		event, err := e.eventService.GetEventById(event_id, "Teams")
-		if err != nil {
-			c.JSON(404, gin.H{"error": err.Error()})
 		}
 
 		var teamUsers []TeamUserCreate
@@ -192,7 +180,7 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 			return
 		}
 		teamUsersModel := utils.Map(teamUsers, teamUserCreateToModel)
-		err = e.teamService.AddUsersToTeams(teamUsersModel, event)
+		err := e.teamService.AddUsersToTeams(teamUsersModel, event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

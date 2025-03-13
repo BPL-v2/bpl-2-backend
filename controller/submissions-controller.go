@@ -45,22 +45,16 @@ func setupSubmissionController() []RouteInfo {
 // @Description Fetches all submissions for an event
 // @Tags submission
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Success 200 {array} Submission
 // @Router /events/{event_id}/submissions [get]
 func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		event, err := e.eventService.GetEventById(eventId, "Teams")
-		if err != nil {
-			c.JSON(404, gin.H{"error": err.Error()})
-			return
-		}
-		submissions, err := e.submissionService.GetSubmissions(eventId)
+		submissions, err := e.submissionService.GetSubmissions(event.Id)
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -81,7 +75,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 // @Tags submission
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param body body SubmissionCreate true "Submission to create"
 // @Success 201 {object} Submission
 // @Router /events/{event_id}/submissions [put]
@@ -119,7 +113,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 // @Description Deletes a submission
 // @Tags submission
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param submission_id path int true "Submission Id"
 // @Success 204
 // @Router /events/{event_id}/submissions/{submission_id} [delete]
@@ -150,7 +144,7 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 // @Tags submission
 // @Accept json
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Param submission_id path int true "Submission Id"
 // @Param submission body SubmissionReview true "Submission review"
 // @Success 200 {object} Submission
@@ -167,9 +161,8 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
 
@@ -179,7 +172,7 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 			return
 		}
 		model := submissionReview.toModel()
-		model.EventId = eventId
+		model.EventId = event.Id
 
 		submission, err := e.submissionService.ReviewSubmission(submissionId, model, user)
 		if err != nil {

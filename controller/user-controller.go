@@ -168,17 +168,17 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 // @Description Fetches all users for an event
 // @Tags user
 // @Produce json
-// @Param event_id path int true "Event Id"
+// @Param event_id path string true "Event Id"
 // @Success 200 {object} map[int][]MinimalUser
 // @Router /events/{event_id}/users [get]
 func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eventId, err := strconv.Atoi(c.Param("event_id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		event, err := e.eventService.GetEventById(eventId, "Teams", "Teams.Users")
+		// loading event again to have preloads
+		event, err := e.eventService.GetEventById(event.Id, "Teams", "Teams.Users")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Event not found"})
