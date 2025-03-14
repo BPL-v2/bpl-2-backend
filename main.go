@@ -4,7 +4,6 @@ import (
 	"bpl/config"
 	"bpl/controller"
 	"bpl/docs"
-	"bpl/repository"
 	"log"
 	"os"
 	"regexp"
@@ -36,7 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	db, err := config.InitDB(
+	_, err = config.InitDB(
 		os.Getenv("DATABASE_HOST"),
 		os.Getenv("DATABASE_PORT"),
 		os.Getenv("POSTGRES_USER"),
@@ -46,28 +45,28 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = db.AutoMigrate(
-		&repository.ScoringCategory{},
-		&repository.Objective{},
-		&repository.Condition{},
-		&repository.Event{},
-		&repository.Team{},
-		&repository.User{},
-		&repository.TeamUser{},
-		&repository.StashChange{},
-		&repository.ObjectiveMatch{},
-		&repository.Submission{},
-		&repository.ClientCredentials{},
-		&repository.Signup{},
-		&repository.Oauth{},
-		&repository.KafkaConsumer{},
-		&repository.RecurringJob{},
-		&repository.LadderEntry{},
-	)
+	// err = db.AutoMigrate(
+	// 	&repository.ScoringCategory{},
+	// 	&repository.Objective{},
+	// 	&repository.Condition{},
+	// 	&repository.Event{},
+	// 	&repository.Team{},
+	// 	&repository.User{},
+	// 	&repository.TeamUser{},
+	// 	&repository.StashChange{},
+	// 	&repository.ObjectiveMatch{},
+	// 	&repository.Submission{},
+	// 	&repository.ClientCredentials{},
+	// 	&repository.Signup{},
+	// 	&repository.Oauth{},
+	// 	&repository.KafkaConsumer{},
+	// 	&repository.RecurringJob{},
+	// 	&repository.LadderEntry{},
+	// )
 
-	if err != nil {
-		panic(err)
-	}
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	r := gin.Default()
 
