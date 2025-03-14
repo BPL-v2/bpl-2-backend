@@ -59,7 +59,7 @@ func setupLadderController() []RouteInfo {
 // @Tags ladder
 // @Accept json
 // @Produce json
-// @Param event_id path string true "Event ID"
+// @Param event_id path int true "Event ID"
 // @Success 200 {array} LadderEntry
 // @Router /events/{event_id}/ladder [get]
 func (c *LadderController) getLadderHandler() gin.HandlerFunc {

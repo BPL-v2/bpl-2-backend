@@ -95,7 +95,7 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 // @id DeleteEvent
 // @Description Deletes an event
 // @Tags event
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Success 204
 // @Router /events/{event_id} [delete]
 func (e *EventController) deleteEventHandler() gin.HandlerFunc {
@@ -118,7 +118,7 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Success 200 {object} EventStatus
 // @Router /events/{event_id}/status [get]
 func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
@@ -162,7 +162,7 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Param event body EventCreate true "Event to create"
 // @Success 201 {object} Event
 // @Router /events/{event_id}/duplicate [post]

@@ -59,7 +59,7 @@ var upgrader = websocket.Upgrader{
 // @Description Websocket for score updates. Once connected, the client will receive score updates in real-time.
 // @Tags scores
 // @Router /events/{event_id}/scores/ws [get]
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Security ApiKeyAuth
 // @Success 200 {object} ScoreDiff
 func (e *ScoreController) WebSocketHandler(c *gin.Context) {
@@ -144,7 +144,7 @@ func (e *ScoreController) StartScoreUpdater() {
 // @Tags scores
 // @Produce json
 // @Success 200 {object} ScoreMap
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/scores/latest [get]
 func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

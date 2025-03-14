@@ -45,7 +45,7 @@ func setupSubmissionController() []RouteInfo {
 // @Description Fetches all submissions for an event
 // @Tags submission
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Success 200 {array} Submission
 // @Router /events/{event_id}/submissions [get]
 func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
@@ -75,7 +75,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 // @Tags submission
 // @Accept json
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Param body body SubmissionCreate true "Submission to create"
 // @Success 201 {object} Submission
 // @Router /events/{event_id}/submissions [put]
@@ -113,7 +113,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 // @Description Deletes a submission
 // @Tags submission
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Param submission_id path int true "Submission Id"
 // @Success 204
 // @Router /events/{event_id}/submissions/{submission_id} [delete]
@@ -144,7 +144,7 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 // @Tags submission
 // @Accept json
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Param submission_id path int true "Submission Id"
 // @Param submission body SubmissionReview true "Submission review"
 // @Success 200 {object} Submission
