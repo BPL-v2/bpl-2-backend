@@ -39,8 +39,8 @@ func SetRoutes(r *gin.Engine) {
 		if route.Authenticated {
 			handlerfuncs = append(handlerfuncs, AuthMiddleware(route.RequiredRoles))
 		}
-		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
 		handlerfuncs = append(handlerfuncs, LoadEventMiddleware())
+		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
 		group.Handle(route.Method, route.Path, handlerfuncs...)
 	}
 }
