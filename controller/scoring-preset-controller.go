@@ -37,7 +37,7 @@ func setupScoringPresetController() []RouteInfo {
 // @Description Fetches the scoring presets for the current event
 // @Tags scoring
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Success 200 {array} ScoringPreset
 // @Router /events/{event_id}/scoring-presets [get]
 func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.HandlerFunc {

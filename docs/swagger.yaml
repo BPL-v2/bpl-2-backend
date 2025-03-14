@@ -998,7 +998,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       responses:
         "204":
           description: No Content
@@ -1015,7 +1015,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Event to create
         in: body
         name: event
@@ -1042,7 +1042,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1063,7 +1063,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1082,7 +1082,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1102,7 +1102,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       responses:
         "200":
           description: OK
@@ -1121,7 +1121,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1142,7 +1142,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1165,7 +1165,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1181,7 +1181,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1201,7 +1201,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Signup
         in: body
         name: body
@@ -1228,7 +1228,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1247,7 +1247,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1269,7 +1269,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Submission to create
         in: body
         name: body
@@ -1294,7 +1294,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Submission Id
         in: path
         name: submission_id
@@ -1318,7 +1318,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Submission Id
         in: path
         name: submission_id
@@ -1348,7 +1348,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
@@ -1370,7 +1370,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Team to create
         in: body
         name: body
@@ -1395,7 +1395,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Team Id
         in: path
         name: team_id
@@ -1416,7 +1416,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Team Id
         in: path
         name: team_id
@@ -1442,7 +1442,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       - description: Users to add to teams
         in: body
         name: body
@@ -1468,7 +1468,7 @@ paths:
         in: path
         name: event_id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:

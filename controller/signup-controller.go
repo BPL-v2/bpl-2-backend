@@ -42,7 +42,7 @@ func setupSignupController() []RouteInfo {
 // @Tags signup
 // @Produce json
 // @Success 200 {object} Signup
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups/self [get]
 func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -74,7 +74,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Success 201 {object} Signup
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Param body body SignupCreate true "Signup"
 // @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
@@ -118,7 +118,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Produce json
 // @Success 204
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups/self [delete]
 func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -145,7 +145,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Produce json
 // @Success 200 {object} map[int][]Signup
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups [get]
 func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

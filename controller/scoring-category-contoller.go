@@ -34,7 +34,7 @@ func setupScoringCategoryController() []RouteInfo {
 // @Description Fetches the rules for the current event
 // @Tags scoring
 // @Produce json
-// @Param event_id path string true "Event Id"
+// @Param event_id path int true "Event Id"
 // @Success 200 {object} Category
 // @Router /events/{event_id}/rules [get]
 func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
