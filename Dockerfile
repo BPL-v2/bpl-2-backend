@@ -24,6 +24,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
+COPY --from=builder /app/migrate .
 COPY --from=builder /app/server .
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/docs ./docs
@@ -31,5 +32,4 @@ COPY --from=builder /app/docs ./docs
 EXPOSE 8000
 
 ENV GIN_MODE=release
-
-CMD ["./server"]
+CMD ["sh", "-c", "./migrate up head && ./server"]

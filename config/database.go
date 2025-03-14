@@ -46,21 +46,6 @@ func InitDB(host string, port string, user string, password string, dbname strin
 			return
 		}
 
-		x := db.Exec(`CREATE SCHEMA IF NOT EXISTS bpl2`)
-		if x.Error != nil {
-			err = x.Error
-			return
-		}
-		// for _, query := range enumQueries {
-		// 	x := db.Exec(query)
-		// 	if x.Error != nil {
-		// 		if strings.Contains(x.Error.Error(), "already exists") {
-		// 			continue
-		// 		}
-		// 		err = x.Error
-		// 		return
-		// 	}
-		// }
 	})
 
 	return db, err
