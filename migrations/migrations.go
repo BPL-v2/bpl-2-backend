@@ -30,7 +30,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable search_path=bpl2",
 		os.Getenv("DATABASE_HOST"),
 		os.Getenv("DATABASE_PORT"),
 		os.Getenv("POSTGRES_USER"),
@@ -85,7 +85,7 @@ func migrateUp(db *sql.DB, version int) error {
 		fmt.Printf("error executing migration: %v", err)
 		return err
 	}
-	_, err = db.Exec("UPDATE public.migrations SET version = $1", version+1)
+	_, err = db.Exec("UPDATE migrations SET version = $1", version+1)
 	if err != nil {
 		fmt.Printf("error updating migration version: %v", err)
 		return err
@@ -105,7 +105,7 @@ func migrateDown(db *sql.DB, version int) error {
 		fmt.Printf("error executing migration: %v", err)
 		return err
 	}
-	_, err = db.Exec("UPDATE public.migrations SET version = $1", version-1)
+	_, err = db.Exec("UPDATE migrations SET version = $1", version-1)
 	if err != nil {
 		fmt.Printf("error updating migration version: %v", err)
 		return err
@@ -115,7 +115,7 @@ func migrateDown(db *sql.DB, version int) error {
 }
 
 func getMigrationVersion(db *sql.DB) (version int, err error) {
-	err = db.QueryRow("SELECT version FROM public.migrations").Scan(&version)
+	err = db.QueryRow("SELECT version FROM migrations").Scan(&version)
 	if err != nil {
 		err := generateMigrationTable(db)
 		if err != nil {
@@ -128,10 +128,10 @@ func getMigrationVersion(db *sql.DB) (version int, err error) {
 
 func generateMigrationTable(db *sql.DB) error {
 	_, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS public.migrations (
+		CREATE TABLE IF NOT EXISTS migrations (
 			version INT PRIMARY KEY
 		);
-		INSERT INTO public.migrations (version) VALUES (0);
+		INSERT INTO migrations (version) VALUES (0);
 	`)
 	if err != nil {
 		return err
