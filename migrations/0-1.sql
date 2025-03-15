@@ -23,6 +23,7 @@ CREATE TABLE ladder_entries (
 CREATE INDEX idx_bpl2_ladder_entries_event_id ON ladder_entries USING btree (event_id);
 CREATE INDEX idx_bpl2_ladder_entries_user_id ON ladder_entries USING btree (user_id);
 CREATE TABLE objective_matches (
+    id bigserial NOT NULL,
     objective_id int8 NOT NULL,
     "timestamp" timestamptz NOT NULL,
     "number" int8 NOT NULL,
@@ -146,10 +147,11 @@ CREATE TABLE submissions (
     review_comment text NULL,
     reviewer_id int8 NULL,
     event_id int8 NOT NULL,
+    match_id int8 NULL,
     CONSTRAINT submissions_pkey PRIMARY KEY (id),
     CONSTRAINT fk_bpl2_submissions_objective FOREIGN KEY (objective_id) REFERENCES objectives(id) ON DELETE CASCADE,
     CONSTRAINT fk_bpl2_submissions_reviewer FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_bpl2_submissions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    CONSTRAINT fk_bpl2_submissions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE CONSTRAINT fk_bpl2_submissions_match FOREIGN KEY (match_id) REFERENCES objective_matches(id) ON DELETE CASCADE
 );
 CREATE TABLE teams (
     id bigserial NOT NULL,
