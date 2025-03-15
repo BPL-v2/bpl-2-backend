@@ -25,7 +25,7 @@ func NewObjectiveController() *ObjectiveController {
 
 func setupObjectiveController() []RouteInfo {
 	e := NewObjectiveController()
-	baseUrl := "/scoring/objectives"
+	baseUrl := "/events/:event_id/objectives"
 	routes := []RouteInfo{
 		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler()},
 		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
@@ -43,9 +43,10 @@ func setupObjectiveController() []RouteInfo {
 // @Tags objective
 // @Accept json
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param body body ObjectiveCreate true "Objective to create"
 // @Success 201 {object} Objective
-// @Router /scoring/objectives [put]
+// @Router /events/{event_id}/objectives [put]
 func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var objectiveCreate ObjectiveCreate
@@ -53,7 +54,14 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "event is locked"})
+			return
+		}
 		objective, err := e.service.CreateObjective(objectiveCreate.toModel())
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -71,14 +79,23 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 // @Description Deletes an objective
 // @Tags objective
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param id path int true "Objective Id"
 // @Success 204
-// @Router /scoring/objectives/{id} [delete]
+// @Router /events/{event_id}/objectives/{id} [delete]
 func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "event is locked"})
 			return
 		}
 
@@ -99,9 +116,10 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 // @Description Gets an objective by id
 // @Tags objective
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param id path int true "Objective Id"
 // @Success 200 {object} Objective
-// @Router /scoring/objectives/{id} [get]
+// @Router /events/{event_id}/objectives/{id} [get]
 func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
@@ -109,7 +127,6 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
 		objective, err := e.service.GetObjectiveById(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -130,7 +147,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		parser, err := e.service.GetParser(currentEvent.ScoringCategoryId)
+		parser, err := e.service.GetParser(currentEvent.Id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})

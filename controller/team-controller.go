@@ -86,6 +86,11 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "event is locked"})
+			return
+		}
+
 		var team TeamCreate
 		if err := c.BindJSON(&team); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})

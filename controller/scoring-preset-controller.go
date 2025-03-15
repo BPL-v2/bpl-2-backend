@@ -26,9 +26,8 @@ func setupScoringPresetController() []RouteInfo {
 	e := NewScoringPresetController()
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/scoring-presets", HandlerFunc: e.getScoringPresetsForEventHandler()},
-		{Method: "PUT", Path: "/scoring/presets", HandlerFunc: e.createScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/scoring/presets/:id", HandlerFunc: e.getScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "DELETE", Path: "/scoring/presets/:id", HandlerFunc: e.deleteScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "PUT", Path: "/events/:event_id/scoring-presets", HandlerFunc: e.createScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "DELETE", Path: "/events/:event_id/scoring-presets/:id", HandlerFunc: e.deleteScoringPresetHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	return routes
 }
@@ -55,50 +54,33 @@ func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.Handler
 	}
 }
 
-// @id GetScoringPreset
-// @Description Fetches a scoring preset by id
-// @Tags scoring
-// @Produce json
-// @Param id path int true "Preset Id"
-// @Success 200 {object} ScoringPreset
-// @Router /scoring/presets/{id} [get]
-func (e *ScoringPresetController) getScoringPresetHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-
-		preset, err := e.presetService.GetPresetById(id)
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "preset not found"})
-				return
-			}
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, toScoringPresetResponse(preset))
-	}
-}
-
 // @id CreateScoringPreset
 // @Description Creates a new scoring preset
 // @Tags scoring
 // @Accept json
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param body body ScoringPresetCreate true "Preset to create"
 // @Success 200 {object} ScoringPreset
-// @Router /scoring/presets [put]
+// @Router /events/{event_id}/scoring-presets [put]
 func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "event is locked"})
+			return
+		}
 		var presetCreate ScoringPresetCreate
 		if err := c.ShouldBindJSON(&presetCreate); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		preset, err := e.presetService.SavePreset(presetCreate.toModel())
+		create := presetCreate.toModel()
+		create.EventId = event.Id
+		preset, err := e.presetService.SavePreset(create)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -111,14 +93,23 @@ func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 // @Description Deletes a scoring preset by id
 // @Tags scoring
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param id path int true "Preset Id"
 // @Success 200
-// @Router /scoring/presets/{id} [delete]
+// @Router /events/{event_id}/scoring-presets/{id} [delete]
 func (e *ScoringPresetController) deleteScoringPresetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "event is locked"})
 			return
 		}
 
@@ -142,7 +133,6 @@ type ScoringPresetCreate struct {
 	Points        []float64                    `json:"points" binding:"required"`
 	ScoringMethod repository.ScoringMethod     `json:"scoring_method" binding:"required"`
 	Type          repository.ScoringPresetType `json:"type" binding:"required"`
-	EventId       int                          `json:"event_id" binding:"required"`
 }
 
 func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
@@ -152,7 +142,6 @@ func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
 		Points:        e.Points,
 		ScoringMethod: e.ScoringMethod,
 		Type:          e.Type,
-		EventId:       e.EventId,
 	}
 	if e.Id != nil {
 		preset.Id = *e.Id

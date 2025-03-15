@@ -25,17 +25,9 @@ func (e *EventService) GetAllEvents(preloads ...string) ([]*repository.Event, er
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
 	if event.Id == 0 {
-		category, err := e.scoringCategoryRepository.SaveCategory(&repository.ScoringCategory{Name: "default"})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create default scoring category: %v", err)
-		}
-		event.ScoringCategory = category
-	} else {
-		currentEvent, err := e.eventRepository.GetEventById(event.Id)
-		if err != nil {
-			return nil, fmt.Errorf("event with this id does not exist: %v", err)
-		}
-		event.ScoringCategoryId = currentEvent.ScoringCategoryId
+		event.ScoringCategories = []*repository.ScoringCategory{{
+			Name: "default",
+		}}
 	}
 	if event.IsCurrent {
 		err := e.eventRepository.InvalidateCurrentEvent()
@@ -67,13 +59,21 @@ func (e *EventService) UpdateEvent(eventId int, updateEvent *repository.Event) (
 }
 
 func (e *EventService) DeleteEvent(event *repository.Event) error {
-	err := e.eventRepository.Delete(event)
+	err := e.scoringCategoryRepository.DeleteCategoriesForEvent(event.Id)
 	if err != nil {
 		return err
 	}
-	err = e.scoringCategoryRepository.DeleteCategoryById(event.ScoringCategoryId)
+	err = e.eventRepository.Delete(event)
 	if err != nil {
 		return err
 	}
 	return e.scoringPresetRepository.DeletePresetsForEvent(event.Id)
+}
+
+func (e *EventService) GetEventByObjectiveId(objectiveId int) (*repository.Event, error) {
+	return e.eventRepository.GetEventByObjectiveId(objectiveId)
+}
+
+func (e *EventService) GetEventByConditionId(conditionId int) (*repository.Event, error) {
+	return e.eventRepository.GetEventByConditionId(conditionId)
 }

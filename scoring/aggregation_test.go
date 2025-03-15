@@ -120,7 +120,6 @@ func TearDown() {
 func SetUp() *repository.Event {
 	event := &repository.Event{
 		Name:                 "event1",
-		ScoringCategoryId:    1,
 		MaxSize:              10,
 		IsCurrent:            true,
 		ApplicationStartTime: time.Now(),
@@ -152,8 +151,10 @@ func SetUp() *repository.Event {
 				AllowedClasses: []string{},
 			},
 		},
-		ScoringCategory: &repository.ScoringCategory{
-			Name: "category1",
+		ScoringCategories: []*repository.ScoringCategory{
+			{
+				Name: "category1",
+			},
 		},
 	}
 	err := db.Create(event).Error
@@ -172,7 +173,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.EARLIEST_FRESH_ITEM,
 		RequiredAmount: 1,
-		CategoryId:     event.ScoringCategory.Id,
+		CategoryId:     event.ScoringCategories[0].Id,
 		ObjectiveType:  repository.ITEM,
 		NumberField:    repository.STACK_SIZE,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -262,7 +263,7 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.EARLIEST_FRESH_ITEM,
 		RequiredAmount: 1,
-		CategoryId:     event.ScoringCategory.Id,
+		CategoryId:     event.ScoringCategories[0].Id,
 		ObjectiveType:  repository.ITEM,
 		NumberField:    repository.STACK_SIZE,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -340,7 +341,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.EARLIEST_FRESH_ITEM,
 		RequiredAmount: 100,
-		CategoryId:     event.ScoringCategory.Id,
+		CategoryId:     event.ScoringCategories[0].Id,
 		ObjectiveType:  repository.ITEM,
 		NumberField:    repository.STACK_SIZE,
 		SyncStatus:     repository.SyncStatusSynced,

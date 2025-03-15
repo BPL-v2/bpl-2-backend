@@ -4,6 +4,7 @@ import (
 	"bpl/auth"
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -87,36 +88,22 @@ func getEvent(c *gin.Context) *repository.Event {
 	return event.(*repository.Event)
 }
 
-func AuthMiddleware(roles []repository.Permission) gin.HandlerFunc {
+func AuthMiddleware(requiredRoles []repository.Permission) gin.HandlerFunc {
 	return func(r *gin.Context) {
-		authCookie, err := r.Cookie("auth")
+		userRoles, err := getUserRoles(r)
 		if err != nil {
 			r.AbortWithStatus(401)
-			return
-		}
-		token, err := auth.ParseToken(authCookie)
-		if err != nil {
-			r.AbortWithStatus(401)
-			return
-		}
-		claims := &auth.Claims{}
-		if !token.Valid {
-			r.AbortWithStatus(401)
-			return
-		}
-		claims.FromJWTClaims(token.Claims)
-		if err := claims.Valid(); err != nil {
-			r.AbortWithStatus(401)
-			return
-		}
-		if len(roles) == 0 {
-			r.Next()
 			return
 		}
 
-		for _, requiredRole := range roles {
-			for _, userRole := range claims.Permissions {
-				if requiredRole == repository.Permission(userRole) {
+		r.Set("userRoles", userRoles)
+		if len(requiredRoles) == 0 {
+			r.Next()
+			return
+		}
+		for _, requiredRole := range requiredRoles {
+			for _, userRole := range userRoles {
+				if requiredRole == userRole {
 					r.Next()
 					return
 				}
@@ -124,4 +111,26 @@ func AuthMiddleware(roles []repository.Permission) gin.HandlerFunc {
 		}
 		r.AbortWithStatus(403)
 	}
+}
+
+func getUserRoles(r *gin.Context) (permissions []repository.Permission, err error) {
+	authCookie, err := r.Cookie("auth")
+	if err != nil {
+		return permissions, err
+	}
+	token, err := auth.ParseToken(authCookie)
+	if err != nil {
+		return permissions, err
+	}
+	claims := &auth.Claims{}
+	if !token.Valid {
+		return permissions, err
+	}
+	claims.FromJWTClaims(token.Claims)
+	if err := claims.Valid(); err != nil {
+		return permissions, err
+	}
+	return utils.Map(claims.Permissions, func(perm string) repository.Permission {
+		return repository.Permission(perm)
+	}), nil
 }

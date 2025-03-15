@@ -3,7 +3,7 @@ package service
 import (
 	"bpl/parser"
 	"bpl/repository"
-	util "bpl/utils"
+	"bpl/utils"
 )
 
 type ObjectiveService struct {
@@ -91,18 +91,14 @@ func (e *ObjectiveService) UpdateObjective(objectiveId int, updateObjective *rep
 	return e.objectiveRepository.SaveObjective(objective)
 }
 
-func (e *ObjectiveService) GetParser(categoryId int) (*parser.ItemChecker, error) {
-	relations, err := e.scoringCategoryRepository.GetTreeStructure(categoryId)
+func (e *ObjectiveService) GetParser(eventId int) (*parser.ItemChecker, error) {
+	cats, err := e.scoringCategoryRepository.GetCategoriesForEvent(eventId, "Objectives", "Objectives.Conditions")
 	if err != nil {
 		return nil, err
 	}
-
-	categoryIds := make([]int, len(relations))
-	categoryIds = append(categoryIds, categoryId)
-	for _, relation := range relations {
-		categoryIds = append(categoryIds, relation.ChildId)
-	}
-	objectives, _ := e.objectiveRepository.GetObjectivesByCategoryIds(util.Uniques(categoryIds))
+	objectives := utils.FlatMap(cats, func(cat *repository.ScoringCategory) []*repository.Objective {
+		return cat.Objectives
+	})
 	return parser.NewItemChecker(objectives)
 }
 
