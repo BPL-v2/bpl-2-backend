@@ -189,7 +189,7 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 		}
 		eventCreate.Id = nil
 		event := eventCreate.toModel()
-		event, err := e.eventService.CreateEvent(event)
+		event, err := e.eventService.CreateEventWithoutCategory(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -199,7 +199,7 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		_, err = e.scoringCategoryService.DuplicateScoringCategories(oldEvent.Id, presetIdMap)
+		_, err = e.scoringCategoryService.DuplicateScoringCategories(oldEvent.Id, event.Id, presetIdMap)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

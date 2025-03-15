@@ -41,6 +41,19 @@ func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, 
 	}
 	return event, nil
 }
+func (e *EventService) CreateEventWithoutCategory(event *repository.Event) (*repository.Event, error) {
+	if event.IsCurrent {
+		err := e.eventRepository.InvalidateCurrentEvent()
+		if err != nil {
+			return nil, err
+		}
+	}
+	result := e.eventRepository.DB.Save(event)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to save event: %v", result.Error)
+	}
+	return event, nil
+}
 
 func (e *EventService) SaveEvent(event *repository.Event) (*repository.Event, error) {
 	return e.eventRepository.Save(event)

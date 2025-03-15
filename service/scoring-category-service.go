@@ -52,26 +52,23 @@ func (e *ScoringCategoryService) DeleteCategory(category *repository.ScoringCate
 	return e.rulesRepository.DeleteCategory(category)
 }
 
-func (e *ScoringCategoryService) DuplicateScoringCategories(eventId int, scoringPresetMap map[int]int) (*repository.ScoringCategory, error) {
-	event, err := e.eventRepository.GetEventById(eventId)
+func (e *ScoringCategoryService) DuplicateScoringCategories(oldEventId int, newEventId int, scoringPresetMap map[int]int) (*repository.ScoringCategory, error) {
+	scoringCategories, err := e.rulesRepository.GetNestedCategoriesForEvent(oldEventId, "Objectives", "Objectives.Conditions")
 	if err != nil {
 		return nil, err
 	}
-	scoringCategories, err := e.rulesRepository.GetNestedCategoriesForEvent(event.Id, "Objectives", "Objectives.Conditions")
-	if err != nil {
-		return nil, err
-	}
-	newCategory := StripCategory(scoringCategories, scoringPresetMap)
-	e.rulesRepository.SaveCategory(newCategory)
-	return newCategory, nil
+	newCategory := StripCategory(scoringCategories, scoringPresetMap, newEventId)
+	return e.rulesRepository.SaveCategory(newCategory)
 }
 
-func StripCategory(category *repository.ScoringCategory, scoringPresetMap map[int]int) *repository.ScoringCategory {
+func StripCategory(category *repository.ScoringCategory, scoringPresetMap map[int]int, newEventId int) *repository.ScoringCategory {
 	newCategory := &repository.ScoringCategory{
 		Name: category.Name,
 		SubCategories: utils.Map(category.SubCategories, func(c *repository.ScoringCategory) *repository.ScoringCategory {
-			return StripCategory(c, scoringPresetMap)
+			return StripCategory(c, scoringPresetMap, newEventId)
 		}),
+		ParentId:      nil,
+		EventId:       newEventId,
 		ScoringPreset: category.ScoringPreset,
 		Objectives: utils.Map(category.Objectives, func(o *repository.Objective) *repository.Objective {
 			newObjective := &repository.Objective{
