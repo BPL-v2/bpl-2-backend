@@ -18,7 +18,7 @@ func NewScoringCategoryService() *ScoringCategoryService {
 }
 
 func (e *ScoringCategoryService) GetCategoryById(categoryId int, preloads ...string) (*repository.ScoringCategory, error) {
-	category, err := e.rulesRepository.GetNestedCategories(categoryId, preloads...)
+	category, err := e.rulesRepository.GetNestedCategoriesForCategory(categoryId, preloads...)
 	if err != nil {
 		return nil, err
 	}
@@ -26,12 +26,7 @@ func (e *ScoringCategoryService) GetCategoryById(categoryId int, preloads ...str
 }
 
 func (e *ScoringCategoryService) GetRulesForEvent(eventId int, preloads ...string) (*repository.ScoringCategory, error) {
-	event, err := e.eventRepository.GetEventById(eventId)
-	if err != nil {
-		return nil, err
-	}
-
-	return e.rulesRepository.GetNestedCategories(event.ScoringCategoryId, preloads...)
+	return e.rulesRepository.GetNestedCategoriesForEvent(eventId, preloads...)
 }
 
 func (e *ScoringCategoryService) CreateCategory(category *repository.ScoringCategory) (*repository.ScoringCategory, error) {
@@ -53,8 +48,8 @@ func (e *ScoringCategoryService) UpdateCategory(categoryUpdate *repository.Scori
 	return e.rulesRepository.SaveCategory(category)
 }
 
-func (e *ScoringCategoryService) DeleteCategoryById(categoryId int) error {
-	return e.rulesRepository.DeleteCategoryById(categoryId)
+func (e *ScoringCategoryService) DeleteCategory(category *repository.ScoringCategory) error {
+	return e.rulesRepository.DeleteCategory(category)
 }
 
 func (e *ScoringCategoryService) DuplicateScoringCategories(eventId int, scoringPresetMap map[int]int) (*repository.ScoringCategory, error) {
@@ -62,7 +57,7 @@ func (e *ScoringCategoryService) DuplicateScoringCategories(eventId int, scoring
 	if err != nil {
 		return nil, err
 	}
-	scoringCategories, err := e.rulesRepository.GetNestedCategories(event.ScoringCategoryId, "Objectives", "Objectives.Conditions")
+	scoringCategories, err := e.rulesRepository.GetNestedCategoriesForEvent(event.Id, "Objectives", "Objectives.Conditions")
 	if err != nil {
 		return nil, err
 	}

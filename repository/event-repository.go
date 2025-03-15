@@ -17,17 +17,18 @@ const (
 )
 
 type Event struct {
-	Id                   int              `gorm:"primaryKey"`
-	Name                 string           `gorm:"not null"`
-	ScoringCategoryId    int              `gorm:"not null"`
-	Teams                []*Team          `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
-	IsCurrent            bool             `gorm:"not null"`
-	GameVersion          GameVersion      `gorm:"null"`
-	MaxSize              int              `gorm:"not null"`
-	ScoringCategory      *ScoringCategory `gorm:"foreignKey:ScoringCategoryId;constraint:OnDelete:CASCADE"`
-	ApplicationStartTime time.Time        `gorm:"null"`
-	EventStartTime       time.Time        `gorm:"null"`
-	EventEndTime         time.Time        `gorm:"null"`
+	Id                   int                `gorm:"primaryKey"`
+	Name                 string             `gorm:"not null"`
+	IsCurrent            bool               `gorm:"not null"`
+	GameVersion          GameVersion        `gorm:"null"`
+	MaxSize              int                `gorm:"not null"`
+	ApplicationStartTime time.Time          `gorm:"null"`
+	EventStartTime       time.Time          `gorm:"null"`
+	EventEndTime         time.Time          `gorm:"null"`
+	Public               bool               `gorm:"not null"`
+	Locked               bool               `gorm:"not null"`
+	Teams                []*Team            `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
+	ScoringCategories    []*ScoringCategory `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
 }
 
 type EventRepository struct {
@@ -133,4 +134,29 @@ func (r *EventRepository) FindAll(preloads ...string) ([]*Event, error) {
 		return nil, fmt.Errorf("failed to find events: %v", result.Error)
 	}
 	return events, nil
+}
+
+func (r *EventRepository) GetEventByObjectiveId(objectiveId int) (*Event, error) {
+	var event Event
+	result := r.DB.Joins("ScoringCategories.Objectives").First(&event, "objective_id = ?", objectiveId)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to find event by objective id: %v", result.Error)
+	}
+	return &event, nil
+}
+
+func (r *EventRepository) GetEventByConditionId(conditionId int) (*Event, error) {
+	var event Event
+	query := `
+	SELECT * FROM events
+	JOIN scoring_categories ON events.id = scoring_categories.event_id
+	JOIN objectives ON scoring_categories.id = objectives.category_id
+	JOIN conditions ON objectives.id = conditions.objective_id
+	WHERE conditions.id = ?
+	`
+	result := r.DB.Raw(query, conditionId).Scan(&event)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to find event by condition id: %v", result.Error)
+	}
+	return &event, nil
 }

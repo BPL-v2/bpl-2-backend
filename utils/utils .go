@@ -19,6 +19,15 @@ func Reduce[A any](input []*A, reducer func(*A, *A) *A) *A {
 	return result
 }
 
+func Find[A any](input []*A, predicate func(*A) bool) (*A, bool) {
+	for _, item := range input {
+		if predicate(item) {
+			return item, true
+		}
+	}
+	return nil, false
+}
+
 func FlatMap[A any, B any](input []A, mapper func(A) []B) []B {
 	return Flatten(Map(input, mapper))
 }

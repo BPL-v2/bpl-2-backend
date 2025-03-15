@@ -5,6 +5,7 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -12,16 +13,22 @@ import (
 )
 
 type ConditionController struct {
-	service *service.ConditionService
+	conditionService *service.ConditionService
+	objectiveService *service.ObjectiveService
+	eventService     *service.EventService
 }
 
 func NewConditionController() *ConditionController {
-	return &ConditionController{service: service.NewConditionService()}
+	return &ConditionController{
+		conditionService: service.NewConditionService(),
+		objectiveService: service.NewObjectiveService(),
+		eventService:     service.NewEventService(),
+	}
 }
 
 func setupConditionController() []RouteInfo {
 	e := NewConditionController()
-	baseUrl := "/scoring/conditions"
+	baseUrl := "/events/:event_id/conditions"
 	routes := []RouteInfo{
 		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler()},
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteConditionHandler()},
@@ -39,9 +46,10 @@ func setupConditionController() []RouteInfo {
 // @Tags condition
 // @Accept json
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param condition body ConditionCreate true "Condition to create"
 // @Success 201 {object} Condition
-// @Router /scoring/conditions [put]
+// @Router /events/{event_id}/conditions [put]
 func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var conditionCreate ConditionCreate
@@ -49,9 +57,12 @@ func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		condition := conditionCreate.toModel()
-
-		condition, err := e.service.CreateCondition(condition)
+		event, err := e.eventService.GetEventByObjectiveId(conditionCreate.ObjectiveId)
+		if err != nil || event.Locked {
+			c.JSON(400, gin.H{"error": "Event is locked"})
+			return
+		}
+		condition, err := e.conditionService.CreateCondition(conditionCreate.toModel())
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objective not found"})
@@ -67,8 +78,9 @@ func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 // @id DeleteCondition
 // @Description Deletes a condition
 // @Tags condition
+// @Param event_id path int true "Event Id"
 // @Param id path int true "Condition Id"
-// @Router /scoring/conditions/{id} [delete]
+// @Router /events/{event_id}/conditions/{id} [delete]
 func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		conditionId, err := strconv.Atoi(c.Param("id"))
@@ -76,8 +88,14 @@ func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+		event, err := e.eventService.GetEventByConditionId(conditionId)
+		if err != nil || event.Locked {
+			fmt.Println(err)
+			c.JSON(400, gin.H{"error": "Event is locked"})
+			return
+		}
 
-		err = e.service.DeleteCondition(conditionId)
+		err = e.conditionService.DeleteCondition(conditionId)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Condition not found"})
@@ -94,8 +112,9 @@ func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 // @Description Get valid mappings for conditions
 // @Tags condition
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Success 200 {object} ConditionMappings
-// @Router /scoring/conditions/valid-mappings [get]
+// @Router /events/{event_id}/conditions/valid-mappings [get]
 func (e *ConditionController) getValidMappingsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(200, ConditionMappings{

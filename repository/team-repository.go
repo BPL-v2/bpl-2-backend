@@ -88,12 +88,12 @@ func (r *TeamRepository) FindAll() ([]Team, error) {
 func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error) {
 	teamUsers := make([]*TeamUser, 0)
 	query := `
-		SELECT *
+		SELECT * 
 		FROM team_users
 		JOIN teams ON team_users.team_id = teams.id
 		WHERE teams.event_id = ?
 	`
-	result := r.DB.Find(&teamUsers, query, event.Id)
+	result := r.DB.Raw(query, event.Id).Scan(&teamUsers)
 	if result.Error != nil {
 		return nil, result.Error
 	}

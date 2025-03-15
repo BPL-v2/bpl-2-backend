@@ -196,12 +196,14 @@ definitions:
         type: integer
       is_current:
         type: boolean
+      is_locked:
+        type: boolean
+      is_public:
+        type: boolean
       max_size:
         type: integer
       name:
         type: string
-      scoring_category_id:
-        type: integer
       teams:
         items:
           $ref: '#/definitions/Team'
@@ -213,9 +215,10 @@ definitions:
     - game_version
     - id
     - is_current
+    - is_locked
+    - is_public
     - max_size
     - name
-    - scoring_category_id
     - teams
     type: object
   EventCreate:
@@ -231,6 +234,10 @@ definitions:
       id:
         type: integer
       is_current:
+        type: boolean
+      is_locked:
+        type: boolean
+      is_public:
         type: boolean
       max_size:
         type: integer
@@ -516,8 +523,6 @@ definitions:
     properties:
       description:
         type: string
-      event_id:
-        type: integer
       id:
         type: integer
       name:
@@ -531,7 +536,6 @@ definitions:
       type:
         $ref: '#/definitions/ScoringPresetType'
     required:
-    - event_id
     - name
     - points
     - scoring_method
@@ -903,10 +907,14 @@ definitions:
     enum:
     - admin
     - command_team
+    - objective_designer
+    - judge
     type: string
     x-enum-varnames:
     - PermissionAdmin
     - PermissionCommandTeam
+    - PermissionObjectiveDesigner
+    - PermissionJudge
   ScoringMethod:
     enum:
     - PRESENCE
@@ -1004,6 +1012,160 @@ paths:
           description: No Content
       tags:
       - event
+  /events/{event_id}/categories:
+    get:
+      description: Fetches the rules for the current event
+      operationId: GetRulesForEvent
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Category'
+      tags:
+      - scoring
+    put:
+      consumes:
+      - application/json
+      description: Creates a new scoring category
+      operationId: CreateCategory
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Category to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CategoryCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Category'
+      tags:
+      - scoring
+  /events/{event_id}/categories/{id}:
+    delete:
+      description: Deletes a scoring category
+      operationId: DeleteCategory
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Category Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - scoring
+    get:
+      description: Fetches a scoring category by id
+      operationId: GetScoringCategory
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Category Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Category'
+      tags:
+      - scoring
+  /events/{event_id}/conditions:
+    put:
+      consumes:
+      - application/json
+      description: Creates a condition
+      operationId: CreateCondition
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Condition to create
+        in: body
+        name: condition
+        required: true
+        schema:
+          $ref: '#/definitions/ConditionCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Condition'
+      tags:
+      - condition
+  /events/{event_id}/conditions/{id}:
+    delete:
+      description: Deletes a condition
+      operationId: DeleteCondition
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Condition Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses: {}
+      tags:
+      - condition
+  /events/{event_id}/conditions/valid-mappings:
+    get:
+      description: Get valid mappings for conditions
+      operationId: GetValidMappings
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ConditionMappings'
+      tags:
+      - condition
   /events/{event_id}/duplicate:
     post:
       consumes:
@@ -1054,14 +1216,67 @@ paths:
             type: array
       tags:
       - ladder
-  /events/{event_id}/rules:
-    get:
-      description: Fetches the rules for the current event
-      operationId: GetRulesForEvent
+  /events/{event_id}/objectives:
+    put:
+      consumes:
+      - application/json
+      description: Creates a new objective
+      operationId: CreateObjective
       parameters:
       - description: Event Id
         in: path
         name: event_id
+        required: true
+        type: integer
+      - description: Objective to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ObjectiveCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/Objective'
+      tags:
+      - objective
+  /events/{event_id}/objectives/{id}:
+    delete:
+      description: Deletes an objective
+      operationId: DeleteObjective
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Objective Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - objective
+    get:
+      description: Gets an objective by id
+      operationId: GetObjective
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Objective Id
+        in: path
+        name: id
         required: true
         type: integer
       produces:
@@ -1070,9 +1285,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Category'
+            $ref: '#/definitions/Objective'
       tags:
-      - scoring
+      - objective
   /events/{event_id}/scores/latest:
     get:
       description: Fetches the latest scores for the current event
@@ -1131,6 +1346,54 @@ paths:
             items:
               $ref: '#/definitions/ScoringPreset'
             type: array
+      tags:
+      - scoring
+    put:
+      consumes:
+      - application/json
+      description: Creates a new scoring preset
+      operationId: CreateScoringPreset
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Preset to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ScoringPresetCreate'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ScoringPreset'
+      tags:
+      - scoring
+  /events/{event_id}/scoring-presets/{id}:
+    delete:
+      description: Deletes a scoring preset by id
+      operationId: DeleteScoringPreset
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Preset Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
       tags:
       - scoring
   /events/{event_id}/signups:
@@ -1582,225 +1845,6 @@ paths:
           description: OK
       tags:
       - oauth
-  /scoring/categories:
-    put:
-      consumes:
-      - application/json
-      description: Creates a new scoring category
-      operationId: CreateCategory
-      parameters:
-      - description: Category to create
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/CategoryCreate'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/Category'
-      tags:
-      - scoring
-  /scoring/categories/{id}:
-    delete:
-      description: Deletes a scoring category
-      operationId: DeleteCategory
-      parameters:
-      - description: Category Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      tags:
-      - scoring
-    get:
-      description: Fetches a scoring category by id
-      operationId: GetScoringCategory
-      parameters:
-      - description: Category Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Category'
-      tags:
-      - scoring
-  /scoring/conditions:
-    put:
-      consumes:
-      - application/json
-      description: Creates a condition
-      operationId: CreateCondition
-      parameters:
-      - description: Condition to create
-        in: body
-        name: condition
-        required: true
-        schema:
-          $ref: '#/definitions/ConditionCreate'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/Condition'
-      tags:
-      - condition
-  /scoring/conditions/{id}:
-    delete:
-      description: Deletes a condition
-      operationId: DeleteCondition
-      parameters:
-      - description: Condition Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      responses: {}
-      tags:
-      - condition
-  /scoring/conditions/valid-mappings:
-    get:
-      description: Get valid mappings for conditions
-      operationId: GetValidMappings
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/ConditionMappings'
-      tags:
-      - condition
-  /scoring/objectives:
-    put:
-      consumes:
-      - application/json
-      description: Creates a new objective
-      operationId: CreateObjective
-      parameters:
-      - description: Objective to create
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/ObjectiveCreate'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/Objective'
-      tags:
-      - objective
-  /scoring/objectives/{id}:
-    delete:
-      description: Deletes an objective
-      operationId: DeleteObjective
-      parameters:
-      - description: Objective Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      tags:
-      - objective
-    get:
-      description: Gets an objective by id
-      operationId: GetObjective
-      parameters:
-      - description: Objective Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Objective'
-      tags:
-      - objective
-  /scoring/presets:
-    put:
-      consumes:
-      - application/json
-      description: Creates a new scoring preset
-      operationId: CreateScoringPreset
-      parameters:
-      - description: Preset to create
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/ScoringPresetCreate'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/ScoringPreset'
-      tags:
-      - scoring
-  /scoring/presets/{id}:
-    delete:
-      description: Deletes a scoring preset by id
-      operationId: DeleteScoringPreset
-      parameters:
-      - description: Preset Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      tags:
-      - scoring
-    get:
-      description: Fetches a scoring preset by id
-      operationId: GetScoringPreset
-      parameters:
-      - description: Preset Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/ScoringPreset'
-      tags:
-      - scoring
   /streams:
     get:
       description: Fetches all twitch streams for the current event

@@ -60,6 +60,12 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
+		roles, _ := getUserRoles(c)
+		if !utils.Contains(roles, repository.PermissionAdmin) {
+			events = utils.Filter(events, func(event *repository.Event) bool {
+				return event.Public
+			})
+		}
 		c.JSON(200, utils.Map(events, toEventResponse))
 	}
 }
@@ -102,6 +108,10 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
+			return
+		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "Event is locked"})
 			return
 		}
 		err := e.eventService.DeleteEvent(event)
@@ -189,23 +199,12 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		newCategory, err := e.scoringCategoryService.DuplicateScoringCategories(oldEvent.Id, presetIdMap)
+		_, err = e.scoringCategoryService.DuplicateScoringCategories(oldEvent.Id, presetIdMap)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		oldCategoryId := event.ScoringCategoryId
-		event.ScoringCategory = newCategory
-		event, err = e.eventService.SaveEvent(event)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		err = e.scoringCategoryService.DeleteCategoryById(oldCategoryId)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
+
 		c.JSON(201, toEventResponse(event))
 	}
 }
@@ -219,12 +218,13 @@ type EventCreate struct {
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
 	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
+	Public               bool                   `json:"is_public"`
+	Locked               bool                   `json:"is_locked"`
 }
 
 type Event struct {
 	Id                   int                    `json:"id" binding:"required"`
 	Name                 string                 `json:"name" binding:"required"`
-	ScoringCategoryId    int                    `json:"scoring_category_id" binding:"required"`
 	IsCurrent            bool                   `json:"is_current" binding:"required"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
@@ -232,6 +232,8 @@ type Event struct {
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
 	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
+	Public               bool                   `json:"is_public" binding:"required"`
+	Locked               bool                   `json:"is_locked" binding:"required"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {
@@ -243,6 +245,8 @@ func (e *EventCreate) toModel() *repository.Event {
 		EventStartTime:       e.EventStartTime,
 		EventEndTime:         e.EventEndTime,
 		ApplicationStartTime: e.ApplicationStartTime,
+		Public:               e.Public,
+		Locked:               e.Locked,
 	}
 	if e.Id != nil {
 		event.Id = *e.Id
@@ -257,7 +261,6 @@ func toEventResponse(event *repository.Event) *Event {
 	return &Event{
 		Id:                   event.Id,
 		Name:                 event.Name,
-		ScoringCategoryId:    event.ScoringCategoryId,
 		GameVersion:          event.GameVersion,
 		IsCurrent:            event.IsCurrent,
 		MaxSize:              event.MaxSize,
@@ -265,6 +268,8 @@ func toEventResponse(event *repository.Event) *Event {
 		ApplicationStartTime: event.ApplicationStartTime,
 		EventStartTime:       event.EventStartTime,
 		EventEndTime:         event.EventEndTime,
+		Public:               event.Public,
+		Locked:               event.Locked,
 	}
 }
 

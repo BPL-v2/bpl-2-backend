@@ -22,10 +22,10 @@ func NewScoringCategoryController() *ScoringCategoryController {
 func setupScoringCategoryController() []RouteInfo {
 	e := NewScoringCategoryController()
 	routes := []RouteInfo{
-		{Method: "GET", Path: "/events/:event_id/rules", HandlerFunc: e.getRulesForEventHandler()},
-		{Method: "PUT", Path: "/scoring/categories", HandlerFunc: e.createCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/scoring/categories/:id", HandlerFunc: e.getScoringCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "DELETE", Path: "/scoring/categories/:id", HandlerFunc: e.deleteCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/events/:event_id/categories", HandlerFunc: e.getRulesForEventHandler()},
+		{Method: "PUT", Path: "/events/:event_id/categories", HandlerFunc: e.createCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/events/:event_id/categories/:id", HandlerFunc: e.getScoringCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "DELETE", Path: "/events/:event_id/categories/:id", HandlerFunc: e.deleteCategoryHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	return routes
 }
@@ -36,7 +36,7 @@ func setupScoringCategoryController() []RouteInfo {
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Success 200 {object} Category
-// @Router /events/{event_id}/rules [get]
+// @Router /events/{event_id}/categories [get]
 func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
@@ -56,11 +56,16 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 // @Description Fetches a scoring category by id
 // @Tags scoring
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param id path int true "Category Id"
 // @Success 200 {object} Category
-// @Router /scoring/categories/{id} [get]
+// @Router /events/{event_id}/categories/{id} [get]
 func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -84,11 +89,21 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 // @Tags scoring
 // @Accept json
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param body body CategoryCreate true "Category to create"
 // @Success 201 {object} Category
-// @Router /scoring/categories [put]
+// @Router /events/{event_id}/categories [put]
 func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "event is locked"})
+			return
+		}
+
 		var categoryCreate CategoryCreate
 		if err := c.BindJSON(&categoryCreate); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -112,18 +127,36 @@ func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 // @Description Deletes a scoring category
 // @Tags scoring
 // @Produce json
+// @Param event_id path int true "Event Id"
 // @Param id path int true "Category Id"
 // @Success 204
-// @Router /scoring/categories/{id} [delete]
+// @Router /events/{event_id}/categories/{id} [delete]
 func (e *ScoringCategoryController) deleteCategoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		if event.Locked {
+			c.JSON(400, gin.H{"error": "event is locked"})
+			return
+		}
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+		category, err := e.categoryService.GetCategoryById(id, "Objectives", "Objectives.Conditions")
+		if err != nil {
+			c.JSON(404, gin.H{"error": err.Error()})
+			return
+		}
+		if category.EventId != event.Id {
+			c.JSON(404, gin.H{"error": "Category not found"})
+			return
+		}
 
-		err = e.categoryService.DeleteCategoryById(id)
+		err = e.categoryService.DeleteCategory(category)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})

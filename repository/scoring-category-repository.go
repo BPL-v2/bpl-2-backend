@@ -2,16 +2,18 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/utils"
+	"fmt"
 
 	"gorm.io/gorm"
 )
 
 type ScoringCategory struct {
-	Id        int    `gorm:"primaryKey foreignKey:CategoryId references:Id on:objectives"`
-	Name      string `gorm:"not null"`
-	ParentId  *int   `gorm:"null;references:scoring_category(id)"`
-	ScoringId *int   `gorm:"null;references:scoring_presets(id)"`
-
+	Id            int                `gorm:"primaryKey foreignKey:CategoryId references:Id on:objectives"`
+	Name          string             `gorm:"not null"`
+	EventId       int                `gorm:"not null;references:events(id)"`
+	ParentId      *int               `gorm:"null;references:scoring_category(id)"`
+	ScoringId     *int               `gorm:"null;references:scoring_presets(id)"`
 	SubCategories []*ScoringCategory `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
 	Objectives    []*Objective       `gorm:"foreignKey:CategoryId;constraint:OnDelete:CASCADE"`
 	ScoringPreset *ScoringPreset     `gorm:"foreignKey:ScoringId;references:Id"`
@@ -31,91 +33,64 @@ func (r *ScoringCategoryRepository) GetRulesForEvent(eventId int, preloads ...st
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return r.GetNestedCategories(event.ScoringCategoryId, preloads...)
+	return r.GetNestedCategoriesForEvent(event.Id, preloads...)
 }
 
-func (r *ScoringCategoryRepository) GetNestedCategories(categoryId int, preloads ...string) (*ScoringCategory, error) {
-	// First get all ids of the categories involved in the tree structure and their parent ids
-	relations, err := r.GetTreeStructure(categoryId)
-	if err != nil {
-		return nil, err
+func addSubCategories(category *ScoringCategory, categories []*ScoringCategory) {
+	for _, cat := range categories {
+		if cat.ParentId != nil {
+			if *cat.ParentId == category.Id {
+				addSubCategories(cat, categories)
+				category.SubCategories = append(category.SubCategories, cat)
+			}
+		}
 	}
-	var scoringCategories []ScoringCategory
-	ids := make(map[int]bool)
-	// manually add the root category id as it is not necessarily included in the relations as it has no parent
-	ids[categoryId] = true
-	for _, relation := range relations {
-		ids[relation.ChildId] = true
-	}
-	uniques := make([]int, 0, len(ids))
-	uniques = append(uniques, categoryId)
-	for id := range ids {
-		uniques = append(uniques, id)
-	}
+}
+
+func (r *ScoringCategoryRepository) GetCategoriesForEvent(eventId int, preloads ...string) (categories []*ScoringCategory, err error) {
 	query := r.DB
 	for _, preload := range preloads {
 		query = query.Preload(preload)
 	}
-	result := query.Where("id IN ?", uniques).Find(&scoringCategories)
-	if result.Error != nil {
-		return nil, result.Error
+	err = query.Find(&categories, "event_id = ?", eventId).Error
+	if err != nil {
+		return nil, err
 	}
-	categoryMap := make(map[int]*ScoringCategory)
-	for _, category := range scoringCategories {
-		categoryMap[category.Id] = &category
-	}
+	return categories, nil
+}
 
-	for _, category := range categoryMap {
-		for _, relation := range relations {
-			if relation.ParentId == category.Id {
-				category.SubCategories = append(category.SubCategories, categoryMap[relation.ChildId])
-			}
-		}
+func (r *ScoringCategoryRepository) GetNestedCategoriesForEvent(eventId int, preloads ...string) (*ScoringCategory, error) {
+	categories, err := r.GetCategoriesForEvent(eventId, preloads...)
+	if err != nil {
+		return nil, err
 	}
+	rootCategory, found := utils.Find(categories, func(cat *ScoringCategory) bool {
+		return cat.ParentId == nil
+	})
+	if !found {
+		return nil, fmt.Errorf("no root category found for event %d", eventId)
+	}
+	addSubCategories(rootCategory, categories)
+	return rootCategory, nil
+}
 
-	category := categoryMap[categoryId]
-	return category, nil
+func (r *ScoringCategoryRepository) GetNestedCategoriesForCategory(categoryId int, preloads ...string) (*ScoringCategory, error) {
+	// First get all ids of the categories involved in the tree structure and their parent ids
+	rootCategory, err := r.GetCategoryById(categoryId, preloads...)
+	if err != nil {
+		return nil, err
+	}
+	categories, err := r.GetCategoriesForEvent(rootCategory.EventId, preloads...)
+	if err != nil {
+		return nil, err
+	}
+	addSubCategories(rootCategory, categories)
+	return rootCategory, nil
 }
 
 type CategoryRelation struct {
 	ChildId  int
 	ParentId int
-}
-
-func (r *ScoringCategoryRepository) GetTreeStructure(parentId int) ([]CategoryRelation, error) {
-	var categories []CategoryRelation
-	query := `
-        WITH RECURSIVE Relations AS (
-            SELECT
-                id,
-                parent_id
-            FROM
-                bpl2.scoring_categories
-            WHERE
-                parent_id = ?
-
-            UNION ALL
-
-            SELECT
-                category.id,
-                category.parent_id
-            FROM
-                bpl2.scoring_categories category
-            INNER JOIN
-                Relations relation ON category.parent_id = relation.Id
-        )
-        SELECT
-			id as child_id,
-            parent_id
-        FROM
-        	Relations;
-    `
-
-	if err := r.DB.Raw(query, parentId).Scan(&categories).Error; err != nil {
-		return nil, err
-	}
-
-	return categories, nil
 }
 
 func (r *ScoringCategoryRepository) GetCategoryById(categoryId int, preloads ...string) (*ScoringCategory, error) {
@@ -140,18 +115,6 @@ func (r *ScoringCategoryRepository) SaveCategory(category *ScoringCategory) (*Sc
 	return category, nil
 }
 
-func (r *ScoringCategoryRepository) DeleteCategoryById(categoryId int) error {
-	category, err := r.GetNestedCategories(categoryId, "Objectives", "Objectives.Conditions")
-	if err != nil {
-		return err
-	}
-	for _, subCategory := range category.SubCategories {
-		if err := r.DeleteCategory(subCategory); err != nil {
-			return err
-		}
-	}
-	return r.DeleteCategory(category)
-}
 func (r *ScoringCategoryRepository) DeleteCategory(category *ScoringCategory) error {
 	for _, objective := range category.Objectives {
 		for _, condition := range objective.Conditions {
@@ -166,4 +129,17 @@ func (r *ScoringCategoryRepository) DeleteCategory(category *ScoringCategory) er
 	}
 	result := r.DB.Delete(&category)
 	return result.Error
+}
+
+func (r *ScoringCategoryRepository) DeleteCategoriesForEvent(eventId int) error {
+	categories, err := r.GetCategoriesForEvent(eventId, "Objectives", "Objectives.Conditions")
+	if err != nil {
+		return err
+	}
+	for _, category := range categories {
+		if err := r.DeleteCategory(category); err != nil {
+			return err
+		}
+	}
+	return nil
 }

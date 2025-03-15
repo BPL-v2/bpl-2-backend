@@ -96,6 +96,237 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/categories": {
+            "get": {
+                "description": "Fetches the rules for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "GetRulesForEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Category"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Creates a new scoring category",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "CreateCategory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Category to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CategoryCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Category"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/categories/{id}": {
+            "get": {
+                "description": "Fetches a scoring category by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "GetScoringCategory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Category"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes a scoring category",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "DeleteCategory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/conditions": {
+            "put": {
+                "description": "Creates a condition",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "condition"
+                ],
+                "operationId": "CreateCondition",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Condition to create",
+                        "name": "condition",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ConditionCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Condition"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/conditions/valid-mappings": {
+            "get": {
+                "description": "Get valid mappings for conditions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "condition"
+                ],
+                "operationId": "GetValidMappings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ConditionMappings"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/conditions/{id}": {
+            "delete": {
+                "description": "Deletes a condition",
+                "tags": [
+                    "condition"
+                ],
+                "operationId": "DeleteCondition",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Condition Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/events/{event_id}/duplicate": {
             "post": {
                 "description": "Duplicates an event's configuration",
@@ -172,21 +403,69 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/{event_id}/rules": {
-            "get": {
-                "description": "Fetches the rules for the current event",
+        "/events/{event_id}/objectives": {
+            "put": {
+                "description": "Creates a new objective",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "scoring"
+                    "objective"
                 ],
-                "operationId": "GetRulesForEvent",
+                "operationId": "CreateObjective",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Event Id",
                         "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Objective to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ObjectiveCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/Objective"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/objectives/{id}": {
+            "get": {
+                "description": "Gets an objective by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "operationId": "GetObjective",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Objective Id",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -195,8 +474,39 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Category"
+                            "$ref": "#/definitions/Objective"
                         }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes an objective",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "operationId": "DeleteObjective",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Objective Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -289,6 +599,78 @@ const docTemplate = `{
                                 "$ref": "#/definitions/ScoringPreset"
                             }
                         }
+                    }
+                }
+            },
+            "put": {
+                "description": "Creates a new scoring preset",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "CreateScoringPreset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Preset to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ScoringPresetCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ScoringPreset"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/scoring-presets/{id}": {
+            "delete": {
+                "description": "Deletes a scoring preset by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scoring"
+                ],
+                "operationId": "DeleteScoringPreset",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Preset Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     }
                 }
             }
@@ -975,340 +1357,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/scoring/categories": {
-            "put": {
-                "description": "Creates a new scoring category",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "CreateCategory",
-                "parameters": [
-                    {
-                        "description": "Category to create",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CategoryCreate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Category"
-                        }
-                    }
-                }
-            }
-        },
-        "/scoring/categories/{id}": {
-            "get": {
-                "description": "Fetches a scoring category by id",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "GetScoringCategory",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Category Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Category"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Deletes a scoring category",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "DeleteCategory",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Category Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
-        },
-        "/scoring/conditions": {
-            "put": {
-                "description": "Creates a condition",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "condition"
-                ],
-                "operationId": "CreateCondition",
-                "parameters": [
-                    {
-                        "description": "Condition to create",
-                        "name": "condition",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ConditionCreate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Condition"
-                        }
-                    }
-                }
-            }
-        },
-        "/scoring/conditions/valid-mappings": {
-            "get": {
-                "description": "Get valid mappings for conditions",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "condition"
-                ],
-                "operationId": "GetValidMappings",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ConditionMappings"
-                        }
-                    }
-                }
-            }
-        },
-        "/scoring/conditions/{id}": {
-            "delete": {
-                "description": "Deletes a condition",
-                "tags": [
-                    "condition"
-                ],
-                "operationId": "DeleteCondition",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Condition Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
-        "/scoring/objectives": {
-            "put": {
-                "description": "Creates a new objective",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "objective"
-                ],
-                "operationId": "CreateObjective",
-                "parameters": [
-                    {
-                        "description": "Objective to create",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ObjectiveCreate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Objective"
-                        }
-                    }
-                }
-            }
-        },
-        "/scoring/objectives/{id}": {
-            "get": {
-                "description": "Gets an objective by id",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "objective"
-                ],
-                "operationId": "GetObjective",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Objective Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Objective"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Deletes an objective",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "objective"
-                ],
-                "operationId": "DeleteObjective",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Objective Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
-        },
-        "/scoring/presets": {
-            "put": {
-                "description": "Creates a new scoring preset",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "CreateScoringPreset",
-                "parameters": [
-                    {
-                        "description": "Preset to create",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ScoringPresetCreate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ScoringPreset"
-                        }
-                    }
-                }
-            }
-        },
-        "/scoring/presets/{id}": {
-            "get": {
-                "description": "Fetches a scoring preset by id",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "GetScoringPreset",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Preset Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ScoringPreset"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "description": "Deletes a scoring preset by id",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "DeleteScoringPreset",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Preset Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
         "/streams": {
             "get": {
                 "description": "Fetches all twitch streams for the current event",
@@ -1800,9 +1848,10 @@ const docTemplate = `{
                 "game_version",
                 "id",
                 "is_current",
+                "is_locked",
+                "is_public",
                 "max_size",
                 "name",
-                "scoring_category_id",
                 "teams"
             ],
             "properties": {
@@ -1824,14 +1873,17 @@ const docTemplate = `{
                 "is_current": {
                     "type": "boolean"
                 },
+                "is_locked": {
+                    "type": "boolean"
+                },
+                "is_public": {
+                    "type": "boolean"
+                },
                 "max_size": {
                     "type": "integer"
                 },
                 "name": {
                     "type": "string"
-                },
-                "scoring_category_id": {
-                    "type": "integer"
                 },
                 "teams": {
                     "type": "array",
@@ -1868,6 +1920,12 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "is_current": {
+                    "type": "boolean"
+                },
+                "is_locked": {
+                    "type": "boolean"
+                },
+                "is_public": {
                     "type": "boolean"
                 },
                 "max_size": {
@@ -2263,7 +2321,6 @@ const docTemplate = `{
         "ScoringPresetCreate": {
             "type": "object",
             "required": [
-                "event_id",
                 "name",
                 "points",
                 "scoring_method",
@@ -2272,9 +2329,6 @@ const docTemplate = `{
             "properties": {
                 "description": {
                     "type": "string"
-                },
-                "event_id": {
-                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
@@ -2782,11 +2836,15 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "admin",
-                "command_team"
+                "command_team",
+                "objective_designer",
+                "judge"
             ],
             "x-enum-varnames": [
                 "PermissionAdmin",
-                "PermissionCommandTeam"
+                "PermissionCommandTeam",
+                "PermissionObjectiveDesigner",
+                "PermissionJudge"
             ]
         },
         "ScoringMethod": {
