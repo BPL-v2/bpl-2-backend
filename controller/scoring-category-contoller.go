@@ -109,8 +109,9 @@ func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-
-		category, err := e.categoryService.CreateCategory(categoryCreate.toModel())
+		category := categoryCreate.toModel()
+		category.EventId = event.Id
+		category, err := e.categoryService.CreateCategory(category)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Parent category not found"})

@@ -36,6 +36,9 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerUpdate) {
+	if s.event.GameVersion == repository.PoE2 {
+		return
+	}
 	playerUpdate.Mu.Lock()
 	defer playerUpdate.Mu.Unlock()
 	if !playerUpdate.ShouldUpdateCharacterName() {
@@ -60,6 +63,9 @@ func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerU
 }
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate) {
+	if s.event.GameVersion == repository.PoE2 {
+		return
+	}
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	if !player.ShouldUpdateCharacter() {
@@ -86,6 +92,9 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate) {
 }
 
 func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate) {
+	if s.event.GameVersion == repository.PoE2 {
+		return
+	}
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	if !player.ShouldUpdateLeagueAccount() {
@@ -105,9 +114,22 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 }
 
 func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
-	// todo: once we have a token that allows us to request the ladder api
-	return
-	token := os.Getenv("POE_CLIENT_TOKEN")
+	var resp *client.GetLeagueLadderResponse
+	var clientError *client.ClientError
+	if s.event.GameVersion == repository.PoE2 {
+		// todo: get the ladder for the correct event
+		resp, clientError = s.client.GetPoE2Ladder("Standard")
+	} else {
+		// todo: once we have a token that allows us to request the ladder api
+		return
+		token := os.Getenv("POE_CLIENT_TOKEN")
+		resp, clientError = s.client.GetFullLadder(token, s.event.Name)
+	}
+	if clientError != nil {
+		log.Print(clientError)
+		return
+	}
+
 	charToUpdate := map[string]*parser.PlayerUpdate{}
 	charToUserId := map[string]int{}
 	for _, player := range players {
@@ -115,11 +137,6 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 		charToUserId[player.New.CharacterName] = player.UserId
 	}
 
-	resp, clientErr := s.client.GetFullLadder(token, s.event.Name)
-	if clientErr != nil {
-		log.Print(clientErr)
-		return
-	}
 	entriesToPersist := make([]*client.LadderEntry, 0, len(resp.Ladder.Entries))
 	for _, entry := range resp.Ladder.Entries {
 		if player, ok := charToUpdate[entry.Character.Name]; ok {
@@ -134,7 +151,7 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 	}
 	err := s.ladderService.UpsertLadder(entriesToPersist, s.event.Id, charToUserId)
 	if err != nil {
-		log.Print(err)
+		log.Print(clientError)
 	}
 }
 
