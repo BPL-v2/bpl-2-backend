@@ -6,6 +6,7 @@ const (
 	PC   Realm = "pc"
 	Sony Realm = "sony"
 	Xbox Realm = "xbox"
+	PoE2 Realm = "poe2"
 )
 
 type LeagueRule struct {
@@ -691,4 +692,8 @@ type RefreshTokenGrantResponse struct {
 	Sub          string `json:"sub"`
 	Scope        string `json:"scope"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+type GetPoE2LadderResponse struct {
+	Context *GetLeagueLadderResponse `json:"context"`
 }

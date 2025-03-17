@@ -200,6 +200,22 @@ func (c *PoEClient) GetFullLadder(token string, league string) (*GetLeagueLadder
 	return response, nil
 }
 
+func (c *PoEClient) GetPoE2Ladder(league string) (*GetLeagueLadderResponse, *ClientError) {
+	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPoE2Ladder"))
+	defer timer.ObserveDuration()
+	poeRequestCounter.WithLabelValues("GetPoE2Ladder").Inc()
+	resp, err := sendRequest[GetPoE2LadderResponse](c, RequestArgs{
+		Endpoint:      fmt.Sprintf("https://pathofexile2.com/internal-api/content/game-ladder/id/%s", league),
+		Method:        "GET",
+		IgnoreBaseURL: true,
+	},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Context, nil
+}
+
 func (c *PoEClient) GetLeagueEventLadder(token string, league string, realm string, limit int, offset int) (*GetLeagueEventLadderResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeagueEventLadder"))
 	defer timer.ObserveDuration()
