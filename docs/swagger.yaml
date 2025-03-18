@@ -636,6 +636,8 @@ definitions:
         items:
           type: string
         type: array
+      color:
+        type: string
       event_id:
         type: integer
       id:
@@ -654,6 +656,8 @@ definitions:
         items:
           type: string
         type: array
+      color:
+        type: string
       id:
         type: integer
       name:

@@ -2498,6 +2498,9 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "color": {
+                    "type": "string"
+                },
                 "event_id": {
                     "type": "integer"
                 },
@@ -2521,6 +2524,9 @@ const docTemplate = `{
                     "items": {
                         "type": "string"
                     }
+                },
+                "color": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
