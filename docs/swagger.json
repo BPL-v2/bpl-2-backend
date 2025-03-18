@@ -2490,6 +2490,9 @@
                         "type": "string"
                     }
                 },
+                "color": {
+                    "type": "string"
+                },
                 "event_id": {
                     "type": "integer"
                 },
@@ -2513,6 +2516,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "color": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"

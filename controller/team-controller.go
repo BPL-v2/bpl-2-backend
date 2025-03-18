@@ -29,6 +29,7 @@ func toTeamResponse(team *repository.Team) *Team {
 		Name:           team.Name,
 		AllowedClasses: team.AllowedClasses,
 		EventId:        team.EventId,
+		Color:          team.Color,
 	}
 }
 
@@ -205,6 +206,7 @@ type TeamCreate struct {
 	Id             *int     `json:"id"`
 	Name           string   `json:"name" binding:"required"`
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
+	Color          string   `json:"color"`
 }
 
 type Team struct {
@@ -212,6 +214,7 @@ type Team struct {
 	Name           string   `json:"name" binding:"required"`
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 	EventId        int      `json:"event_id" binding:"required"`
+	Color          string   `json:"color"`
 }
 
 func teamUserCreateToModel(teamUserCreate TeamUserCreate) *repository.TeamUser {
@@ -226,6 +229,7 @@ func (e *TeamCreate) toModel() *repository.Team {
 	team := &repository.Team{
 		Name:           e.Name,
 		AllowedClasses: e.AllowedClasses,
+		Color:          e.Color,
 	}
 	if e.Id != nil {
 		team.Id = *e.Id

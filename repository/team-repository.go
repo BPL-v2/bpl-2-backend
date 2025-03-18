@@ -13,6 +13,7 @@ type Team struct {
 	Name           string         `gorm:"not null"`
 	AllowedClasses pq.StringArray `gorm:"not null;type:text[]"`
 	EventId        int            `gorm:"not null;references events(id)"`
+	Color          string         `gorm:"not null"`
 	Users          []*User        `gorm:"many2many:team_users"`
 }
 
