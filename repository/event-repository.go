@@ -138,7 +138,13 @@ func (r *EventRepository) FindAll(preloads ...string) ([]*Event, error) {
 
 func (r *EventRepository) GetEventByObjectiveId(objectiveId int) (*Event, error) {
 	var event Event
-	result := r.DB.Joins("ScoringCategories.Objectives").First(&event, "objective_id = ?", objectiveId)
+	query := `
+		SELECT * FROM events
+		JOIN scoring_categories ON events.id = scoring_categories.event_id
+		JOIN objectives ON scoring_categories.id = objectives.category_id
+		WHERE objectives.id = ?
+	`
+	result := r.DB.Raw(query, objectiveId).Scan(&event)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to find event by objective id: %v", result.Error)
 	}
@@ -148,11 +154,11 @@ func (r *EventRepository) GetEventByObjectiveId(objectiveId int) (*Event, error)
 func (r *EventRepository) GetEventByConditionId(conditionId int) (*Event, error) {
 	var event Event
 	query := `
-	SELECT * FROM events
-	JOIN scoring_categories ON events.id = scoring_categories.event_id
-	JOIN objectives ON scoring_categories.id = objectives.category_id
-	JOIN conditions ON objectives.id = conditions.objective_id
-	WHERE conditions.id = ?
+		SELECT * FROM events
+		JOIN scoring_categories ON events.id = scoring_categories.event_id
+		JOIN objectives ON scoring_categories.id = objectives.category_id
+		JOIN conditions ON objectives.id = conditions.objective_id
+		WHERE conditions.id = ?
 	`
 	result := r.DB.Raw(query, conditionId).Scan(&event)
 	if result.Error != nil {
