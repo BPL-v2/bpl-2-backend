@@ -134,7 +134,7 @@ func (e *ScoreController) StartScoreUpdater() {
 				}
 			}
 			e.mu.Unlock()
-			time.Sleep(5 * time.Second)
+			time.Sleep(60 * time.Minute)
 		}
 	}()
 }
