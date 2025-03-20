@@ -1311,6 +1311,25 @@ paths:
             $ref: '#/definitions/ScoreMap'
       tags:
       - scores
+  /events/{event_id}/scores/simple/ws:
+    get:
+      description: Websocket for simple score updates.
+      operationId: SimpleScoreWebSocket
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Score'
+      security:
+      - ApiKeyAuth: []
+      tags:
+      - scores
   /events/{event_id}/scores/ws:
     get:
       description: Websocket for score updates. Once connected, the client will receive

@@ -10,6 +10,14 @@ import (
 
 type ScoreMap map[string]*ScoreDifference
 
+func (s ScoreMap) GetSimpleScore() map[int]int {
+	scores := make(map[int]int)
+	for _, value := range s {
+		scores[value.Score.TeamId] += value.Score.Points
+	}
+	return scores
+}
+
 type Difftype string
 
 const (
