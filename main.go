@@ -73,11 +73,11 @@ func main() {
 	r.LoadHTMLGlob("templates/*")
 	r.Use(gin.Recovery())
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "http://localhost"},
-		AllowMethods:     []string{"GET", "PUT", "PATCH", "DELETE"},
-		AllowHeaders:     []string{"Origin"},
+		AllowOrigins:     []string{"*"},                                // Allow all origins
+		AllowMethods:     []string{"GET", "OPTIONS"},                   // Allow only GET requests
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"}, // Allow necessary headers
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		AllowCredentials: false, // Credentials are not allowed when AllowOrigins is "*"
 		MaxAge:           12 * time.Hour,
 	}))
 	addMetrics(r)
