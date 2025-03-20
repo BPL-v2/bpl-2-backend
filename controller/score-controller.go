@@ -117,7 +117,7 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 // @Router /events/{event_id}/scores/simple/ws [get]
 // @Param event_id path int true "Event Id"
 // @Security ApiKeyAuth
-// @Success 200 {object} Score
+// @Success 200 {object} map[int]int
 func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 
 	event := getEvent(c)
