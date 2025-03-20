@@ -1325,7 +1325,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Score'
+            additionalProperties:
+              type: integer
+            type: object
       security:
       - ApiKeyAuth: []
       tags:
