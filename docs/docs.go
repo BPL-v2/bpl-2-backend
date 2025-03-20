@@ -540,6 +540,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/scores/simple/ws": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Websocket for simple score updates.",
+                "tags": [
+                    "scores"
+                ],
+                "operationId": "SimpleScoreWebSocket",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Score"
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/scores/ws": {
             "get": {
                 "security": [

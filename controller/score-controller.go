@@ -20,6 +20,7 @@ type ScoreController struct {
 	scoreService           *service.ScoreService
 	mu                     sync.Mutex
 	connections            map[int]map[*websocket.Conn]bool
+	simpleConnections      map[int]map[*websocket.Conn]bool
 }
 
 func NewScoreController() *ScoreController {
@@ -30,6 +31,7 @@ func NewScoreController() *ScoreController {
 		eventService:           eventService,
 		scoreService:           service.NewScoreService(),
 		connections:            make(map[int]map[*websocket.Conn]bool),
+		simpleConnections:      make(map[int]map[*websocket.Conn]bool),
 	}
 	controller.StartScoreUpdater()
 	return controller
@@ -41,6 +43,7 @@ func setupScoreController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
 		{Method: "GET", Path: "/ws", HandlerFunc: e.WebSocketHandler},
+		{Method: "GET", Path: "/simple/ws", HandlerFunc: e.SimpleWebSocketHandler},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -108,15 +111,65 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	}
 }
 
+// @id SimpleScoreWebSocket
+// @Description Websocket for simple score updates.
+// @Tags scores
+// @Router /events/{event_id}/scores/simple/ws [get]
+// @Param event_id path int true "Event Id"
+// @Security ApiKeyAuth
+// @Success 200 {object} Score
+func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
+
+	event := getEvent(c)
+	if event == nil {
+		return
+	}
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		http.NotFound(c.Writer, c.Request)
+		return
+	}
+	defer conn.Close()
+
+	serialized, err := json.Marshal(e.scoreService.LatestScores[event.Id].GetSimpleScore())
+	if err != nil {
+		return
+	}
+
+	if err := conn.WriteMessage(websocket.TextMessage, serialized); err != nil {
+		return
+	}
+
+	e.mu.Lock()
+	if _, ok := e.simpleConnections[event.Id]; !ok {
+		e.simpleConnections[event.Id] = make(map[*websocket.Conn]bool)
+	}
+	e.simpleConnections[event.Id][conn] = true
+	e.mu.Unlock()
+
+	for {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			e.mu.Lock()
+			delete(e.simpleConnections[event.Id], conn)
+			if len(e.simpleConnections[event.Id]) == 0 {
+				delete(e.simpleConnections, event.Id)
+			}
+			e.mu.Unlock()
+			return
+		}
+	}
+}
+
 func (e *ScoreController) StartScoreUpdater() {
 	go func() {
 		for {
 			e.mu.Lock()
 			// calculate scores for events with active websocket connections
-			for eventId, conns := range e.connections {
-				if len(utils.Values(conns)) == 0 {
-					continue
-				}
+			eventIds := utils.Keys(e.connections)
+			eventIds = append(eventIds, utils.Keys(e.simpleConnections)...)
+			e.mu.Unlock()
+			for _, eventId := range eventIds {
 				diff, err := e.scoreService.GetNewDiff(eventId)
 				if err != nil {
 					continue
@@ -126,14 +179,27 @@ func (e *ScoreController) StartScoreUpdater() {
 					log.Fatal(err)
 					continue
 				}
-				for conn := range conns {
+				simpleScore, err := json.Marshal(e.scoreService.LatestScores[eventId].GetSimpleScore())
+				if err != nil {
+					log.Fatal(err)
+					continue
+				}
+
+				e.mu.Lock()
+				for conn := range e.connections[eventId] {
 					if err := conn.WriteMessage(websocket.TextMessage, serializedDiff); err != nil {
 						conn.Close()
-						delete(conns, conn)
+						delete(e.connections[eventId], conn)
 					}
 				}
+				for conn := range e.simpleConnections[eventId] {
+					if err := conn.WriteMessage(websocket.TextMessage, simpleScore); err != nil {
+						conn.Close()
+						delete(e.simpleConnections[eventId], conn)
+					}
+				}
+				e.mu.Unlock()
 			}
-			e.mu.Unlock()
 			time.Sleep(10 * time.Second)
 		}
 	}()
