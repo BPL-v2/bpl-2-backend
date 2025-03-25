@@ -171,6 +171,7 @@ type Character struct {
 	MainSkill        string    `json:"main_skill" binding:"required"`
 	Ascendancy       string    `json:"ascendancy" binding:"required"`
 	AscendancyPoints int       `json:"ascendancy_points" binding:"required"`
+	AtlasNodeCount   int       `json:"atlas_node_count" binding:"required"`
 	Pantheon         bool      `json:"pantheon" binding:"required"`
 	Timestamp        time.Time `json:"timestamp" binding:"required"`
 }
@@ -194,6 +195,7 @@ func toCharacterResponse(character *repository.Character) *Character {
 		MainSkill:        character.MainSkill,
 		Ascendancy:       character.Ascendancy,
 		AscendancyPoints: character.AscendancyPoints,
+		AtlasNodeCount:   character.AtlasNodeCount,
 		Pantheon:         character.Pantheon,
 		Timestamp:        character.Timestamp,
 	}

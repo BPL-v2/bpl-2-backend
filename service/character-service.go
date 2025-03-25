@@ -33,7 +33,8 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 		update.New.MainSkill != update.Old.MainSkill ||
 		update.New.Pantheon != update.Old.Pantheon ||
 		update.New.AscendancyPoints != update.Old.AscendancyPoints ||
-		update.New.Ascendancy != update.Old.Ascendancy {
+		update.New.Ascendancy != update.Old.Ascendancy ||
+		update.New.MaxAtlasTreeNodes() != update.Old.MaxAtlasTreeNodes() {
 
 		character := &repository.Character{
 			UserID:           update.UserId,
@@ -44,6 +45,7 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 			Ascendancy:       update.New.Ascendancy,
 			AscendancyPoints: update.New.AscendancyPoints,
 			Pantheon:         update.New.Pantheon,
+			AtlasNodeCount:   update.New.MaxAtlasTreeNodes(),
 			Timestamp:        time.Now(),
 		}
 		err := c.repository.CreateCharacterCheckpoint(character)

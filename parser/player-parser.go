@@ -38,7 +38,7 @@ type PlayerUpdate struct {
 	}
 }
 
-func (p *Player) maxAtlasTreeNodes() int {
+func (p *Player) MaxAtlasTreeNodes() int {
 	return utils.Max(utils.Map(p.AtlasPassiveTrees, func(tree client.AtlasPassiveTree) int {
 		return len(tree.Hashes)
 	}))
@@ -69,7 +69,7 @@ func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
 		return false
 	}
 
-	if p.New.maxAtlasTreeNodes() < 100 {
+	if p.New.MaxAtlasTreeNodes() < 100 {
 		return time.Since(p.LastUpdateTimes.LeagueAccount) > 1*time.Minute
 	}
 
@@ -112,7 +112,7 @@ func GetChecker(objective *repository.Objective) (PlayerObjectiveChecker, error)
 				}
 			}
 
-			if p.maxAtlasTreeNodes() > 100 {
+			if p.MaxAtlasTreeNodes() >= 40 {
 				score += 3
 			}
 			if score > 9 {

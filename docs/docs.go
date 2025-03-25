@@ -1919,6 +1919,7 @@ const docTemplate = `{
             "required": [
                 "ascendancy",
                 "ascendancy_points",
+                "atlas_node_count",
                 "event_id",
                 "level",
                 "main_skill",
@@ -1932,6 +1933,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ascendancy_points": {
+                    "type": "integer"
+                },
+                "atlas_node_count": {
                     "type": "integer"
                 },
                 "event_id": {
