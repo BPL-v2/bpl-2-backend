@@ -50,6 +50,26 @@ definitions:
     - ApplicationStatusAccepted
     - ApplicationStatusWaitlisted
     - ApplicationStatusNone
+  Atlas:
+    properties:
+      event_id:
+        type: integer
+      index:
+        type: integer
+      trees:
+        items:
+          items:
+            type: integer
+          type: array
+        type: array
+      user_id:
+        type: integer
+    required:
+    - event_id
+    - index
+    - trees
+    - user_id
+    type: object
   Category:
     properties:
       id:
@@ -87,6 +107,37 @@ definitions:
     required:
     - name
     - parent_id
+    type: object
+  Character:
+    properties:
+      ascendancy:
+        type: string
+      ascendancy_points:
+        type: integer
+      event_id:
+        type: integer
+      level:
+        type: integer
+      main_skill:
+        type: string
+      name:
+        type: string
+      pantheon:
+        type: boolean
+      timestamp:
+        type: string
+      user_id:
+        type: integer
+    required:
+    - ascendancy
+    - ascendancy_points
+    - event_id
+    - level
+    - main_skill
+    - name
+    - pantheon
+    - timestamp
+    - user_id
     type: object
   Condition:
     properties:
@@ -285,6 +336,8 @@ definitions:
         type: integer
       experience:
         type: integer
+      extra:
+        $ref: '#/definitions/Character'
       level:
         type: integer
       rank:
@@ -1016,6 +1069,29 @@ paths:
           description: No Content
       tags:
       - event
+  /events/{event_id}/atlas:
+    get:
+      consumes:
+      - application/json
+      description: Get atlas trees for your team for an event
+      operationId: GetTeamAtlasesForEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Atlas'
+            type: array
+      tags:
+      - atlas
   /events/{event_id}/categories:
     get:
       description: Fetches the rules for the current event
@@ -1106,6 +1182,57 @@ paths:
             $ref: '#/definitions/Category'
       tags:
       - scoring
+  /events/{event_id}/characters:
+    get:
+      consumes:
+      - application/json
+      description: Get all characters for an event
+      operationId: GetCharactersForEvent
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Character'
+            type: array
+      tags:
+      - characters
+  /events/{event_id}/characters/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get all characters for an event for a user
+      operationId: GetCharacterEventHistoryForUser
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Character'
+            type: array
+      tags:
+      - characters
   /events/{event_id}/conditions:
     put:
       consumes:
@@ -1931,6 +2058,27 @@ paths:
             $ref: '#/definitions/User'
       security:
       - ApiKeyAuth: []
+      tags:
+      - user
+  /users/{userId}/characters:
+    get:
+      description: Fetches all event characters for a user
+      operationId: GetUserCharacters
+      parameters:
+      - description: User Id
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Character'
+            type: array
       tags:
       - user
   /users/logout:

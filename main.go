@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	_, err = config.InitDB(
+	db, err := config.InitDB(
 		os.Getenv("DATABASE_HOST"),
 		os.Getenv("DATABASE_PORT"),
 		os.Getenv("POSTGRES_USER"),
@@ -45,6 +45,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	_ = db
 	// err = db.AutoMigrate(
 	// 	&repository.ScoringCategory{},
 	// 	&repository.Objective{},
@@ -62,6 +63,8 @@ func main() {
 	// 	&repository.KafkaConsumer{},
 	// 	&repository.RecurringJob{},
 	// 	&repository.LadderEntry{},
+	// 	&repository.Character{},
+	// 	&repository.Atlas{},
 	// )
 
 	// if err != nil {

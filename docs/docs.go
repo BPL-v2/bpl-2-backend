@@ -96,6 +96,41 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/atlas": {
+            "get": {
+                "description": "Get atlas trees for your team for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "atlas"
+                ],
+                "operationId": "GetTeamAtlasesForEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Atlas"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/categories": {
             "get": {
                 "description": "Fetches the rules for the current event",
@@ -227,6 +262,83 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/characters": {
+            "get": {
+                "description": "Get all characters for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "GetCharactersForEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Character"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/characters/{user_id}": {
+            "get": {
+                "description": "Get all characters for an event for a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "GetCharacterEventHistoryForUser",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Character"
+                            }
+                        }
                     }
                 }
             }
@@ -1608,6 +1720,38 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/{userId}/characters": {
+            "get": {
+                "description": "Fetches all event characters for a user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "GetUserCharacters",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User Id",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Character"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1685,6 +1829,35 @@ const docTemplate = `{
                 "ApplicationStatusNone"
             ]
         },
+        "Atlas": {
+            "type": "object",
+            "required": [
+                "event_id",
+                "index",
+                "trees",
+                "user_id"
+            ],
+            "properties": {
+                "event_id": {
+                    "type": "integer"
+                },
+                "index": {
+                    "type": "integer"
+                },
+                "trees": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "Category": {
             "type": "object",
             "required": [
@@ -1737,6 +1910,49 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "scoring_preset_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Character": {
+            "type": "object",
+            "required": [
+                "ascendancy",
+                "ascendancy_points",
+                "event_id",
+                "level",
+                "main_skill",
+                "name",
+                "pantheon",
+                "timestamp",
+                "user_id"
+            ],
+            "properties": {
+                "ascendancy": {
+                    "type": "string"
+                },
+                "ascendancy_points": {
+                    "type": "integer"
+                },
+                "event_id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "main_skill": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pantheon": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "user_id": {
                     "type": "integer"
                 }
             }
@@ -2031,6 +2247,9 @@ const docTemplate = `{
                 },
                 "experience": {
                     "type": "integer"
+                },
+                "extra": {
+                    "$ref": "#/definitions/Character"
                 },
                 "level": {
                     "type": "integer"

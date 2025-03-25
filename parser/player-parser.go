@@ -12,11 +12,14 @@ import (
 type Player struct {
 	CharacterName     string
 	CharacterLevel    int
+	MainSkill         string
 	Pantheon          bool
+	Ascendancy        string
 	AscendancyPoints  int
 	AtlasPassiveTrees []client.AtlasPassiveTree
 	DelveDepth        int
 }
+
 type PlayerUpdate struct {
 	UserId      int
 	AccountName string
