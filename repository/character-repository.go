@@ -20,6 +20,7 @@ type Character struct {
 	AscendancyPoints int       `gorm:"not null"`
 	Pantheon         bool      `gorm:"not null"`
 	Timestamp        time.Time `gorm:"not null;index"`
+	AtlasNodeCount   int       `gorm:"not null"`
 	// Pob        string    `gorm:"not null"`
 	User  *User  `gorm:"foreignKey:UserID"`
 	Event *Event `gorm:"foreignKey:EventID"`

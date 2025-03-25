@@ -1,0 +1,1 @@
+ALTER TABLE DROP COLUMN "atlas_node_count";
