@@ -19,6 +19,7 @@ type PlayerFetchingService struct {
 	userRepository        *repository.UserRepository
 	objectiveMatchService *service.ObjectiveMatchService
 	objectiveService      *service.ObjectiveService
+	characterService      *service.CharacterService
 	ladderService         *service.LadderService
 	client                *client.PoEClient
 	event                 *repository.Event
@@ -30,6 +31,7 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 		objectiveMatchService: service.NewObjectiveMatchService(),
 		objectiveService:      service.NewObjectiveService(),
 		ladderService:         service.NewLadderService(),
+		characterService:      service.NewCharacterService(),
 		client:                client,
 		event:                 event,
 	}
@@ -88,7 +90,9 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate) {
 
 	player.New.CharacterLevel = characterResponse.Character.Level
 	player.New.Pantheon = characterResponse.Character.Passives.PantheonMajor != nil && characterResponse.Character.Passives.PantheonMinor != nil
+	player.New.Ascendancy = characterResponse.Character.Class
 	player.New.AscendancyPoints = len(ascendancyNodes.Intersection(utils.ToSet(characterResponse.Character.Passives.Hashes)))
+	player.New.MainSkill = getMainSkill(characterResponse.Character)
 }
 
 func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate) {
@@ -220,6 +224,13 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			}()
 			wg.Wait()
 
+			for _, player := range players {
+				err := service.characterService.SavePlayerUpdate(event.Id, player)
+				if err != nil {
+					log.Print(err)
+				}
+			}
+
 			matches := utils.FlatMap(players, func(player *parser.PlayerUpdate) []*repository.ObjectiveMatch {
 				return service.GetPlayerMatches(player, playerChecker)
 			})
@@ -243,4 +254,39 @@ func (m *PlayerFetchingService) GetPlayerMatches(player *parser.PlayerUpdate, pl
 			EventId:     m.event.Id,
 		}
 	})
+}
+
+func getMainSkill(character *client.Character) string {
+	mainSkill := ""
+	maxLinks := 0
+	for _, item := range character.Equipment {
+		if item.SocketedItems == nil || item.Sockets == nil {
+			continue
+		}
+		socketedItems := *item.SocketedItems
+		sockets := *item.Sockets
+		for _, gem := range socketedItems {
+
+			if gem.Support == nil || *gem.Support {
+				continue
+			}
+			group := sockets[*gem.Socket].Group
+			links := 1
+			for socketId, socket := range sockets {
+				if len(socketedItems) <= socketId || socket.Group != group {
+					continue
+				}
+				support := socketedItems[socketId].Support
+				if support != nil && *support {
+					links++
+				}
+			}
+			if links > maxLinks {
+				maxLinks = links
+				mainSkill = gem.BaseType
+			}
+
+		}
+	}
+	return mainSkill
 }
