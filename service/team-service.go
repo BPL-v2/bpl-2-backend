@@ -66,6 +66,6 @@ func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]
 	return &userToTeam, nil
 }
 
-func (e *TeamService) GetTeamForUser(eventId int, userId int) (*repository.Team, error) {
+func (e *TeamService) GetTeamForUser(eventId int, userId int) (*repository.TeamUser, error) {
 	return e.teamRepository.GetTeamForUser(eventId, userId)
 }

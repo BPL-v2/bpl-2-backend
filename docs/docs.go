@@ -844,12 +844,9 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "array",
-                                "items": {
-                                    "$ref": "#/definitions/Signup"
-                                }
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Signup"
                             }
                         }
                     }
@@ -1128,6 +1125,177 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/Submission"
                         }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/suggestions": {
+            "get": {
+                "description": "Fetches all suggestions for your team for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "GetTeamSuggestions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Suggestions"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/suggestions/categories": {
+            "post": {
+                "description": "Creates a suggestion for a category for your team for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "CreateCategoryTeamSuggestion",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Suggestion to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SuggestionCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/suggestions/categories/{category_id}": {
+            "delete": {
+                "description": "Deletes a suggestion for a category for your team for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "DeleteCategoryTeamSuggestion",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category Id",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/suggestions/objectives": {
+            "post": {
+                "description": "Creates a suggestion for an objective for your team for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "CreateObjectiveTeamSuggestion",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Suggestion to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SuggestionCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/suggestions/objectives/{objective_id}": {
+            "delete": {
+                "description": "Deletes a suggestion for an objective for your team for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "DeleteObjectiveTeamSuggestion",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Objective Id",
+                        "name": "objective_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -2193,11 +2361,15 @@ const docTemplate = `{
         "EventStatus": {
             "type": "object",
             "required": [
-                "application_status"
+                "application_status",
+                "is_team_lead"
             ],
             "properties": {
                 "application_status": {
                     "$ref": "#/definitions/ApplicationStatus"
+                },
+                "is_team_lead": {
+                    "type": "boolean"
                 },
                 "team_id": {
                     "type": "integer"
@@ -2612,6 +2784,7 @@ const docTemplate = `{
             "required": [
                 "expected_playtime",
                 "id",
+                "team_lead",
                 "timestamp",
                 "user"
             ],
@@ -2624,6 +2797,9 @@ const docTemplate = `{
                 },
                 "team_id": {
                     "type": "integer"
+                },
+                "team_lead": {
+                    "type": "boolean"
                 },
                 "timestamp": {
                     "type": "string"
@@ -2737,6 +2913,38 @@ const docTemplate = `{
                 },
                 "review_comment": {
                     "type": "string"
+                }
+            }
+        },
+        "SuggestionCreate": {
+            "type": "object",
+            "required": [
+                "id"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Suggestions": {
+            "type": "object",
+            "required": [
+                "category_ids",
+                "objective_ids"
+            ],
+            "properties": {
+                "category_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "objective_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },

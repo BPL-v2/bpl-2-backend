@@ -309,10 +309,13 @@ definitions:
     properties:
       application_status:
         $ref: '#/definitions/ApplicationStatus'
+      is_team_lead:
+        type: boolean
       team_id:
         type: integer
     required:
     - application_status
+    - is_team_lead
     type: object
   JobCreate:
     properties:
@@ -605,6 +608,8 @@ definitions:
         type: integer
       team_id:
         type: integer
+      team_lead:
+        type: boolean
       timestamp:
         type: string
       user:
@@ -612,6 +617,7 @@ definitions:
     required:
     - expected_playtime
     - id
+    - team_lead
     - timestamp
     - user
     type: object
@@ -685,6 +691,27 @@ definitions:
         type: string
     required:
     - approval_status
+    type: object
+  SuggestionCreate:
+    properties:
+      id:
+        type: integer
+    required:
+    - id
+    type: object
+  Suggestions:
+    properties:
+      category_ids:
+        items:
+          type: integer
+        type: array
+      objective_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - category_ids
+    - objective_ids
     type: object
   Team:
     properties:
@@ -1567,11 +1594,9 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              items:
-                $ref: '#/definitions/Signup'
-              type: array
-            type: object
+            items:
+              $ref: '#/definitions/Signup'
+            type: array
       tags:
       - signup
   /events/{event_id}/signups/self:
@@ -1757,6 +1782,119 @@ paths:
             $ref: '#/definitions/Submission'
       tags:
       - submission
+  /events/{event_id}/suggestions:
+    get:
+      description: Fetches all suggestions for your team for an event
+      operationId: GetTeamSuggestions
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Suggestions'
+      tags:
+      - team
+  /events/{event_id}/suggestions/categories:
+    post:
+      consumes:
+      - application/json
+      description: Creates a suggestion for a category for your team for an event
+      operationId: CreateCategoryTeamSuggestion
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Suggestion to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SuggestionCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      tags:
+      - team
+  /events/{event_id}/suggestions/categories/{category_id}:
+    delete:
+      description: Deletes a suggestion for a category for your team for an event
+      operationId: DeleteCategoryTeamSuggestion
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Category Id
+        in: path
+        name: category_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - team
+  /events/{event_id}/suggestions/objectives:
+    post:
+      consumes:
+      - application/json
+      description: Creates a suggestion for an objective for your team for an event
+      operationId: CreateObjectiveTeamSuggestion
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Suggestion to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/SuggestionCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      tags:
+      - team
+  /events/{event_id}/suggestions/objectives/{objective_id}:
+    delete:
+      description: Deletes a suggestion for an objective for your team for an event
+      operationId: DeleteObjectiveTeamSuggestion
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Objective Id
+        in: path
+        name: objective_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - team
   /events/{event_id}/teams:
     get:
       description: Fetches all teams for an event

@@ -65,6 +65,7 @@ func main() {
 	// 	&repository.LadderEntry{},
 	// 	&repository.Character{},
 	// 	&repository.Atlas{},
+	// 	&repository.TeamSuggestion{},
 	// )
 
 	// if err != nil {
