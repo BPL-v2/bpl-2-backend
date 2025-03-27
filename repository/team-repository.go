@@ -125,13 +125,18 @@ func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
 	return result.Error
 }
 
-func (r *TeamRepository) GetTeamForUser(eventId int, userId int) (*Team, error) {
-	team := &Team{}
-	result := r.DB.Joins("JOIN bpl2.team_users ON team_users.team_id = teams.id").
-		Where("team_users.user_id = ? AND teams.event_id = ?", userId, eventId).
-		First(team)
-	if result.Error != nil {
-		return nil, result.Error
+func (r *TeamRepository) GetTeamForUser(eventId int, userId int) (*TeamUser, error) {
+	team := &TeamUser{}
+	query := `
+		SELECT team_users.*
+		FROM team_users
+		JOIN teams ON team_users.team_id = teams.id
+		WHERE team_users.user_id = ?
+		AND teams.event_id = ?
+	`
+	err := r.DB.Raw(query, userId, eventId).First(&team).Error
+	if err != nil {
+		return nil, err
 	}
 	return team, nil
 }

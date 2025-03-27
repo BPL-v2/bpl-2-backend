@@ -149,12 +149,11 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-
 		if team != nil {
-			response.TeamId = &team.Id
+			response.TeamId = &team.TeamId
+			response.IsTeamLead = team.IsTeamLead
 			response.ApplicationStatus = ApplicationStatusAccepted
 		} else {
-
 			signup, _ := e.signupService.GetSignupForUser(user.Id, event.Id)
 			if signup != nil {
 				response.ApplicationStatus = ApplicationStatusApplied
@@ -275,6 +274,7 @@ func toEventResponse(event *repository.Event) *Event {
 
 type EventStatus struct {
 	TeamId            *int              `json:"team_id"`
+	IsTeamLead        bool              `json:"is_team_lead" binding:"required"`
 	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
 }
 

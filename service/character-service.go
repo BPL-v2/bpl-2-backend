@@ -75,5 +75,5 @@ func (c *CharacterService) GetTeamAtlasesForEvent(eventId int, userId int) ([]*r
 	if err != nil {
 		return []*repository.Atlas{}, nil
 	}
-	return c.repository.GetTeamAtlasesForEvent(eventId, team.Id)
+	return c.repository.GetTeamAtlasesForEvent(eventId, team.TeamId)
 }

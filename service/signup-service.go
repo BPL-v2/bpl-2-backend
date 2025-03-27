@@ -34,27 +34,6 @@ type SignupWithUser struct {
 	TeamUser *repository.TeamUser
 }
 
-func (r *SignupService) GetSignupsForEvent(event *repository.Event) (map[int][]*repository.Signup, error) {
-	teamUsers, err := r.teamRepository.GetTeamUsersForEvent(event)
-	if err != nil {
-		return nil, err
-	}
-	signups, err := r.signupRepository.GetSignupsForEvent(event.Id, event.MaxSize)
-	if err != nil {
-		return nil, err
-	}
-	userToTeam := make(map[int]int)
-	for _, teamUser := range teamUsers {
-		userToTeam[teamUser.UserId] = teamUser.TeamId
-	}
-	teamSignups := make(map[int][]*repository.Signup)
-	for _, signup := range signups {
-		teamId, ok := userToTeam[signup.UserId]
-		if !ok {
-			teamId = 0
-		}
-		teamSignups[teamId] = append(teamSignups[teamId], signup)
-	}
-
-	return teamSignups, nil
+func (r *SignupService) GetSignupsForEvent(event *repository.Event) ([]*repository.Signup, error) {
+	return r.signupRepository.GetSignupsForEvent(event.Id, event.MaxSize)
 }
