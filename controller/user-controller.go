@@ -126,7 +126,7 @@ func (e *UserController) getUserHandler() gin.HandlerFunc {
 // @Router /users/logout [post]
 func (e *UserController) logoutHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.SetCookie("auth", "", -1, "/", "", false, true)
+		c.SetCookie("auth", "", -1, "/", c.Request.Host, false, true)
 		c.JSON(200, gin.H{"message": "Logged out"})
 	}
 }

@@ -95,7 +95,9 @@ func addMetrics(r *gin.Engine) {
 	p := ginprometheus.NewPrometheus("gin")
 	re := regexp.MustCompile(`\d+`)
 	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
-		url := re.ReplaceAllString(c.Request.URL.String(), "?")
+		url := strings.Split(c.Request.URL.String(), "?")[0]
+		url = strings.ReplaceAll(url, "current", "?")
+		url = re.ReplaceAllString(url, "?")
 		return strings.TrimPrefix(url, "/api")
 	}
 	p.MetricsPath = "/api/metrics"
