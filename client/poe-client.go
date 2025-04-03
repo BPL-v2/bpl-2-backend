@@ -306,24 +306,32 @@ func (c *PoEClient) GetAccountLeagues(token string) (*ListLeaguesResponse, *Clie
 	)
 }
 
-func (c *PoEClient) ListCharacters(token string) (*ListCharactersResponse, *ClientError) {
+func (c *PoEClient) ListCharacters(token string, realm *Realm) (*ListCharactersResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListCharacters"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("ListCharacters").Inc()
+	endpoint := "character"
+	if realm != nil {
+		endpoint += fmt.Sprintf("/%s", *realm)
+	}
 	return sendRequest[ListCharactersResponse](c, RequestArgs{
-		Endpoint: "character",
+		Endpoint: endpoint,
 		Token:    token,
 		Method:   "GET",
 	},
 	)
 }
 
-func (c *PoEClient) GetCharacter(token string, character string) (*GetCharacterResponse, *ClientError) {
+func (c *PoEClient) GetCharacter(token string, character string, realm *Realm) (*GetCharacterResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetCharacter"))
 	defer timer.ObserveDuration()
+	endpoint := "character"
+	if realm != nil {
+		endpoint += fmt.Sprintf("/%s", *realm)
+	}
 	poeRequestCounter.WithLabelValues("GetCharacter").Inc()
 	return sendRequest[GetCharacterResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("character/%s", character),
+		Endpoint: fmt.Sprintf("%s/%s", endpoint, character),
 		Token:    token,
 		Method:   "GET",
 	},
