@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/client"
 	"bpl/config"
 	"bpl/utils"
 	"fmt"
@@ -29,6 +30,14 @@ type Event struct {
 	Locked               bool               `gorm:"not null"`
 	Teams                []*Team            `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
 	ScoringCategories    []*ScoringCategory `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
+}
+
+func (e *Event) GetRealm() *client.Realm {
+	if e.GameVersion == PoE2 {
+		realm := client.PoE2
+		return &realm
+	}
+	return nil
 }
 
 type EventRepository struct {

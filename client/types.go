@@ -209,10 +209,33 @@ type Error struct {
 	Code    int    `json:"code"`
 }
 
+type ItemSocketType string
+
+const (
+	ItemSocketTypeGem   ItemSocketType = "gem"
+	ItemSocketTypeJewel ItemSocketType = "jewel"
+	ItemSocketTypeRune  ItemSocketType = "rune"
+)
+
+type ItemSocketItem string
+
+// PoE2 only; emerald, sapphire, ruby, rune, soulcore, activegem, or supportgem
+const (
+	ItemSocketItemEmerald    ItemSocketItem = "emerald"
+	ItemSocketItemSapphire   ItemSocketItem = "sapphire"
+	ItemSocketItemRuby       ItemSocketItem = "ruby"
+	ItemSocketItemRune       ItemSocketItem = "rune"
+	ItemSocketItemSoulcore   ItemSocketItem = "soulcore"
+	ItemSocketItemActiveGem  ItemSocketItem = "activegem"
+	ItemSocketItemSupportGem ItemSocketItem = "supportgem"
+)
+
 type ItemSocket struct {
-	Group   int     `json:"group"`
-	Attr    *string `json:"attr,omitempty"`
-	SColour *string `json:"sColour,omitempty"`
+	Group   int             `json:"group"`
+	Attr    *string         `json:"attr,omitempty"`
+	SColour *string         `json:"sColour,omitempty"`
+	Type    *ItemSocketType `json:"type,omitempty"` // PoE2 only
+	Item    *ItemSocketItem `json:"item,omitempty"` // PoE2 only
 }
 
 type ItemValue []any
@@ -232,6 +255,7 @@ type ItemProperty struct {
 	Progress    *float64    `json:"progress,omitempty"`
 	Type        *int        `json:"type,omitempty"`
 	Suffix      *string     `json:"suffix,omitempty"`
+	Icon        *string     `json:"icon,omitempty"` // PoE2 only
 }
 
 type ItemInfluences struct {
@@ -296,89 +320,122 @@ type ItemExtended struct {
 	Suffixes      *int      `json:"suffixes,omitempty"`
 }
 
-type Item struct {
-	Support              *bool               `json:"support,omitempty"`
-	StackSize            *int                `json:"stackSize,omitempty"`
-	Elder                *bool               `json:"elder,omitempty"`
-	Shaper               *bool               `json:"shaper,omitempty"`
-	Searing              *bool               `json:"searing,omitempty"`
-	Tangled              *bool               `json:"tangled,omitempty"`
-	AbyssJewel           *bool               `json:"abyssJewel,omitempty"`
-	Delve                *bool               `json:"delve,omitempty"`
-	Fractured            *bool               `json:"fractured,omitempty"`
-	Synthesised          *bool               `json:"synthesised,omitempty"`
-	Sockets              *[]ItemSocket       `json:"sockets,omitempty"`
-	SocketedItems        *[]Item             `json:"socketedItems,omitempty"`
-	Name                 string              `json:"name"`
-	TypeLine             string              `json:"typeLine"`
-	BaseType             string              `json:"baseType"`
-	Rarity               *string             `json:"rarity,omitempty"`
-	ItemLevel            *int                `json:"itemLevel,omitempty"`
-	Ilvl                 int                 `json:"ilvl"`
-	Duplicated           *bool               `json:"duplicated,omitempty"`
-	Split                *bool               `json:"split,omitempty"`
-	Corrupted            *bool               `json:"corrupted,omitempty"`
-	Unmodifiable         *bool               `json:"unmodifiable,omitempty"`
-	Properties           *[]ItemProperty     `json:"properties,omitempty"`
-	NotableProperties    *[]ItemProperty     `json:"notableProperties,omitempty"`
-	AdditionalProperties *[]ItemProperty     `json:"additionalProperties,omitempty"`
-	TalismanTier         *int                `json:"talismanTier,omitempty"`
-	Rewards              *[]ItemReward       `json:"rewards,omitempty"`
-	UtilityMods          *[]string           `json:"utilityMods,omitempty"`
-	LogbookMods          *[]ItemLogbookMod   `json:"logbookMods,omitempty"`
-	EnchantMods          *[]string           `json:"enchantMods,omitempty"`
-	ScourgeMods          *[]string           `json:"scourgeMods,omitempty"`
-	ImplicitMods         *[]string           `json:"implicitMods,omitempty"`
-	UltimatumMods        *[]ItemUltimatumMod `json:"ultimatumMods,omitempty"`
-	ExplicitMods         *[]string           `json:"explicitMods,omitempty"`
-	CraftedMods          *[]string           `json:"craftedMods,omitempty"`
-	FracturedMods        *[]string           `json:"fracturedMods,omitempty"`
-	CosmeticMods         *[]string           `json:"cosmeticMods,omitempty"`
-	VeiledMods           *[]string           `json:"veiledMods,omitempty"`
-	Veiled               *bool               `json:"veiled,omitempty"`
-	IsRelic              *bool               `json:"isRelic,omitempty"`
-	FoilVariation        *int                `json:"foilVariation,omitempty"`
-	Foreseeing           *bool               `json:"foreseeing,omitempty"`
-	IncubatedItem        *ItemIncubatedItem  `json:"incubatedItem,omitempty"`
-	Ruthless             *bool               `json:"ruthless,omitempty"`
-	FrameType            *int                `json:"frameType,omitempty"`
-	Hybrid               *ItemHybrid         `json:"hybrid,omitempty"`
-	Extended             *ItemExtended       `json:"extended,omitempty"`
-	Socket               *int                `json:"socket,omitempty"`
-	Colour               *string             `json:"colour,omitempty"`
-	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
+type GemSocket string
 
-	// Verified              bool                `json:"verified"`
-	// W                     int                 `json:"w"`
-	// H                     int                 `json:"h"`
-	// Icon                  string              `json:"icon"`
-	// MaxStackSize          *int                `json:"maxStackSize,omitempty"`
-	// StackSizeText         *string             `json:"stackSizeText,omitempty"`
-	// League                string              `json:"league"`
-	// Id                    string              `json:"id"`
-	// Influences            *ItemInfluences     `json:"influences,omitempty"`
-	// Identified            bool                `json:"identified"`
-	// Note                  *string             `json:"note,omitempty"`
-	// ForumNote             *string             `json:"forum_note,omitempty"`
-	// LockedToCharacter     *bool               `json:"lockedToCharacter,omitempty"`
-	// LockedToAccount       *bool               `json:"lockedToAccount,omitempty"`
-	// CisRaceReward         *bool               `json:"cisRaceReward,omitempty"`
-	// SeaRaceReward         *bool               `json:"seaRaceReward,omitempty"`
-	// ThRaceReward          *bool               `json:"thRaceReward,omitempty"`
-	// Requirements          *[]ItemProperty     `json:"requirements,omitempty"`
-	// NextLevelRequirements *[]ItemProperty     `json:"nextLevelRequirements,omitempty"`
-	// SecDescrText          *string             `json:"secDescrText,omitempty"`
-	// DescrText             *string             `json:"descrText,omitempty"`
-	// FlavourText           *[]string           `json:"flavourText,omitempty"`
-	// FlavourTextParsed     *[]interface{}      `json:"flavourTextParsed,omitempty"`
-	// FlavourTextNote       *string             `json:"flavourTextNote,omitempty"`
-	// ProphecyText          *string             `json:"prophecyText,omitempty"`
-	// Replica               *bool               `json:"replica,omitempty"`
-	// Scourged              *ItemScourged       `json:"scourged,omitempty"`
-	// ArtFilename           *string             `json:"artFilename,omitempty"`
-	// X                     *int                `json:"x,omitempty"`
-	// Y                     *int                `json:"y,omitempty"`
-	// InventoryId           *string             `json:"inventoryId,omitempty"`
+const (
+	W GemSocket = "W"
+)
+
+type Item struct {
+	Support                *bool               `json:"support,omitempty"`
+	StackSize              *int                `json:"stackSize,omitempty"`
+	Elder                  *bool               `json:"elder,omitempty"`
+	Shaper                 *bool               `json:"shaper,omitempty"`
+	Searing                *bool               `json:"searing,omitempty"`
+	Tangled                *bool               `json:"tangled,omitempty"`
+	AbyssJewel             *bool               `json:"abyssJewel,omitempty"`
+	Delve                  *bool               `json:"delve,omitempty"`
+	Fractured              *bool               `json:"fractured,omitempty"`
+	Synthesised            *bool               `json:"synthesised,omitempty"`
+	Sockets                *[]ItemSocket       `json:"sockets,omitempty"`
+	SocketedItems          *[]Item             `json:"socketedItems,omitempty"`
+	Name                   string              `json:"name"`
+	TypeLine               string              `json:"typeLine"`
+	BaseType               string              `json:"baseType"`
+	Rarity                 *string             `json:"rarity,omitempty"`
+	ItemLevel              *int                `json:"itemLevel,omitempty"`
+	Ilvl                   int                 `json:"ilvl"`
+	Duplicated             *bool               `json:"duplicated,omitempty"`
+	Split                  *bool               `json:"split,omitempty"`
+	Corrupted              *bool               `json:"corrupted,omitempty"`
+	Unmodifiable           *bool               `json:"unmodifiable,omitempty"`
+	Properties             *[]ItemProperty     `json:"properties,omitempty"`
+	NotableProperties      *[]ItemProperty     `json:"notableProperties,omitempty"`
+	AdditionalProperties   *[]ItemProperty     `json:"additionalProperties,omitempty"`
+	WeaponRequirements     *[]ItemProperty     `json:"weaponRequirements,omitempty"`     // PoE2 only
+	SupportGemRequirements *[]ItemProperty     `json:"supportGemRequirements,omitempty"` // PoE2 only
+	GrantedSkills          *[]ItemProperty     `json:"grantedSkills,omitempty"`          // PoE2 only
+	TalismanTier           *int                `json:"talismanTier,omitempty"`
+	Rewards                *[]ItemReward       `json:"rewards,omitempty"`
+	UtilityMods            *[]string           `json:"utilityMods,omitempty"`
+	LogbookMods            *[]ItemLogbookMod   `json:"logbookMods,omitempty"`
+	EnchantMods            *[]string           `json:"enchantMods,omitempty"`
+	ScourgeMods            *[]string           `json:"scourgeMods,omitempty"`
+	ImplicitMods           *[]string           `json:"implicitMods,omitempty"`
+	UltimatumMods          *[]ItemUltimatumMod `json:"ultimatumMods,omitempty"`
+	ExplicitMods           *[]string           `json:"explicitMods,omitempty"`
+	CraftedMods            *[]string           `json:"craftedMods,omitempty"`
+	FracturedMods          *[]string           `json:"fracturedMods,omitempty"`
+	CosmeticMods           *[]string           `json:"cosmeticMods,omitempty"`
+	VeiledMods             *[]string           `json:"veiledMods,omitempty"`
+	Veiled                 *bool               `json:"veiled,omitempty"`
+	IsRelic                *bool               `json:"isRelic,omitempty"`
+	FoilVariation          *int                `json:"foilVariation,omitempty"`
+	Foreseeing             *bool               `json:"foreseeing,omitempty"`
+	IncubatedItem          *ItemIncubatedItem  `json:"incubatedItem,omitempty"`
+	Ruthless               *bool               `json:"ruthless,omitempty"`
+	FrameType              *int                `json:"frameType,omitempty"`
+	Hybrid                 *ItemHybrid         `json:"hybrid,omitempty"`
+	Extended               *ItemExtended       `json:"extended,omitempty"`
+	Socket                 *int                `json:"socket,omitempty"`
+	Colour                 *string             `json:"colour,omitempty"`
+	GemSockets             *[]GemSocket        `json:"gemSockets,omitempty"`
+
+	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
+	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only
+	// GemBackground         *string         `json:"gemBackground,omitempty"` // PoE2 only
+	// GemSkill              *string         `json:"gemSkill,omitempty"` // PoE2 only
+	// UnidentifiedTier      *int            `json:"unidentifiedTier,omitempty"` // PoE2 only
+	// Realm                 *Realm          `json:"realm,omitempty"` // PoE2 only
+	// Verified              bool            `json:"verified"`
+	// W                     int             `json:"w"`
+	// H                     int             `json:"h"`
+	// Icon                  string          `json:"icon"`
+	// MaxStackSize          *int            `json:"maxStackSize,omitempty"`
+	// StackSizeText         *string         `json:"stackSizeText,omitempty"`
+	// League                string          `json:"league"`
+	// Id                    string          `json:"id"`
+	// Influences            *ItemInfluences `json:"influences,omitempty"`
+	// Identified            bool            `json:"identified"`
+	// Note                  *string         `json:"note,omitempty"`
+	// ForumNote             *string         `json:"forum_note,omitempty"`
+	// LockedToCharacter     *bool           `json:"lockedToCharacter,omitempty"`
+	// LockedToAccount       *bool           `json:"lockedToAccount,omitempty"`
+	// CisRaceReward         *bool           `json:"cisRaceReward,omitempty"`
+	// SeaRaceReward         *bool           `json:"seaRaceReward,omitempty"`
+	// ThRaceReward          *bool           `json:"thRaceReward,omitempty"`
+	// Requirements          *[]ItemProperty `json:"requirements,omitempty"`
+	// NextLevelRequirements *[]ItemProperty `json:"nextLevelRequirements,omitempty"`
+	// SecDescrText          *string         `json:"secDescrText,omitempty"`
+	// DescrText             *string         `json:"descrText,omitempty"`
+	// FlavourText           *[]string       `json:"flavourText,omitempty"`
+	// FlavourTextParsed     *[]interface{}  `json:"flavourTextParsed,omitempty"`
+	// FlavourTextNote       *string         `json:"flavourTextNote,omitempty"`
+	// ProphecyText          *string         `json:"prophecyText,omitempty"`
+	// Replica               *bool           `json:"replica,omitempty"`
+	// Scourged              *ItemScourged   `json:"scourged,omitempty"`
+	// ArtFilename           *string         `json:"artFilename,omitempty"`
+	// X                     *int            `json:"x,omitempty"`
+	// Y                     *int            `json:"y,omitempty"`
+	// InventoryId           *string         `json:"inventoryId,omitempty"`
+}
+
+type GemTab struct {
+	Name  *string   `json:"name"`
+	Pages []GemPage `json:"pages"`
+}
+
+type GemPage struct {
+	SkillName   *string         `json:"skillName"`
+	Description *string         `json:"description"`
+	Properties  *[]ItemProperty `json:"properties"`
+	Stats       *[]string       `json:"stats"`
+}
+
+type Specialisations struct {
+	Set1       *[]int `json:"set1,omitempty"`
+	Set2       *[]int `json:"set2,omitempty"`
+	Shapeshift *[]int `json:"shapeshift,omitempty"`
 }
 
 type Passives struct {
@@ -391,6 +448,7 @@ type Passives struct {
 	PantheonMinor       *string                  `json:"pantheon_minor,omitempty"`
 	JewelData           map[string]ItemJewelData `json:"jewel_data"`
 	AlternateAscendancy *string                  `json:"alternate_ascendancy,omitempty"`
+	Specialisations     *Specialisations         `json:"specialisation,omitempty"` // PoE2 only
 }
 
 type Metadata struct {
@@ -535,10 +593,11 @@ type Character struct {
 	Expired    *bool    `json:"expired,omitempty"`
 	Deleted    *bool    `json:"deleted,omitempty"`
 	Current    *bool    `json:"current,omitempty"`
-	Equipment  []Item   `json:"equipment"`
-	Inventory  []Item   `json:"inventory"`
+	Equipment  *[]Item  `json:"equipment"`
+	Skills     *[]Item  `json:"skills,omitempty"` // PoE2 only
+	Inventory  *[]Item  `json:"inventory"`
 	Rucksack   *[]Item  `json:"rucksack,omitempty"`
-	Jewels     []Item   `json:"jewels"`
+	Jewels     *[]Item  `json:"jewels"`
 	Passives   Passives `json:"passives"`
 	Metadata   Metadata `json:"metadata"`
 }

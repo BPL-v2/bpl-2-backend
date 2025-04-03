@@ -37,16 +37,13 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 	}
 }
 
-func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerUpdate) {
-	if s.event.GameVersion == repository.PoE2 {
-		return
-	}
+func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerUpdate, event *repository.Event) {
 	playerUpdate.Mu.Lock()
 	defer playerUpdate.Mu.Unlock()
 	if !playerUpdate.ShouldUpdateCharacterName() {
 		return
 	}
-	charactersResponse, err := s.client.ListCharacters(playerUpdate.Token)
+	charactersResponse, err := s.client.ListCharacters(playerUpdate.Token, event.GetRealm())
 	playerUpdate.LastUpdateTimes.CharacterName = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
@@ -64,16 +61,14 @@ func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerU
 	}
 }
 
-func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate) {
-	if s.event.GameVersion == repository.PoE2 {
-		return
-	}
+func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
+
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	if !player.ShouldUpdateCharacter() {
 		return
 	}
-	characterResponse, err := s.client.GetCharacter(player.Token, player.New.CharacterName)
+	characterResponse, err := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
 	player.LastUpdateTimes.Character = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
@@ -206,11 +201,11 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				wg.Add(3)
 				go func(player *parser.PlayerUpdate) {
 					defer wg.Done()
-					service.UpdateCharacterName(player)
+					service.UpdateCharacterName(player, event)
 				}(player)
 				go func(player *parser.PlayerUpdate) {
 					defer wg.Done()
-					service.UpdateCharacter(player)
+					service.UpdateCharacter(player, event)
 				}(player)
 				go func(player *parser.PlayerUpdate) {
 					defer wg.Done()
@@ -259,7 +254,7 @@ func (m *PlayerFetchingService) GetPlayerMatches(player *parser.PlayerUpdate, pl
 func getMainSkill(character *client.Character) string {
 	mainSkill := ""
 	maxLinks := 0
-	for _, item := range character.Equipment {
+	for _, item := range *character.Equipment {
 		if item.SocketedItems == nil || item.Sockets == nil {
 			continue
 		}
