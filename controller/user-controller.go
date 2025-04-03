@@ -302,9 +302,8 @@ func toUserResponse(user *repository.User) *User {
 			response.TwitchId = &oauth.AccountId
 			response.TwitchName = &oauth.Name
 		case repository.ProviderPoE:
-			response.AcountName = &oauth.AccountId
+			response.AcountName = &oauth.Name
 			response.TokenExpiryTimestamp = &oauth.Expiry
-
 		}
 	}
 
