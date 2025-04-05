@@ -4,8 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +28,6 @@ func setupLadderController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/ladder", HandlerFunc: c.getLadderHandler()},
 		{Method: "GET", Path: "/characters", HandlerFunc: c.getLatestCharactersForEvent()},
-		{Method: "GET", Path: "/characters/:user_id", HandlerFunc: c.getCharacterEventHistoryForUser()},
 		{Method: "GET", Path: "/atlas", HandlerFunc: c.getAtlasesForEvent(), Authenticated: true},
 	}
 	for i, route := range routes {
@@ -92,36 +89,6 @@ func (c *LadderController) getLatestCharactersForEvent() gin.HandlerFunc {
 	}
 }
 
-// @id GetCharacterEventHistoryForUser
-// @Description Get all characters for an event for a user
-// @Tags characters
-// @Accept json
-// @Produce json
-// @Param event_id path int true "Event ID"
-// @Param user_id path int true "User ID"
-// @Success 200 {array} Character
-// @Router /events/{event_id}/characters/{user_id} [get]
-func (c *LadderController) getCharacterEventHistoryForUser() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		event := getEvent(ctx)
-		if event == nil {
-			return
-		}
-		userId, err := strconv.Atoi(ctx.Param("user_id"))
-		if err != nil {
-			ctx.JSON(400, gin.H{"error": "Invalid user ID"})
-			return
-		}
-		characters, err := c.characterService.GetEventCharacterHistoryForUser(userId, event.Id)
-		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-
-		ctx.JSON(200, utils.Map(characters, toCharacterResponse))
-	}
-}
-
 // @id GetTeamAtlasesForEvent
 // @Description Get atlas trees for your team for an event
 // @Tags atlas
@@ -163,42 +130,11 @@ type LadderEntry struct {
 	Extra         *Character `json:"extra"`
 }
 
-type Character struct {
-	UserId           int       `json:"user_id" binding:"required"`
-	EventId          int       `json:"event_id" binding:"required"`
-	Name             string    `json:"name" binding:"required"`
-	Level            int       `json:"level" binding:"required"`
-	MainSkill        string    `json:"main_skill" binding:"required"`
-	Ascendancy       string    `json:"ascendancy" binding:"required"`
-	AscendancyPoints int       `json:"ascendancy_points" binding:"required"`
-	AtlasNodeCount   int       `json:"atlas_node_count" binding:"required"`
-	Pantheon         bool      `json:"pantheon" binding:"required"`
-	Timestamp        time.Time `json:"timestamp" binding:"required"`
-}
-
 type Atlas struct {
 	UserId  int     `json:"user_id" binding:"required"`
 	EventId int     `json:"event_id" binding:"required"`
 	Index   int     `json:"index" binding:"required"`
 	Trees   [][]int `json:"trees" binding:"required"`
-}
-
-func toCharacterResponse(character *repository.Character) *Character {
-	if character == nil {
-		return nil
-	}
-	return &Character{
-		UserId:           character.UserID,
-		EventId:          character.EventID,
-		Name:             character.Name,
-		Level:            character.Level,
-		MainSkill:        character.MainSkill,
-		Ascendancy:       character.Ascendancy,
-		AscendancyPoints: character.AscendancyPoints,
-		AtlasNodeCount:   character.AtlasNodeCount,
-		Pantheon:         character.Pantheon,
-		Timestamp:        character.Timestamp,
-	}
 }
 
 func toAtlasResponse(atlas *repository.Atlas) *Atlas {
