@@ -28,8 +28,8 @@ type PlayerUpdate struct {
 	TokenExpiry time.Time
 	Mu          sync.Mutex
 
-	New *Player
-	Old *Player
+	New Player
+	Old Player
 
 	LastUpdateTimes struct {
 		CharacterName time.Time
@@ -46,7 +46,7 @@ func (p *Player) MaxAtlasTreeNodes() int {
 
 func (p *PlayerUpdate) ShouldUpdateCharacterName() bool {
 	if p.New.CharacterName == "" {
-		return time.Since(p.LastUpdateTimes.CharacterName) > 1*time.Minute
+		return time.Since(p.LastUpdateTimes.CharacterName) > 10*time.Minute
 	}
 	return time.Since(p.LastUpdateTimes.CharacterName) > 10*time.Minute
 }
@@ -146,8 +146,8 @@ func NewPlayerChecker(objectives []*repository.Objective) (*PlayerChecker, error
 func (pc *PlayerChecker) CheckForCompletions(update *PlayerUpdate) []*CheckResult {
 	results := make([]*CheckResult, 0)
 	for id, checker := range *pc {
-		new := checker(update.New)
-		if new != checker(update.Old) {
+		new := checker(&update.New)
+		if new != checker(&update.Old) {
 			results = append(results, &CheckResult{
 				ObjectiveId: id,
 				Number:      new,
