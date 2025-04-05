@@ -126,7 +126,7 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 	var clientError *client.ClientError
 	if s.event.GameVersion == repository.PoE2 {
 		// todo: get the ladder for the correct event
-		resp, clientError = s.client.GetPoE2Ladder("Standard")
+		resp, clientError = s.client.GetPoE2Ladder(s.event.Name)
 	} else {
 		// todo: once we have a token that allows us to request the ladder api
 		return
@@ -177,8 +177,8 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			AccountName: user.AccountName,
 			Token:       user.Token,
 			TokenExpiry: user.TokenExpiry,
-			New:         &parser.Player{},
-			Old:         &parser.Player{},
+			New:         parser.Player{},
+			Old:         parser.Player{},
 			Mu:          sync.Mutex{},
 			LastUpdateTimes: struct {
 				CharacterName time.Time
