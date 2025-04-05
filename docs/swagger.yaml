@@ -1048,6 +1048,55 @@ info:
   title: BPL Backend API
   version: "2.0"
 paths:
+  /characters/{user_id}/{event_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get all character data for an event for a user
+      operationId: GetCharacterEventHistoryForUser
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Character'
+            type: array
+      tags:
+      - characters
+  /characters/{userId}:
+    get:
+      description: Fetches all event characters for a user
+      operationId: GetUserCharacters
+      parameters:
+      - description: User Id
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Character'
+            type: array
+      tags:
+      - characters
   /events:
     get:
       description: Fetches all events
@@ -1222,34 +1271,6 @@ paths:
       - description: Event ID
         in: path
         name: event_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Character'
-            type: array
-      tags:
-      - characters
-  /events/{event_id}/characters/{user_id}:
-    get:
-      consumes:
-      - application/json
-      description: Get all characters for an event for a user
-      operationId: GetCharacterEventHistoryForUser
-      parameters:
-      - description: Event ID
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: User ID
-        in: path
-        name: user_id
         required: true
         type: integer
       produces:
@@ -2199,27 +2220,6 @@ paths:
             $ref: '#/definitions/User'
       security:
       - ApiKeyAuth: []
-      tags:
-      - user
-  /users/{userId}/characters:
-    get:
-      description: Fetches all event characters for a user
-      operationId: GetUserCharacters
-      parameters:
-      - description: User Id
-        in: path
-        name: userId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Character'
-            type: array
       tags:
       - user
   /users/logout:

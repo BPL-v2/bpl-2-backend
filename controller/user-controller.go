@@ -37,7 +37,6 @@ func setupUserController() []RouteInfo {
 		{Method: "GET", Path: "/users/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/self", HandlerFunc: e.updateUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/:userId", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/users/:userId/characters", HandlerFunc: e.getUserCharactersHandler()},
 		{Method: "POST", Path: "/users/logout", HandlerFunc: e.logoutHandler(), Authenticated: true},
 		{Method: "POST", Path: "/users/remove-auth", HandlerFunc: e.removeAuthHandler(), Authenticated: true},
 	}
@@ -229,29 +228,6 @@ func (e *UserController) updateUserHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, toUserResponse(user))
-	}
-}
-
-// @id GetUserCharacters
-// @Description Fetches all event characters for a user
-// @Tags user
-// @Produce json
-// @Param userId path int true "User Id"
-// @Success 200 {array} Character
-// @Router /users/{userId}/characters [get]
-func (e *UserController) getUserCharactersHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userId, err := strconv.Atoi(c.Param("userId"))
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		characters, err := e.characterService.GetLatestEventCharactersForUser(userId)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, utils.Map(characters, toCharacterResponse))
 	}
 }
 
