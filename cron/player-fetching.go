@@ -235,11 +235,13 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				if player.TokenExpiry.Before(time.Now()) {
 					continue
 				}
-				wg.Add(1)
-				go func(player *parser.PlayerUpdate) {
-					defer wg.Done()
-					service.UpdateCharacterName(player, event)
-				}(player)
+				if player.ShouldUpdateCharacterName() {
+					wg.Add(1)
+					go func(player *parser.PlayerUpdate) {
+						defer wg.Done()
+						service.UpdateCharacterName(player, event)
+					}(player)
+				}
 			}
 			wg.Wait()
 			wg = sync.WaitGroup{}
@@ -247,21 +249,28 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				if player.TokenExpiry.Before(time.Now()) {
 					continue
 				}
-				wg.Add(2)
-				go func(player *parser.PlayerUpdate) {
-					defer wg.Done()
-					service.UpdateCharacter(player, event)
-				}(player)
-				go func(player *parser.PlayerUpdate) {
-					defer wg.Done()
-					service.UpdateLeagueAccount(player)
-				}(player)
+				if player.ShouldUpdateCharacter() {
+					wg.Add(1)
+					go func(player *parser.PlayerUpdate) {
+						defer wg.Done()
+						service.UpdateCharacter(player, event)
+					}(player)
+				}
+				if player.ShouldUpdateLeagueAccount() {
+					wg.Add(1)
+					go func(player *parser.PlayerUpdate) {
+						defer wg.Done()
+						service.UpdateLeagueAccount(player)
+					}(player)
+				}
 			}
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				service.UpdateLadder(players)
-			}()
+			if service.shouldUpdateLadder() {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					service.UpdateLadder(players)
+				}()
+			}
 			wg.Wait()
 
 			for _, player := range players {
@@ -278,7 +287,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			for _, player := range players {
 				player.Old = player.New
 			}
-
+			time.Sleep(10 * time.Second)
 		}
 	}
 }
