@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 )
 
@@ -121,7 +122,8 @@ type Streamer struct {
 }
 
 func (r *UserRepository) GetStreamersForCurrentEvent() (streamers []*Streamer, err error) {
-
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetStreamersForCurrentEvent"))
+	defer timer.ObserveDuration()
 	query := `
 		SELECT 
 			users.id as user_id, 
@@ -149,6 +151,8 @@ type UserTeam struct {
 }
 
 func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("LoadUsersIntoEvent"))
+	defer timer.ObserveDuration()
 	var users []*UserTeam
 	query := `
 		SELECT
@@ -192,6 +196,8 @@ type TeamUserWithPoEToken struct {
 }
 
 func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccountName, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetUsersForEvent"))
+	defer timer.ObserveDuration()
 	var users []*TeamUserWithPoEAccountName
 	query := `
 		SELECT
@@ -212,6 +218,8 @@ func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccoun
 }
 
 func (r *UserRepository) GetAuthenticatedUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetAuthenticatedUsersForEvent"))
+	defer timer.ObserveDuration()
 	var users []*TeamUserWithPoEToken
 	query := `
 		SELECT

@@ -4,6 +4,7 @@ import (
 	"bpl/config"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 )
 
@@ -59,6 +60,8 @@ func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, e
 }
 
 func (r *SignupRepository) GetSignupsForEvent(eventId int, limit int) ([]*Signup, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetSignupsForEvent"))
+	defer timer.ObserveDuration()
 	signups := make([]*Signup, 0)
 	result := r.DB.Preload("User").Preload("User.OauthAccounts").Order("timestamp ASC").Limit(limit).Find(&signups, "event_id = ?", eventId)
 	if result.Error != nil {

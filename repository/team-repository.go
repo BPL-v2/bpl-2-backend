@@ -5,6 +5,7 @@ import (
 	"bpl/utils"
 
 	"github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 )
 
@@ -87,6 +88,8 @@ func (r *TeamRepository) FindAll() ([]Team, error) {
 }
 
 func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamUsersForEvent"))
+	defer timer.ObserveDuration()
 	teamUsers := make([]*TeamUser, 0)
 	query := `
 		SELECT * 
