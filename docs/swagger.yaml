@@ -2192,6 +2192,24 @@ paths:
       tags:
       - user
   /users/{userId}:
+    get:
+      description: Fetches a user by ID
+      operationId: GetUserById
+      parameters:
+      - description: User Id
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/User'
+      tags:
+      - user
     patch:
       consumes:
       - application/json

@@ -1873,6 +1873,33 @@ const docTemplate = `{
             }
         },
         "/users/{userId}": {
+            "get": {
+                "description": "Fetches a user by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "GetUserById",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User Id",
+                        "name": "userId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/User"
+                        }
+                    }
+                }
+            },
             "patch": {
                 "security": [
                     {
