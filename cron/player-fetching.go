@@ -129,6 +129,7 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 	}
 
 	charToUpdate := map[string]*parser.PlayerUpdate{}
+	foundInLadder := make(map[string]bool)
 	charToUserId := map[string]int{}
 	for _, player := range players {
 		charToUpdate[player.New.CharacterName] = player
@@ -138,6 +139,7 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 	entriesToPersist := make([]*client.LadderEntry, 0, len(resp.Ladder.Entries))
 	for _, entry := range resp.Ladder.Entries {
 		if player, ok := charToUpdate[entry.Character.Name]; ok {
+			foundInLadder[entry.Character.Name] = true
 			entriesToPersist = append(entriesToPersist, &entry)
 			player.Mu.Lock()
 			player.New.CharacterLevel = entry.Character.Level
@@ -145,6 +147,19 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 				player.New.DelveDepth = *entry.Character.Depth.Depth
 			}
 			player.Mu.Unlock()
+		}
+	}
+	for charName, player := range charToUpdate {
+		if _, ok := foundInLadder[charName]; !ok {
+			entriesToPersist = append(entriesToPersist, &client.LadderEntry{
+				Character: client.LadderEntryCharacter{
+					Name:  charName,
+					Level: player.New.CharacterLevel,
+					Class: player.New.Ascendancy,
+				},
+				Rank:    0,
+				Account: &client.Account{Name: player.AccountName},
+			})
 		}
 	}
 	err := s.ladderService.UpsertLadder(entriesToPersist, s.event.Id, charToUserId)
