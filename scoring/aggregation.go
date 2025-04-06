@@ -43,17 +43,15 @@ var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []
 	repository.MAXIMUM:             handleMaximum,
 	repository.MINIMUM:             handleMinimum,
 }
-var scoreAggregationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+var scoreAggregationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Name: "score_aggregation_duration_s",
 	Help: "Duration of Aggregation step during scoring",
-	Buckets: []float64{
-		0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 60,
-	},
-})
+}, []string{"aggregation-step"})
+
+// timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetAuthenticatedUsersForEvent"))
+// defer timer.ObserveDuration()
 
 func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) (ObjectiveTeamMatches, error) {
-	timer := prometheus.NewTimer(scoreAggregationDuration)
-	defer timer.ObserveDuration()
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {
 		return team.Id
@@ -92,6 +90,8 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 }
 
 func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleEarliest"))
+	defer timer.ObserveDuration()
 	query := `
 	WITH ranked_matches AS (
 		SELECT 
@@ -216,6 +216,8 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 }
 
 func handleMaximum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMaximum"))
+	defer timer.ObserveDuration()
 	query, err := getExtremeQuery(repository.MAXIMUM)
 	if err != nil {
 		return nil, err
@@ -229,6 +231,8 @@ func handleMaximum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) 
 }
 
 func handleMinimum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMinimum"))
+	defer timer.ObserveDuration()
 	query, err := getExtremeQuery(repository.MINIMUM)
 	if err != nil {
 		return nil, err
@@ -243,6 +247,8 @@ func handleMinimum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) 
 }
 
 func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleLatestSum"))
+	defer timer.ObserveDuration()
 	query := `
 	WITH latest AS (
 		SELECT
@@ -283,6 +289,8 @@ func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
 
 func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) (FreshMatches, error) {
 	// todo: might want to also check if the match finishes the objective
+	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("getFreshMatches"))
+	defer timer.ObserveDuration()
 	query := `
     WITH latest AS (
         SELECT 

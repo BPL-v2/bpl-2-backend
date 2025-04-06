@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 )
 
@@ -59,6 +60,8 @@ func convert(hashes []int) pq.Int32Array {
 }
 
 func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassiveTrees []client.AtlasPassiveTree) error {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("SaveAtlasTrees"))
+	defer timer.ObserveDuration()
 	atlas := Atlas{}
 	r.DB.Where("user_id = ? AND event_id = ?", userId, eventId).First(&atlas)
 	if atlas.UserID == 0 {
@@ -83,6 +86,8 @@ func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassi
 }
 
 func (r *CharacterRepository) GetLatestCharactersForEvent(eventId int) ([]*Character, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharactersForEvent"))
+	defer timer.ObserveDuration()
 	charData := []*Character{}
 	query := `
 		SELECT c.* FROM characters c
@@ -102,6 +107,8 @@ func (r *CharacterRepository) GetLatestCharactersForEvent(eventId int) ([]*Chara
 	return charData, nil
 }
 func (r *CharacterRepository) GetLatestEventCharactersForUser(userId int) ([]*Character, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestEventCharactersForUser"))
+	defer timer.ObserveDuration()
 	charData := []*Character{}
 	query := `
 		SELECT c.* FROM characters c
@@ -121,6 +128,8 @@ func (r *CharacterRepository) GetLatestEventCharactersForUser(userId int) ([]*Ch
 }
 
 func (r *CharacterRepository) GetEventCharacterHistoryForUser(userId int, eventId int) ([]*Character, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetEventCharacterHistoryForUser"))
+	defer timer.ObserveDuration()
 	charData := []*Character{}
 	err := r.DB.Where("user_id = ? AND event_id = ?", userId, eventId).Find(&charData).Error
 	if err != nil {
@@ -130,6 +139,8 @@ func (r *CharacterRepository) GetEventCharacterHistoryForUser(userId int, eventI
 }
 
 func (r *CharacterRepository) GetTeamAtlasesForEvent(eventId int, teamId int) (atlas []*Atlas, err error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamAtlasesForEvent"))
+	defer timer.ObserveDuration()
 	query := `
 		SELECT a.* FROM atlas a
 		JOIN team_users tu ON a.user_id = tu.user_id

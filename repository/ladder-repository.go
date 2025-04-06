@@ -4,6 +4,7 @@ import (
 	"bpl/client"
 	"bpl/config"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +29,9 @@ func NewLadderRepository() *LadderRepository {
 }
 
 func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId int, playerMap map[string]int) error {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("UpsertLadder"))
+	defer timer.ObserveDuration()
+
 	err := r.DB.Delete(&LadderEntry{}, "event_id = ?", eventId).Error
 	if err != nil {
 		return err
@@ -55,6 +59,8 @@ func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId in
 }
 
 func (r *LadderRepository) GetLadderForEvent(eventId int) ([]*LadderEntry, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLadderForEvent"))
+	defer timer.ObserveDuration()
 	var ladder []*LadderEntry
 	result := r.DB.Find(&ladder, "event_id = ?", eventId)
 	if result.Error != nil {

@@ -42,12 +42,9 @@ func (s *PlayerFetchingService) shouldUpdateLadder() bool {
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerUpdate, event *repository.Event) {
+	charactersResponse, err := s.client.ListCharacters(playerUpdate.Token, event.GetRealm())
 	playerUpdate.Mu.Lock()
 	defer playerUpdate.Mu.Unlock()
-	if !playerUpdate.ShouldUpdateCharacterName() {
-		return
-	}
-	charactersResponse, err := s.client.ListCharacters(playerUpdate.Token, event.GetRealm())
 	playerUpdate.LastUpdateTimes.CharacterName = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
@@ -68,12 +65,9 @@ func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerU
 }
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
+	characterResponse, err := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
-	if !player.ShouldUpdateCharacter() {
-		return
-	}
-	characterResponse, err := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
 	player.LastUpdateTimes.Character = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
@@ -87,7 +81,6 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		log.Print(err)
 		return
 	}
-
 	player.New.CharacterLevel = characterResponse.Character.Level
 	player.New.Ascendancy = characterResponse.Character.Class
 	player.New.Pantheon = characterResponse.Character.HasPantheon()
@@ -99,12 +92,9 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 	if s.event.GameVersion == repository.PoE2 {
 		return
 	}
+	leagueAccount, err := s.client.GetLeagueAccount(player.Token, s.event.Name)
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
-	if !player.ShouldUpdateLeagueAccount() {
-		return
-	}
-	leagueAccount, err := s.client.GetLeagueAccount(player.Token, s.event.Name)
 	player.LastUpdateTimes.LeagueAccount = time.Now()
 	if err != nil {
 		if err.StatusCode == 401 || err.StatusCode == 403 {
