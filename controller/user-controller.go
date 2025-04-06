@@ -34,9 +34,10 @@ func setupUserController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/users", HandlerFunc: e.getUsersForEventHandler()},
 		{Method: "GET", Path: "/users", HandlerFunc: e.getAllUsersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/users/:user_id", HandlerFunc: e.getUserByIdHandler()},
 		{Method: "GET", Path: "/users/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/self", HandlerFunc: e.updateUserHandler(), Authenticated: true},
-		{Method: "PATCH", Path: "/users/:userId", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "PATCH", Path: "/users/:user_id", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "POST", Path: "/users/logout", HandlerFunc: e.logoutHandler(), Authenticated: true},
 		{Method: "POST", Path: "/users/remove-auth", HandlerFunc: e.removeAuthHandler(), Authenticated: true},
 	}
@@ -69,14 +70,14 @@ func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 // @Tags user
 // @Accept json
 // @Produce json
-// @Param userId path int true "User Id"
+// @Param user_id path int true "User Id"
 // @Param permissions body repository.Permissions true "Permissions"
 // @Success 200 {object} User
 // @Security ApiKeyAuth
-// @Router /users/{userId} [patch]
+// @Router /users/{user_id} [patch]
 func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userId, err := strconv.Atoi(c.Param("userId"))
+		userId, err := strconv.Atoi(c.Param("user_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -197,6 +198,33 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 			}
 		}
 		c.JSON(200, teamUsers)
+	}
+}
+
+// @id GetUserById
+// @Description Fetches a user by ID
+// @Tags user
+// @Produce json
+// @Param user_id path int true "User Id"
+// @Success 200 {object} User
+// @Router /users/{user_id} [get]
+func (e *UserController) getUserByIdHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userId, err := strconv.Atoi(c.Param("user_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := e.userService.GetUserById(userId)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "User not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
+			return
+		}
+		c.JSON(200, toMinimalUserResponse(user))
 	}
 }
 
