@@ -12,6 +12,7 @@ import (
 type Player struct {
 	CharacterName     string
 	CharacterLevel    int
+	CharacterXP       int
 	MainSkill         string
 	Pantheon          bool
 	Ascendancy        string

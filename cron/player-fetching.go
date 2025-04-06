@@ -58,6 +58,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerU
 		if char.League != nil && *char.League == s.event.Name && char.Level > playerUpdate.New.CharacterLevel {
 			playerUpdate.New.CharacterName = char.Name
 			playerUpdate.New.CharacterLevel = char.Level
+			playerUpdate.New.CharacterXP = char.Experience
 			playerUpdate.New.Ascendancy = char.Class
 		}
 	}
@@ -82,6 +83,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		return
 	}
 	player.New.CharacterLevel = characterResponse.Character.Level
+	player.New.CharacterXP = characterResponse.Character.Experience
 	player.New.Ascendancy = characterResponse.Character.Class
 	player.New.Pantheon = characterResponse.Character.HasPantheon()
 	player.New.AscendancyPoints = characterResponse.Character.GetAscendancyPoints()
@@ -153,9 +155,10 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 		if _, ok := foundInLadder[charName]; !ok {
 			entriesToPersist = append(entriesToPersist, &client.LadderEntry{
 				Character: client.LadderEntryCharacter{
-					Name:  charName,
-					Level: player.New.CharacterLevel,
-					Class: player.New.Ascendancy,
+					Name:       charName,
+					Level:      player.New.CharacterLevel,
+					Experience: &player.New.CharacterXP,
+					Class:      player.New.Ascendancy,
 				},
 				Rank:    0,
 				Account: &client.Account{Name: player.AccountName},
