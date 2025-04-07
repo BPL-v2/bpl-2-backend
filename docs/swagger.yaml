@@ -603,7 +603,7 @@ definitions:
   Signup:
     properties:
       expected_playtime:
-        $ref: '#/definitions/ExpectedPlayTime'
+        type: integer
       id:
         type: integer
       team_id:
@@ -624,7 +624,7 @@ definitions:
   SignupCreate:
     properties:
       expected_playtime:
-        $ref: '#/definitions/ExpectedPlayTime'
+        type: integer
     required:
     - expected_playtime
     type: object
@@ -834,24 +834,6 @@ definitions:
     - APPROVED
     - REJECTED
     - PENDING
-  ExpectedPlayTime:
-    enum:
-    - VERY_LOW
-    - LOW
-    - MEDIUM
-    - HIGH
-    - VERY_HIGH
-    - EXTREME
-    - NO_LIFE
-    type: string
-    x-enum-varnames:
-    - VeryLow
-    - Low
-    - Medium
-    - High
-    - VeryHigh
-    - Extreme
-    - NoLife
   FieldType:
     enum:
     - string
@@ -2191,14 +2173,14 @@ paths:
       - ApiKeyAuth: []
       tags:
       - user
-  /users/{userId}:
+  /users/{user_id}:
     get:
       description: Fetches a user by ID
       operationId: GetUserById
       parameters:
       - description: User Id
         in: path
-        name: userId
+        name: user_id
         required: true
         type: integer
       produces:
@@ -2218,7 +2200,7 @@ paths:
       parameters:
       - description: User Id
         in: path
-        name: userId
+        name: user_id
         required: true
         type: integer
       - description: Permissions

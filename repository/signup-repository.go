@@ -8,25 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type ExpectedPlayTime string
-
-const (
-	VeryLow  ExpectedPlayTime = "VERY_LOW"
-	Low      ExpectedPlayTime = "LOW"
-	Medium   ExpectedPlayTime = "MEDIUM"
-	High     ExpectedPlayTime = "HIGH"
-	VeryHigh ExpectedPlayTime = "VERY_HIGH"
-	Extreme  ExpectedPlayTime = "EXTREME"
-	NoLife   ExpectedPlayTime = "NO_LIFE"
-)
-
 type Signup struct {
-	Id               int              `gorm:"primaryKey"`
-	EventId          int              `gorm:"not null;references:event(id)"`
-	UserId           int              `gorm:"not null;references:event(id)"`
-	Timestamp        time.Time        `gorm:"not null"`
-	User             *User            `gorm:"foreignKey:UserId;references:Id"`
-	ExpectedPlayTime ExpectedPlayTime `gorm:"not null"`
+	Id               int       `gorm:"primaryKey"`
+	EventId          int       `gorm:"not null;references:event(id)"`
+	UserId           int       `gorm:"not null;references:event(id)"`
+	Timestamp        time.Time `gorm:"not null"`
+	User             *User     `gorm:"foreignKey:UserId;references:Id"`
+	ExpectedPlayTime int       `gorm:"not null"`
 }
 
 type SignupRepository struct {

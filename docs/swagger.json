@@ -1864,7 +1864,7 @@
                 }
             }
         },
-        "/users/{userId}": {
+        "/users/{user_id}": {
             "get": {
                 "description": "Fetches a user by ID",
                 "produces": [
@@ -1878,7 +1878,7 @@
                     {
                         "type": "integer",
                         "description": "User Id",
-                        "name": "userId",
+                        "name": "user_id",
                         "in": "path",
                         "required": true
                     }
@@ -1913,7 +1913,7 @@
                     {
                         "type": "integer",
                         "description": "User Id",
-                        "name": "userId",
+                        "name": "user_id",
                         "in": "path",
                         "required": true
                     },
@@ -2809,7 +2809,7 @@
             ],
             "properties": {
                 "expected_playtime": {
-                    "$ref": "#/definitions/ExpectedPlayTime"
+                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
@@ -2835,7 +2835,7 @@
             ],
             "properties": {
                 "expected_playtime": {
-                    "$ref": "#/definitions/ExpectedPlayTime"
+                    "type": "integer"
                 }
             }
         },
@@ -3139,27 +3139,6 @@
                 "APPROVED",
                 "REJECTED",
                 "PENDING"
-            ]
-        },
-        "ExpectedPlayTime": {
-            "type": "string",
-            "enum": [
-                "VERY_LOW",
-                "LOW",
-                "MEDIUM",
-                "HIGH",
-                "VERY_HIGH",
-                "EXTREME",
-                "NO_LIFE"
-            ],
-            "x-enum-varnames": [
-                "VeryLow",
-                "Low",
-                "Medium",
-                "High",
-                "VeryHigh",
-                "Extreme",
-                "NoLife"
             ]
         },
         "FieldType": {
