@@ -1872,7 +1872,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{userId}": {
+        "/users/{user_id}": {
             "get": {
                 "description": "Fetches a user by ID",
                 "produces": [
@@ -1886,7 +1886,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "User Id",
-                        "name": "userId",
+                        "name": "user_id",
                         "in": "path",
                         "required": true
                     }
@@ -1921,7 +1921,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "User Id",
-                        "name": "userId",
+                        "name": "user_id",
                         "in": "path",
                         "required": true
                     },
@@ -2817,7 +2817,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "expected_playtime": {
-                    "$ref": "#/definitions/ExpectedPlayTime"
+                    "type": "integer"
                 },
                 "id": {
                     "type": "integer"
@@ -2843,7 +2843,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "expected_playtime": {
-                    "$ref": "#/definitions/ExpectedPlayTime"
+                    "type": "integer"
                 }
             }
         },
@@ -3147,27 +3147,6 @@ const docTemplate = `{
                 "APPROVED",
                 "REJECTED",
                 "PENDING"
-            ]
-        },
-        "ExpectedPlayTime": {
-            "type": "string",
-            "enum": [
-                "VERY_LOW",
-                "LOW",
-                "MEDIUM",
-                "HIGH",
-                "VERY_HIGH",
-                "EXTREME",
-                "NO_LIFE"
-            ],
-            "x-enum-varnames": [
-                "VeryLow",
-                "Low",
-                "Medium",
-                "High",
-                "VeryHigh",
-                "Extreme",
-                "NoLife"
             ]
         },
         "FieldType": {

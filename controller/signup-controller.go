@@ -188,16 +188,16 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 }
 
 type Signup struct {
-	Id               int                         `json:"id" binding:"required"`
-	User             *NonSensitiveUser           `json:"user" binding:"required"`
-	Timestamp        time.Time                   `json:"timestamp" binding:"required"`
-	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`
-	TeamId           *int                        `json:"team_id"`
-	IsTeamLead       bool                        `json:"team_lead" binding:"required"`
+	Id               int               `json:"id" binding:"required"`
+	User             *NonSensitiveUser `json:"user" binding:"required"`
+	Timestamp        time.Time         `json:"timestamp" binding:"required"`
+	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
+	TeamId           *int              `json:"team_id"`
+	IsTeamLead       bool              `json:"team_lead" binding:"required"`
 }
 
 type SignupCreate struct {
-	ExpectedPlaytime repository.ExpectedPlayTime `json:"expected_playtime" binding:"required"`
+	ExpectedPlaytime int `json:"expected_playtime" binding:"required"`
 }
 
 func toSignupResponse(signup *repository.Signup) *Signup {
