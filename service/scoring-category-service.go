@@ -37,17 +37,6 @@ func (e *ScoringCategoryService) CreateCategory(category *repository.ScoringCate
 	return category, nil
 }
 
-func (e *ScoringCategoryService) UpdateCategory(categoryUpdate *repository.ScoringCategory) (*repository.ScoringCategory, error) {
-	category, err := e.rulesRepository.GetCategoryById(categoryUpdate.Id)
-	if err != nil {
-		return nil, err
-	}
-	if categoryUpdate.Name != "" {
-		category.Name = categoryUpdate.Name
-	}
-	return e.rulesRepository.SaveCategory(category)
-}
-
 func (e *ScoringCategoryService) DeleteCategory(category *repository.ScoringCategory) error {
 	return e.rulesRepository.DeleteCategory(category)
 }

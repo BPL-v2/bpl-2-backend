@@ -101,33 +101,12 @@ func (r *ObjectiveRepository) GetObjectiveById(objectiveId int, preloads ...stri
 }
 
 func (r *ObjectiveRepository) DeleteObjective(objectiveId int) error {
-	result := r.DB.Delete(&Objective{}, "id = ?", objectiveId)
+	result := r.DB.Delete(&Objective{Id: objectiveId})
 	return result.Error
 }
 
-func (r *ObjectiveRepository) GetObjectivesByCategoryId(categoryId int) ([]*Objective, error) {
-	var objectives []*Objective
-
-	result := r.DB.Preload("Conditions").Find(&objectives, "category_id = ?", categoryId)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return objectives, nil
-}
-
-func (r *ObjectiveRepository) GetObjectivesByCategoryIds(categoryIds []int) ([]*Objective, error) {
-	var objectives []*Objective
-
-	result := r.DB.Preload("Conditions").Find(&objectives, "category_id IN ?", categoryIds)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return objectives, nil
-}
-
 func (r *ObjectiveRepository) RemoveScoringId(scoringId int) error {
-	result := r.DB.Model(&Objective{}).Where("scoring_id = ?", scoringId).Update("scoring_id", nil)
+	result := r.DB.Model(&Objective{}).Where(Objective{ScoringId: &scoringId}).Update("scoring_id", nil)
 	return result.Error
 }
 
@@ -145,10 +124,5 @@ func (r *ObjectiveRepository) FinishSync(objectiveIds []int) error {
 	result := r.DB.
 		Model(&Objective{}).Where("id IN ? and sync_status = ?", objectiveIds, SyncStatusSyncing).
 		Update("sync_status", SyncStatusSynced)
-	return result.Error
-}
-
-func (r *ObjectiveRepository) DesyncObjective(objectiveId int) error {
-	result := r.DB.Model(&Objective{}).Where("id = ?", objectiveId).Update("sync_status", SyncStatusDesynced)
 	return result.Error
 }

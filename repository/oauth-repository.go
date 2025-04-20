@@ -37,7 +37,7 @@ func NewOauthRepository() *OauthRepository {
 
 func (r *OauthRepository) GetOauthByProviderAndAccountId(provider Provider, accountId string) (*Oauth, error) {
 	var oauth Oauth
-	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, "provider = ? AND account_id = ?", provider, accountId)
+	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, Oauth{Provider: provider, AccountId: accountId})
 	if result.Error != nil {
 		return nil, result.Error
 	}

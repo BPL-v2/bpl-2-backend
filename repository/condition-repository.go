@@ -108,17 +108,8 @@ func NewConditionRepository() *ConditionRepository {
 	return &ConditionRepository{DB: config.DatabaseConnection()}
 }
 
-func (r *ConditionRepository) GetConditionByPK(objectiveId int, field ItemField, operator Operator) (*Condition, error) {
-	var condition Condition
-	result := r.DB.First(&condition, "objective_id = ? AND field = ? AND operator = ?", objectiveId, field, operator)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &condition, nil
-}
-
 func (r *ConditionRepository) SaveCondition(condition *Condition) (*Condition, error) {
-	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveId).Update("sync_status", SyncStatusDesynced)
+	r.DB.Model(&Objective{}).Where(Objective{Id: condition.ObjectiveId}).Update("sync_status", SyncStatusDesynced)
 	result := r.DB.Save(condition)
 	if result.Error != nil {
 		return nil, result.Error
@@ -128,8 +119,8 @@ func (r *ConditionRepository) SaveCondition(condition *Condition) (*Condition, e
 
 func (r *ConditionRepository) DeleteCondition(conditionId int) error {
 	condition := Condition{}
-	r.DB.First(&condition, "id = ?", conditionId)
-	r.DB.Model(&Objective{}).Where("id = ?", condition.ObjectiveId).Update("sync_status", SyncStatusDesynced)
-	result := r.DB.Delete(&Condition{}, "id = ?", conditionId)
+	r.DB.Where(Condition{Id: conditionId}).First(&condition)
+	r.DB.Model(&Objective{}).Where(Objective{Id: condition.ObjectiveId}).Update("sync_status", SyncStatusDesynced)
+	result := r.DB.Delete(condition)
 	return result.Error
 }

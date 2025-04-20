@@ -72,33 +72,6 @@ func (r *UserRepository) GetUserById(userId int, preloads ...string) (*User, err
 	return &user, nil
 }
 
-func (r *UserRepository) GetUserByDiscordId(discordId int64) (*User, error) {
-	var user User
-	result := r.DB.First(&user, "discord_id = ?", discordId)
-	if result.Error != nil {
-		return nil, fmt.Errorf("user with discord id %d not found", discordId)
-	}
-	return &user, nil
-}
-
-func (r *UserRepository) GetUserByPoEAccount(poeAccount string) (*User, error) {
-	var user User
-	result := r.DB.First(&user, "poe_account = ?", poeAccount)
-	if result.Error != nil {
-		return nil, fmt.Errorf("user with poe account %s not found", poeAccount)
-	}
-	return &user, nil
-}
-
-func (r *UserRepository) GetUserByTwitchId(twitchId string) (*User, error) {
-	var user User
-	result := r.DB.First(&user, "twitch_id = ?", twitchId)
-	if result.Error != nil {
-		return nil, fmt.Errorf("user with twitch id %s not found", twitchId)
-	}
-	return &user, nil
-}
-
 func (r *UserRepository) SaveUser(user *User) (*User, error) {
 	result := r.DB.Save(user)
 	if result.Error != nil {

@@ -295,7 +295,3 @@ func (e *OauthService) GetApplicationToken(provider repository.Provider) (*strin
 	}
 	return &credentials.AccessToken, nil
 }
-
-func (e *OauthService) GetOauthByProviderAndAccountId(provider repository.Provider, accountId string) (*repository.Oauth, error) {
-	return e.oauthRepository.GetOauthByProviderAndAccountId(provider, accountId)
-}

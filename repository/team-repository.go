@@ -43,7 +43,7 @@ func (r *TeamRepository) GetTeamById(teamId int) (*Team, error) {
 
 func (r *TeamRepository) GetTeamsForEvent(eventId int) ([]*Team, error) {
 	var teams []*Team
-	result := r.DB.Find(&teams, "event_id = ?", eventId)
+	result := r.DB.Find(&teams, Team{EventId: eventId})
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -58,33 +58,9 @@ func (r *TeamRepository) Save(team *Team) (*Team, error) {
 	return team, nil
 }
 
-func (r *TeamRepository) Update(teamId int, updateTeam *Team) (*Team, error) {
-	team, err := r.GetTeamById(teamId)
-	if err != nil {
-		return nil, err
-	}
-	if updateTeam.Name != "" {
-		team.Name = updateTeam.Name
-	}
-	result := r.DB.Save(&team)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return team, nil
-}
-
 func (r *TeamRepository) Delete(teamId int) error {
-	result := r.DB.Delete(Team{}, teamId)
+	result := r.DB.Delete(Team{Id: teamId})
 	return result.Error
-}
-
-func (r *TeamRepository) FindAll() ([]Team, error) {
-	var teams []Team
-	result := r.DB.Find(&teams)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return teams, nil
 }
 
 func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error) {

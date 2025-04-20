@@ -104,18 +104,9 @@ func (r *ScoringPresetRepository) SavePreset(preset *ScoringPreset) (*ScoringPre
 	return preset, nil
 }
 
-func (r *ScoringPresetRepository) GetPresetById(presetId int) (*ScoringPreset, error) {
-	var preset ScoringPreset
-	result := r.DB.First(&preset, "id = ?", presetId)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &preset, nil
-}
-
 func (r *ScoringPresetRepository) GetPresetsForEvent(eventId int) ([]*ScoringPreset, error) {
 	var presets []*ScoringPreset
-	result := r.DB.Find(&presets, "event_id = ?", eventId)
+	result := r.DB.Find(&presets, ScoringPreset{EventId: eventId})
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -123,11 +114,11 @@ func (r *ScoringPresetRepository) GetPresetsForEvent(eventId int) ([]*ScoringPre
 }
 
 func (r *ScoringPresetRepository) DeletePreset(presetId int) error {
-	result := r.DB.Delete(&ScoringPreset{}, "id = ?", presetId)
+	result := r.DB.Delete(&ScoringPreset{}, &ScoringPreset{Id: presetId})
 	return result.Error
 }
 
 func (r *ScoringPresetRepository) DeletePresetsForEvent(eventId int) error {
-	result := r.DB.Delete(&ScoringPreset{}, "event_id = ?", eventId)
+	result := r.DB.Delete(&ScoringPreset{}, &ScoringPreset{EventId: eventId})
 	return result.Error
 }

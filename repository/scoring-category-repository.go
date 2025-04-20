@@ -29,7 +29,7 @@ func NewScoringCategoryRepository() *ScoringCategoryRepository {
 
 func (r *ScoringCategoryRepository) GetRulesForEvent(eventId int, preloads ...string) (*ScoringCategory, error) {
 	var event Event
-	result := r.DB.First(&event, "id = ?", eventId)
+	result := r.DB.First(&event, Event{Id: eventId})
 	if result.Error != nil {
 		return nil, result.Error
 	}

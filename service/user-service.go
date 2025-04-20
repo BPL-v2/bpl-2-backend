@@ -35,12 +35,12 @@ func (s *UserService) GetUserByDiscordId(discordId string) (*repository.User, er
 	return oauth.User, nil
 }
 
-func (s *UserService) GetUserByPoEAccount(poeAccount string) (*repository.User, error) {
-	return s.userRepository.GetUserByPoEAccount(poeAccount)
-}
-
 func (s *UserService) GetUserByTwitchId(twitchId string) (*repository.User, error) {
-	return s.userRepository.GetUserByTwitchId(twitchId)
+	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountId(repository.ProviderTwitch, twitchId)
+	if err != nil {
+		return nil, err
+	}
+	return oauth.User, nil
 }
 
 func (s *UserService) SaveUser(user *repository.User) (*repository.User, error) {

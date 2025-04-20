@@ -32,7 +32,7 @@ func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId in
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("UpsertLadder"))
 	defer timer.ObserveDuration()
 
-	err := r.DB.Delete(&LadderEntry{}, "event_id = ?", eventId).Error
+	err := r.DB.Delete(&LadderEntry{}, &LadderEntry{EventId: eventId}).Error
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (r *LadderRepository) GetLadderForEvent(eventId int) ([]*LadderEntry, error
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLadderForEvent"))
 	defer timer.ObserveDuration()
 	var ladder []*LadderEntry
-	result := r.DB.Find(&ladder, "event_id = ?", eventId)
+	result := r.DB.Find(&ladder, &LadderEntry{EventId: eventId})
 	if result.Error != nil {
 		return nil, result.Error
 	}

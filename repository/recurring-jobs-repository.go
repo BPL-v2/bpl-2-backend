@@ -32,18 +32,8 @@ func NewRecurringJobsRepository() *RecurringJobsRepository {
 }
 
 func (r *RecurringJobsRepository) CreateRecurringJob(job *RecurringJob) error {
-	r.DB.Delete(&RecurringJob{}, "job_type = ?", job.JobType)
+	r.DB.Delete(&RecurringJob{}, &RecurringJob{JobType: job.JobType})
 	return r.DB.Create(job).Error
-}
-
-func (r *RecurringJobsRepository) GetRecurringJob(jobType JobType, eventId int) (job *RecurringJob, err error) {
-	err = r.DB.Where("job_type = ? AND event_id = ?", jobType, eventId).First(&job).Error
-	return job, err
-}
-
-func (r *RecurringJobsRepository) GetJobsForEvent(eventId int) (jobs []*RecurringJob, err error) {
-	err = r.DB.Where("event_id = ?", eventId).Find(&jobs).Error
-	return jobs, err
 }
 
 func (r *RecurringJobsRepository) GetAllJobs() (jobs []*RecurringJob, err error) {

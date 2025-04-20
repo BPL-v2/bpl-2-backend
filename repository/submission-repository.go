@@ -63,7 +63,7 @@ func (r *SubmissionRepository) GetSubmissionsForObjectives(objectives []*Objecti
 
 func (r *SubmissionRepository) GetSubmissionById(id int) (*Submission, error) {
 	var submission Submission
-	result := r.DB.First(&submission, "id = ?", id).Preload("Objective")
+	result := r.DB.Preload("Objective").First(&submission, Submission{Id: id})
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -86,7 +86,7 @@ func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission)
 		tx.Rollback()
 		return submission, result.Error
 	}
-	result = tx.Delete(&ObjectiveMatch{}, "objective_id = ? AND user_id = ? AND event_id = ?", submission.ObjectiveId, submission.UserId, submission.EventId)
+	result = tx.Delete(&ObjectiveMatch{ObjectiveId: submission.ObjectiveId, UserId: submission.UserId, EventId: submission.EventId})
 	if result.Error != nil {
 		tx.Rollback()
 		return submission, result.Error
@@ -97,6 +97,6 @@ func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission)
 }
 
 func (r *SubmissionRepository) DeleteSubmission(submissionId int) error {
-	result := r.DB.Delete(&Submission{}, "id = ?", submissionId)
+	result := r.DB.Delete(&Submission{Id: submissionId})
 	return result.Error
 }

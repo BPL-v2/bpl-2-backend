@@ -63,7 +63,7 @@ func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassi
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("SaveAtlasTrees"))
 	defer timer.ObserveDuration()
 	atlas := Atlas{}
-	r.DB.Where("user_id = ? AND event_id = ?", userId, eventId).First(&atlas)
+	r.DB.Where(Atlas{UserID: userId, EventID: eventId}).First(&atlas)
 	if atlas.UserID == 0 {
 		atlas.UserID = userId
 		atlas.EventID = eventId
@@ -131,7 +131,7 @@ func (r *CharacterRepository) GetEventCharacterHistoryForUser(userId int, eventI
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetEventCharacterHistoryForUser"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
-	err := r.DB.Where("user_id = ? AND event_id = ?", userId, eventId).Find(&charData).Error
+	err := r.DB.Where(Character{UserID: userId, EventID: eventId}).Find(&charData).Error
 	if err != nil {
 		return nil, err
 	}

@@ -26,7 +26,7 @@ func (r *TeamSuggestionRepository) SaveSuggestion(suggestion *TeamSuggestion) er
 
 func (r *TeamSuggestionRepository) GetSuggestionsForTeam(teamId int) ([]*TeamSuggestion, error) {
 	var suggestions []*TeamSuggestion
-	result := r.DB.Find(&suggestions, "team_id = ?", teamId)
+	result := r.DB.Find(&suggestions, TeamSuggestion{TeamId: teamId})
 	if result.Error != nil {
 		return nil, result.Error
 	}
