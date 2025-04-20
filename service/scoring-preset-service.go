@@ -20,10 +20,6 @@ func (s *ScoringPresetService) SavePreset(preset *repository.ScoringPreset) (*re
 	return s.scoringPresetRepository.SavePreset(preset)
 }
 
-func (s *ScoringPresetService) GetPresetById(presetId int) (*repository.ScoringPreset, error) {
-	return s.scoringPresetRepository.GetPresetById(presetId)
-}
-
 func (s *ScoringPresetService) GetPresetsForEvent(eventId int) ([]*repository.ScoringPreset, error) {
 	return s.scoringPresetRepository.GetPresetsForEvent(eventId)
 }

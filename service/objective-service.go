@@ -43,10 +43,6 @@ func (e *ObjectiveService) DeleteObjective(objectiveId int) error {
 	return e.objectiveRepository.DeleteObjective(objectiveId)
 }
 
-func (e *ObjectiveService) GetObjectivesByCategoryId(categoryId int) ([]*repository.Objective, error) {
-	return e.objectiveRepository.GetObjectivesByCategoryId(categoryId)
-}
-
 func (e *ObjectiveService) GetObjectiveById(objectiveId int) (*repository.Objective, error) {
 	return e.objectiveRepository.GetObjectiveById(objectiveId, "Conditions")
 }
@@ -66,29 +62,6 @@ func extractObjectives(category *repository.ScoringCategory, objectives *[]*repo
 		*objectives = append(*objectives, subCategory.Objectives...)
 		extractObjectives(subCategory, objectives)
 	}
-}
-
-func (e *ObjectiveService) UpdateObjective(objectiveId int, updateObjective *repository.Objective) (*repository.Objective, error) {
-	objective, err := e.objectiveRepository.GetObjectiveById(objectiveId)
-	if err != nil {
-		return nil, err
-	}
-	if updateObjective.Name != "" {
-		objective.Name = updateObjective.Name
-	}
-	if updateObjective.RequiredAmount != 0 {
-		objective.RequiredAmount = updateObjective.RequiredAmount
-	}
-	if updateObjective.ObjectiveType != "" {
-		objective.ObjectiveType = updateObjective.ObjectiveType
-	}
-	if updateObjective.ValidFrom != nil {
-		objective.ValidFrom = updateObjective.ValidFrom
-	}
-	if updateObjective.ValidTo != nil {
-		objective.ValidTo = updateObjective.ValidTo
-	}
-	return e.objectiveRepository.SaveObjective(objective)
 }
 
 func (e *ObjectiveService) GetParser(eventId int) (*parser.ItemChecker, error) {

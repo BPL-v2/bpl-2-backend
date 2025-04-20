@@ -59,7 +59,7 @@ func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
 		query = query.Preload(preload)
 	}
 
-	result := query.Where("is_current = ?", true).First(&event)
+	result := query.Where(Event{IsCurrent: true}).First(&event)
 	if result.Error != nil {
 		return nil, fmt.Errorf("no current event found: %v", result.Error)
 	}
@@ -91,37 +91,8 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 	return event, nil
 }
 
-func (r *EventRepository) Save(event *Event) (*Event, error) {
-	if event.IsCurrent {
-		err := r.InvalidateCurrentEvent()
-		if err != nil {
-			return nil, err
-		}
-	}
-	result := r.DB.Save(event)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to create event: %v", result.Error)
-	}
-	return event, nil
-}
-
-func (r *EventRepository) Update(eventId int, updateEvent *Event) (*Event, error) {
-	event, err := r.GetEventById(eventId)
-	if err != nil {
-		return nil, err
-	}
-	if updateEvent.Name != "" {
-		event.Name = updateEvent.Name
-	}
-	event.IsCurrent = updateEvent.IsCurrent
-	if updateEvent.MaxSize != 0 {
-		event.MaxSize = updateEvent.MaxSize
-	}
-	return r.Save(event)
-}
-
 func (r *EventRepository) InvalidateCurrentEvent() error {
-	result := r.DB.Model(&Event{}).Where("is_current = ?", true).Update("is_current", false)
+	result := r.DB.Model(&Event{}).Where(Event{IsCurrent: true}).Update("is_current", false)
 	if result.Error != nil {
 		return fmt.Errorf("failed to invalidate current event: %v", result.Error)
 	}

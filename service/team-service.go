@@ -14,10 +14,6 @@ func NewTeamService() *TeamService {
 	}
 }
 
-func (e *TeamService) GetAllTeams() ([]repository.Team, error) {
-	return e.teamRepository.FindAll()
-}
-
 func (e *TeamService) GetTeamsForEvent(eventId int) ([]*repository.Team, error) {
 	return e.teamRepository.GetTeamsForEvent(eventId)
 }
@@ -32,10 +28,6 @@ func (e *TeamService) SaveTeam(team *repository.Team) (*repository.Team, error) 
 
 func (e *TeamService) GetTeamById(teamId int) (*repository.Team, error) {
 	return e.teamRepository.GetTeamById(teamId)
-}
-
-func (e *TeamService) UpdateTeam(teamId int, updateTeam *repository.Team) (*repository.Team, error) {
-	return e.teamRepository.Update(teamId, updateTeam)
 }
 
 func (e *TeamService) DeleteTeam(teamId int) error {

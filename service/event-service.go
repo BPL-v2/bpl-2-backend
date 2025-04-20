@@ -55,20 +55,12 @@ func (e *EventService) CreateEventWithoutCategory(event *repository.Event) (*rep
 	return event, nil
 }
 
-func (e *EventService) SaveEvent(event *repository.Event) (*repository.Event, error) {
-	return e.eventRepository.Save(event)
-}
-
 func (e *EventService) GetEventById(eventId int, preloads ...string) (*repository.Event, error) {
 	return e.eventRepository.GetEventById(eventId, preloads...)
 }
 
 func (e *EventService) GetCurrentEvent(preloads ...string) (*repository.Event, error) {
 	return e.eventRepository.GetCurrentEvent(preloads...)
-}
-
-func (e *EventService) UpdateEvent(eventId int, updateEvent *repository.Event) (*repository.Event, error) {
-	return e.eventRepository.Update(eventId, updateEvent)
 }
 
 func (e *EventService) DeleteEvent(event *repository.Event) error {

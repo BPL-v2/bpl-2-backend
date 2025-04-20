@@ -23,11 +23,3 @@ func (e *ConditionService) CreateCondition(condition *repository.Condition) (*re
 func (e *ConditionService) DeleteCondition(conditionId int) error {
 	return e.conditionRepository.DeleteCondition(conditionId)
 }
-
-func (e *ConditionService) GetConditionsByObjectiveId(objectiveId int) ([]*repository.Condition, error) {
-	objective, err := e.objectiveRepository.GetObjectiveById(objectiveId, "Conditions")
-	if err != nil {
-		return nil, err
-	}
-	return objective.Conditions, nil
-}

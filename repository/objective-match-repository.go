@@ -54,17 +54,9 @@ func (r *ObjectiveMatchRepository) OverwriteMatches(objectiveMatches []*Objectiv
 	})
 }
 
-func (r *ObjectiveMatchRepository) DeleteMatch(id int) error {
-	result := r.DB.Delete(&ObjectiveMatch{}, id)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
 func (r *ObjectiveMatchRepository) GetKafkaConsumer(eventId int) (*KafkaConsumer, error) {
 	var consumer *KafkaConsumer
-	result := r.DB.Where("event_id = ?", eventId).First(&consumer)
+	result := r.DB.Where(KafkaConsumer{EventId: eventId}).First(&consumer)
 	if result.Error != nil {
 		consumer.EventId = eventId
 		consumer.GroupId = 1
@@ -86,15 +78,6 @@ func (r *ObjectiveMatchRepository) SaveKafkaConsumer(consumer *KafkaConsumer) er
 	return nil
 }
 
-func (r *ObjectiveMatchRepository) DeleteOldMatches(changeId int64, objectiveIds []int) error {
-	result := r.DB.
-		Where("change_id < ? AND objective_id IN (?)", changeId, objectiveIds).
-		Delete(&ObjectiveMatch{})
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
 func (r *ObjectiveMatchRepository) DeleteMatches(objectiveIds []int) error {
 	return r.DB.Where("objective_id IN ?", objectiveIds).Delete(&ObjectiveMatch{}).Error
 }

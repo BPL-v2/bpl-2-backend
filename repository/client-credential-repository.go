@@ -23,7 +23,7 @@ func NewClientCredentialsRepository() *ClientCredentialsRepository {
 
 func (r *ClientCredentialsRepository) GetClientCredentialsByName(provider Provider) (*ClientCredentials, error) {
 	var clientCredentials ClientCredentials
-	result := r.DB.First(&clientCredentials, "name = ?", provider)
+	result := r.DB.First(&clientCredentials, ClientCredentials{Name: provider})
 	if result.Error != nil {
 		return nil, result.Error
 	}
