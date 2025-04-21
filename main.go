@@ -73,8 +73,6 @@ func main() {
 	// }
 
 	r := gin.Default()
-
-	r.LoadHTMLGlob("templates/*")
 	r.Use(gin.Recovery())
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},                                // Allow all origins
