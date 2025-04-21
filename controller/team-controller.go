@@ -75,6 +75,7 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 // @id CreateTeam
 // @Description Creates a team for an event
 // @Tags team
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
@@ -138,6 +139,7 @@ func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 
 // @id DeleteTeam
 // @Description Deletes a team
+// @Security BearerAuth
 // @Tags team
 // @Produce json
 // @Param event_id path int true "Event Id"
@@ -167,6 +169,7 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 // @id AddUsersToTeams
 // @Description Adds users to teams
 // @Tags team, user
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"

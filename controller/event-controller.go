@@ -72,6 +72,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 
 // @id CreateEvent
 // @Description Creates or updates an event
+// @Security BearerAuth
 // @Tags event
 // @Accept json
 // @Produce json
@@ -100,6 +101,7 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 
 // @id DeleteEvent
 // @Description Deletes an event
+// @Security BearerAuth
 // @Tags event
 // @Param event_id path int true "Event Id"
 // @Success 204
@@ -129,6 +131,7 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
+// @Security BearerAuth
 // @Success 200 {object} EventStatus
 // @Router /events/{event_id}/status [get]
 func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
@@ -137,7 +140,7 @@ func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return

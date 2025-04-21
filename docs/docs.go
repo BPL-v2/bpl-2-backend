@@ -115,6 +115,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates or updates an event",
                 "consumes": [
                     "application/json"
@@ -149,6 +154,11 @@ const docTemplate = `{
         },
         "/events/{event_id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes an event",
                 "tags": [
                     "event"
@@ -172,6 +182,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/atlas": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get atlas trees for your team for an event",
                 "consumes": [
                     "application/json"
@@ -234,6 +249,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new scoring category",
                 "consumes": [
                     "application/json"
@@ -275,6 +295,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/categories/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches a scoring category by id",
                 "produces": [
                     "application/json"
@@ -309,6 +334,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a scoring category",
                 "produces": [
                     "application/json"
@@ -377,6 +407,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/conditions": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a condition",
                 "consumes": [
                     "application/json"
@@ -418,6 +453,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/conditions/valid-mappings": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get valid mappings for conditions",
                 "produces": [
                     "application/json"
@@ -447,6 +487,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/conditions/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a condition",
                 "tags": [
                     "condition"
@@ -549,6 +594,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/objectives": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new objective",
                 "consumes": [
                     "application/json"
@@ -590,6 +640,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/objectives/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Gets an objective by id",
                 "produces": [
                     "application/json"
@@ -624,6 +679,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes an objective",
                 "produces": [
                     "application/json"
@@ -688,7 +748,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Websocket for simple score updates.",
@@ -722,7 +782,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Websocket for score updates. Once connected, the client will receive score updates in real-time.",
@@ -781,6 +841,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a new scoring preset",
                 "consumes": [
                     "application/json"
@@ -822,6 +887,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/scoring-presets/{id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a scoring preset by id",
                 "produces": [
                     "application/json"
@@ -855,6 +925,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/signups": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches all signups for the event",
                 "produces": [
                     "application/json"
@@ -887,6 +962,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/signups/self": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches an authenticated user's signup for the event",
                 "produces": [
                     "application/json"
@@ -914,6 +994,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a signup for the authenticated user",
                 "consumes": [
                     "application/json"
@@ -953,6 +1038,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes the authenticated user's signup for the event",
                 "produces": [
                     "application/json"
@@ -979,6 +1069,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/status": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Gets the users application status for an event",
                 "consumes": [
                     "application/json"
@@ -1041,6 +1136,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Submits a bounty for an event",
                 "consumes": [
                     "application/json"
@@ -1082,6 +1182,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/submissions/{submission_id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a submission",
                 "produces": [
                     "application/json"
@@ -1115,6 +1220,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/submissions/{submission_id}/review": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Reviews a submission",
                 "consumes": [
                     "application/json"
@@ -1163,6 +1273,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/suggestions": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches all suggestions for your team for an event",
                 "produces": [
                     "application/json"
@@ -1192,6 +1307,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/suggestions/categories": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a suggestion for a category for your team for an event",
                 "consumes": [
                     "application/json"
@@ -1230,6 +1350,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/suggestions/categories/{category_id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a suggestion for a category for your team for an event",
                 "produces": [
                     "application/json"
@@ -1263,6 +1388,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/suggestions/objectives": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a suggestion for an objective for your team for an event",
                 "consumes": [
                     "application/json"
@@ -1301,6 +1431,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/suggestions/objectives/{objective_id}": {
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a suggestion for an objective for your team for an event",
                 "produces": [
                     "application/json"
@@ -1364,6 +1499,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Creates a team for an event",
                 "consumes": [
                     "application/json"
@@ -1405,6 +1545,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/teams/users": {
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Adds users to teams",
                 "consumes": [
                     "application/json"
@@ -1481,6 +1626,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Deletes a team",
                 "produces": [
                     "application/json"
@@ -1549,6 +1699,11 @@ const docTemplate = `{
         },
         "/jobs": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Get all recurring jobs",
                 "consumes": [
                     "application/json"
@@ -1573,6 +1728,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Start a recurring job",
                 "consumes": [
                     "application/json"
@@ -1600,6 +1760,37 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/RecurringJob"
+                        }
+                    }
+                }
+            }
+        },
+        "/oauth2/callback": {
+            "post": {
+                "description": "Callback handler for oauth",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "operationId": "OauthCallback",
+                "parameters": [
+                    {
+                        "description": "Callback body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CallbackBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/CallbackResponse"
                         }
                     }
                 }
@@ -1655,22 +1846,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/oauth2/discord/redirect": {
-            "get": {
-                "description": "Redirect handler for discord oauth",
-                "produces": [
-                    "text/html"
-                ],
-                "tags": [
-                    "oauth"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
         "/oauth2/twitch": {
             "get": {
                 "description": "Redirects to twitch oauth",
@@ -1683,22 +1858,6 @@ const docTemplate = `{
                 "responses": {
                     "302": {
                         "description": "Found"
-                    }
-                }
-            }
-        },
-        "/oauth2/twitch/redirect": {
-            "get": {
-                "description": "Redirect handler for twitch oauth",
-                "produces": [
-                    "text/html"
-                ],
-                "tags": [
-                    "oauth"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
                     }
                 }
             }
@@ -1730,7 +1889,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Fetches all users",
@@ -1754,33 +1913,11 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/logout": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Logs out the authenticated user",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "operationId": "Logout",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    }
-                }
-            }
-        },
         "/users/remove-auth": {
             "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Removes an authentication provider from the authenticated user",
@@ -1814,7 +1951,7 @@ const docTemplate = `{
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Fetches the authenticated user",
@@ -1837,7 +1974,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Updates the authenticated users display name",
@@ -1903,7 +2040,7 @@ const docTemplate = `{
             "patch": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
                 "description": "Changes the permissions of a user",
@@ -2050,6 +2187,44 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "CallbackBody": {
+            "type": "object",
+            "required": [
+                "code",
+                "provider",
+                "state"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "provider": {
+                    "$ref": "#/definitions/Provider"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "CallbackResponse": {
+            "type": "object",
+            "required": [
+                "auth_token",
+                "last_path",
+                "user"
+            ],
+            "properties": {
+                "auth_token": {
+                    "type": "string"
+                },
+                "last_path": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/User"
                 }
             }
         },
@@ -3324,6 +3499,19 @@ const docTemplate = `{
                 "PermissionJudge"
             ]
         },
+        "Provider": {
+            "type": "string",
+            "enum": [
+                "poe",
+                "twitch",
+                "discord"
+            ],
+            "x-enum-varnames": [
+                "ProviderPoE",
+                "ProviderTwitch",
+                "ProviderDiscord"
+            ]
+        },
         "ScoringMethod": {
             "type": "string",
             "enum": [
@@ -3373,8 +3561,10 @@ const docTemplate = `{
         }
     },
     "securityDefinitions": {
-        "BasicAuth": {
-            "type": "basic"
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

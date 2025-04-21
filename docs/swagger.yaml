@@ -70,6 +70,32 @@ definitions:
     - trees
     - user_id
     type: object
+  CallbackBody:
+    properties:
+      code:
+        type: string
+      provider:
+        $ref: '#/definitions/Provider'
+      state:
+        type: string
+    required:
+    - code
+    - provider
+    - state
+    type: object
+  CallbackResponse:
+    properties:
+      auth_token:
+        type: string
+      last_path:
+        type: string
+      user:
+        $ref: '#/definitions/User'
+    required:
+    - auth_token
+    - last_path
+    - user
+    type: object
   Category:
     properties:
       id:
@@ -984,6 +1010,16 @@ definitions:
     - PermissionCommandTeam
     - PermissionObjectiveDesigner
     - PermissionJudge
+  Provider:
+    enum:
+    - poe
+    - twitch
+    - discord
+    type: string
+    x-enum-varnames:
+    - ProviderPoE
+    - ProviderTwitch
+    - ProviderDiscord
   ScoringMethod:
     enum:
     - PRESENCE
@@ -1113,6 +1149,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Event'
+      security:
+      - BearerAuth: []
       tags:
       - event
   /events/{event_id}:
@@ -1128,6 +1166,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - event
   /events/{event_id}/atlas:
@@ -1151,6 +1191,8 @@ paths:
             items:
               $ref: '#/definitions/Atlas'
             type: array
+      security:
+      - BearerAuth: []
       tags:
       - atlas
   /events/{event_id}/categories:
@@ -1196,6 +1238,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Category'
+      security:
+      - BearerAuth: []
       tags:
       - scoring
   /events/{event_id}/categories/{id}:
@@ -1218,6 +1262,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - scoring
     get:
@@ -1241,6 +1287,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Category'
+      security:
+      - BearerAuth: []
       tags:
       - scoring
   /events/{event_id}/characters:
@@ -1291,6 +1339,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Condition'
+      security:
+      - BearerAuth: []
       tags:
       - condition
   /events/{event_id}/conditions/{id}:
@@ -1309,6 +1359,8 @@ paths:
         required: true
         type: integer
       responses: {}
+      security:
+      - BearerAuth: []
       tags:
       - condition
   /events/{event_id}/conditions/valid-mappings:
@@ -1328,6 +1380,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ConditionMappings'
+      security:
+      - BearerAuth: []
       tags:
       - condition
   /events/{event_id}/duplicate:
@@ -1405,6 +1459,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Objective'
+      security:
+      - BearerAuth: []
       tags:
       - objective
   /events/{event_id}/objectives/{id}:
@@ -1427,6 +1483,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - objective
     get:
@@ -1450,6 +1508,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Objective'
+      security:
+      - BearerAuth: []
       tags:
       - objective
   /events/{event_id}/scores/latest:
@@ -1489,7 +1549,7 @@ paths:
               type: integer
             type: object
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       tags:
       - scores
   /events/{event_id}/scores/ws:
@@ -1509,7 +1569,7 @@ paths:
           schema:
             $ref: '#/definitions/ScoreDiff'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       tags:
       - scores
   /events/{event_id}/scoring-presets:
@@ -1557,6 +1617,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/ScoringPreset'
+      security:
+      - BearerAuth: []
       tags:
       - scoring
   /events/{event_id}/scoring-presets/{id}:
@@ -1579,6 +1641,8 @@ paths:
       responses:
         "200":
           description: OK
+      security:
+      - BearerAuth: []
       tags:
       - scoring
   /events/{event_id}/signups:
@@ -1600,6 +1664,8 @@ paths:
             items:
               $ref: '#/definitions/Signup'
             type: array
+      security:
+      - BearerAuth: []
       tags:
       - signup
   /events/{event_id}/signups/self:
@@ -1617,6 +1683,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - signup
     get:
@@ -1635,6 +1703,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Signup'
+      security:
+      - BearerAuth: []
       tags:
       - signup
     put:
@@ -1661,6 +1731,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Signup'
+      security:
+      - BearerAuth: []
       tags:
       - signup
   /events/{event_id}/status:
@@ -1682,6 +1754,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/EventStatus'
+      security:
+      - BearerAuth: []
       tags:
       - event
   /events/{event_id}/submissions:
@@ -1729,6 +1803,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Submission'
+      security:
+      - BearerAuth: []
       tags:
       - submission
   /events/{event_id}/submissions/{submission_id}:
@@ -1751,6 +1827,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - submission
   /events/{event_id}/submissions/{submission_id}/review:
@@ -1783,6 +1861,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Submission'
+      security:
+      - BearerAuth: []
       tags:
       - submission
   /events/{event_id}/suggestions:
@@ -1802,6 +1882,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Suggestions'
+      security:
+      - BearerAuth: []
       tags:
       - team
   /events/{event_id}/suggestions/categories:
@@ -1827,6 +1909,8 @@ paths:
       responses:
         "201":
           description: Created
+      security:
+      - BearerAuth: []
       tags:
       - team
   /events/{event_id}/suggestions/categories/{category_id}:
@@ -1849,6 +1933,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - team
   /events/{event_id}/suggestions/objectives:
@@ -1874,6 +1960,8 @@ paths:
       responses:
         "201":
           description: Created
+      security:
+      - BearerAuth: []
       tags:
       - team
   /events/{event_id}/suggestions/objectives/{objective_id}:
@@ -1896,6 +1984,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - team
   /events/{event_id}/teams:
@@ -1943,6 +2033,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Team'
+      security:
+      - BearerAuth: []
       tags:
       - team
   /events/{event_id}/teams/{team_id}:
@@ -1965,6 +2057,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - team
     get:
@@ -2015,6 +2109,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       tags:
       - team
       - user
@@ -2056,6 +2152,8 @@ paths:
             items:
               $ref: '#/definitions/RecurringJob'
             type: array
+      security:
+      - BearerAuth: []
       tags:
       - jobs
     post:
@@ -2077,8 +2175,30 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/RecurringJob'
+      security:
+      - BearerAuth: []
       tags:
       - jobs
+  /oauth2/callback:
+    post:
+      consumes:
+      - application/json
+      description: Callback handler for oauth
+      operationId: OauthCallback
+      parameters:
+      - description: Callback body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CallbackBody'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CallbackResponse'
+      tags:
+      - oauth
   /oauth2/discord:
     get:
       description: Redirects to discord oauth
@@ -2111,16 +2231,6 @@ paths:
             type: string
       tags:
       - oauth
-  /oauth2/discord/redirect:
-    get:
-      description: Redirect handler for discord oauth
-      produces:
-      - text/html
-      responses:
-        "200":
-          description: OK
-      tags:
-      - oauth
   /oauth2/twitch:
     get:
       description: Redirects to twitch oauth
@@ -2129,16 +2239,6 @@ paths:
       responses:
         "302":
           description: Found
-      tags:
-      - oauth
-  /oauth2/twitch/redirect:
-    get:
-      description: Redirect handler for twitch oauth
-      produces:
-      - text/html
-      responses:
-        "200":
-          description: OK
       tags:
       - oauth
   /streams:
@@ -2170,7 +2270,7 @@ paths:
               $ref: '#/definitions/User'
             type: array
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       tags:
       - user
   /users/{user_id}:
@@ -2219,20 +2319,7 @@ paths:
           schema:
             $ref: '#/definitions/User'
       security:
-      - ApiKeyAuth: []
-      tags:
-      - user
-  /users/logout:
-    post:
-      description: Logs out the authenticated user
-      operationId: Logout
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-      security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       tags:
       - user
   /users/remove-auth:
@@ -2253,7 +2340,7 @@ paths:
           schema:
             $ref: '#/definitions/User'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       tags:
       - user
   /users/self:
@@ -2268,7 +2355,7 @@ paths:
           schema:
             $ref: '#/definitions/User'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       tags:
       - user
     patch:
@@ -2291,10 +2378,12 @@ paths:
           schema:
             $ref: '#/definitions/User'
       security:
-      - ApiKeyAuth: []
+      - BearerAuth: []
       tags:
       - user
 securityDefinitions:
-  BasicAuth:
-    type: basic
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

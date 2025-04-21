@@ -27,7 +27,7 @@ func setupObjectiveController() []RouteInfo {
 	e := NewObjectiveController()
 	baseUrl := "/events/:event_id/objectives"
 	routes := []RouteInfo{
-		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler()},
+		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler()},
@@ -40,6 +40,7 @@ func setupObjectiveController() []RouteInfo {
 
 // @id CreateObjective
 // @Description Creates a new objective
+// @Security BearerAuth
 // @Tags objective
 // @Accept json
 // @Produce json
@@ -77,6 +78,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 
 // @id DeleteObjective
 // @Description Deletes an objective
+// @Security BearerAuth
 // @Tags objective
 // @Produce json
 // @Param event_id path int true "Event Id"
@@ -114,6 +116,7 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 
 // @id GetObjective
 // @Description Gets an objective by id
+// @Security BearerAuth
 // @Tags objective
 // @Produce json
 // @Param event_id path int true "Event Id"

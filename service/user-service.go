@@ -77,12 +77,12 @@ func (s *UserService) GetUserById(id int, preloads ...string) (*repository.User,
 	return s.userRepository.GetUserById(id, preloads...)
 }
 
-func (s *UserService) GetUserFromAuthCookie(c *gin.Context) (*repository.User, error) {
-	cookie, err := c.Cookie("auth")
-	if err != nil {
-		return nil, err
+func (s *UserService) GetUserFromAuthHeader(c *gin.Context) (*repository.User, error) {
+	authHeader := c.Request.Header.Get("Authorization")
+	if len(authHeader) < 7 || authHeader[:7] != "Bearer " {
+		return nil, fmt.Errorf("authorization header is invalid")
 	}
-	return s.GetUserFromToken(cookie)
+	return s.GetUserFromToken(authHeader[7:])
 }
 
 func (s *UserService) GetUserFromToken(tokenString string) (*repository.User, error) {

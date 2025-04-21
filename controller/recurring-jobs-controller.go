@@ -66,8 +66,8 @@ func setupRecurringJobsController() []RouteInfo {
 	c := NewRecurringJobsController()
 	baseUrl := "jobs"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: c.getJobsHandler()},
-		{Method: "POST", Path: "", HandlerFunc: c.startJobHandler()},
+		{Method: "GET", Path: "", HandlerFunc: c.getJobsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "POST", Path: "", HandlerFunc: c.startJobHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -77,6 +77,7 @@ func setupRecurringJobsController() []RouteInfo {
 
 // @id GetJobs
 // @Description Get all recurring jobs
+// @Security BearerAuth
 // @Tags jobs
 // @Accept json
 // @Produce json
@@ -97,6 +98,7 @@ func (c *RecurringJobsController) getJobsHandler() gin.HandlerFunc {
 
 // @id StartJob
 // @Description Start a recurring job
+// @Security BearerAuth
 // @Tags jobs
 // @Accept json
 // @Produce json

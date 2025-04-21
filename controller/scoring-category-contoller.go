@@ -54,6 +54,7 @@ func (e *ScoringCategoryController) getRulesForEventHandler() gin.HandlerFunc {
 
 // @id GetScoringCategory
 // @Description Fetches a scoring category by id
+// @Security BearerAuth
 // @Tags scoring
 // @Produce json
 // @Param event_id path int true "Event Id"
@@ -86,6 +87,7 @@ func (e *ScoringCategoryController) getScoringCategoryHandler() gin.HandlerFunc 
 
 // @id CreateCategory
 // @Description Creates a new scoring category
+// @Security BearerAuth
 // @Tags scoring
 // @Accept json
 // @Produce json
@@ -126,6 +128,7 @@ func (e *ScoringCategoryController) createCategoryHandler() gin.HandlerFunc {
 
 // @id DeleteCategory
 // @Description Deletes a scoring category
+// @Security BearerAuth
 // @Tags scoring
 // @Produce json
 // @Param event_id path int true "Event Id"

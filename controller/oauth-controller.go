@@ -32,12 +32,10 @@ func setupOauthController() []RouteInfo {
 	e := NewOauthController()
 	basePath := "/oauth2"
 	routes := []RouteInfo{
+		{Method: "POST", Path: "/callback", HandlerFunc: e.callbackHandler()},
 		{Method: "GET", Path: "/discord", HandlerFunc: e.discordOauthHandler()},
-		{Method: "GET", Path: "/discord/redirect", HandlerFunc: e.discordRedirectHandler()},
-		{Method: "POST", Path: "/discord/bot-login", HandlerFunc: e.loginDiscordBotHandler()},
-
 		{Method: "GET", Path: "/twitch", HandlerFunc: e.twitchOauthHandler()},
-		{Method: "GET", Path: "/twitch/redirect", HandlerFunc: e.twitchRedirectHandler()},
+		{Method: "POST", Path: "/discord/bot-login", HandlerFunc: e.loginDiscordBotHandler()},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -97,49 +95,51 @@ func (e *OauthController) twitchOauthHandler() gin.HandlerFunc {
 
 func (e *OauthController) redirectHandler(provider repository.Provider) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, _ := e.userService.GetUserFromAuthCookie(c)
-		url := e.oauthService.GetRedirectUrl(user, provider)
+		user, _ := e.userService.GetUserFromAuthHeader(c)
+		lastUrl := c.Request.URL.Query().Get("last_url")
+		url := e.oauthService.GetRedirectUrl(user, provider, lastUrl)
 		c.Redirect(http.StatusTemporaryRedirect, url)
 	}
 }
 
-// @Description Redirect handler for discord oauth
+// @Description Callback handler for oauth
+// @Id OauthCallback
 // @Tags oauth
-// @Produce html
-// @Success 200
-// @Router /oauth2/discord/redirect [get]
-func (e *OauthController) discordRedirectHandler() gin.HandlerFunc {
+// @Accept json
+// @Param body body CallbackBody true "Callback body"
+// @Success 200 {object} CallbackResponse
+// @Router /oauth2/callback [post]
+func (e *OauthController) callbackHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		e.handleOauthResponse(c, repository.ProviderDiscord)
-	}
-}
-
-// @Description Redirect handler for twitch oauth
-// @Tags oauth
-// @Produce html
-// @Success 200
-// @Router /oauth2/twitch/redirect [get]
-func (e *OauthController) twitchRedirectHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		errorString := c.Request.URL.Query().Get("error")
-		if errorString != "" {
-			c.JSON(400, gin.H{"error": errorString + ": " + c.Request.URL.Query().Get("error_description")})
+		var body CallbackBody
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		e.handleOauthResponse(c, repository.ProviderTwitch)
+		verifier, err := e.oauthService.Verify(body.State, body.Code, body.Provider)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		authToken, _ := auth.CreateToken(verifier.User)
+		c.JSON(200,
+			CallbackResponse{
+				LastPath:  verifier.Redirect,
+				AuthToken: authToken,
+				User:      *toUserResponse(verifier.User),
+			},
+		)
 	}
 }
 
-func (e *OauthController) handleOauthResponse(c *gin.Context, provider repository.Provider) {
-	code := c.Request.URL.Query().Get("code")
-	state := c.Request.URL.Query().Get("state")
-	user, err := e.oauthService.Verify(state, code, provider)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-	authToken, _ := auth.CreateToken(user)
-	c.SetSameSite(http.SameSiteStrictMode)
-	c.SetCookie("auth", authToken, 60*60*24*7, "/", os.Getenv("PUBLIC_DOMAIN"), false, true)
-	c.HTML(http.StatusOK, "auth-closing.html", gin.H{})
+type CallbackBody struct {
+	Provider repository.Provider `json:"provider" binding:"required"`
+	Code     string              `json:"code" binding:"required"`
+	State    string              `json:"state" binding:"required"`
+}
+
+type CallbackResponse struct {
+	LastPath  string `json:"last_path" binding:"required"`
+	AuthToken string `json:"auth_token" binding:"required"`
+	User      User   `json:"user" binding:"required"`
 }

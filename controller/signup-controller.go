@@ -42,6 +42,7 @@ func setupSignupController() []RouteInfo {
 // @Description Fetches an authenticated user's signup for the event
 // @Tags signup
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {object} Signup
 // @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups/self [get]
@@ -51,7 +52,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
@@ -74,6 +75,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Success 201 {object} Signup
 // @Param event_id path int true "Event Id"
 // @Param body body SignupCreate true "Signup"
@@ -84,7 +86,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
@@ -118,6 +120,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 // @Description Deletes the authenticated user's signup for the event
 // @Tags signup
 // @Produce json
+// @Security BearerAuth
 // @Success 204
 // @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups/self [delete]
@@ -127,7 +130,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
@@ -144,6 +147,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 // @id GetEventSignups
 // @Description Fetches all signups for the event
 // @Tags signup
+// @Security BearerAuth
 // @Produce json
 // @Success 200 {object} []Signup
 // @Param event_id path int true "Event Id"

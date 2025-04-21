@@ -10,14 +10,13 @@ import (
 	"strings"
 	"time"
 
-	ginprometheus "github.com/zsais/go-gin-prometheus"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
 // @title           BPL Backend API
@@ -27,10 +26,11 @@ import (
 // @contact.name   	Liberator
 // @contact.email 	Liberatorist@gmail.com
 
-// @securityDefinitions.basic  BasicAuth
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")

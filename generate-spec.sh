@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # script to remove package names from generated Swagger doc
-
+swag init
 docs_dir="docs"
 package_names=$(find . -name "*.go" -exec grep -h "^package " {} \; | awk '{print $2}' | sort | uniq)
 

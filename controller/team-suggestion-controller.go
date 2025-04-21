@@ -43,7 +43,7 @@ func (e *TeamSuggestionController) getTeamForUser(c *gin.Context) *repository.Te
 	if event == nil {
 		return nil
 	}
-	user, err := e.userService.GetUserFromAuthCookie(c)
+	user, err := e.userService.GetUserFromAuthHeader(c)
 	if err != nil {
 		c.JSON(401, gin.H{"error": err.Error()})
 		return nil
@@ -60,6 +60,7 @@ func (e *TeamSuggestionController) getTeamForUser(c *gin.Context) *repository.Te
 // @id GetTeamSuggestions
 // @Description Fetches all suggestions for your team for an event
 // @Tags team
+// @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Success 200 {object} Suggestions
@@ -83,6 +84,7 @@ func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 // @Description Creates a suggestion for an objective for your team for an event
 // @Tags team
 // @Accept json
+// @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Param body body SuggestionCreate true "Suggestion to create"
@@ -112,6 +114,7 @@ func (e *TeamSuggestionController) createObjectiveTeamSuggestionHandler() gin.Ha
 // @Description Creates a suggestion for a category for your team for an event
 // @Tags team
 // @Accept json
+// @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Param body body SuggestionCreate true "Suggestion to create"
@@ -140,6 +143,7 @@ func (e *TeamSuggestionController) createCategoryTeamSuggestionHandler() gin.Han
 // @id DeleteObjectiveTeamSuggestion
 // @Description Deletes a suggestion for an objective for your team for an event
 // @Tags team
+// @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Param objective_id path int true "Objective Id"
@@ -168,6 +172,7 @@ func (e *TeamSuggestionController) deleteObjectiveTeamSuggestionHandler() gin.Ha
 // @id DeleteCategoryTeamSuggestion
 // @Description Deletes a suggestion for a category for your team for an event
 // @Tags team
+// @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Param category_id path int true "Category Id"
