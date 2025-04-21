@@ -18,6 +18,7 @@ type Verifier struct {
 	Verifier string
 	Timeout  int64
 	User     *repository.User
+	Redirect string
 }
 
 type OauthService struct {
@@ -87,7 +88,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://discord.com/oauth2/authorize",
 					TokenURL: "https://discord.com/api/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("%s/api/oauth2/discord/redirect", os.Getenv("PUBLIC_URL")),
+				RedirectURL: fmt.Sprintf("%s/redirect?provider=discord", os.Getenv("FRONTEND_URL")),
 			},
 			repository.ProviderTwitch: {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
@@ -97,7 +98,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 					TokenURL: "https://id.twitch.tv/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("%s/api/oauth2/twitch/redirect", os.Getenv("PUBLIC_URL")),
+				RedirectURL: fmt.Sprintf("%s/redirect?provider=twitch", os.Getenv("FRONTEND_URL")),
 			},
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
@@ -114,7 +115,7 @@ func NewOauthService() *OauthService {
 	}
 }
 
-func (e *OauthService) GetNewVerifier(user *repository.User) (string, string) {
+func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (string, string) {
 	// clean up old verifiers
 	for verifier, v := range e.stateToVerifyer {
 		if v.Timeout < time.Now().Unix() {
@@ -127,16 +128,18 @@ func (e *OauthService) GetNewVerifier(user *repository.User) (string, string) {
 		Verifier: verifier,
 		Timeout:  time.Now().Add(1 * time.Minute).Unix(),
 		User:     user,
+		Redirect: lastUrl,
 	}
 	return state, verifier
 }
 
-func (e *OauthService) GetRedirectUrl(user *repository.User, provider repository.Provider) string {
-	state, verifier := e.GetNewVerifier(user)
-	return e.config[provider].AuthCodeURL(state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
+func (e *OauthService) GetRedirectUrl(user *repository.User, provider repository.Provider, lastUrl string) string {
+	state, verifier := e.GetNewVerifier(user, lastUrl)
+	return e.config[provider].AuthCodeURL(
+		state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
 }
 
-func (e *OauthService) Verify(state string, code string, provider repository.Provider) (*repository.User, error) {
+func (e *OauthService) Verify(state string, code string, provider repository.Provider) (*Verifier, error) {
 	switch provider {
 	case repository.ProviderDiscord:
 		return e.VerifyDiscord(state, code)
@@ -147,7 +150,7 @@ func (e *OauthService) Verify(state string, code string, provider repository.Pro
 	}
 }
 
-func (e *OauthService) VerifyDiscord(state string, code string) (*repository.User, error) {
+func (e *OauthService) VerifyDiscord(state string, code string) (*Verifier, error) {
 	verifier, ok := e.stateToVerifyer[state]
 	if !ok {
 		return nil, fmt.Errorf("state is unknown")
@@ -166,9 +169,7 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 	json.NewDecoder(response.Body).Decode(discordUser)
 
 	user := &repository.User{}
-	if verifier.User != nil {
-		user = verifier.User
-	} else {
+	if verifier.User == nil {
 		user, err = e.userService.GetUserByDiscordId(discordUser.Id)
 		if err != nil {
 			user = &repository.User{
@@ -177,6 +178,7 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 				OauthAccounts: []*repository.Oauth{},
 			}
 		}
+		verifier.User = user
 	}
 	oauthAccounts := []*repository.Oauth{}
 	for _, oauthAccount := range user.OauthAccounts {
@@ -185,7 +187,7 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 		}
 	}
 
-	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
+	verifier.User.OauthAccounts = append(oauthAccounts, &repository.Oauth{
 		Provider:     repository.ProviderDiscord,
 		AccountId:    discordUser.Id,
 		AccessToken:  token.AccessToken,
@@ -194,14 +196,14 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*repository.Use
 		Name:         discordUser.Username,
 	})
 
-	user, err = e.userService.SaveUser(user)
+	_, err = e.userService.SaveUser(verifier.User)
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return &verifier, nil
 }
 
-func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User, error) {
+func (e *OauthService) VerifyTwitch(state string, code string) (*Verifier, error) {
 	verifier, ok := e.stateToVerifyer[state]
 	if !ok {
 		return nil, fmt.Errorf("state is unknown")
@@ -240,9 +242,7 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 	json.NewDecoder(response.Body).Decode(twitchExtendedUser)
 	response.Body.Close()
 	user := &repository.User{}
-	if verifier.User != nil {
-		user = verifier.User
-	} else {
+	if verifier.User == nil {
 		user, err = e.userService.GetUserByTwitchId(twitchId)
 		if err != nil {
 			user = &repository.User{
@@ -251,6 +251,7 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 				OauthAccounts: []*repository.Oauth{},
 			}
 		}
+		verifier.User = user
 	}
 	oauthAccounts := []*repository.Oauth{}
 	for _, oauthAccount := range user.OauthAccounts {
@@ -258,7 +259,7 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 			oauthAccounts = append(oauthAccounts, oauthAccount)
 		}
 	}
-	user.OauthAccounts = append(oauthAccounts, &repository.Oauth{
+	verifier.User.OauthAccounts = append(oauthAccounts, &repository.Oauth{
 		Provider:     repository.ProviderTwitch,
 		AccountId:    twitchId,
 		AccessToken:  token.AccessToken,
@@ -266,8 +267,8 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*repository.User
 		Expiry:       token.Expiry,
 		Name:         twitchExtendedUser.Data[0].DisplayName,
 	})
-
-	return e.userService.SaveUser(user)
+	e.userService.SaveUser(verifier.User)
+	return &verifier, nil
 }
 
 func (e *OauthService) GetApplicationToken(provider repository.Provider) (*string, error) {

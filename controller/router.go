@@ -5,6 +5,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -116,11 +117,11 @@ func AuthMiddleware(requiredRoles []repository.Permission) gin.HandlerFunc {
 }
 
 func getUserRoles(r *gin.Context) (permissions []repository.Permission, err error) {
-	authCookie, err := r.Cookie("auth")
-	if err != nil {
-		return permissions, err
+	authHeader := r.Request.Header.Get("Authorization")
+	if len(authHeader) < 7 || authHeader[:7] != "Bearer " {
+		return nil, fmt.Errorf("authorization header is invalid")
 	}
-	token, err := auth.ParseToken(authCookie)
+	token, err := auth.ParseToken(authHeader[7:])
 	if err != nil {
 		return permissions, err
 	}

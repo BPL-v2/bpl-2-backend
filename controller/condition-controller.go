@@ -30,10 +30,10 @@ func setupConditionController() []RouteInfo {
 	e := NewConditionController()
 	baseUrl := "/events/:event_id/conditions"
 	routes := []RouteInfo{
-		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler()},
-		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteConditionHandler()},
-		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler()},
-		{Method: "POST", Path: "/test", HandlerFunc: e.testConditionHandler()},
+		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "POST", Path: "/test", HandlerFunc: e.testConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -44,6 +44,7 @@ func setupConditionController() []RouteInfo {
 // @id CreateCondition
 // @Description Creates a condition
 // @Tags condition
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
@@ -77,6 +78,7 @@ func (e *ConditionController) createConditionHandler() gin.HandlerFunc {
 
 // @id DeleteCondition
 // @Description Deletes a condition
+// @Security BearerAuth
 // @Tags condition
 // @Param event_id path int true "Event Id"
 // @Param id path int true "Condition Id"
@@ -110,6 +112,7 @@ func (e *ConditionController) deleteConditionHandler() gin.HandlerFunc {
 
 // @id GetValidMappings
 // @Description Get valid mappings for conditions
+// @Security BearerAuth
 // @Tags condition
 // @Produce json
 // @Param event_id path int true "Event Id"

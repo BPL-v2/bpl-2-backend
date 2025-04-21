@@ -1,12 +1,9 @@
 package controller
 
 import (
-	"bpl/auth"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -38,7 +35,6 @@ func setupUserController() []RouteInfo {
 		{Method: "GET", Path: "/users/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/self", HandlerFunc: e.updateUserHandler(), Authenticated: true},
 		{Method: "PATCH", Path: "/users/:user_id", HandlerFunc: e.changePermissionsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "POST", Path: "/users/logout", HandlerFunc: e.logoutHandler(), Authenticated: true},
 		{Method: "POST", Path: "/users/remove-auth", HandlerFunc: e.removeAuthHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
@@ -52,7 +48,7 @@ func setupUserController() []RouteInfo {
 // @Tags user
 // @Produce json
 // @Success 200 {array} User
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Router /users [get]
 func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -73,7 +69,7 @@ func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 // @Param user_id path int true "User Id"
 // @Param permissions body repository.Permissions true "Permissions"
 // @Success 200 {object} User
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Router /users/{user_id} [patch]
 func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -101,33 +97,16 @@ func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 // @Tags user
 // @Produce json
 // @Success 200 {object} User
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Router /users/self [get]
 func (e *UserController) getUserHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		authToken, _ := auth.CreateToken(user)
-		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("auth", authToken, 60*60*24*7, "/", os.Getenv("PUBLIC_DOMAIN"), false, true)
 		c.JSON(200, toUserResponse(user))
-	}
-}
-
-// @id Logout
-// @Description Logs out the authenticated user
-// @Tags user
-// @Produce json
-// @Success 200
-// @Security ApiKeyAuth
-// @Router /users/logout [post]
-func (e *UserController) logoutHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.SetCookie("auth", "", -1, "/", c.Request.Host, false, true)
-		c.JSON(200, gin.H{"message": "Logged out"})
 	}
 }
 
@@ -137,7 +116,7 @@ func (e *UserController) logoutHandler() gin.HandlerFunc {
 // @Produce json
 // @Param provider query string true "Provider"
 // @Success 200 {object} User
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Router /users/remove-auth [post]
 func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -146,7 +125,7 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "No provider specified"})
 			return
 		}
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
@@ -156,13 +135,6 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		authToken, err := auth.CreateToken(user)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.SetSameSite(http.SameSiteStrictMode)
-		c.SetCookie("auth", authToken, 60*60*24*7, "/", os.Getenv("PUBLIC_DOMAIN"), false, true)
 		c.JSON(200, toUserResponse(user))
 	}
 }
@@ -235,11 +207,11 @@ func (e *UserController) getUserByIdHandler() gin.HandlerFunc {
 // @Produce json
 // @Param user body UserUpdate true "User"
 // @Success 200 {object} User
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Router /users/self [patch]
 func (e *UserController) updateUserHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return

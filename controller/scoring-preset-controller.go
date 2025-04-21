@@ -57,6 +57,7 @@ func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.Handler
 // @id CreateScoringPreset
 // @Description Creates a new scoring preset
 // @Tags scoring
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
@@ -91,6 +92,7 @@ func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {
 
 // @id DeleteScoringPreset
 // @Description Deletes a scoring preset by id
+// @Security BearerAuth
 // @Tags scoring
 // @Produce json
 // @Param event_id path int true "Event Id"

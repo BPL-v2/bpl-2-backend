@@ -74,6 +74,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 // @Description Submits a bounty for an event
 // @Tags submission
 // @Accept json
+// @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Param body body SubmissionCreate true "Submission to create"
@@ -89,7 +90,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 		}
 		submission := submissionCreate.toModel()
 		submission.EventId, _ = strconv.Atoi(c.Param("event_id"))
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
@@ -113,6 +114,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 // @Description Deletes a submission
 // @Tags submission
 // @Produce json
+// @Security BearerAuth
 // @Param event_id path int true "Event Id"
 // @Param submission_id path int true "Submission Id"
 // @Success 204
@@ -124,7 +126,7 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
@@ -144,6 +146,7 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 // @Tags submission
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param event_id path int true "Event Id"
 // @Param submission_id path int true "Submission Id"
 // @Param submission body SubmissionReview true "Submission review"
@@ -156,7 +159,7 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		user, err := e.userService.GetUserFromAuthCookie(c)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return

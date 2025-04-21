@@ -63,7 +63,9 @@ var upgrader = websocket.Upgrader{
 // @Tags scores
 // @Router /events/{event_id}/scores/ws [get]
 // @Param event_id path int true "Event Id"
-// @Security ApiKeyAuth
+// @Security BearerAuth
+// @in header
+// @name Authorization
 // @Success 200 {object} ScoreDiff
 func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	event := getEvent(c)
@@ -116,7 +118,7 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 // @Tags scores
 // @Router /events/{event_id}/scores/simple/ws [get]
 // @Param event_id path int true "Event Id"
-// @Security ApiKeyAuth
+// @Security BearerAuth
 // @Success 200 {object} map[int]int
 func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 

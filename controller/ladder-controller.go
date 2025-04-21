@@ -94,6 +94,7 @@ func (c *LadderController) getLatestCharactersForEvent() gin.HandlerFunc {
 // @Tags atlas
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param event_id path int true "Event ID"
 // @Success 200 {array} Atlas
 // @Router /events/{event_id}/atlas [get]
@@ -103,7 +104,7 @@ func (c *LadderController) getAtlasesForEvent() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		user, err := c.userService.GetUserFromAuthCookie(ctx)
+		user, err := c.userService.GetUserFromAuthHeader(ctx)
 		if err != nil {
 			ctx.JSON(401, gin.H{"error": "Not authenticated"})
 			return
