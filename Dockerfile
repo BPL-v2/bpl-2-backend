@@ -26,7 +26,6 @@ WORKDIR /app
 COPY --from=builder /app/migrate .
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrations ./migrations
-COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/docs ./docs
 
 EXPOSE 8000
