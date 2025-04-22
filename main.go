@@ -74,14 +74,33 @@ func main() {
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
-	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},                                // Allow all origins
-		AllowMethods:     []string{"GET", "OPTIONS"},                   // Allow only GET requests
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"}, // Allow necessary headers
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false, // Credentials are not allowed when AllowOrigins is "*"
+	corsConfigGetOptions := cors.Config{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"GET", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
+		MaxAge:       12 * time.Hour,
+	}
+	corsConfigOtherMethods := cors.Config{
+		AllowOrigins: []string{
+			"https://bpl-2.netlify.app",
+			"https://v2202503259898322516.goodsrv.de",
+			"http://localhost",
+			"http://localhost:3000",
+		},
+		AllowMethods:     []string{"POST", "PUT", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
-	}))
+	}
+
+	r.Use(func(c *gin.Context) {
+		if c.Request.Method == "GET" || c.Request.Method == "OPTIONS" {
+			cors.New(corsConfigGetOptions)(c)
+		} else {
+			cors.New(corsConfigOtherMethods)(c)
+		}
+	})
+
 	addMetrics(r)
 	addDocs(r)
 
