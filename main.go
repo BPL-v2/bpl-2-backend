@@ -75,10 +75,11 @@ func main() {
 	r := gin.Default()
 	r.Use(gin.Recovery())
 	corsConfigGetOptions := cors.Config{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{"GET", "OPTIONS"},
-		AllowHeaders: []string{"Origin", "Content-Type", "Accept"},
-		MaxAge:       12 * time.Hour,
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
 	}
 	corsConfigOtherMethods := cors.Config{
 		AllowOrigins: []string{
