@@ -102,7 +102,7 @@ func NewOauthService() *OauthService {
 			repository.ProviderPoE: {
 				ClientID:     os.Getenv("POE_CLIENT_ID"),
 				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
-				Scopes:       []string{},
+				Scopes:       []string{"account:characters", "account:league-accounts", "account:profile"},
 				Endpoint: oauth2.Endpoint{
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
@@ -141,10 +141,10 @@ func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (st
 	return state, verifier
 }
 
-func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string, redirect_url string) string {
+func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string, redirectUrl string) string {
 	state, verifier := e.GetNewVerifier(user, lastUrl)
 	config := e.Config[provider]
-	config.RedirectURL = redirect_url
+	config.RedirectURL = redirectUrl
 	return config.AuthCodeURL(state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
 }
 
