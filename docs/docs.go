@@ -1858,7 +1858,13 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Last URL to redirect to after oauth",
+                        "description": "Redirect URL for oauth provider",
+                        "name": "redirect_url",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Last URL to redirect to after oauth is finished",
                         "name": "last_url",
                         "in": "query"
                     }
@@ -2205,10 +2211,14 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "code",
+                "redirect_url",
                 "state"
             ],
             "properties": {
                 "code": {
+                    "type": "string"
+                },
+                "redirect_url": {
                     "type": "string"
                 },
                 "state": {

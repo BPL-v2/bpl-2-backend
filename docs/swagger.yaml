@@ -74,10 +74,13 @@ definitions:
     properties:
       code:
         type: string
+      redirect_url:
+        type: string
       state:
         type: string
     required:
     - code
+    - redirect_url
     - state
     type: object
   CallbackResponse:
@@ -2202,7 +2205,11 @@ paths:
         name: provider
         required: true
         type: string
-      - description: Last URL to redirect to after oauth
+      - description: Redirect URL for oauth provider
+        in: query
+        name: redirect_url
+        type: string
+      - description: Last URL to redirect to after oauth is finished
         in: query
         name: last_url
         type: string

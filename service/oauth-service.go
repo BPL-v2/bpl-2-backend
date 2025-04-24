@@ -24,7 +24,7 @@ type OauthState struct {
 }
 
 type OauthService struct {
-	config                     map[repository.Provider]*oauth2.Config
+	Config                     map[repository.Provider]*oauth2.Config
 	clientConfig               map[repository.Provider]*clientcredentials.Config
 	stateMap                   map[string]OauthState
 	userService                *UserService
@@ -80,7 +80,7 @@ type TwitchExtendedUserResponse struct {
 
 func NewOauthService() *OauthService {
 	return &OauthService{
-		config: map[repository.Provider]*oauth2.Config{
+		Config: map[repository.Provider]*oauth2.Config{
 			repository.ProviderDiscord: {
 				ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
 				ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
@@ -89,7 +89,6 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://discord.com/oauth2/authorize",
 					TokenURL: "https://discord.com/api/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("%s/auth/discord/callback", os.Getenv("FRONTEND_URL")),
 			},
 			repository.ProviderTwitch: {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
@@ -99,7 +98,6 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 					TokenURL: "https://id.twitch.tv/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("%s/auth/twitch/callback", os.Getenv("FRONTEND_URL")),
 			},
 			repository.ProviderPoE: {
 				ClientID:     os.Getenv("POE_CLIENT_ID"),
@@ -109,7 +107,6 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
 				},
-				RedirectURL: fmt.Sprintf("%s/auth/poe/callback", os.Getenv("FRONTEND_URL")),
 			},
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
@@ -144,20 +141,21 @@ func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (st
 	return state, verifier
 }
 
-func (e *OauthService) GetRedirectUrl(user *repository.User, provider repository.Provider, lastUrl string) string {
+func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string, redirect_url string) string {
 	state, verifier := e.GetNewVerifier(user, lastUrl)
-	return e.config[provider].AuthCodeURL(
-		state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
+	config := e.Config[provider]
+	config.RedirectURL = redirect_url
+	return config.AuthCodeURL(state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
 }
 
-func (e *OauthService) Verify(state string, code string, provider repository.Provider) (*OauthState, error) {
+func (e *OauthService) Verify(state string, code string, provider repository.Provider, oauthConfig oauth2.Config) (*OauthState, error) {
 	switch provider {
 	case repository.ProviderDiscord:
-		return e.VerifyDiscord(state, code)
+		return e.VerifyDiscord(state, code, oauthConfig)
 	case repository.ProviderTwitch:
-		return e.VerifyTwitch(state, code)
+		return e.VerifyTwitch(state, code, oauthConfig)
 	case repository.ProviderPoE:
-		return e.VerifyPoE(state, code)
+		return e.VerifyPoE(state, code, oauthConfig)
 	default:
 		return nil, fmt.Errorf("not implemented")
 	}
@@ -165,10 +163,8 @@ func (e *OauthService) Verify(state string, code string, provider repository.Pro
 
 func addAccountToUser(userService *UserService, authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	if authState.User == nil {
-		fmt.Println("User was not set in authState, fetching from DB")
 		user, err := userService.GetUserByOauthProvider(repository.ProviderDiscord, accountId)
 		if err != nil {
-			fmt.Println("User not found in DB, creating new user")
 			user = &repository.User{
 				Permissions:   []repository.Permission{},
 				DisplayName:   accountName,
@@ -194,24 +190,25 @@ func addAccountToUser(userService *UserService, authState *OauthState, accountId
 	_, err := userService.SaveUser(authState.User)
 	return authState, err
 }
-func (e *OauthService) fetchToken(provider repository.Provider, state string, code string) (*OauthState, *oauth2.Token, error) {
+func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
 	authState, ok := e.stateMap[state]
 	if !ok {
 		return nil, nil, fmt.Errorf("state is unknown")
 	}
-	token, err := e.config[provider].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", authState.Verifier))
+	token, err := oauthConfig.Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", authState.Verifier))
 	if err != nil {
 		return nil, nil, err
 	}
 	return &authState, token, nil
 }
 
-func (e *OauthService) VerifyDiscord(state string, code string) (*OauthState, error) {
-	authState, token, err := e.fetchToken(repository.ProviderDiscord, state, code)
+func (e *OauthService) VerifyDiscord(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
+
+	authState, token, err := e.fetchToken(oauthConfig, state, code)
 	if err != nil {
 		return nil, err
 	}
-	client := e.config[repository.ProviderDiscord].Client(context.Background(), token)
+	client := oauthConfig.Client(context.Background(), token)
 	response, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
 		return nil, err
@@ -222,12 +219,12 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*OauthState, er
 	return addAccountToUser(e.userService, authState, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
 }
 
-func (e *OauthService) VerifyTwitch(state string, code string) (*OauthState, error) {
-	authState, token, err := e.fetchToken(repository.ProviderTwitch, state, code)
+func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
+	authState, token, err := e.fetchToken(oauthConfig, state, code)
 	if err != nil {
 		return nil, err
 	}
-	response, err := e.config[repository.ProviderTwitch].Client(context.Background(), token).Get("https://id.twitch.tv/oauth2/userinfo")
+	response, err := e.Config[repository.ProviderTwitch].Client(context.Background(), token).Get("https://id.twitch.tv/oauth2/userinfo")
 	if err != nil {
 		return nil, err
 	}
@@ -259,8 +256,8 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*OauthState, err
 	return addAccountToUser(e.userService, authState, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
 }
 
-func (e *OauthService) VerifyPoE(state string, code string) (*OauthState, error) {
-	verifier, token, err := e.fetchToken(repository.ProviderPoE, state, code)
+func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
+	verifier, token, err := e.fetchToken(oauthConfig, state, code)
 	if err != nil {
 		return nil, err
 	}
