@@ -1,7 +1,9 @@
 package service
 
 import (
+	"bpl/client"
 	"bpl/repository"
+	"bpl/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,7 +16,7 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
-type Verifier struct {
+type OauthState struct {
 	Verifier string
 	Timeout  int64
 	User     *repository.User
@@ -24,10 +26,9 @@ type Verifier struct {
 type OauthService struct {
 	config                     map[repository.Provider]*oauth2.Config
 	clientConfig               map[repository.Provider]*clientcredentials.Config
-	stateToVerifyer            map[string]Verifier
+	stateMap                   map[string]OauthState
 	userService                *UserService
 	clientCredentialRepository *repository.ClientCredentialsRepository
-	oauthRepository            *repository.OauthRepository
 }
 
 type DiscordUserResponse struct {
@@ -88,7 +89,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://discord.com/oauth2/authorize",
 					TokenURL: "https://discord.com/api/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("%s/redirect?provider=discord", os.Getenv("FRONTEND_URL")),
+				RedirectURL: fmt.Sprintf("%s/auth/discord/callback", os.Getenv("FRONTEND_URL")),
 			},
 			repository.ProviderTwitch: {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
@@ -98,7 +99,17 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 					TokenURL: "https://id.twitch.tv/oauth2/token",
 				},
-				RedirectURL: fmt.Sprintf("%s/redirect?provider=twitch", os.Getenv("FRONTEND_URL")),
+				RedirectURL: fmt.Sprintf("%s/auth/twitch/callback", os.Getenv("FRONTEND_URL")),
+			},
+			repository.ProviderPoE: {
+				ClientID:     os.Getenv("POE_CLIENT_ID"),
+				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
+				Scopes:       []string{},
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
+					TokenURL: "https://www.pathofexile.com/oauth/token",
+				},
+				RedirectURL: fmt.Sprintf("%s/auth/poe/callback", os.Getenv("FRONTEND_URL")),
 			},
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
@@ -109,7 +120,7 @@ func NewOauthService() *OauthService {
 			},
 		},
 
-		stateToVerifyer:            make(map[string]Verifier),
+		stateMap:                   make(map[string]OauthState),
 		userService:                NewUserService(),
 		clientCredentialRepository: repository.NewClientCredentialsRepository(),
 	}
@@ -117,14 +128,14 @@ func NewOauthService() *OauthService {
 
 func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (string, string) {
 	// clean up old verifiers
-	for verifier, v := range e.stateToVerifyer {
+	for verifier, v := range e.stateMap {
 		if v.Timeout < time.Now().Unix() {
-			delete(e.stateToVerifyer, verifier)
+			delete(e.stateMap, verifier)
 		}
 	}
 	state := oauth2.GenerateVerifier()
 	verifier := oauth2.GenerateVerifier()
-	e.stateToVerifyer[state] = Verifier{
+	e.stateMap[state] = OauthState{
 		Verifier: verifier,
 		Timeout:  time.Now().Add(1 * time.Minute).Unix(),
 		User:     user,
@@ -139,23 +150,64 @@ func (e *OauthService) GetRedirectUrl(user *repository.User, provider repository
 		state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
 }
 
-func (e *OauthService) Verify(state string, code string, provider repository.Provider) (*Verifier, error) {
+func (e *OauthService) Verify(state string, code string, provider repository.Provider) (*OauthState, error) {
 	switch provider {
 	case repository.ProviderDiscord:
 		return e.VerifyDiscord(state, code)
 	case repository.ProviderTwitch:
 		return e.VerifyTwitch(state, code)
+	case repository.ProviderPoE:
+		return e.VerifyPoE(state, code)
 	default:
 		return nil, fmt.Errorf("not implemented")
 	}
 }
 
-func (e *OauthService) VerifyDiscord(state string, code string) (*Verifier, error) {
-	verifier, ok := e.stateToVerifyer[state]
-	if !ok {
-		return nil, fmt.Errorf("state is unknown")
+func addAccountToUser(userService *UserService, authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
+	if authState.User == nil {
+		fmt.Println("User was not set in authState, fetching from DB")
+		user, err := userService.GetUserByOauthProvider(repository.ProviderDiscord, accountId)
+		if err != nil {
+			fmt.Println("User not found in DB, creating new user")
+			user = &repository.User{
+				Permissions:   []repository.Permission{},
+				DisplayName:   accountName,
+				OauthAccounts: []*repository.Oauth{},
+			}
+		}
+		authState.User = user
 	}
-	token, err := e.config[repository.ProviderDiscord].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
+	authState.User.OauthAccounts = append(
+		utils.Filter(authState.User.OauthAccounts, func(oauthAccount *repository.Oauth) bool {
+			return oauthAccount.Provider != provider
+		}),
+		&repository.Oauth{
+			UserId:       authState.User.Id,
+			Provider:     provider,
+			AccessToken:  token.AccessToken,
+			RefreshToken: token.RefreshToken,
+			AccountId:    accountId,
+			Name:         accountName,
+			Expiry:       token.Expiry,
+		},
+	)
+	_, err := userService.SaveUser(authState.User)
+	return authState, err
+}
+func (e *OauthService) fetchToken(provider repository.Provider, state string, code string) (*OauthState, *oauth2.Token, error) {
+	authState, ok := e.stateMap[state]
+	if !ok {
+		return nil, nil, fmt.Errorf("state is unknown")
+	}
+	token, err := e.config[provider].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", authState.Verifier))
+	if err != nil {
+		return nil, nil, err
+	}
+	return &authState, token, nil
+}
+
+func (e *OauthService) VerifyDiscord(state string, code string) (*OauthState, error) {
+	authState, token, err := e.fetchToken(repository.ProviderDiscord, state, code)
 	if err != nil {
 		return nil, err
 	}
@@ -167,48 +219,11 @@ func (e *OauthService) VerifyDiscord(state string, code string) (*Verifier, erro
 	defer response.Body.Close()
 	discordUser := &DiscordUserResponse{}
 	json.NewDecoder(response.Body).Decode(discordUser)
-
-	user := &repository.User{}
-	if verifier.User == nil {
-		user, err = e.userService.GetUserByDiscordId(discordUser.Id)
-		if err != nil {
-			user = &repository.User{
-				Permissions:   []repository.Permission{},
-				DisplayName:   discordUser.Username,
-				OauthAccounts: []*repository.Oauth{},
-			}
-		}
-		verifier.User = user
-	}
-	oauthAccounts := []*repository.Oauth{}
-	for _, oauthAccount := range user.OauthAccounts {
-		if oauthAccount.Provider != repository.ProviderDiscord {
-			oauthAccounts = append(oauthAccounts, oauthAccount)
-		}
-	}
-
-	verifier.User.OauthAccounts = append(oauthAccounts, &repository.Oauth{
-		Provider:     repository.ProviderDiscord,
-		AccountId:    discordUser.Id,
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		Expiry:       token.Expiry,
-		Name:         discordUser.Username,
-	})
-
-	_, err = e.userService.SaveUser(verifier.User)
-	if err != nil {
-		return nil, err
-	}
-	return &verifier, nil
+	return addAccountToUser(e.userService, authState, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
 }
 
-func (e *OauthService) VerifyTwitch(state string, code string) (*Verifier, error) {
-	verifier, ok := e.stateToVerifyer[state]
-	if !ok {
-		return nil, fmt.Errorf("state is unknown")
-	}
-	token, err := e.config[repository.ProviderTwitch].Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", verifier.Verifier))
+func (e *OauthService) VerifyTwitch(state string, code string) (*OauthState, error) {
+	authState, token, err := e.fetchToken(repository.ProviderTwitch, state, code)
 	if err != nil {
 		return nil, err
 	}
@@ -241,34 +256,20 @@ func (e *OauthService) VerifyTwitch(state string, code string) (*Verifier, error
 	twitchExtendedUser := &TwitchExtendedUserResponse{}
 	json.NewDecoder(response.Body).Decode(twitchExtendedUser)
 	response.Body.Close()
-	user := &repository.User{}
-	if verifier.User == nil {
-		user, err = e.userService.GetUserByTwitchId(twitchId)
-		if err != nil {
-			user = &repository.User{
-				Permissions:   []repository.Permission{},
-				DisplayName:   twitchExtendedUser.Data[0].DisplayName,
-				OauthAccounts: []*repository.Oauth{},
-			}
-		}
-		verifier.User = user
+	return addAccountToUser(e.userService, authState, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
+}
+
+func (e *OauthService) VerifyPoE(state string, code string) (*OauthState, error) {
+	verifier, token, err := e.fetchToken(repository.ProviderPoE, state, code)
+	if err != nil {
+		return nil, err
 	}
-	oauthAccounts := []*repository.Oauth{}
-	for _, oauthAccount := range user.OauthAccounts {
-		if oauthAccount.Provider != repository.ProviderDiscord {
-			oauthAccounts = append(oauthAccounts, oauthAccount)
-		}
+	client := client.NewPoEClient(1, true, 10)
+	profile, clientError := client.GetAccountProfile(token.AccessToken)
+	if clientError != nil {
+		return nil, fmt.Errorf("failed to get profile: %v", clientError)
 	}
-	verifier.User.OauthAccounts = append(oauthAccounts, &repository.Oauth{
-		Provider:     repository.ProviderTwitch,
-		AccountId:    twitchId,
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		Expiry:       token.Expiry,
-		Name:         twitchExtendedUser.Data[0].DisplayName,
-	})
-	e.userService.SaveUser(verifier.User)
-	return &verifier, nil
+	return addAccountToUser(e.userService, verifier, profile.UUId, profile.Name, token, repository.ProviderPoE)
 }
 
 func (e *OauthService) GetApplicationToken(provider repository.Provider) (*string, error) {

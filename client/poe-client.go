@@ -9,6 +9,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -34,10 +35,10 @@ type ErrorResponse struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-func NewPoEClient(userAgent string, maxRequestsPerSecond float64, raiseForStatus bool, timeOutSeconds int) *PoEClient {
+func NewPoEClient(maxRequestsPerSecond float64, raiseForStatus bool, timeOutSeconds int) *PoEClient {
 	baseURL := &url.URL{Scheme: "https", Host: "api.pathofexile.com"}
 	return &PoEClient{
-		Client:         NewAsyncHttpClient(baseURL, userAgent, maxRequestsPerSecond),
+		Client:         NewAsyncHttpClient(baseURL, os.Getenv("POE_CLIENT_AGENT"), maxRequestsPerSecond),
 		TimeOutSeconds: timeOutSeconds,
 	}
 }

@@ -1765,7 +1765,30 @@ const docTemplate = `{
                 }
             }
         },
-        "/oauth2/callback": {
+        "/oauth2/discord/bot-login": {
+            "post": {
+                "description": "Logs in the discord bot (only for internal use)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "oauth"
+                ],
+                "operationId": "LoginDiscordBot",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/oauth2/{provider}/callback": {
             "post": {
                 "description": "Callback handler for oauth",
                 "consumes": [
@@ -1776,6 +1799,18 @@ const docTemplate = `{
                 ],
                 "operationId": "OauthCallback",
                 "parameters": [
+                    {
+                        "enum": [
+                            "poe",
+                            "twitch",
+                            "discord"
+                        ],
+                        "type": "string",
+                        "description": "Provider name",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Callback body",
                         "name": "body",
@@ -1796,44 +1831,36 @@ const docTemplate = `{
                 }
             }
         },
-        "/oauth2/discord": {
+        "/oauth2/{provider}/redirect": {
             "get": {
-                "description": "Redirects to discord oauth",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "oauth"
-                ],
-                "responses": {
-                    "302": {
-                        "description": "Found"
+                "security": [
+                    {
+                        "BearerAuth": []
                     }
-                }
-            }
-        },
-        "/oauth2/discord/bot-login": {
-            "post": {
-                "description": "Logs in the discord bot (only for internal use)",
-                "consumes": [
-                    "application/json"
                 ],
-                "produces": [
-                    "application/json"
-                ],
+                "description": "Redirects to an oauth provider",
                 "tags": [
                     "oauth"
                 ],
-                "operationId": "LoginDiscordBot",
+                "operationId": "OauthRedirect",
                 "parameters": [
                     {
-                        "description": "Discord bot login body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/DiscordBotLoginBody"
-                        }
+                        "enum": [
+                            "poe",
+                            "twitch",
+                            "discord"
+                        ],
+                        "type": "string",
+                        "description": "Provider name",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Last URL to redirect to after oauth",
+                        "name": "last_url",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1842,22 +1869,6 @@ const docTemplate = `{
                         "schema": {
                             "type": "string"
                         }
-                    }
-                }
-            }
-        },
-        "/oauth2/twitch": {
-            "get": {
-                "description": "Redirects to twitch oauth",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "oauth"
-                ],
-                "responses": {
-                    "302": {
-                        "description": "Found"
                     }
                 }
             }
@@ -2194,15 +2205,11 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "code",
-                "provider",
                 "state"
             ],
             "properties": {
                 "code": {
                     "type": "string"
-                },
-                "provider": {
-                    "$ref": "#/definitions/Provider"
                 },
                 "state": {
                     "type": "string"
@@ -2449,17 +2456,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/Operator"
                         }
                     }
-                }
-            }
-        },
-        "DiscordBotLoginBody": {
-            "type": "object",
-            "required": [
-                "token"
-            ],
-            "properties": {
-                "token": {
-                    "type": "string"
                 }
             }
         },
@@ -3497,19 +3493,6 @@ const docTemplate = `{
                 "PermissionCommandTeam",
                 "PermissionObjectiveDesigner",
                 "PermissionJudge"
-            ]
-        },
-        "Provider": {
-            "type": "string",
-            "enum": [
-                "poe",
-                "twitch",
-                "discord"
-            ],
-            "x-enum-varnames": [
-                "ProviderPoE",
-                "ProviderTwitch",
-                "ProviderDiscord"
             ]
         },
         "ScoringMethod": {
