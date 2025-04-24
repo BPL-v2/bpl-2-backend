@@ -27,16 +27,8 @@ func NewUserService() *UserService {
 	}
 }
 
-func (s *UserService) GetUserByDiscordId(discordId string) (*repository.User, error) {
-	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountId(repository.ProviderDiscord, discordId)
-	if err != nil {
-		return nil, err
-	}
-	return oauth.User, nil
-}
-
-func (s *UserService) GetUserByTwitchId(twitchId string) (*repository.User, error) {
-	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountId(repository.ProviderTwitch, twitchId)
+func (s *UserService) GetUserByOauthProvider(provider repository.Provider, accountId string) (*repository.User, error) {
+	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountId(provider, accountId)
 	if err != nil {
 		return nil, err
 	}

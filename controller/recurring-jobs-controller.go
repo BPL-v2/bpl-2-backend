@@ -6,7 +6,6 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -54,7 +53,7 @@ var jobList = []repository.JobType{
 }
 
 func NewRecurringJobsController() *RecurringJobsController {
-	poeClient := client.NewPoEClient(os.Getenv("POE_CLIENT_AGENT"), 10, false, 10)
+	poeClient := client.NewPoEClient(10, false, 10)
 	controller := &RecurringJobsController{
 		service: cron.NewRecurringJobService(poeClient),
 	}
