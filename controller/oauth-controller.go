@@ -77,7 +77,8 @@ func (e *OauthController) loginDiscordBotHandler() gin.HandlerFunc {
 // @Tags oauth
 // @Security BearerAuth
 // @Param provider path repository.Provider true "Provider name"
-// @Param last_url query string false "Last URL to redirect to after oauth"
+// @Param redirect_url query string false "Redirect URL for oauth provider"
+// @Param last_url query string false "Last URL to redirect to after oauth is finished"
 // @Success 200 {string} string
 // @Router /oauth2/{provider}/redirect [get]
 func (e *OauthController) oauthRedirectHandler() gin.HandlerFunc {
@@ -89,7 +90,8 @@ func (e *OauthController) oauthRedirectHandler() gin.HandlerFunc {
 		}
 		user, _ := e.userService.GetUserFromAuthHeader(c)
 		lastUrl := c.Request.URL.Query().Get("last_url")
-		url := e.oauthService.GetRedirectUrl(user, provider, lastUrl)
+		redirectUrl := c.Request.URL.Query().Get("redirect_url")
+		url := e.oauthService.GetOauthProviderUrl(user, provider, lastUrl, redirectUrl)
 		c.JSON(200, url)
 	}
 }
@@ -114,7 +116,9 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		verifier, err := e.oauthService.Verify(body.State, body.Code, provider)
+		config := *e.oauthService.Config[provider]
+		config.RedirectURL = body.RedirectUrl
+		verifier, err := e.oauthService.Verify(body.State, body.Code, provider, config)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -131,8 +135,9 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 }
 
 type CallbackBody struct {
-	Code  string `json:"code" binding:"required"`
-	State string `json:"state" binding:"required"`
+	RedirectUrl string `json:"redirect_url" binding:"required"`
+	Code        string `json:"code" binding:"required"`
+	State       string `json:"state" binding:"required"`
 }
 
 type CallbackResponse struct {
