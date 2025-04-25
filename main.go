@@ -95,7 +95,19 @@ func main() {
 	}
 
 	r.Use(func(c *gin.Context) {
-		if c.Request.Method == "GET" || c.Request.Method == "OPTIONS" {
+		if c.Request.Method == "OPTIONS" {
+			// Check the Access-Control-Request-Method header to determine the actual method being preflighted
+			requestedMethod := c.GetHeader("Access-Control-Request-Method")
+			if requestedMethod == "GET" || requestedMethod == "OPTIONS" {
+				cors.New(corsConfigGetOptions)(c)
+			} else {
+				cors.New(corsConfigOtherMethods)(c)
+			}
+			c.AbortWithStatus(204) // Respond with 204 No Content for preflight
+			return
+		}
+
+		if c.Request.Method == "GET" {
 			cors.New(corsConfigGetOptions)(c)
 		} else {
 			cors.New(corsConfigOtherMethods)(c)
