@@ -145,7 +145,11 @@ func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repos
 	state, verifier := e.GetNewVerifier(user, lastUrl)
 	config := e.Config[provider]
 	config.RedirectURL = redirectUrl
-	return config.AuthCodeURL(state, oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)))
+	return config.AuthCodeURL(
+		state,
+		oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)),
+		oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+	)
 }
 
 func (e *OauthService) Verify(state string, code string, provider repository.Provider, oauthConfig oauth2.Config) (*OauthState, error) {
