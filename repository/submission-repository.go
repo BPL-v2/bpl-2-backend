@@ -86,7 +86,7 @@ func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission)
 		tx.Rollback()
 		return submission, result.Error
 	}
-	result = tx.Delete(&ObjectiveMatch{ObjectiveId: submission.ObjectiveId, UserId: submission.UserId, EventId: submission.EventId})
+	result = tx.Delete(ObjectiveMatch{}, ObjectiveMatch{ObjectiveId: submission.ObjectiveId, UserId: submission.UserId, EventId: submission.EventId})
 	if result.Error != nil {
 		tx.Rollback()
 		return submission, result.Error
