@@ -169,7 +169,7 @@ func (e *OauthService) Verify(state string, code string, provider repository.Pro
 
 func addAccountToUser(userService *UserService, authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	if authState.User == nil {
-		user, err := userService.GetUserByOauthProvider(repository.ProviderDiscord, accountId)
+		user, err := userService.GetUserByOauthProvider(provider, accountId)
 		if err != nil {
 			user = &repository.User{
 				Permissions:   []repository.Permission{},
