@@ -743,7 +743,7 @@ type ClientCredentialsGrantResponse struct {
 	Scope       string `json:"scope"`
 }
 
-type RefreshTokenGrantResponse struct {
+type AccessTokenGrantResponse struct {
 	AccessToken  string `json:"access_token"`
 	ExpiresIn    int    `json:"expires_in"`
 	TokenType    string `json:"token_type"`

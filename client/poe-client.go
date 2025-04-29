@@ -504,17 +504,20 @@ func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string, s
 	)
 }
 
-func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, refreshToken string) (*RefreshTokenGrantResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("RefreshAccessToken"))
+func (c *PoEClient) GetAccessToken(clientId string, clientSecret string, code string, code_verifier string, scopes []string, redirect_uri string) (*AccessTokenGrantResponse, *ClientError) {
+	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetAccessToken"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("RefreshAccessToken").Inc()
+	poeRequestCounter.WithLabelValues("GetAccessToken").Inc()
 	form := url.Values{
-		"grant_type":    {"refresh_token"},
+		"grant_type":    {"authorization_code"},
 		"client_id":     {clientId},
 		"client_secret": {clientSecret},
-		"refresh_token": {refreshToken},
+		"redirect_uri":  {redirect_uri},
+		"code":          {code},
+		"scope":         scopes,
+		"code_verifier": {code_verifier},
 	}
-	return sendRequest[RefreshTokenGrantResponse](c, RequestArgs{
+	return sendRequest[AccessTokenGrantResponse](c, RequestArgs{
 		Endpoint: "https://www.pathofexile.com/oauth/token",
 		Method:   "POST",
 		Body:     strings.NewReader(form.Encode()),
@@ -524,5 +527,25 @@ func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, ref
 		IgnoreBaseURL: true,
 	},
 	)
-
+}
+func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, refreshToken string) (*AccessTokenGrantResponse, *ClientError) {
+	timer := prometheus.NewTimer(requestDuration.WithLabelValues("RefreshAccessToken"))
+	defer timer.ObserveDuration()
+	poeRequestCounter.WithLabelValues("RefreshAccessToken").Inc()
+	form := url.Values{
+		"grant_type":    {"refresh_token"},
+		"client_id":     {clientId},
+		"client_secret": {clientSecret},
+		"refresh_token": {refreshToken},
+	}
+	return sendRequest[AccessTokenGrantResponse](c, RequestArgs{
+		Endpoint: "https://www.pathofexile.com/oauth/token",
+		Method:   "POST",
+		Body:     strings.NewReader(form.Encode()),
+		Headers: map[string]string{
+			"Content-Type": "application/x-www-form-urlencoded",
+		},
+		IgnoreBaseURL: true,
+	},
+	)
 }
