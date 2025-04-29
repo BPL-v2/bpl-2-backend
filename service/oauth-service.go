@@ -17,10 +17,11 @@ import (
 )
 
 type OauthState struct {
-	Verifier string
-	Timeout  int64
-	User     *repository.User
-	Redirect string
+	Verifier    string
+	Timeout     int64
+	User        *repository.User
+	LastUrl     string
+	RedirectUrl string
 }
 
 type OauthService struct {
@@ -107,7 +108,6 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
 				},
-				RedirectURL: "https://bpl-poe.com/auth/poe/callback",
 			},
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
@@ -124,7 +124,7 @@ func NewOauthService() *OauthService {
 	}
 }
 
-func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (string, string) {
+func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string, redirectUrl string) (string, string) {
 	// clean up old verifiers
 	for verifier, v := range e.stateMap {
 		if v.Timeout < time.Now().Unix() {
@@ -134,16 +134,17 @@ func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (st
 	state := oauth2.GenerateVerifier()
 	verifier := oauth2.GenerateVerifier()
 	e.stateMap[state] = OauthState{
-		Verifier: verifier,
-		Timeout:  time.Now().Add(1 * time.Minute).Unix(),
-		User:     user,
-		Redirect: lastUrl,
+		Verifier:    verifier,
+		Timeout:     time.Now().Add(1 * time.Minute).Unix(),
+		User:        user,
+		LastUrl:     lastUrl,
+		RedirectUrl: redirectUrl,
 	}
 	return state, verifier
 }
 
 func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string, redirectUrl string) string {
-	state, verifier := e.GetNewVerifier(user, lastUrl)
+	state, verifier := e.GetNewVerifier(user, lastUrl, redirectUrl)
 	config := e.Config[provider]
 	config.RedirectURL = redirectUrl
 	return config.AuthCodeURL(
@@ -200,6 +201,7 @@ func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code 
 	if !ok {
 		return nil, nil, fmt.Errorf("state is unknown")
 	}
+	oauthConfig.RedirectURL = authState.RedirectUrl
 
 	token, err := oauthConfig.Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", authState.Verifier))
 	if err != nil {
@@ -268,7 +270,7 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 	if !ok {
 		return nil, fmt.Errorf("state is unknown")
 	}
-	resp, clientError := client.GetAccessToken(os.Getenv("POE_CLIENT_ID"), os.Getenv("POE_CLIENT_SECRET"), code, authState.Verifier, oauthConfig.Scopes, oauthConfig.RedirectURL)
+	resp, clientError := client.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, authState.RedirectUrl)
 	if clientError != nil {
 		return nil, fmt.Errorf("failed to get access token: %v", clientError)
 	}
@@ -278,10 +280,6 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 		RefreshToken: resp.RefreshToken,
 		Expiry:       time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second),
 	}
-	// verifier, token, err := e.fetchToken(oauthConfig, state, code)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	profile, clientError := client.GetAccountProfile(token.AccessToken)
 	if clientError != nil {
 		return nil, fmt.Errorf("failed to get profile: %v", clientError)

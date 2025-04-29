@@ -126,7 +126,7 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 		authToken, _ := auth.CreateToken(verifier.User)
 		c.JSON(200,
 			CallbackResponse{
-				LastPath:  verifier.Redirect,
+				LastPath:  verifier.LastUrl,
 				AuthToken: authToken,
 				User:      *toUserResponse(verifier.User),
 			},
