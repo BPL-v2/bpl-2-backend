@@ -90,7 +90,7 @@ func setCors(r *gin.Engine) {
 	}
 	corsConfigOtherMethods := cors.Config{
 		AllowOrigins: []string{
-			"https://bpl-poe.com/",
+			"https://bpl-poe.com",
 			"https://bpl-2.netlify.app",
 			"https://v2202503259898322516.goodsrv.de",
 			"http://localhost",
