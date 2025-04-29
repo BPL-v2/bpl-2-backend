@@ -107,6 +107,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
 				},
+				RedirectURL: "https://bpl-poe.com/auth/poe/callback",
 			},
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
@@ -199,6 +200,7 @@ func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code 
 	if !ok {
 		return nil, nil, fmt.Errorf("state is unknown")
 	}
+
 	token, err := oauthConfig.Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", authState.Verifier))
 	if err != nil {
 		return nil, nil, err
@@ -261,16 +263,30 @@ func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth
 }
 
 func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
-	verifier, token, err := e.fetchToken(oauthConfig, state, code)
-	if err != nil {
-		return nil, err
-	}
 	client := client.NewPoEClient(1, true, 10)
+	authState, ok := e.stateMap[state]
+	if !ok {
+		return nil, fmt.Errorf("state is unknown")
+	}
+	resp, clientError := client.GetAccessToken(os.Getenv("POE_CLIENT_ID"), os.Getenv("POE_CLIENT_SECRET"), code, authState.Verifier, oauthConfig.Scopes, oauthConfig.RedirectURL)
+	if clientError != nil {
+		return nil, fmt.Errorf("failed to get access token: %v", clientError)
+	}
+	token := &oauth2.Token{
+		AccessToken:  resp.AccessToken,
+		TokenType:    resp.TokenType,
+		RefreshToken: resp.RefreshToken,
+		Expiry:       time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second),
+	}
+	// verifier, token, err := e.fetchToken(oauthConfig, state, code)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	profile, clientError := client.GetAccountProfile(token.AccessToken)
 	if clientError != nil {
 		return nil, fmt.Errorf("failed to get profile: %v", clientError)
 	}
-	return addAccountToUser(e.userService, verifier, profile.UUId, profile.Name, token, repository.ProviderPoE)
+	return addAccountToUser(e.userService, &authState, profile.UUId, profile.Name, token, repository.ProviderPoE)
 }
 
 func (e *OauthService) GetApplicationToken(provider repository.Provider) (*string, error) {
