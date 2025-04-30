@@ -91,11 +91,12 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		err = e.userService.DiscordServerCheck(user)
-		if err != nil {
-			c.JSON(403, gin.H{"error": err.Error()})
-			return
-		}
+
+		// err = e.userService.DiscordServerCheck(user)
+		// if err != nil {
+		// 	c.JSON(403, gin.H{"error": err.Error()})
+		// 	return
+		// }
 		var signupCreate SignupCreate
 		if err := c.BindJSON(&signupCreate); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
