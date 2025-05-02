@@ -52,3 +52,11 @@ func (r *OauthRepository) GetAllOauths() ([]*Oauth, error) {
 	}
 	return oauths, nil
 }
+
+func (r *OauthRepository) DeleteOauthsByUserId(userId int) error {
+	result := r.DB.Delete(&Oauth{}, Oauth{UserId: userId})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

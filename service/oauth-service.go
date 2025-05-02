@@ -30,6 +30,7 @@ type OauthService struct {
 	stateMap                   map[string]OauthState
 	userService                *UserService
 	clientCredentialRepository *repository.ClientCredentialsRepository
+	oauthRepository            *repository.OauthRepository
 }
 
 type DiscordUserResponse struct {
@@ -121,6 +122,7 @@ func NewOauthService() *OauthService {
 		stateMap:                   make(map[string]OauthState),
 		userService:                NewUserService(),
 		clientCredentialRepository: repository.NewClientCredentialsRepository(),
+		oauthRepository:            repository.NewOauthRepository(),
 	}
 }
 
@@ -167,9 +169,9 @@ func (e *OauthService) Verify(state string, code string, provider repository.Pro
 	}
 }
 
-func addAccountToUser(userService *UserService, authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
+func (e *OauthService) addAccountToUser(authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	if authState.User == nil {
-		user, err := userService.GetUserByOauthProvider(provider, accountId)
+		user, err := e.userService.GetUserByOauthProvider(provider, accountId)
 		if err != nil {
 			user = &repository.User{
 				Permissions:   []repository.Permission{},
@@ -193,7 +195,8 @@ func addAccountToUser(userService *UserService, authState *OauthState, accountId
 			Expiry:       token.Expiry,
 		},
 	)
-	_, err := userService.SaveUser(authState.User)
+	e.oauthRepository.DeleteOauthsByUserId(authState.User.Id)
+	_, err := e.userService.SaveUser(authState.User)
 	return authState, err
 }
 func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
@@ -224,7 +227,7 @@ func (e *OauthService) VerifyDiscord(state string, code string, oauthConfig oaut
 	defer response.Body.Close()
 	discordUser := &DiscordUserResponse{}
 	json.NewDecoder(response.Body).Decode(discordUser)
-	return addAccountToUser(e.userService, authState, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
+	return e.addAccountToUser(authState, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
 }
 
 func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
@@ -261,7 +264,7 @@ func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth
 	twitchExtendedUser := &TwitchExtendedUserResponse{}
 	json.NewDecoder(response.Body).Decode(twitchExtendedUser)
 	response.Body.Close()
-	return addAccountToUser(e.userService, authState, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
+	return e.addAccountToUser(authState, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
 }
 
 func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
@@ -284,7 +287,7 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 	if clientError != nil {
 		return nil, fmt.Errorf("failed to get profile: %v", clientError)
 	}
-	return addAccountToUser(e.userService, &authState, profile.UUId, profile.Name, token, repository.ProviderPoE)
+	return e.addAccountToUser(&authState, profile.UUId, profile.Name, token, repository.ProviderPoE)
 }
 
 func (e *OauthService) GetApplicationToken(provider repository.Provider) (*string, error) {
