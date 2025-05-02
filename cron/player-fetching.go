@@ -121,7 +121,6 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 		resp, clientError = s.client.GetPoE2Ladder(s.event.Name)
 	} else {
 		// todo: once we have a token that allows us to request the ladder api
-		return
 		token := os.Getenv("POE_CLIENT_TOKEN")
 		resp, clientError = s.client.GetFullLadder(token, s.event.Name)
 	}
