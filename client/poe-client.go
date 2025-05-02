@@ -514,7 +514,7 @@ func (c *PoEClient) GetAccessToken(clientId string, clientSecret string, code st
 		"client_secret": {clientSecret},
 		"redirect_uri":  {redirect_uri},
 		"code":          {code},
-		"scope":         scopes,
+		"scope":         {strings.Join(scopes, " ")},
 		"code_verifier": {code_verifier},
 	}
 	return sendRequest[AccessTokenGrantResponse](c, RequestArgs{
