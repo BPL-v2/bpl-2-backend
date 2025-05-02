@@ -574,12 +574,14 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 		discriminators, remainingConditions, err := GetDiscriminators(objective.Conditions)
 		if err != nil {
 			fmt.Printf("Error getting discriminators for objective %d: %s", objective.Id, err)
-			return nil, err
+			continue
+			// return nil, err
 		}
 		fn, err := ComperatorFromConditions(remainingConditions)
 		if err != nil {
 			fmt.Printf("Error getting comperator for objective %d: %s", objective.Id, err)
-			return nil, err
+			continue
+			// return nil, err
 		}
 		for _, discriminator := range discriminators {
 			if valueToChecker, ok := funcMap[discriminator.field]; ok {
