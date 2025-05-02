@@ -139,9 +139,9 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 
 	entriesToPersist := make([]*client.LadderEntry, 0, len(resp.Ladder.Entries))
 	for _, entry := range resp.Ladder.Entries {
+		entriesToPersist = append(entriesToPersist, &entry)
 		if player, ok := charToUpdate[entry.Character.Name]; ok {
 			foundInLadder[entry.Character.Name] = true
-			entriesToPersist = append(entriesToPersist, &entry)
 			player.Mu.Lock()
 			player.New.CharacterLevel = entry.Character.Level
 			if entry.Character.Depth != nil && entry.Character.Depth.Depth != nil {
