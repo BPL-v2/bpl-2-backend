@@ -150,20 +150,20 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 			player.Mu.Unlock()
 		}
 	}
-	for charName, player := range charToUpdate {
-		if _, ok := foundInLadder[charName]; !ok {
-			entriesToPersist = append(entriesToPersist, &client.LadderEntry{
-				Character: client.LadderEntryCharacter{
-					Name:       charName,
-					Level:      player.New.CharacterLevel,
-					Experience: &player.New.CharacterXP,
-					Class:      player.New.Ascendancy,
-				},
-				Rank:    0,
-				Account: &client.Account{Name: player.AccountName},
-			})
-		}
-	}
+	// for charName, player := range charToUpdate {
+	// 	if _, ok := foundInLadder[charName]; !ok {
+	// 		entriesToPersist = append(entriesToPersist, &client.LadderEntry{
+	// 			Character: client.LadderEntryCharacter{
+	// 				Name:       charName,
+	// 				Level:      player.New.CharacterLevel,
+	// 				Experience: &player.New.CharacterXP,
+	// 				Class:      player.New.Ascendancy,
+	// 			},
+	// 			Rank:    0,
+	// 			Account: &client.Account{Name: player.AccountName},
+	// 		})
+	// 	}
+	// }
 	err := s.ladderService.UpsertLadder(entriesToPersist, s.event.Id, charToUserId)
 	if err != nil {
 		log.Print(clientError)
