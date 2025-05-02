@@ -138,8 +138,8 @@ func (f *FetchingService) FilterStashChanges() {
 					stashes = append(stashes, stash)
 					stashCounterFiltered.Inc()
 				}
-
 			}
+			fmt.Println("Stash Change: ", stashChange.ChangeId, "Stashes: ", len(stashChange.Stashes), "In League: ", len(stashes))
 			message := config.StashChangeMessage{
 				ChangeId:     stashChange.ChangeId,
 				NextChangeId: stashChange.NextChangeId,
