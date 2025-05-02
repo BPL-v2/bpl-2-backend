@@ -33,7 +33,7 @@ func setupLadderController() []RouteInfo {
 		{Method: "GET", Path: "/characters", HandlerFunc: c.getLatestCharactersForEvent()},
 		{Method: "GET", Path: "/atlas", HandlerFunc: c.getAtlasesForEvent(), Authenticated: true},
 		//  too: remove endpoint
-		{Method: "POST	", Path: "/add-to-league", HandlerFunc: c.addLadderPlayersToLeague(), Authenticated: true},
+		{Method: "POST", Path: "/add-to-league", HandlerFunc: c.addLadderPlayersToLeague(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
