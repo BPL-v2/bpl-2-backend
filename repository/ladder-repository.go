@@ -47,8 +47,8 @@ func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId in
 			UserId:    playerMap[entry.Character.Name],
 			Rank:      entry.Rank,
 		}
-		if entry.Character.Depth != nil && entry.Character.Depth.Depth != nil {
-			dbEntry.Delve = *entry.Character.Depth.Depth
+		if entry.Character.Depth != nil && entry.Character.Depth.Default != nil {
+			dbEntry.Delve = *entry.Character.Depth.Default
 		}
 		if entry.Character.Experience != nil {
 			dbEntry.Experience = *entry.Character.Experience

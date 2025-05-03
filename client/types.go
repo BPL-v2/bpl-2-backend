@@ -39,7 +39,8 @@ type League struct {
 }
 
 type LadderEntryCharacterDepth struct {
-	Depth *int `json:"depth,omitempty"`
+	Default *int `json:"default,omitempty"`
+	Solo    *int `json:"solo,omitempty"`
 }
 
 type LadderEntryCharacter struct {

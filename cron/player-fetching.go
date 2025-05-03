@@ -144,8 +144,8 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 			foundInLadder[entry.Character.Name] = true
 			player.Mu.Lock()
 			player.New.CharacterLevel = entry.Character.Level
-			if entry.Character.Depth != nil && entry.Character.Depth.Depth != nil {
-				player.New.DelveDepth = *entry.Character.Depth.Depth
+			if entry.Character.Depth != nil && entry.Character.Depth.Default != nil {
+				player.New.DelveDepth = *entry.Character.Depth.Default
 			}
 			player.Mu.Unlock()
 		}
