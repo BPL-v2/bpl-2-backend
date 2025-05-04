@@ -1153,6 +1153,24 @@ paths:
       - BearerAuth: []
       tags:
       - event
+    get:
+      description: Fetches an event by id
+      operationId: GetEvent
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Event'
+      tags:
+      - event
   /events/{event_id}/atlas:
     get:
       consumes:

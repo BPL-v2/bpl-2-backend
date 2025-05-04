@@ -36,6 +36,7 @@ func setupEventController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventsHandler()},
 		{Method: "PUT", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEvent()},
 
 		{Method: "POST", Path: "/:event_id/duplicate", HandlerFunc: e.duplicateEventHandler()},
 		{Method: "GET", Path: "/:event_id/status", HandlerFunc: e.getEventStatusForUser(), Authenticated: true},
@@ -67,6 +68,28 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 			})
 		}
 		c.JSON(200, utils.Map(events, toEventResponse))
+	}
+}
+
+// @id GetEvent
+// @Description Fetches an event by id
+// @Tags event
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Success 200 {object} Event
+// @Router /events/{event_id} [get]
+func (e *EventController) getEvent() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		roles, _ := getUserRoles(c)
+		if !utils.Contains(roles, repository.PermissionAdmin) && !event.Public {
+			c.JSON(403, gin.H{"error": "You are not allowed to view this event"})
+			return
+		}
+		c.JSON(200, toEventResponse(event))
 	}
 }
 
