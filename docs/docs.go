@@ -153,6 +153,33 @@ const docTemplate = `{
             }
         },
         "/events/{event_id}": {
+            "get": {
+                "description": "Fetches an event by id",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "event"
+                ],
+                "operationId": "GetEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Event"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
