@@ -49,6 +49,7 @@ func setupEventController() []RouteInfo {
 }
 
 // @id GetEvents
+// @Security BearerAuth
 // @Description Fetches all events
 // @Tags event
 // @Produce json
@@ -73,6 +74,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 
 // @id GetEvent
 // @Description Fetches an event by id
+// @Security BearerAuth
 // @Tags event
 // @Produce json
 // @Param event_id path int true "Event Id"

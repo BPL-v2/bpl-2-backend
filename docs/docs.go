@@ -94,6 +94,11 @@ const docTemplate = `{
         },
         "/events": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches all events",
                 "produces": [
                     "application/json"
@@ -154,6 +159,11 @@ const docTemplate = `{
         },
         "/events/{event_id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches an event by id",
                 "produces": [
                     "application/json"
