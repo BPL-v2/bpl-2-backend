@@ -1111,6 +1111,8 @@ paths:
             items:
               $ref: '#/definitions/Event'
             type: array
+      security:
+      - BearerAuth: []
       tags:
       - event
     put:
@@ -1169,6 +1171,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Event'
+      security:
+      - BearerAuth: []
       tags:
       - event
   /events/{event_id}/atlas:
