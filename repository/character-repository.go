@@ -67,6 +67,9 @@ func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassi
 	if atlas.UserID == 0 {
 		atlas.UserID = userId
 		atlas.EventID = eventId
+		atlas.Tree1 = pq.Int32Array{}
+		atlas.Tree2 = pq.Int32Array{}
+		atlas.Tree3 = pq.Int32Array{}
 	}
 	atlas.Index = -1
 	for i, v := range atlasPassiveTrees {
