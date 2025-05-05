@@ -82,8 +82,17 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 // @Router /events/{event_id} [get]
 func (e *EventController) getEvent() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
+		ev := getEvent(c)
+		if ev == nil {
+			return
+		}
+		event, err := e.eventService.GetEventById(ev.Id, "Teams")
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "Event not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
 			return
 		}
 		roles, _ := getUserRoles(c)
