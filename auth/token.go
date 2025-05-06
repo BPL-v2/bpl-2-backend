@@ -9,8 +9,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte(os.Getenv("JWT_SECRET"))
-
 type Claims struct {
 	UserId      int      `json:"user_id"`
 	Permissions []string `json:"permissions"`
@@ -44,7 +42,7 @@ func CreateToken(user *repository.User) (string, error) {
 			"exp":         time.Now().Add(time.Hour * 24 * 7).Unix(),
 		})
 
-	tokenString, err := token.SignedString(secretKey)
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +52,7 @@ func CreateToken(user *repository.User) (string, error) {
 
 func ParseToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		return []byte(os.Getenv("JWT_SECRET")), nil
 	})
 
 	if err != nil {
