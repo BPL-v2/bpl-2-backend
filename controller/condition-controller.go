@@ -162,8 +162,8 @@ type ConditionTest struct {
 }
 
 type ConditionCreate struct {
-	Operator    repository.Operator  `json:"operator" binding:"required,oneof=EQ NEQ GT GTE LT LTE IN NOT_IN MATCHES CONTAINS CONTAINS_ALL CONTAINS_MATCH CONTAINS_ALL_MATCHES"`
-	ItemField   repository.ItemField `json:"field" binding:"required,oneof=BASE_TYPE NAME TYPE_LINE RARITY ILVL FRAME_TYPE TALISMAN_TIER ENCHANT_MODS EXPLICIT_MODS IMPLICIT_MODS CRAFTED_MODS FRACTURED_MODS SIX_LINK"`
+	Operator    repository.Operator  `json:"operator" binding:"required"`
+	ItemField   repository.ItemField `json:"field" binding:"required"`
 	FieldValue  string               `json:"value" binding:"required"`
 	Id          int                  `json:"id"`
 	ObjectiveId int                  `json:"objective_id" binding:"required"`
