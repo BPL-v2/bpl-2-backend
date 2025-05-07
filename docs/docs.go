@@ -2418,26 +2418,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "field": {
-                    "enum": [
-                        "BASE_TYPE",
-                        "NAME",
-                        "TYPE_LINE",
-                        "RARITY",
-                        "ILVL",
-                        "FRAME_TYPE",
-                        "TALISMAN_TIER",
-                        "ENCHANT_MODS",
-                        "EXPLICIT_MODS",
-                        "IMPLICIT_MODS",
-                        "CRAFTED_MODS",
-                        "FRACTURED_MODS",
-                        "SIX_LINK"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ItemField"
-                        }
-                    ]
+                    "$ref": "#/definitions/ItemField"
                 },
                 "id": {
                     "type": "integer"
@@ -2446,26 +2427,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "operator": {
-                    "enum": [
-                        "EQ",
-                        "NEQ",
-                        "GT",
-                        "GTE",
-                        "LT",
-                        "LTE",
-                        "IN",
-                        "NOT_IN",
-                        "MATCHES",
-                        "CONTAINS",
-                        "CONTAINS_ALL",
-                        "CONTAINS_MATCH",
-                        "CONTAINS_ALL_MATCHES"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/Operator"
-                        }
-                    ]
+                    "$ref": "#/definitions/Operator"
                 },
                 "value": {
                     "type": "string"
@@ -3415,6 +3377,7 @@ const docTemplate = `{
                 "INCUBATOR_KILLS",
                 "IS_CORRUPTED",
                 "IS_VAAL",
+                "IS_SPLIT",
                 "SANCTUM_AFFLICTIONS",
                 "TEMPLE_ROOMS",
                 "RITUAL_VESSEL_BOSSES",
@@ -3443,6 +3406,7 @@ const docTemplate = `{
                 "INCUBATOR_KILLS",
                 "IS_CORRUPTED",
                 "IS_VAAL",
+                "IS_SPLIT",
                 "SANCTUM_MODS",
                 "TEMPLE_ROOMS",
                 "RITUAL_BOSSES",

@@ -187,43 +187,13 @@ definitions:
   ConditionCreate:
     properties:
       field:
-        allOf:
-        - $ref: '#/definitions/ItemField'
-        enum:
-        - BASE_TYPE
-        - NAME
-        - TYPE_LINE
-        - RARITY
-        - ILVL
-        - FRAME_TYPE
-        - TALISMAN_TIER
-        - ENCHANT_MODS
-        - EXPLICIT_MODS
-        - IMPLICIT_MODS
-        - CRAFTED_MODS
-        - FRACTURED_MODS
-        - SIX_LINK
+        $ref: '#/definitions/ItemField'
       id:
         type: integer
       objective_id:
         type: integer
       operator:
-        allOf:
-        - $ref: '#/definitions/Operator'
-        enum:
-        - EQ
-        - NEQ
-        - GT
-        - GTE
-        - LT
-        - LTE
-        - IN
-        - NOT_IN
-        - MATCHES
-        - CONTAINS
-        - CONTAINS_ALL
-        - CONTAINS_MATCH
-        - CONTAINS_ALL_MATCHES
+        $ref: '#/definitions/Operator'
       value:
         type: string
     required:
@@ -894,6 +864,7 @@ definitions:
     - INCUBATOR_KILLS
     - IS_CORRUPTED
     - IS_VAAL
+    - IS_SPLIT
     - SANCTUM_AFFLICTIONS
     - TEMPLE_ROOMS
     - RITUAL_VESSEL_BOSSES
@@ -921,6 +892,7 @@ definitions:
     - INCUBATOR_KILLS
     - IS_CORRUPTED
     - IS_VAAL
+    - IS_SPLIT
     - SANCTUM_MODS
     - TEMPLE_ROOMS
     - RITUAL_BOSSES
