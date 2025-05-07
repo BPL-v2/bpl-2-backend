@@ -2,7 +2,6 @@ package parser
 
 import (
 	clientModel "bpl/client"
-	"bpl/repository"
 	dbModel "bpl/repository"
 	"bpl/utils"
 	"fmt"
@@ -28,6 +27,13 @@ func BoolFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) bool
 		return func(item *clientModel.Item) bool {
 			if item.Hybrid != nil && item.Hybrid.IsVaalGem != nil {
 				return *item.Hybrid.IsVaalGem
+			}
+			return false
+		}, nil
+	case dbModel.IS_SPLIT:
+		return func(item *clientModel.Item) bool {
+			if item.Split != nil {
+				return *item.Split
 			}
 			return false
 		}, nil
@@ -248,19 +254,27 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 	}
 }
 
+func StringToBool(value string) bool {
+	if value == "true" || value == "True" || value == "1" {
+		return true
+	}
+	return false
+}
+
 func BoolComparator(condition *dbModel.Condition) (itemChecker, error) {
 	getter, err := BoolFieldGetter(condition.Field)
 	if err != nil {
 		return nil, err
 	}
+	value := StringToBool(condition.Value)
 	switch condition.Operator {
 	case dbModel.EQ:
 		return func(item *clientModel.Item) bool {
-			return getter(item)
+			return getter(item) == value
 		}, nil
 	case dbModel.NEQ:
 		return func(item *clientModel.Item) bool {
-			return !getter(item)
+			return getter(item) != value
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for boolean field %s", condition.Operator, condition.Field)
@@ -455,7 +469,7 @@ func StringArrayComparator(condition *dbModel.Condition) (itemChecker, error) {
 }
 
 func Comparator(condition *dbModel.Condition) (itemChecker, error) {
-	switch repository.FieldToType[condition.Field] {
+	switch dbModel.FieldToType[condition.Field] {
 	case dbModel.Bool:
 		return BoolComparator(condition)
 	case dbModel.String:
