@@ -143,12 +143,14 @@ func (e *ConditionController) testConditionHandler() gin.HandlerFunc {
 				Value:    condition.FieldValue,
 			})
 		}
-		itemChecker, err := parser.ComperatorFromConditions(conditions)
-		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, itemChecker(&conditionTest.Item))
+		objectives := make([]*repository.Objective, 0, len(conditionTest.Conditions))
+		objectives = append(objectives, &repository.Objective{
+			Conditions:    conditions,
+			ObjectiveType: repository.ITEM,
+		})
+		checker, _ := parser.NewItemChecker(objectives)
+		checker.CheckForCompletions(&conditionTest.Item)
+		c.JSON(200, checker.CheckForCompletions(&conditionTest.Item))
 	}
 }
 

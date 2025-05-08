@@ -12,6 +12,7 @@ type ItemField string
 const (
 	BASE_TYPE       ItemField = "BASE_TYPE"
 	NAME            ItemField = "NAME"
+	ITEM_CLASS      ItemField = "ITEM_CLASS"
 	TYPE_LINE       ItemField = "TYPE_LINE"
 	QUALITY         ItemField = "QUALITY"
 	LEVEL           ItemField = "LEVEL"
@@ -24,6 +25,7 @@ const (
 	IMPLICITS       ItemField = "IMPLICIT_MODS"
 	CRAFTED_MODS    ItemField = "CRAFTED_MODS"
 	FRACTURED_MODS  ItemField = "FRACTURED_MODS"
+	INFLUENCES      ItemField = "INFLUENCES"
 	MAX_LINKS       ItemField = "MAX_LINKS"
 	SOCKETS         ItemField = "SOCKETS" // as string like "RGGB"
 	INCUBATOR_KILLS ItemField = "INCUBATOR_KILLS"
@@ -48,6 +50,7 @@ const (
 var FieldToType = map[ItemField]FieldType{
 	BASE_TYPE:       String,
 	NAME:            String,
+	ITEM_CLASS:      String,
 	TYPE_LINE:       String,
 	QUALITY:         Int,
 	LEVEL:           Int,
@@ -60,6 +63,7 @@ var FieldToType = map[ItemField]FieldType{
 	IMPLICITS:       StringArray,
 	CRAFTED_MODS:    StringArray,
 	FRACTURED_MODS:  StringArray,
+	INFLUENCES:      StringArray,
 	MAX_LINKS:       Int,
 	SOCKETS:         String,
 	INCUBATOR_KILLS: Int,
