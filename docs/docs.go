@@ -3360,6 +3360,7 @@ const docTemplate = `{
             "enum": [
                 "BASE_TYPE",
                 "NAME",
+                "ITEM_CLASS",
                 "TYPE_LINE",
                 "QUALITY",
                 "LEVEL",
@@ -3372,6 +3373,7 @@ const docTemplate = `{
                 "IMPLICIT_MODS",
                 "CRAFTED_MODS",
                 "FRACTURED_MODS",
+                "INFLUENCES",
                 "MAX_LINKS",
                 "SOCKETS",
                 "INCUBATOR_KILLS",
@@ -3389,6 +3391,7 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "BASE_TYPE",
                 "NAME",
+                "ITEM_CLASS",
                 "TYPE_LINE",
                 "QUALITY",
                 "LEVEL",
@@ -3401,6 +3404,7 @@ const docTemplate = `{
                 "IMPLICITS",
                 "CRAFTED_MODS",
                 "FRACTURED_MODS",
+                "INFLUENCES",
                 "MAX_LINKS",
                 "SOCKETS",
                 "INCUBATOR_KILLS",
