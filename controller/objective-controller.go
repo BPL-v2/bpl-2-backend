@@ -262,10 +262,12 @@ func toPublicObjectiveResponse(objective *repository.Objective) *Objective {
 
 	if objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &Objective{
-			Name:       fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
-			CategoryId: objective.CategoryId,
-			ValidFrom:  objective.ValidFrom,
-			ValidTo:    objective.ValidTo,
+			Name:            fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
+			CategoryId:      objective.CategoryId,
+			ValidFrom:       objective.ValidFrom,
+			ValidTo:         objective.ValidTo,
+			ScoringPresetId: objective.ScoringId,
+			ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
 		}
 	}
 	return toObjectiveResponse(objective)
