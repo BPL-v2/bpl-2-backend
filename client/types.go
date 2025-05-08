@@ -381,6 +381,7 @@ type Item struct {
 	Socket                 *int                `json:"socket,omitempty"`
 	Colour                 *string             `json:"colour,omitempty"`
 	GemSockets             *[]GemSocket        `json:"gemSockets,omitempty"`
+	Influences             *map[string]bool    `json:"influences,omitempty"`
 
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only
@@ -396,7 +397,6 @@ type Item struct {
 	// StackSizeText         *string         `json:"stackSizeText,omitempty"`
 	// League                string          `json:"league"`
 	// Id                    string          `json:"id"`
-	// Influences            *ItemInfluences `json:"influences,omitempty"`
 	// Identified            bool            `json:"identified"`
 	// Note                  *string         `json:"note,omitempty"`
 	// ForumNote             *string         `json:"forum_note,omitempty"`

@@ -52,6 +52,10 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 		return func(item *clientModel.Item) string {
 			return item.Name
 		}, nil
+	case dbModel.ITEM_CLASS:
+		return func(item *clientModel.Item) string {
+			return ItemClasses[item.BaseType]
+		}, nil
 	case dbModel.TYPE_LINE:
 		return func(item *clientModel.Item) string {
 			return item.TypeLine
@@ -172,6 +176,16 @@ func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Ite
 				}
 			}
 			return bosses
+		}, nil
+	case dbModel.INFLUENCES:
+		return func(item *clientModel.Item) []string {
+			influences := make([]string, 0)
+			if item.Influences != nil {
+				for influence := range *item.Influences {
+					influences = append(influences, influence)
+				}
+			}
+			return influences
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid string array field", field)
@@ -517,9 +531,8 @@ type Discriminator struct {
 
 func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*dbModel.Condition, error) {
 	for i, condition := range conditions {
-		if condition.Field == dbModel.BASE_TYPE || condition.Field == dbModel.NAME {
+		if condition.Field == dbModel.BASE_TYPE || condition.Field == dbModel.NAME || condition.Field == dbModel.ITEM_CLASS {
 			if condition.Operator == dbModel.EQ {
-
 				discriminators := []*Discriminator{
 					{field: condition.Field, value: condition.Value},
 				}
@@ -578,8 +591,9 @@ type ItemChecker struct {
 
 func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 	funcMap := map[dbModel.ItemField]map[string][]*ItemObjectiveChecker{
-		dbModel.BASE_TYPE: make(map[string][]*ItemObjectiveChecker),
-		dbModel.NAME:      make(map[string][]*ItemObjectiveChecker),
+		dbModel.BASE_TYPE:  make(map[string][]*ItemObjectiveChecker),
+		dbModel.NAME:       make(map[string][]*ItemObjectiveChecker),
+		dbModel.ITEM_CLASS: make(map[string][]*ItemObjectiveChecker),
 	}
 	for _, objective := range objectives {
 		if objective.ObjectiveType != dbModel.ITEM {
@@ -623,6 +637,9 @@ func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResul
 		results = append(results, applyCheckers(checkers, item)...)
 	}
 	if checkers, ok := ic.Funcmap[dbModel.NAME][item.Name]; ok {
+		results = append(results, applyCheckers(checkers, item)...)
+	}
+	if checkers, ok := ic.Funcmap[dbModel.ITEM_CLASS][ItemClasses[item.BaseType]]; ok {
 		results = append(results, applyCheckers(checkers, item)...)
 	}
 	return results
