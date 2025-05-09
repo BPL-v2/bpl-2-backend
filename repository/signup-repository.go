@@ -15,6 +15,8 @@ type Signup struct {
 	Timestamp        time.Time `gorm:"not null"`
 	User             *User     `gorm:"foreignKey:UserId;references:Id"`
 	ExpectedPlayTime int       `gorm:"not null"`
+	NeedsHelp        bool      `gorm:"not null"`
+	WantsToHelp      bool      `gorm:"not null"`
 }
 
 type SignupRepository struct {
