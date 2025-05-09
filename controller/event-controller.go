@@ -232,6 +232,7 @@ type EventCreate struct {
 	IsCurrent            bool                   `json:"is_current"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
+	WaitlistSize         int                    `json:"waitlist_size" binding:"required"`
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
 	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
@@ -260,6 +261,7 @@ func (e *EventCreate) toModel() *repository.Event {
 		IsCurrent:            e.IsCurrent,
 		GameVersion:          e.GameVersion,
 		MaxSize:              e.MaxSize,
+		WaitlistSize:         e.WaitlistSize,
 		EventStartTime:       e.EventStartTime,
 		EventEndTime:         e.EventEndTime,
 		ApplicationStartTime: e.ApplicationStartTime,
