@@ -2977,6 +2977,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "needs_help": {
+                    "type": "boolean"
+                },
                 "team_id": {
                     "type": "integer"
                 },
@@ -2988,6 +2991,9 @@ const docTemplate = `{
                 },
                 "user": {
                     "$ref": "#/definitions/NonSensitiveUser"
+                },
+                "wants_to_help": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2999,6 +3005,12 @@ const docTemplate = `{
             "properties": {
                 "expected_playtime": {
                     "type": "integer"
+                },
+                "needs_help": {
+                    "type": "boolean"
+                },
+                "wants_to_help": {
+                    "type": "boolean"
                 }
             }
         },

@@ -107,6 +107,8 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			EventId:          event.Id,
 			Timestamp:        time.Now(),
 			ExpectedPlayTime: signupCreate.ExpectedPlaytime,
+			NeedsHelp:        signupCreate.NeedsHelp,
+			WantsToHelp:      signupCreate.WantsToHelp,
 		}
 		signup, err = e.signupService.CreateSignup(signup)
 		if err != nil {
@@ -200,10 +202,14 @@ type Signup struct {
 	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
 	TeamId           *int              `json:"team_id"`
 	IsTeamLead       bool              `json:"team_lead" binding:"required"`
+	NeedsHelp        bool              `json:"needs_help"`
+	WantsToHelp      bool              `json:"wants_to_help"`
 }
 
 type SignupCreate struct {
-	ExpectedPlaytime int `json:"expected_playtime" binding:"required"`
+	ExpectedPlaytime int  `json:"expected_playtime" binding:"required"`
+	NeedsHelp        bool `json:"needs_help"`
+	WantsToHelp      bool `json:"wants_to_help"`
 }
 
 func toSignupResponse(signup *repository.Signup) *Signup {
@@ -216,5 +222,7 @@ func toSignupResponse(signup *repository.Signup) *Signup {
 		User:             toNonSensitiveUserResponse(signup.User),
 		Timestamp:        signup.Timestamp,
 		ExpectedPlaytime: signup.ExpectedPlayTime,
+		NeedsHelp:        signup.NeedsHelp,
+		WantsToHelp:      signup.WantsToHelp,
 	}
 }
