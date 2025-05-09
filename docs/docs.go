@@ -2519,7 +2519,8 @@ const docTemplate = `{
                 "event_start_time",
                 "game_version",
                 "max_size",
-                "name"
+                "name",
+                "waitlist_size"
             ],
             "properties": {
                 "application_start_time": {
@@ -2551,6 +2552,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "waitlist_size": {
+                    "type": "integer"
                 }
             }
         },
