@@ -2466,7 +2466,8 @@ const docTemplate = `{
                 "is_public",
                 "max_size",
                 "name",
-                "teams"
+                "teams",
+                "waitlist_size"
             ],
             "properties": {
                 "application_start_time": {
@@ -2504,6 +2505,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/Team"
                     }
+                },
+                "waitlist_size": {
+                    "type": "integer"
                 }
             }
         },
