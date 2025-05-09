@@ -91,7 +91,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-
+		//  TODO: Uncomment this when discord server check is implemented
 		// err = e.userService.DiscordServerCheck(user)
 		// if err != nil {
 		// 	c.JSON(403, gin.H{"error": err.Error()})
