@@ -39,7 +39,7 @@ func CreateToken(user *repository.User) (string, error) {
 		jwt.MapClaims{
 			"user_id":     user.Id,
 			"permissions": user.Permissions,
-			"exp":         time.Now().Add(time.Hour * 24 * 7).Unix(),
+			"exp":         time.Now().Add(time.Hour * 24 * 21).Unix(),
 		})
 
 	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
