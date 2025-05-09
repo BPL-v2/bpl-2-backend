@@ -1111,7 +1111,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Gets the users application status for an event",
+                "description": "Gets the status for an event including the user's application status",
                 "consumes": [
                     "application/json"
                 ],
@@ -1121,7 +1121,7 @@ const docTemplate = `{
                 "tags": [
                     "event"
                 ],
-                "operationId": "GetEventStatusForUser",
+                "operationId": "GetEventStatus",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2200,21 +2200,6 @@ const docTemplate = `{
                 }
             }
         },
-        "ApplicationStatus": {
-            "type": "string",
-            "enum": [
-                "applied",
-                "accepted",
-                "waitlisted",
-                "none"
-            ],
-            "x-enum-varnames": [
-                "ApplicationStatusApplied",
-                "ApplicationStatusAccepted",
-                "ApplicationStatusWaitlisted",
-                "ApplicationStatusNone"
-            ]
-        },
         "Atlas": {
             "type": "object",
             "required": [
@@ -2562,24 +2547,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "EventStatus": {
-            "type": "object",
-            "required": [
-                "application_status",
-                "is_team_lead"
-            ],
-            "properties": {
-                "application_status": {
-                    "$ref": "#/definitions/ApplicationStatus"
-                },
-                "is_team_lead": {
-                    "type": "boolean"
-                },
-                "team_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -3542,6 +3509,21 @@ const docTemplate = `{
                 "CATEGORY"
             ]
         },
+        "ApplicationStatus": {
+            "type": "string",
+            "enum": [
+                "applied",
+                "accepted",
+                "waitlisted",
+                "none"
+            ],
+            "x-enum-varnames": [
+                "ApplicationStatusApplied",
+                "ApplicationStatusAccepted",
+                "ApplicationStatusWaitlisted",
+                "ApplicationStatusNone"
+            ]
+        },
         "Difftype": {
             "type": "string",
             "enum": [
@@ -3556,6 +3538,28 @@ const docTemplate = `{
                 "Changed",
                 "Unchanged"
             ]
+        },
+        "EventStatus": {
+            "type": "object",
+            "required": [
+                "application_status",
+                "is_team_lead",
+                "number_of_signups"
+            ],
+            "properties": {
+                "application_status": {
+                    "$ref": "#/definitions/ApplicationStatus"
+                },
+                "is_team_lead": {
+                    "type": "boolean"
+                },
+                "number_of_signups": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "integer"
+                }
+            }
         }
     },
     "securityDefinitions": {

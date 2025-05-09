@@ -38,18 +38,6 @@ definitions:
       viewer_count:
         type: integer
     type: object
-  ApplicationStatus:
-    enum:
-    - applied
-    - accepted
-    - waitlisted
-    - none
-    type: string
-    x-enum-varnames:
-    - ApplicationStatusApplied
-    - ApplicationStatusAccepted
-    - ApplicationStatusWaitlisted
-    - ApplicationStatusNone
   Atlas:
     properties:
       event_id:
@@ -293,18 +281,6 @@ definitions:
     - game_version
     - max_size
     - name
-    type: object
-  EventStatus:
-    properties:
-      application_status:
-        $ref: '#/definitions/ApplicationStatus'
-      is_team_lead:
-        type: boolean
-      team_id:
-        type: integer
-    required:
-    - application_status
-    - is_team_lead
     type: object
   JobCreate:
     properties:
@@ -1005,6 +981,18 @@ definitions:
     x-enum-varnames:
     - OBJECTIVE
     - CATEGORY
+  ApplicationStatus:
+    enum:
+    - applied
+    - accepted
+    - waitlisted
+    - none
+    type: string
+    x-enum-varnames:
+    - ApplicationStatusApplied
+    - ApplicationStatusAccepted
+    - ApplicationStatusWaitlisted
+    - ApplicationStatusNone
   Difftype:
     enum:
     - Added
@@ -1017,6 +1005,21 @@ definitions:
     - Removed
     - Changed
     - Unchanged
+  EventStatus:
+    properties:
+      application_status:
+        $ref: '#/definitions/ApplicationStatus'
+      is_team_lead:
+        type: boolean
+      number_of_signups:
+        type: integer
+      team_id:
+        type: integer
+    required:
+    - application_status
+    - is_team_lead
+    - number_of_signups
+    type: object
 info:
   contact:
     email: Liberatorist@gmail.com
@@ -1720,8 +1723,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Gets the users application status for an event
-      operationId: GetEventStatusForUser
+      description: Gets the status for an event including the user's application status
+      operationId: GetEventStatus
       parameters:
       - description: Event Id
         in: path

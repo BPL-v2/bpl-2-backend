@@ -47,11 +47,11 @@ func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, e
 	return &signup, nil
 }
 
-func (r *SignupRepository) GetSignupsForEvent(eventId int, limit int) ([]*Signup, error) {
+func (r *SignupRepository) GetSignupsForEvent(eventId int) ([]*Signup, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetSignupsForEvent"))
 	defer timer.ObserveDuration()
 	signups := make([]*Signup, 0)
-	result := r.DB.Preload("User").Preload("User.OauthAccounts").Order("timestamp ASC").Limit(limit).Find(&signups, &Signup{EventId: eventId})
+	result := r.DB.Preload("User").Preload("User.OauthAccounts").Order("timestamp ASC").Find(&signups, &Signup{EventId: eventId})
 	if result.Error != nil {
 		return nil, result.Error
 	}

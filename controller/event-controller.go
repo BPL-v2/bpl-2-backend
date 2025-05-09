@@ -39,7 +39,7 @@ func setupEventController() []RouteInfo {
 		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEvent()},
 
 		{Method: "POST", Path: "/:event_id/duplicate", HandlerFunc: e.duplicateEventHandler()},
-		{Method: "GET", Path: "/:event_id/status", HandlerFunc: e.getEventStatusForUser(), Authenticated: true},
+		{Method: "GET", Path: "/:event_id/status", HandlerFunc: e.getEventStatus()},
 		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
@@ -159,45 +159,26 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 	}
 }
 
-// @id GetEventStatusForUser
-// @Description Gets the users application status for an event
+// @id GetEventStatus
+// @Description Gets the status for an event including the user's application status
 // @Tags event
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Security BearerAuth
-// @Success 200 {object} EventStatus
+// @Success 200 {object} service.EventStatus
 // @Router /events/{event_id}/status [get]
-func (e *EventController) getEventStatusForUser() gin.HandlerFunc {
+func (e *EventController) getEventStatus() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
 			return
 		}
-		user, err := e.userService.GetUserFromAuthHeader(c)
+		user, _ := e.userService.GetUserFromAuthHeader(c)
+		response, err := e.eventService.GetEventStatus(event, user)
 		if err != nil {
-			c.JSON(401, gin.H{"error": "Not authenticated"})
-			return
-		}
-		response := EventStatus{}
-
-		team, err := e.teamService.GetTeamForUser(event.Id, user.Id)
-		if err != nil && err != gorm.ErrRecordNotFound {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
-		}
-		if team != nil {
-			response.TeamId = &team.TeamId
-			response.IsTeamLead = team.IsTeamLead
-			response.ApplicationStatus = ApplicationStatusAccepted
-		} else {
-			signup, _ := e.signupService.GetSignupForUser(user.Id, event.Id)
-			if signup != nil {
-				response.ApplicationStatus = ApplicationStatusApplied
-			} else {
-				response.ApplicationStatus = ApplicationStatusNone
-			}
-
 		}
 		c.JSON(200, response)
 	}
@@ -308,18 +289,3 @@ func toEventResponse(event *repository.Event) *Event {
 		Locked:               event.Locked,
 	}
 }
-
-type EventStatus struct {
-	TeamId            *int              `json:"team_id"`
-	IsTeamLead        bool              `json:"is_team_lead" binding:"required"`
-	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
-}
-
-type ApplicationStatus string
-
-const (
-	ApplicationStatusApplied    ApplicationStatus = "applied"
-	ApplicationStatusAccepted   ApplicationStatus = "accepted"
-	ApplicationStatusWaitlisted ApplicationStatus = "waitlisted"
-	ApplicationStatusNone       ApplicationStatus = "none"
-)

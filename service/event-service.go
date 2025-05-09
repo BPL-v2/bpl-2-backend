@@ -3,12 +3,32 @@ package service
 import (
 	"bpl/repository"
 	"fmt"
+
+	"gorm.io/gorm"
 )
+
+type ApplicationStatus string
+
+const (
+	ApplicationStatusApplied    ApplicationStatus = "applied"
+	ApplicationStatusAccepted   ApplicationStatus = "accepted"
+	ApplicationStatusWaitlisted ApplicationStatus = "waitlisted"
+	ApplicationStatusNone       ApplicationStatus = "none"
+)
+
+type EventStatus struct {
+	TeamId            *int              `json:"team_id"`
+	IsTeamLead        bool              `json:"is_team_lead" binding:"required"`
+	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
+	NumberOfSignups   int               `json:"number_of_signups" binding:"required"`
+}
 
 type EventService struct {
 	eventRepository           *repository.EventRepository
 	scoringCategoryRepository *repository.ScoringCategoryRepository
 	scoringPresetRepository   *repository.ScoringPresetRepository
+	teamService               *TeamService
+	signupService             *SignupService
 }
 
 func NewEventService() *EventService {
@@ -16,6 +36,8 @@ func NewEventService() *EventService {
 		eventRepository:           repository.NewEventRepository(),
 		scoringCategoryRepository: repository.NewScoringCategoryRepository(),
 		scoringPresetRepository:   repository.NewScoringPresetRepository(),
+		teamService:               NewTeamService(),
+		signupService:             NewSignupService(),
 	}
 }
 
@@ -81,4 +103,40 @@ func (e *EventService) GetEventByObjectiveId(objectiveId int) (*repository.Event
 
 func (e *EventService) GetEventByConditionId(conditionId int) (*repository.Event, error) {
 	return e.eventRepository.GetEventByConditionId(conditionId)
+}
+
+func (e *EventService) GetEventStatus(event *repository.Event, user *repository.User) (*EventStatus, error) {
+	eventStatus := &EventStatus{
+		ApplicationStatus: ApplicationStatusNone,
+	}
+	signups, err := e.signupService.GetSignupsForEvent(event)
+	if err != nil {
+		return nil, err
+	}
+	eventStatus.NumberOfSignups = len(signups)
+	if user == nil {
+		return eventStatus, nil
+	}
+	team, err := e.teamService.GetTeamForUser(event.Id, user.Id)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return eventStatus, err
+	}
+	if team != nil {
+		eventStatus.TeamId = &team.TeamId
+		eventStatus.IsTeamLead = team.IsTeamLead
+		eventStatus.ApplicationStatus = ApplicationStatusAccepted
+	} else {
+		count := 0
+		for _, signup := range signups {
+			count++
+			if signup.UserId == user.Id {
+				if count > event.MaxSize {
+					eventStatus.ApplicationStatus = ApplicationStatusWaitlisted
+				} else {
+					eventStatus.ApplicationStatus = ApplicationStatusAccepted
+				}
+			}
+		}
+	}
+	return eventStatus, nil
 }
