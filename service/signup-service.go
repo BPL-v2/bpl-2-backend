@@ -35,5 +35,5 @@ type SignupWithUser struct {
 }
 
 func (r *SignupService) GetSignupsForEvent(event *repository.Event) ([]*repository.Signup, error) {
-	return r.signupRepository.GetSignupsForEvent(event.Id, event.MaxSize)
+	return r.signupRepository.GetSignupsForEvent(event.Id)
 }

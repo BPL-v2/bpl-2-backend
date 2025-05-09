@@ -27,7 +27,7 @@ func setupSignupController() []RouteInfo {
 	e := NewSignupController()
 	basePath := "/events/:event_id/signups"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true},
+		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{"admin"}},
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/self", HandlerFunc: e.deleteSignupHandler(), Authenticated: true},
@@ -164,6 +164,7 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
+		signups = signups[:event.MaxSize]
 		teamUsers, err := e.teamService.GetTeamUsersForEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
