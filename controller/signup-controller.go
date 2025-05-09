@@ -164,7 +164,7 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		signups = signups[:event.MaxSize]
+		signups = signups[:min(event.MaxSize, len(signups))]
 		teamUsers, err := e.teamService.GetTeamUsersForEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})

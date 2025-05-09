@@ -133,7 +133,7 @@ func (e *EventService) GetEventStatus(event *repository.Event, user *repository.
 				if count > event.MaxSize {
 					eventStatus.ApplicationStatus = ApplicationStatusWaitlisted
 				} else {
-					eventStatus.ApplicationStatus = ApplicationStatusAccepted
+					eventStatus.ApplicationStatus = ApplicationStatusApplied
 				}
 			}
 		}
