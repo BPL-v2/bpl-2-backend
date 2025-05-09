@@ -239,6 +239,8 @@ definitions:
         items:
           $ref: '#/definitions/Team'
         type: array
+      waitlist_size:
+        type: integer
     required:
     - application_start_time
     - event_end_time
@@ -251,6 +253,7 @@ definitions:
     - max_size
     - name
     - teams
+    - waitlist_size
     type: object
   EventCreate:
     properties:

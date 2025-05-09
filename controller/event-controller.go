@@ -245,6 +245,7 @@ type Event struct {
 	IsCurrent            bool                   `json:"is_current" binding:"required"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
+	WaitlistSize         int                    `json:"waitlist_size" binding:"required"`
 	Teams                []*Team                `json:"teams" binding:"required"`
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
@@ -281,6 +282,7 @@ func toEventResponse(event *repository.Event) *Event {
 		GameVersion:          event.GameVersion,
 		IsCurrent:            event.IsCurrent,
 		MaxSize:              event.MaxSize,
+		WaitlistSize:         event.WaitlistSize,
 		Teams:                utils.Map(event.Teams, toTeamResponse),
 		ApplicationStartTime: event.ApplicationStartTime,
 		EventStartTime:       event.EventStartTime,

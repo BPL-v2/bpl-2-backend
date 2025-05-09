@@ -23,6 +23,7 @@ type Event struct {
 	IsCurrent            bool               `gorm:"not null"`
 	GameVersion          GameVersion        `gorm:"null"`
 	MaxSize              int                `gorm:"not null"`
+	WaitlistSize         int                `gorm:"not null"`
 	ApplicationStartTime time.Time          `gorm:"null"`
 	EventStartTime       time.Time          `gorm:"null"`
 	EventEndTime         time.Time          `gorm:"null"`
