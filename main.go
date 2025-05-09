@@ -51,8 +51,10 @@ func main() {
 	_ = db
 	// autoMigrate(db)
 
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.Recovery())
 	r.SetTrustedProxies(nil)
+	addLogger(r)
 	addMetrics(r)
 	addDocs(r)
 	setCors(r)
@@ -60,6 +62,13 @@ func main() {
 	controller.SetRoutes(r)
 	fmt.Println("Server started in", time.Since(t))
 	r.Run(":8000")
+}
+
+func addLogger(r *gin.Engine) {
+	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
+		SkipPaths: []string{"/api/metrics"},
+	}))
+
 }
 
 func addMetrics(r *gin.Engine) {
