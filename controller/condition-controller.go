@@ -30,10 +30,10 @@ func setupConditionController() []RouteInfo {
 	e := NewConditionController()
 	baseUrl := "/events/:event_id/conditions"
 	routes := []RouteInfo{
-		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "POST", Path: "/test", HandlerFunc: e.testConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "PUT", Path: "", HandlerFunc: e.createConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "POST", Path: "/test", HandlerFunc: e.testConditionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path

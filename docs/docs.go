@@ -555,6 +555,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/duplicate": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Duplicates an event's configuration",
                 "consumes": [
                     "application/json"
@@ -3486,15 +3491,15 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "admin",
-                "command_team",
+                "manager",
                 "objective_designer",
-                "judge"
+                "submission_judge"
             ],
             "x-enum-varnames": [
                 "PermissionAdmin",
-                "PermissionCommandTeam",
+                "PermissionManager",
                 "PermissionObjectiveDesigner",
-                "PermissionJudge"
+                "PermissionSubmissionJudge"
             ]
         },
         "ScoringMethod": {

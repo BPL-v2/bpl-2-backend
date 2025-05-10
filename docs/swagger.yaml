@@ -960,15 +960,15 @@ definitions:
   Permission:
     enum:
     - admin
-    - command_team
+    - manager
     - objective_designer
-    - judge
+    - submission_judge
     type: string
     x-enum-varnames:
     - PermissionAdmin
-    - PermissionCommandTeam
+    - PermissionManager
     - PermissionObjectiveDesigner
-    - PermissionJudge
+    - PermissionSubmissionJudge
   ScoringMethod:
     enum:
     - PRESENCE
@@ -1407,6 +1407,8 @@ paths:
           description: Created
           schema:
             $ref: '#/definitions/Event'
+      security:
+      - BearerAuth: []
       tags:
       - event
   /events/{event_id}/ladder:

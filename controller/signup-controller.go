@@ -27,7 +27,7 @@ func setupSignupController() []RouteInfo {
 	e := NewSignupController()
 	basePath := "/events/:event_id/signups"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{"admin"}},
+		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/self", HandlerFunc: e.deleteSignupHandler(), Authenticated: true},

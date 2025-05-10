@@ -96,6 +96,10 @@ func (e *TeamSuggestionController) createObjectiveTeamSuggestionHandler() gin.Ha
 		if team == nil {
 			return
 		}
+		if !team.IsTeamLead {
+			c.JSON(403, gin.H{"error": "You are not a team lead"})
+			return
+		}
 		var suggestionCreate SuggestionCreate
 		if err := c.BindJSON(&suggestionCreate); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -124,6 +128,10 @@ func (e *TeamSuggestionController) createCategoryTeamSuggestionHandler() gin.Han
 	return func(c *gin.Context) {
 		team := e.getTeamForUser(c)
 		if team == nil {
+			return
+		}
+		if !team.IsTeamLead {
+			c.JSON(403, gin.H{"error": "You are not a team lead"})
 			return
 		}
 		var suggestionCreate SuggestionCreate
@@ -155,6 +163,10 @@ func (e *TeamSuggestionController) deleteObjectiveTeamSuggestionHandler() gin.Ha
 		if team == nil {
 			return
 		}
+		if !team.IsTeamLead {
+			c.JSON(403, gin.H{"error": "You are not a team lead"})
+			return
+		}
 		objectiveId, err := strconv.Atoi(c.Param("objective_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -182,6 +194,10 @@ func (e *TeamSuggestionController) deleteCategoryTeamSuggestionHandler() gin.Han
 	return func(c *gin.Context) {
 		team := e.getTeamForUser(c)
 		if team == nil {
+			return
+		}
+		if !team.IsTeamLead {
+			c.JSON(403, gin.H{"error": "You are not a team lead"})
 			return
 		}
 		categoryId, err := strconv.Atoi(c.Param("category_id"))
