@@ -38,7 +38,7 @@ func setupEventController() []RouteInfo {
 		{Method: "PUT", Path: "", HandlerFunc: e.createEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/:event_id", HandlerFunc: e.getEvent()},
 
-		{Method: "POST", Path: "/:event_id/duplicate", HandlerFunc: e.duplicateEventHandler()},
+		{Method: "POST", Path: "/:event_id/duplicate", HandlerFunc: e.duplicateEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/:event_id/status", HandlerFunc: e.getEventStatus()},
 		{Method: "DELETE", Path: "/:event_id", HandlerFunc: e.deleteEventHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
@@ -189,6 +189,7 @@ func (e *EventController) getEventStatus() gin.HandlerFunc {
 // @Tags event
 // @Accept json
 // @Produce json
+// @Security BearerAuth
 // @Param event_id path int true "Event Id"
 // @Param event body EventCreate true "Event to create"
 // @Success 201 {object} Event

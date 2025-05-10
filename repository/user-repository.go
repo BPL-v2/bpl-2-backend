@@ -17,9 +17,9 @@ type Permission string
 
 const (
 	PermissionAdmin             Permission = "admin"
-	PermissionCommandTeam       Permission = "command_team"
+	PermissionManager           Permission = "manager"
 	PermissionObjectiveDesigner Permission = "objective_designer"
-	PermissionJudge             Permission = "judge"
+	PermissionSubmissionJudge   Permission = "submission_judge"
 )
 
 type Permissions []Permission

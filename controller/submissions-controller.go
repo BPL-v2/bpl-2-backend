@@ -33,7 +33,7 @@ func setupSubmissionController() []RouteInfo {
 		{Method: "GET", Path: "", HandlerFunc: e.getSubmissionsHandler()},
 		{Method: "PUT", Path: "", HandlerFunc: e.submitBountyHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/:submission_id", HandlerFunc: e.deleteSubmissionHandler(), Authenticated: true},
-		{Method: "PUT", Path: "/:submission_id/review", HandlerFunc: e.reviewSubmissionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "PUT", Path: "/:submission_id/review", HandlerFunc: e.reviewSubmissionHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionSubmissionJudge}},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -131,7 +131,6 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-
 		err = e.submissionService.DeleteSubmission(submissionId, user)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
