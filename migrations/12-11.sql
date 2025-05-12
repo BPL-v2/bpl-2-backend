@@ -1,0 +1,1 @@
+ALTER TABLE scoring_presets drop column point_cap;

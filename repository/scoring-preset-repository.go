@@ -62,6 +62,7 @@ type ScoringPreset struct {
 	Name          string               `gorm:"not null"`
 	Description   string               `gorm:"not null"`
 	Points        ExtendingNumberSlice `gorm:"type:numeric[];not null"`
+	PointCap      int                  `gorm:"not null"`
 	ScoringMethod ScoringMethod        `gorm:"not null"`
 	Type          ScoringPresetType    `gorm:"not null"`
 }

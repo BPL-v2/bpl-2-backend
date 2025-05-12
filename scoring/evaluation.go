@@ -115,10 +115,11 @@ func handlePointsFromValue(objective *repository.Objective, aggregations Objecti
 			UserId:    match.UserId,
 			Timestamp: match.Timestamp,
 			Number:    match.Number,
+			Points:    int(objective.ScoringPreset.Points.Get(0) * float64(match.Number)),
+			Finished:  match.Finished,
 		}
-		if match.Finished {
-			score.Finished = true
-			score.Points = int(objective.ScoringPreset.Points.Get(0) * float64(match.Number))
+		if objective.ScoringPreset.PointCap != 0 && score.Points > objective.ScoringPreset.PointCap {
+			score.Points = objective.ScoringPreset.PointCap
 		}
 		scores = append(scores, score)
 	}
@@ -135,9 +136,9 @@ func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamM
 			UserId:    match.UserId,
 			Timestamp: match.Timestamp,
 			Number:    match.Number,
+			Finished:  match.Finished,
 		}
 		if match.Finished {
-			score.Finished = true
 			score.Points = int(objective.ScoringPreset.Points.Get(0))
 		}
 		scores = append(scores, score)
@@ -188,9 +189,9 @@ func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMat
 			UserId:    match.UserId,
 			Timestamp: match.Timestamp,
 			Number:    match.Number,
+			Finished:  match.Finished,
 		}
 		if match.Finished {
-			score.Finished = true
 			score.Rank = i + 1
 			score.Points = int(objective.ScoringPreset.Points.Get(i))
 		}
