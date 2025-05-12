@@ -2920,6 +2920,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "point_cap": {
+                    "type": "integer"
+                },
                 "points": {
                     "type": "array",
                     "items": {
@@ -2951,6 +2954,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "point_cap": {
+                    "type": "integer"
                 },
                 "points": {
                     "type": "array",

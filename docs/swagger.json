@@ -2912,6 +2912,9 @@
                 "name": {
                     "type": "string"
                 },
+                "point_cap": {
+                    "type": "integer"
+                },
                 "points": {
                     "type": "array",
                     "items": {
@@ -2943,6 +2946,9 @@
                 },
                 "name": {
                     "type": "string"
+                },
+                "point_cap": {
+                    "type": "integer"
                 },
                 "points": {
                     "type": "array",

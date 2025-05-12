@@ -135,6 +135,7 @@ type ScoringPresetCreate struct {
 	Points        []float64                    `json:"points" binding:"required"`
 	ScoringMethod repository.ScoringMethod     `json:"scoring_method" binding:"required"`
 	Type          repository.ScoringPresetType `json:"type" binding:"required"`
+	PointCap      int                          `json:"point_cap" `
 }
 
 func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
@@ -144,6 +145,7 @@ func (e *ScoringPresetCreate) toModel() *repository.ScoringPreset {
 		Points:        e.Points,
 		ScoringMethod: e.ScoringMethod,
 		Type:          e.Type,
+		PointCap:      e.PointCap,
 	}
 	if e.Id != nil {
 		preset.Id = *e.Id
@@ -158,6 +160,7 @@ type ScoringPreset struct {
 	Points        []float64                    `json:"points" binding:"required"`
 	ScoringMethod repository.ScoringMethod     `json:"scoring_method" binding:"required"`
 	Type          repository.ScoringPresetType `json:"type" binding:"required"`
+	PointCap      int                          `json:"point_cap" `
 }
 
 func toScoringPresetResponse(preset *repository.ScoringPreset) *ScoringPreset {
@@ -171,5 +174,6 @@ func toScoringPresetResponse(preset *repository.ScoringPreset) *ScoringPreset {
 		Points:        preset.Points,
 		ScoringMethod: preset.ScoringMethod,
 		Type:          preset.Type,
+		PointCap:      preset.PointCap,
 	}
 }

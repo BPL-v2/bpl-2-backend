@@ -533,6 +533,8 @@ definitions:
         type: integer
       name:
         type: string
+      point_cap:
+        type: integer
       points:
         items:
           type: number
@@ -557,6 +559,8 @@ definitions:
         type: integer
       name:
         type: string
+      point_cap:
+        type: integer
       points:
         items:
           type: number
