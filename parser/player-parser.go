@@ -22,12 +22,13 @@ type Player struct {
 }
 
 type PlayerUpdate struct {
-	UserId      int
-	AccountName string
-	TeamId      int
-	Token       string
-	TokenExpiry time.Time
-	Mu          sync.Mutex
+	UserId           int
+	AccountName      string
+	TeamId           int
+	Token            string
+	TokenExpiry      time.Time
+	Mu               sync.Mutex
+	SuccessiveErrors int
 
 	New Player
 	Old Player
@@ -45,7 +46,14 @@ func (p *Player) MaxAtlasTreeNodes() int {
 	}))
 }
 
+func (p *PlayerUpdate) CanMakeRequests() bool {
+	return p.TokenExpiry.After(time.Now()) && p.Token != "" && p.SuccessiveErrors < 5
+}
+
 func (p *PlayerUpdate) ShouldUpdateCharacterName() bool {
+	if !p.CanMakeRequests() {
+		return false
+	}
 	if p.New.CharacterName == "" {
 		return time.Since(p.LastUpdateTimes.CharacterName) > 10*time.Minute
 	}
@@ -53,6 +61,9 @@ func (p *PlayerUpdate) ShouldUpdateCharacterName() bool {
 }
 
 func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
+	if !p.CanMakeRequests() {
+		return false
+	}
 	if p.New.CharacterName == "" {
 		return false
 	}
@@ -66,6 +77,9 @@ func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
 }
 
 func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
+	if !p.CanMakeRequests() {
+		return false
+	}
 	if p.New.CharacterLevel < 55 {
 		return false
 	}
@@ -77,10 +91,12 @@ func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
 	return time.Since(p.LastUpdateTimes.LeagueAccount) > 10*time.Minute
 }
 
+type TeamObjectiveChecker func(p []*Player) int
+
 type PlayerObjectiveChecker func(p *Player) int
 
-func GetChecker(objective *repository.Objective) (PlayerObjectiveChecker, error) {
-	if objective.ObjectiveType != repository.PLAYER {
+func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, error) {
+	if (objective.ObjectiveType != repository.PLAYER) && (objective.ObjectiveType != repository.TEAM) {
 		return nil, fmt.Errorf("not a player objective")
 	}
 	switch objective.NumberField {
@@ -91,6 +107,10 @@ func GetChecker(objective *repository.Objective) (PlayerObjectiveChecker, error)
 	case repository.DELVE_DEPTH:
 		return func(p *Player) int {
 			return p.DelveDepth
+		}, nil
+	case repository.DELVE_DEPTH_PAST_100:
+		return func(p *Player) int {
+			return max(p.DelveDepth-100, 0)
 		}, nil
 	case repository.PANTHEON:
 		return func(p *Player) int {
@@ -112,7 +132,6 @@ func GetChecker(objective *repository.Objective) (PlayerObjectiveChecker, error)
 					score += 3
 				}
 			}
-
 			if p.MaxAtlasTreeNodes() >= 40 {
 				score += 3
 			}
@@ -127,7 +146,25 @@ func GetChecker(objective *repository.Objective) (PlayerObjectiveChecker, error)
 	}
 }
 
+func GetTeamChecker(objective *repository.Objective) (TeamObjectiveChecker, error) {
+	if objective.ObjectiveType != repository.TEAM {
+		return nil, fmt.Errorf("not a team objective")
+	}
+	checker, err := GetPlayerChecker(objective)
+	if err != nil {
+		return nil, err
+	}
+	return func(p []*Player) int {
+		sum := 0
+		for _, player := range p {
+			sum += checker(player)
+		}
+		return sum
+	}, nil
+}
+
 type PlayerChecker map[int]PlayerObjectiveChecker
+type TeamChecker map[int]TeamObjectiveChecker
 
 func NewPlayerChecker(objectives []*repository.Objective) (*PlayerChecker, error) {
 	checkers := make(map[int]PlayerObjectiveChecker)
@@ -135,7 +172,7 @@ func NewPlayerChecker(objectives []*repository.Objective) (*PlayerChecker, error
 		if objective.ObjectiveType != repository.PLAYER {
 			continue
 		}
-		checker, err := GetChecker(objective)
+		checker, err := GetPlayerChecker(objective)
 		if err != nil {
 			return nil, err
 		}
@@ -144,11 +181,46 @@ func NewPlayerChecker(objectives []*repository.Objective) (*PlayerChecker, error
 	return (*PlayerChecker)(&checkers), nil
 }
 
+func NewTeamChecker(objectives []*repository.Objective) (*TeamChecker, error) {
+	checkers := make(map[int]TeamObjectiveChecker)
+	for _, objective := range objectives {
+		if objective.ObjectiveType != repository.TEAM {
+			continue
+		}
+		checker, err := GetTeamChecker(objective)
+		if err != nil {
+			return nil, err
+		}
+		checkers[objective.Id] = checker
+	}
+	return (*TeamChecker)(&checkers), nil
+}
+
 func (pc *PlayerChecker) CheckForCompletions(update *PlayerUpdate) []*CheckResult {
 	results := make([]*CheckResult, 0)
 	for id, checker := range *pc {
 		new := checker(&update.New)
 		if new != checker(&update.Old) {
+			results = append(results, &CheckResult{
+				ObjectiveId: id,
+				Number:      new,
+			})
+		}
+	}
+	return results
+}
+
+func (tc *TeamChecker) CheckForCompletions(updates []*PlayerUpdate) []*CheckResult {
+	results := make([]*CheckResult, 0)
+	oldTeam := make([]*Player, 0)
+	newTeam := make([]*Player, 0)
+	for _, update := range updates {
+		oldTeam = append(oldTeam, &update.Old)
+		newTeam = append(newTeam, &update.New)
+	}
+	for id, checker := range *tc {
+		new := checker(newTeam)
+		if new != checker(oldTeam) {
 			results = append(results, &CheckResult{
 				ObjectiveId: id,
 				Number:      new,

@@ -29,7 +29,8 @@ CREATE TABLE objective_matches (
     "number" int8 NOT NULL,
     user_id int8 NOT NULL,
     event_id int8 NOT NULL,
-    stash_change_id int8 NULL
+    stash_change_id int8 NULL,
+    CONSTRAINT objective_matches_pkey PRIMARY KEY (id)
 );
 CREATE INDEX obj_match_event ON objective_matches USING btree (event_id);
 CREATE INDEX obj_match_obj ON objective_matches USING btree (objective_id);
@@ -151,7 +152,8 @@ CREATE TABLE submissions (
     CONSTRAINT submissions_pkey PRIMARY KEY (id),
     CONSTRAINT fk_bpl2_submissions_objective FOREIGN KEY (objective_id) REFERENCES objectives(id) ON DELETE CASCADE,
     CONSTRAINT fk_bpl2_submissions_reviewer FOREIGN KEY (reviewer_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_bpl2_submissions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE CONSTRAINT fk_bpl2_submissions_match FOREIGN KEY (match_id) REFERENCES objective_matches(id) ON DELETE CASCADE
+    CONSTRAINT fk_bpl2_submissions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_bpl2_submissions_match FOREIGN KEY (match_id) REFERENCES objective_matches(id) ON DELETE CASCADE
 );
 CREATE TABLE teams (
     id bigserial NOT NULL,

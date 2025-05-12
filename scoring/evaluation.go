@@ -122,7 +122,6 @@ func handlePointsFromValue(objective *repository.Objective, aggregations Objecti
 		}
 		scores = append(scores, score)
 	}
-
 	return scores, nil
 }
 

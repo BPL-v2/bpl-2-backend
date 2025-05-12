@@ -36,12 +36,15 @@ type TeamMatches = map[int]*Match
 
 type ObjectiveTeamMatches = map[int]TeamMatches
 
-var aggregationMap = map[repository.AggregationType]func(db *gorm.DB, teamIds []int, objectiveIds []int, eventId int) ([]*Match, error){
+type AggregationHandler func(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error)
+
+var aggregationMap = map[repository.AggregationType]AggregationHandler{
 	repository.EARLIEST_FRESH_ITEM: handleEarliestFreshItem,
 	repository.EARLIEST:            handleEarliest,
 	repository.SUM_LATEST:          handleLatestSum,
 	repository.MAXIMUM:             handleMaximum,
 	repository.MINIMUM:             handleMinimum,
+	repository.DIFFERENCE_BETWEEN:  handleDifferenceBetween,
 }
 var scoreAggregationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Name: "score_aggregation_duration_s",
@@ -57,9 +60,9 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		return team.Id
 	})
 	objectiveMap := make(map[int]repository.Objective)
-	objectiveIdLists := make(map[repository.AggregationType][]int)
+	objectiveLists := make(map[repository.AggregationType][]*repository.Objective)
 	for _, objective := range objectives {
-		objectiveIdLists[objective.Aggregation] = append(objectiveIdLists[objective.Aggregation], objective.Id)
+		objectiveLists[objective.Aggregation] = append(objectiveLists[objective.Aggregation], objective)
 		objectiveMap[objective.Id] = *objective
 		aggregations[objective.Id] = make(TeamMatches)
 	}
@@ -70,11 +73,12 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		repository.MAXIMUM,
 		repository.MINIMUM,
 		repository.SUM_LATEST,
+		repository.DIFFERENCE_BETWEEN,
 	} {
 		// wg.Add(1)
 		// go func(aggregation repository.AggregationType) {
 		// 	defer wg.Done()
-		matches, err := aggregationMap[aggregation](db, objectiveIdLists[aggregation], teamIds, event.Id)
+		matches, err := aggregationMap[aggregation](db, objectiveLists[aggregation], teamIds, event.Id)
 		if err != nil {
 			log.Print(err)
 			return nil, err
@@ -89,7 +93,13 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 	return aggregations, nil
 }
 
-func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+func getObjectiveIds(objectives []*repository.Objective) []int {
+	return utils.Map(objectives, func(objective *repository.Objective) int {
+		return objective.Id
+	})
+}
+
+func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleEarliest"))
 	defer timer.ObserveDuration()
 	query := `
@@ -128,14 +138,14 @@ func handleEarliest(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int)
 	`
 
 	matches := make([]*Match, 0)
-	err := db.Raw(query, map[string]interface{}{"objectiveIds": objectiveIds, "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
+	err := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
 	return matches, nil
 }
 
-func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	// var wg sync.WaitGroup
 	var freshMatches FreshMatches
 	var firstMatches []*Match
@@ -145,12 +155,12 @@ func handleEarliestFreshItem(db *gorm.DB, objectiveIds []int, teamIds []int, eve
 
 	// go func() {
 	// 	defer wg.Done()
-	freshMatches, err1 = getFreshMatches(db, objectiveIds, teamIds, eventId)
+	freshMatches, err1 = getFreshMatches(db, objectives, teamIds, eventId)
 	// }()
 
 	// go func() {
 	// 	defer wg.Done()
-	firstMatches, err2 = handleEarliest(db, objectiveIds, teamIds, eventId)
+	firstMatches, err2 = handleEarliest(db, objectives, teamIds, eventId)
 	// }()
 
 	// wg.Wait()
@@ -215,7 +225,7 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 
 }
 
-func handleMaximum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMaximum"))
 	defer timer.ObserveDuration()
 	query, err := getExtremeQuery(repository.MAXIMUM)
@@ -223,14 +233,14 @@ func handleMaximum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) 
 		return nil, err
 	}
 	matches := make([]*Match, 0)
-	err = db.Raw(query, map[string]interface{}{"objectiveIds": objectiveIds, "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
+	err = db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
 	return matches, nil
 }
 
-func handleMinimum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMinimum"))
 	defer timer.ObserveDuration()
 	query, err := getExtremeQuery(repository.MINIMUM)
@@ -239,14 +249,14 @@ func handleMinimum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) 
 	}
 	matches := make([]*Match, 0)
 	err = db.Raw(query,
-		map[string]interface{}{"objectiveIds": objectiveIds, "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
+		map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
 	return matches, nil
 }
 
-func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) ([]*Match, error) {
+func handleLatestSum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleLatestSum"))
 	defer timer.ObserveDuration()
 	query := `
@@ -280,14 +290,14 @@ func handleLatestSum(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
 		match.objective_id, team_users.team_id
 	`
 	matches := make([]*Match, 0)
-	err := db.Raw(query, map[string]interface{}{"objectiveIds": objectiveIds, "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
+	err := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
 	return matches, nil
 }
 
-func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int) (FreshMatches, error) {
+func getFreshMatches(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) (FreshMatches, error) {
 	// todo: might want to also check if the match finishes the objective
 	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("getFreshMatches"))
 	defer timer.ObserveDuration()
@@ -311,7 +321,7 @@ func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
         team_users.team_id
     `
 	matchList := make([]ObjectiveIdTeamId, 0)
-	result := db.Raw(query, map[string]interface{}{"objectiveIds": objectiveIds, "teamIds": teamIds, "eventId": eventId}).Scan(&matchList)
+	result := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "teamIds": teamIds, "eventId": eventId}).Scan(&matchList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -321,4 +331,79 @@ func getFreshMatches(db *gorm.DB, objectiveIds []int, teamIds []int, eventId int
 	}
 
 	return freshMatches, nil
+}
+
+func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
+	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleDifferenceBetween"))
+	defer timer.ObserveDuration()
+	query := `
+	SELECT
+		match.objective_id,
+		team_users.team_id,
+		match.user_id,
+		match.number,
+		match.timestamp
+	FROM
+		objective_matches AS match
+	JOIN
+		team_users ON team_users.user_id = match.user_id
+	WHERE
+		match.event_id = @eventId AND match.objective_id IN @objectiveIds AND team_users.team_id IN @teamIds
+	ORDER BY
+		match.objective_id, match.timestamp
+	`
+	objectiveMap := make(map[int]repository.Objective)
+	for _, objective := range objectives {
+		objectiveMap[objective.Id] = *objective
+	}
+	preMatches := make([]*Match, 0)
+	err := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "teamIds": teamIds, "eventId": eventId}).Scan(&preMatches).Error
+	if err != nil {
+		return nil, err
+	}
+	matches := make([]*Match, 0)
+	for _, objective := range objectives {
+		if objective.ValidFrom == nil || objective.ValidTo == nil {
+			fmt.Printf("DIFFERENCE_BETWEEN objective %d does not have timestamps set\n", objective.Id)
+			continue
+		}
+
+		matches = append(matches, getDifferencesBetweenTimestamps(objective, preMatches, teamIds)...)
+	}
+	return matches, nil
+
+}
+
+func getDifferencesBetweenTimestamps(objective *repository.Objective, preMatches []*Match, teamIds []int) []*Match {
+	matches := []*Match{}
+	for _, teamId := range teamIds {
+		filteredMatches := utils.Filter(preMatches, func(match *Match) bool {
+			return match.ObjectiveId == objective.Id &&
+				match.TeamId == teamId &&
+				match.Timestamp.After(*objective.ValidFrom) &&
+				match.Timestamp.Before(*objective.ValidTo)
+		})
+		if len(filteredMatches) == 0 {
+			continue
+		}
+		maxMatch := filteredMatches[0]
+		minMatch := filteredMatches[0]
+		for _, match := range filteredMatches {
+			if match.Timestamp.Before(minMatch.Timestamp) && match.Timestamp.After(*objective.ValidFrom) {
+				minMatch = match
+			}
+			if match.Timestamp.After(maxMatch.Timestamp) && match.Timestamp.Before(*objective.ValidTo) {
+				maxMatch = match
+			}
+		}
+		matches = append(matches, &Match{
+			ObjectiveId: objective.Id,
+			Number:      maxMatch.Number - minMatch.Number,
+			Timestamp:   maxMatch.Timestamp,
+			UserId:      0,
+			TeamId:      maxMatch.TeamId,
+			Finished:    time.Now().After(*objective.ValidTo),
+		})
+	}
+	return matches
 }

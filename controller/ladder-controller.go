@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,65 +31,11 @@ func setupLadderController() []RouteInfo {
 		{Method: "GET", Path: "/ladder", HandlerFunc: c.getLadderHandler()},
 		{Method: "GET", Path: "/characters", HandlerFunc: c.getLatestCharactersForEvent()},
 		{Method: "GET", Path: "/atlas", HandlerFunc: c.getAtlasesForEvent(), Authenticated: true},
-		//  too: remove endpoint
-		// {Method: "POST", Path: "/add-to-league", HandlerFunc: c.addLadderPlayersToLeague(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
 	}
 	return routes
-}
-
-func (c *LadderController) addLadderPlayersToLeague() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		event := getEvent(ctx)
-		if event == nil {
-			return
-		}
-		_, err := c.userService.GetUserFromAuthHeader(ctx)
-		if err != nil {
-			ctx.JSON(401, gin.H{"error": "Not authenticated"})
-			return
-		}
-		ladder, err := c.ladderService.GetLadderForEvent(event.Id)
-		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		users, err := c.userService.GetUsersForEvent(event.Id)
-		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		userMap := make(map[string]int)
-		for _, user := range users {
-			userMap[user.AccountName] = user.UserId
-		}
-		for _, entry := range ladder {
-			if _, ok := userMap[entry.Account]; !ok {
-				user := &repository.User{
-					DisplayName: entry.Account,
-					Permissions: make(repository.Permissions, 0),
-					OauthAccounts: []*repository.Oauth{{
-						Provider:     repository.ProviderPoE,
-						AccessToken:  "",
-						RefreshToken: "",
-						Expiry:       time.Now(),
-						Name:         entry.Account,
-						AccountId:    entry.Account,
-					}},
-				}
-
-				c.userService.SaveUser(user)
-				c.signupService.CreateSignup(&repository.Signup{
-					UserId:           user.Id,
-					EventId:          event.Id,
-					Timestamp:        time.Now(),
-					ExpectedPlayTime: 4,
-				})
-			}
-		}
-	}
 }
 
 // @id GetLadder

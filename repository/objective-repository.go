@@ -12,6 +12,7 @@ type ObjectiveType string
 const (
 	ITEM       ObjectiveType = "ITEM"
 	PLAYER     ObjectiveType = "PLAYER"
+	TEAM       ObjectiveType = "TEAM"
 	SUBMISSION ObjectiveType = "SUBMISSION"
 )
 
@@ -23,6 +24,7 @@ const (
 	EARLIEST_FRESH_ITEM AggregationType = "EARLIEST_FRESH_ITEM"
 	MAXIMUM             AggregationType = "MAXIMUM"
 	MINIMUM             AggregationType = "MINIMUM"
+	DIFFERENCE_BETWEEN  AggregationType = "DIFFERENCE_BETWEEN"
 )
 
 type NumberField string
@@ -30,18 +32,20 @@ type NumberField string
 const (
 	STACK_SIZE NumberField = "STACK_SIZE"
 
-	PLAYER_LEVEL NumberField = "PLAYER_LEVEL"
-	DELVE_DEPTH  NumberField = "DELVE_DEPTH"
-	PANTHEON     NumberField = "PANTHEON"
-	ASCENDANCY   NumberField = "ASCENDANCY"
-	PLAYER_SCORE NumberField = "PLAYER_SCORE"
+	PLAYER_LEVEL         NumberField = "PLAYER_LEVEL"
+	DELVE_DEPTH          NumberField = "DELVE_DEPTH"
+	DELVE_DEPTH_PAST_100 NumberField = "DELVE_DEPTH_PAST_100"
+	PANTHEON             NumberField = "PANTHEON"
+	ASCENDANCY           NumberField = "ASCENDANCY"
+	PLAYER_SCORE         NumberField = "PLAYER_SCORE"
 
 	SUBMISSION_VALUE NumberField = "SUBMISSION_VALUE"
 )
 
 var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
 	ITEM:       {STACK_SIZE},
-	PLAYER:     {PLAYER_LEVEL, DELVE_DEPTH, PANTHEON, ASCENDANCY, PLAYER_SCORE},
+	PLAYER:     {PLAYER_LEVEL, DELVE_DEPTH, DELVE_DEPTH_PAST_100, PANTHEON, ASCENDANCY, PLAYER_SCORE},
+	TEAM:       {PLAYER_LEVEL, DELVE_DEPTH, DELVE_DEPTH_PAST_100, PANTHEON, ASCENDANCY, PLAYER_SCORE},
 	SUBMISSION: {SUBMISSION_VALUE},
 }
 

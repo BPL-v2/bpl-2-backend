@@ -53,7 +53,7 @@ var jobList = []repository.JobType{
 }
 
 func NewRecurringJobsController() *RecurringJobsController {
-	poeClient := client.NewPoEClient(10, false, 10)
+	poeClient := client.NewPoEClient(10, false, 600)
 	controller := &RecurringJobsController{
 		service: cron.NewRecurringJobService(poeClient),
 	}
