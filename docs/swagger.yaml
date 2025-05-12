@@ -796,6 +796,7 @@ definitions:
     - EARLIEST_FRESH_ITEM
     - MAXIMUM
     - MINIMUM
+    - DIFFERENCE_BETWEEN
     type: string
     x-enum-varnames:
     - SUM_LATEST
@@ -803,6 +804,7 @@ definitions:
     - EARLIEST_FRESH_ITEM
     - MAXIMUM
     - MINIMUM
+    - DIFFERENCE_BETWEEN
   ApprovalStatus:
     enum:
     - APPROVED
@@ -906,6 +908,7 @@ definitions:
     - STACK_SIZE
     - PLAYER_LEVEL
     - DELVE_DEPTH
+    - DELVE_DEPTH_PAST_100
     - PANTHEON
     - ASCENDANCY
     - PLAYER_SCORE
@@ -915,6 +918,7 @@ definitions:
     - STACK_SIZE
     - PLAYER_LEVEL
     - DELVE_DEPTH
+    - DELVE_DEPTH_PAST_100
     - PANTHEON
     - ASCENDANCY
     - PLAYER_SCORE
@@ -923,11 +927,13 @@ definitions:
     enum:
     - ITEM
     - PLAYER
+    - TEAM
     - SUBMISSION
     type: string
     x-enum-varnames:
     - ITEM
     - PLAYER
+    - TEAM
     - SUBMISSION
   Operator:
     enum:

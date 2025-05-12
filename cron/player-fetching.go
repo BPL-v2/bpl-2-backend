@@ -7,6 +7,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -41,28 +42,29 @@ func (s *PlayerFetchingService) shouldUpdateLadder() bool {
 	return time.Since(s.lastLadderUpdate) > 5*time.Minute
 }
 
-func (s *PlayerFetchingService) UpdateCharacterName(playerUpdate *parser.PlayerUpdate, event *repository.Event) {
-	charactersResponse, err := s.client.ListCharacters(playerUpdate.Token, event.GetRealm())
-	playerUpdate.Mu.Lock()
-	defer playerUpdate.Mu.Unlock()
-	playerUpdate.LastUpdateTimes.CharacterName = time.Now()
+func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate, event *repository.Event) {
+	charactersResponse, err := s.client.ListCharacters(player.Token, event.GetRealm())
+	player.Mu.Lock()
+	defer player.Mu.Unlock()
+	player.LastUpdateTimes.CharacterName = time.Now()
 	if err != nil {
+		player.SuccessiveErrors++
 		if err.StatusCode == 401 || err.StatusCode == 403 {
-			playerUpdate.TokenExpiry = time.Now()
+			player.TokenExpiry = time.Now()
 			return
 		}
-		log.Print(err)
+		log.Printf("Error fetching characters for player %d: %v", player.UserId, err)
 		return
 	}
+	player.SuccessiveErrors = 0
 	for _, char := range charactersResponse.Characters {
-		if char.League != nil && *char.League == s.event.Name && char.Level > playerUpdate.New.CharacterLevel {
-			playerUpdate.New.CharacterName = char.Name
-			playerUpdate.New.CharacterLevel = char.Level
-			playerUpdate.New.CharacterXP = char.Experience
-			playerUpdate.New.Ascendancy = char.Class
+		if char.League != nil && *char.League == s.event.Name && char.Level > player.New.CharacterLevel {
+			player.New.CharacterName = char.Name
+			player.New.CharacterLevel = char.Level
+			player.New.CharacterXP = char.Experience
+			player.New.Ascendancy = char.Class
 		}
 	}
-	log.Printf("Player %s updated: %s (%d)", playerUpdate.AccountName, playerUpdate.New.CharacterName, playerUpdate.New.CharacterLevel)
 }
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
@@ -71,17 +73,21 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.Character = time.Now()
 	if err != nil {
+		player.SuccessiveErrors++
 		if err.StatusCode == 401 || err.StatusCode == 403 {
+			fmt.Printf("Error fetching character for player %d: %d", player.UserId, err.StatusCode)
 			player.TokenExpiry = time.Now()
 			return
 		}
 		if err.StatusCode == 404 {
+			fmt.Printf("Character not found for player %d: %s", player.UserId, player.New.CharacterName)
 			player.New.CharacterName = ""
 			return
 		}
-		log.Print(err)
+		log.Printf("Error fetching character for player %d: %v", player.UserId, err)
 		return
 	}
+	player.SuccessiveErrors = 0
 	player.New.CharacterLevel = characterResponse.Character.Level
 	player.New.CharacterXP = characterResponse.Character.Experience
 	player.New.Ascendancy = characterResponse.Character.Class
@@ -99,13 +105,16 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.LeagueAccount = time.Now()
 	if err != nil {
+		player.SuccessiveErrors++
 		if err.StatusCode == 401 || err.StatusCode == 403 {
+			fmt.Printf("Error fetching league account for player %d: %d", player.UserId, err.StatusCode)
 			player.TokenExpiry = time.Now()
 			return
 		}
 		log.Print(err)
 		return
 	}
+	player.SuccessiveErrors = 0
 	player.New.AtlasPassiveTrees = leagueAccount.LeagueAccount.AtlasPassiveTrees
 }
 
@@ -125,7 +134,7 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 		resp, clientError = s.client.GetFullLadder(token, s.event.Name)
 	}
 	if clientError != nil {
-		log.Print(clientError)
+		log.Printf("Error fetching ladder: %v", clientError)
 		return
 	}
 
@@ -171,20 +180,21 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 }
 
 func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdate, error) {
-	users, err := service.userRepository.GetAuthenticatedUsersForEvent(service.event.Id)
+	users, err := service.userRepository.GetUsersForEvent(service.event.Id)
 	if err != nil {
 		return nil, err
 	}
 	players := utils.Map(users, func(user *repository.TeamUserWithPoEToken) *parser.PlayerUpdate {
 		return &parser.PlayerUpdate{
-			UserId:      user.UserId,
-			TeamId:      user.TeamId,
-			AccountName: user.AccountName,
-			Token:       user.Token,
-			TokenExpiry: user.TokenExpiry,
-			New:         parser.Player{},
-			Old:         parser.Player{},
-			Mu:          sync.Mutex{},
+			UserId:           user.UserId,
+			TeamId:           user.TeamId,
+			AccountName:      user.AccountName,
+			Token:            user.Token,
+			TokenExpiry:      user.TokenExpiry,
+			SuccessiveErrors: 0,
+			New:              parser.Player{},
+			Old:              parser.Player{},
+			Mu:               sync.Mutex{},
 			LastUpdateTimes: struct {
 				CharacterName time.Time
 				Character     time.Time
@@ -214,6 +224,22 @@ func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdat
 	return players, nil
 }
 
+func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.PlayerUpdate) []*parser.PlayerUpdate {
+	users, err := service.userRepository.GetUsersForEvent(service.event.Id)
+	usermap := make(map[int]*repository.TeamUserWithPoEToken, len(users))
+	if err != nil {
+		fmt.Printf("Error fetching users for event %d: %v", service.event.Id, err)
+		return players
+	}
+	for _, player := range players {
+		if user, ok := usermap[player.UserId]; ok {
+			player.Token = user.Token
+			player.TokenExpiry = user.TokenExpiry
+		}
+	}
+	return players
+}
+
 func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	service := NewPlayerFetchingService(poeClient, event)
 	players, err := service.initPlayerUpdates()
@@ -231,6 +257,11 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 		log.Print(err)
 		return
 	}
+	teamChecker, err := parser.NewTeamChecker(objectives)
+	if err != nil {
+		log.Print(err)
+		return
+	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -239,9 +270,6 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			wg := sync.WaitGroup{}
 			// handle character name updates first
 			for _, player := range players {
-				if player.TokenExpiry.Before(time.Now()) {
-					continue
-				}
 				if player.ShouldUpdateCharacterName() {
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {
@@ -253,9 +281,6 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			wg.Wait()
 			wg = sync.WaitGroup{}
 			for _, player := range players {
-				if player.TokenExpiry.Before(time.Now()) {
-					continue
-				}
 				if player.ShouldUpdateCharacter() {
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {
@@ -290,10 +315,18 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			matches := utils.FlatMap(players, func(player *parser.PlayerUpdate) []*repository.ObjectiveMatch {
 				return service.GetPlayerMatches(player, playerChecker)
 			})
+			for _, team := range event.Teams {
+				teamPlayers := utils.Filter(players, func(player *parser.PlayerUpdate) bool {
+					return player.TeamId == team.Id
+				})
+				teamMatches := service.GetTeamMatches(teamPlayers, teamChecker)
+				matches = append(matches, teamMatches...)
+			}
 			service.objectiveMatchService.SaveMatches(matches, []int{})
 			for _, player := range players {
 				player.Old = player.New
 			}
+			players = service.UpdatePlayerTokens(players)
 			time.Sleep(10 * time.Second)
 		}
 	}
@@ -304,6 +337,21 @@ func (m *PlayerFetchingService) GetPlayerMatches(player *parser.PlayerUpdate, pl
 		return &repository.ObjectiveMatch{
 			ObjectiveId: result.ObjectiveId,
 			UserId:      player.UserId,
+			Number:      result.Number,
+			Timestamp:   time.Now(),
+			EventId:     m.event.Id,
+		}
+	})
+}
+
+func (m *PlayerFetchingService) GetTeamMatches(players []*parser.PlayerUpdate, teamChecker *parser.TeamChecker) []*repository.ObjectiveMatch {
+	if len(players) == 0 {
+		return []*repository.ObjectiveMatch{}
+	}
+	return utils.Map(teamChecker.CheckForCompletions(players), func(result *parser.CheckResult) *repository.ObjectiveMatch {
+		return &repository.ObjectiveMatch{
+			ObjectiveId: result.ObjectiveId,
+			UserId:      players[0].UserId,
 			Number:      result.Number,
 			Timestamp:   time.Now(),
 			EventId:     m.event.Id,

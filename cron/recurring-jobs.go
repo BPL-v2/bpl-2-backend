@@ -132,7 +132,7 @@ func (s *RecurringJobService) FetchStashChanges(job *RecurringJob) error {
 }
 
 func (s *RecurringJobService) FetchCharacterData(job *RecurringJob) error {
-	event, err := s.eventService.GetEventById(job.EventId)
+	event, err := s.eventService.GetEventById(job.EventId, "Teams")
 	if err != nil {
 		return err
 	}

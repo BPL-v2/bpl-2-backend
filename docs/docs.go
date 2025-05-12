@@ -3298,14 +3298,16 @@ const docTemplate = `{
                 "EARLIEST",
                 "EARLIEST_FRESH_ITEM",
                 "MAXIMUM",
-                "MINIMUM"
+                "MINIMUM",
+                "DIFFERENCE_BETWEEN"
             ],
             "x-enum-varnames": [
                 "SUM_LATEST",
                 "EARLIEST",
                 "EARLIEST_FRESH_ITEM",
                 "MAXIMUM",
-                "MINIMUM"
+                "MINIMUM",
+                "DIFFERENCE_BETWEEN"
             ]
         },
         "ApprovalStatus": {
@@ -3428,6 +3430,7 @@ const docTemplate = `{
                 "STACK_SIZE",
                 "PLAYER_LEVEL",
                 "DELVE_DEPTH",
+                "DELVE_DEPTH_PAST_100",
                 "PANTHEON",
                 "ASCENDANCY",
                 "PLAYER_SCORE",
@@ -3437,6 +3440,7 @@ const docTemplate = `{
                 "STACK_SIZE",
                 "PLAYER_LEVEL",
                 "DELVE_DEPTH",
+                "DELVE_DEPTH_PAST_100",
                 "PANTHEON",
                 "ASCENDANCY",
                 "PLAYER_SCORE",
@@ -3448,11 +3452,13 @@ const docTemplate = `{
             "enum": [
                 "ITEM",
                 "PLAYER",
+                "TEAM",
                 "SUBMISSION"
             ],
             "x-enum-varnames": [
                 "ITEM",
                 "PLAYER",
+                "TEAM",
                 "SUBMISSION"
             ]
         },

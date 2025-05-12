@@ -34,13 +34,11 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Could not construct pool: %s", err)
 	}
-
 	// uses pool to try to connect to Docker
 	err = pool.Client.Ping()
 	if err != nil {
 		log.Fatalf("Could not connect to Docker: %s", err)
 	}
-
 	// pulls an image, creates a container based on it and runs it
 	resource, err := pool.Run("postgres", "17.2-alpine", []string{"POSTGRES_USER=postgres", "POSTGRES_PASSWORD=postgres", "DATABASE_NAME=postgres"})
 	if err != nil {
@@ -50,7 +48,6 @@ func TestMain(m *testing.M) {
 	sqlInfo := fmt.Sprintf(
 		"host=localhost port=%s user=postgres password=postgres dbname=postgres sslmode=disable search_path=bpl2",
 		resource.GetPort("5432/tcp"))
-
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	if err := pool.Retry(func() error {
 		var err error
@@ -74,11 +71,11 @@ func TestMain(m *testing.M) {
 		// 		}
 		// 	}
 		// }
-		return db.AutoMigrate(
+		err = db.AutoMigrate(
+			&repository.Event{},
 			&repository.ScoringCategory{},
 			&repository.Objective{},
 			&repository.Condition{},
-			&repository.Event{},
 			&repository.Team{},
 			&repository.User{},
 			&repository.TeamUser{},
@@ -90,6 +87,11 @@ func TestMain(m *testing.M) {
 			&repository.Oauth{},
 			&repository.KafkaConsumer{},
 		)
+		if err != nil {
+			fmt.Println("Error in AutoMigrate: ", err)
+		}
+
+		return err
 
 	}); err != nil {
 		log.Fatalf("Could not connect to database: %s", err)
@@ -415,4 +417,64 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 	}
 
 	assert.InDelta(t, now.Add(time.Hour).Unix(), match.Timestamp.Unix(), 1, "match should have the timestamp of completion")
+}
+
+func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
+	// this tests that an objective that has the aggregation type of IN_BETWEEN_TIMESTAMPS will only be counted as finished if the item
+	// is found in the stash change between the timestamps
+	event := SetUp()
+	defer TearDown()
+	now := time.Now()
+	timeStart := now.Add(-time.Hour)
+	timeEnd := now.Add(2 * time.Hour)
+
+	objective := &repository.Objective{
+		Name:           "objective1",
+		Aggregation:    repository.DIFFERENCE_BETWEEN,
+		RequiredAmount: 1,
+		CategoryId:     event.ScoringCategories[0].Id,
+		ObjectiveType:  repository.ITEM,
+		NumberField:    repository.STACK_SIZE,
+		SyncStatus:     repository.SyncStatusSynced,
+		ValidFrom:      &timeStart,
+		ValidTo:        &timeEnd,
+	}
+	err := db.Create(objective).Error
+	if err != nil {
+		t.Errorf("Error creating objective: %v", err)
+	}
+	stashChanges := []*repository.StashChange{
+		{
+			StashId:      "stash1",
+			NextChangeId: "1",
+			EventId:      event.Id,
+			Timestamp:    now,
+		},
+	}
+	db.Create(stashChanges)
+	getMatch := func(t time.Time, num int) *repository.ObjectiveMatch {
+		return &repository.ObjectiveMatch{
+			ObjectiveId:   objective.Id,
+			Timestamp:     t,
+			Number:        num,
+			UserId:        event.Teams[0].Users[0].Id,
+			EventId:       event.Id,
+			StashChangeId: &stashChanges[0].Id,
+		}
+	}
+
+	objectiveMatches := []*repository.ObjectiveMatch{
+		getMatch(timeStart.Add(-time.Minute), 1),
+		getMatch(timeStart.Add(time.Minute), 2),
+		getMatch(now, 12),
+		getMatch(timeEnd.Add(-time.Minute), 10),
+		getMatch(timeEnd.Add(time.Minute), 11),
+	}
+	db.Create(objectiveMatches)
+
+	matches, err := AggregateMatches(db, event, []*repository.Objective{objective})
+	if err != nil {
+		t.Errorf("Error in AggregateMatches: %v", err)
+	}
+	assert.Equal(t, 8, matches[objective.Id][event.Teams[0].Id].Number, "Match should be 8 since its the difference between the first and last timestamp")
 }

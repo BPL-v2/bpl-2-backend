@@ -154,12 +154,6 @@ func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
 
 }
 
-type TeamUserWithPoEAccountName struct {
-	TeamId      int
-	UserId      int
-	AccountName string
-}
-
 type TeamUserWithPoEToken struct {
 	TeamId      int
 	UserId      int
@@ -168,38 +162,16 @@ type TeamUserWithPoEToken struct {
 	TokenExpiry time.Time
 }
 
-func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEAccountName, error) {
+func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetUsersForEvent"))
-	defer timer.ObserveDuration()
-	var users []*TeamUserWithPoEAccountName
-	query := `
-		SELECT
-			users.id as user_id,
-			oauths.name as account_name,
-			team_users.team_id as team_id
-		FROM users
-		JOIN oauths ON oauths.user_id = users.id
-		JOIN team_users ON team_users.user_id = users.id
-		JOIN teams ON teams.id = team_users.team_id
-		WHERE teams.event_id = ? AND oauths.provider = 'poe'
-	`
-	result := r.DB.Raw(query, eventId).Scan(&users)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to get users for event: %v", result.Error)
-	}
-	return users, nil
-}
-
-func (r *UserRepository) GetAuthenticatedUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetAuthenticatedUsersForEvent"))
 	defer timer.ObserveDuration()
 	var users []*TeamUserWithPoEToken
 	query := `
 		SELECT
 			users.id as user_id,
+			oauths.name as account_name,
 			oauths.access_token as token,
 			oauths.expiry as token_expiry,
-			oauths.name as account_name,
 			team_users.team_id as team_id
 		FROM users
 		JOIN oauths ON oauths.user_id = users.id
