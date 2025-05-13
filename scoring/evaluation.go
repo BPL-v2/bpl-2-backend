@@ -214,7 +214,7 @@ func handleCategoryBonus(category *repository.ScoringCategory, objectiveScores [
 	}
 	for teamId, _ := range teamIds {
 		points := 0
-		for i := 0; i < finishCounts[teamId]; i++ {
+		for i := range finishCounts[teamId] {
 			points += int(category.ScoringPreset.Points.Get(i))
 		}
 		score := &Score{

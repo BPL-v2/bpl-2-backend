@@ -78,22 +78,17 @@ func (r *SubmissionRepository) SaveSubmission(submission *Submission) (*Submissi
 	return submission, nil
 }
 
-func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission) (*Submission, error) {
-
-	tx := r.DB.Begin()
-	result := tx.Save(submission)
-	if result.Error != nil {
-		tx.Rollback()
-		return submission, result.Error
-	}
-	result = tx.Delete(ObjectiveMatch{}, ObjectiveMatch{ObjectiveId: submission.ObjectiveId, UserId: submission.UserId, EventId: submission.EventId})
-	if result.Error != nil {
-		tx.Rollback()
-		return submission, result.Error
-	}
-	tx.Commit()
-	return submission, nil
-
+func (r *SubmissionRepository) AddMatchToSubmission(submission *Submission) error {
+	return r.DB.Create(submission.ToObjectiveMatch()).Error
+}
+func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission) error {
+	return r.DB.Delete(ObjectiveMatch{},
+		ObjectiveMatch{
+			ObjectiveId: submission.ObjectiveId,
+			UserId:      submission.UserId,
+			EventId:     submission.EventId,
+			Number:      submission.Number,
+		}).Error
 }
 
 func (r *SubmissionRepository) DeleteSubmission(submissionId int) error {

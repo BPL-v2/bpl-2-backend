@@ -34,8 +34,7 @@ func (e *SubmissionService) SaveSubmission(submission *repository.Submission, su
 		if existingSubmission.UserId != submitter.Id {
 			return nil, fmt.Errorf("you are not allowed to edit this submission")
 		}
-
-		existingSubmission, err = e.submissionRepository.RemoveMatchFromSubmission(existingSubmission)
+		err = e.submissionRepository.RemoveMatchFromSubmission(existingSubmission)
 		if err != nil {
 			return nil, err
 		}
@@ -57,18 +56,19 @@ func (e *SubmissionService) SaveSubmission(submission *repository.Submission, su
 
 func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview *repository.Submission, reviewer *repository.User) (*repository.Submission, error) {
 	submission, err := e.submissionRepository.GetSubmissionById(submissionId)
-
 	if err != nil {
 		return nil, err
 	}
 	if !utils.Contains(reviewer.Permissions, "admin") {
 		return nil, fmt.Errorf("you are not allowed to review submissions")
 	}
-	if submissionReview.ApprovalStatus != repository.APPROVED {
-		submission, err = e.submissionRepository.RemoveMatchFromSubmission(submission)
-		if err != nil {
-			return nil, err
-		}
+	if submissionReview.ApprovalStatus == repository.APPROVED {
+		err = e.submissionRepository.AddMatchToSubmission(submission)
+	} else {
+		err = e.submissionRepository.RemoveMatchFromSubmission(submission)
+	}
+	if err != nil {
+		return nil, err
 	}
 	submission.ApprovalStatus = submissionReview.ApprovalStatus
 	submission.ReviewComment = submissionReview.ReviewComment
