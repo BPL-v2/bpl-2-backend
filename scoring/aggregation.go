@@ -5,6 +5,7 @@ import (
 	"bpl/utils"
 	"fmt"
 	"log"
+	"sort"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -377,22 +378,22 @@ func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, te
 func getDifferencesBetweenTimestamps(objective *repository.Objective, preMatches []*Match, teamIds []int) []*Match {
 	matches := []*Match{}
 	for _, teamId := range teamIds {
-		filteredMatches := utils.Filter(preMatches, func(match *Match) bool {
-			return match.ObjectiveId == objective.Id &&
-				match.TeamId == teamId &&
-				match.Timestamp.After(*objective.ValidFrom) &&
-				match.Timestamp.Before(*objective.ValidTo)
+		objectiveMatches := utils.Filter(preMatches, func(match *Match) bool {
+			return match.ObjectiveId == objective.Id && match.TeamId == teamId
 		})
-		if len(filteredMatches) == 0 {
+		sort.Slice(objectiveMatches, func(i, j int) bool {
+			return objectiveMatches[i].Timestamp.Before(objectiveMatches[j].Timestamp)
+		})
+		if len(objectiveMatches) == 0 {
 			continue
 		}
-		maxMatch := filteredMatches[0]
-		minMatch := filteredMatches[0]
-		for _, match := range filteredMatches {
-			if match.Timestamp.Before(minMatch.Timestamp) && match.Timestamp.After(*objective.ValidFrom) {
+		minMatch := objectiveMatches[0]
+		maxMatch := objectiveMatches[0]
+		for _, match := range objectiveMatches {
+			if match.Timestamp.Before(*objective.ValidFrom) && minMatch.Timestamp.Before(match.Timestamp) {
 				minMatch = match
 			}
-			if match.Timestamp.After(maxMatch.Timestamp) && match.Timestamp.Before(*objective.ValidTo) {
+			if match.Timestamp.Before(*objective.ValidTo) && maxMatch.Timestamp.Before(match.Timestamp) {
 				maxMatch = match
 			}
 		}
