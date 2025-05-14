@@ -3383,7 +3383,8 @@ const docTemplate = `{
                 "SANCTUM_AFFLICTIONS",
                 "TEMPLE_ROOMS",
                 "RITUAL_VESSEL_BOSSES",
-                "RITUAL_VESSEL_MAP"
+                "RITUAL_VESSEL_MAP",
+                "FACETOR_LENS_EXP"
             ],
             "x-enum-comments": {
                 "SOCKETS": "as string like \"RGGB\""
@@ -3414,7 +3415,8 @@ const docTemplate = `{
                 "SANCTUM_MODS",
                 "TEMPLE_ROOMS",
                 "RITUAL_BOSSES",
-                "RITUAL_MAP"
+                "RITUAL_MAP",
+                "FACETOR_LENS_EXP"
             ]
         },
         "JobType": {

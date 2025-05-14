@@ -867,6 +867,7 @@ definitions:
     - TEMPLE_ROOMS
     - RITUAL_VESSEL_BOSSES
     - RITUAL_VESSEL_MAP
+    - FACETOR_LENS_EXP
     type: string
     x-enum-comments:
       SOCKETS: as string like "RGGB"
@@ -897,6 +898,7 @@ definitions:
     - TEMPLE_ROOMS
     - RITUAL_BOSSES
     - RITUAL_MAP
+    - FACETOR_LENS_EXP
   JobType:
     enum:
     - FetchStashChanges
