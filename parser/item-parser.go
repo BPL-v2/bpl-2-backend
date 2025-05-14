@@ -230,6 +230,23 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 			}
 			return 0
 		}, nil
+
+	case dbModel.FACETOR_LENS_EXP:
+		return func(item *clientModel.Item) int {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Stored Experience: {0}" {
+						exp, err := strconv.Atoi(property.Values[0].Name())
+						if err != nil {
+							log.Printf("Error parsing facetor lens exp %s", property.Values[0].Name())
+							return 0
+						}
+						return exp
+					}
+				}
+			}
+			return 0
+		}, nil
 	case dbModel.QUALITY:
 		return func(item *clientModel.Item) int {
 			if item.Properties != nil {
