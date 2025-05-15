@@ -215,6 +215,8 @@ definitions:
     type: object
   Event:
     properties:
+      application_end_time:
+        type: string
       application_start_time:
         type: string
       event_end_time:
@@ -242,6 +244,7 @@ definitions:
       waitlist_size:
         type: integer
     required:
+    - application_end_time
     - application_start_time
     - event_end_time
     - event_start_time
@@ -257,6 +260,8 @@ definitions:
     type: object
   EventCreate:
     properties:
+      application_end_time:
+        type: string
       application_start_time:
         type: string
       event_end_time:
@@ -280,6 +285,7 @@ definitions:
       waitlist_size:
         type: integer
     required:
+    - application_end_time
     - application_start_time
     - event_end_time
     - event_start_time

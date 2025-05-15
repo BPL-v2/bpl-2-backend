@@ -2461,6 +2461,7 @@ const docTemplate = `{
         "Event": {
             "type": "object",
             "required": [
+                "application_end_time",
                 "application_start_time",
                 "event_end_time",
                 "event_start_time",
@@ -2475,6 +2476,9 @@ const docTemplate = `{
                 "waitlist_size"
             ],
             "properties": {
+                "application_end_time": {
+                    "type": "string"
+                },
                 "application_start_time": {
                     "type": "string"
                 },
@@ -2519,6 +2523,7 @@ const docTemplate = `{
         "EventCreate": {
             "type": "object",
             "required": [
+                "application_end_time",
                 "application_start_time",
                 "event_end_time",
                 "event_start_time",
@@ -2528,6 +2533,9 @@ const docTemplate = `{
                 "waitlist_size"
             ],
             "properties": {
+                "application_end_time": {
+                    "type": "string"
+                },
                 "application_start_time": {
                     "type": "string"
                 },

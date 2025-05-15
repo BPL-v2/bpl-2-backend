@@ -237,6 +237,7 @@ type EventCreate struct {
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
 	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
+	ApplicationEndTime   time.Time              `json:"application_end_time" binding:"required"`
 	Public               bool                   `json:"is_public"`
 	Locked               bool                   `json:"is_locked"`
 }
@@ -250,6 +251,7 @@ type Event struct {
 	WaitlistSize         int                    `json:"waitlist_size" binding:"required"`
 	Teams                []*Team                `json:"teams" binding:"required"`
 	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
+	ApplicationEndTime   time.Time              `json:"application_end_time" binding:"required"`
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
 	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
 	Public               bool                   `json:"is_public" binding:"required"`
@@ -266,6 +268,7 @@ func (e *EventCreate) toModel() *repository.Event {
 		EventStartTime:       e.EventStartTime,
 		EventEndTime:         e.EventEndTime,
 		ApplicationStartTime: e.ApplicationStartTime,
+		ApplicationEndTime:   e.ApplicationEndTime,
 		Public:               e.Public,
 		Locked:               e.Locked,
 	}
@@ -288,6 +291,7 @@ func toEventResponse(event *repository.Event) *Event {
 		WaitlistSize:         event.WaitlistSize,
 		Teams:                utils.Map(event.Teams, toTeamResponse),
 		ApplicationStartTime: event.ApplicationStartTime,
+		ApplicationEndTime:   event.ApplicationEndTime,
 		EventStartTime:       event.EventStartTime,
 		EventEndTime:         event.EventEndTime,
 		Public:               event.Public,

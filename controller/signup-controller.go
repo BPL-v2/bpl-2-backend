@@ -91,6 +91,10 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
+		if event.ApplicationStartTime.Before(time.Now()) || event.ApplicationEndTime.After(time.Now()) {
+			c.JSON(400, gin.H{"error": "Applications are not open"})
+			return
+		}
 		//  TODO: Uncomment this when discord server check is implemented
 		// err = e.userService.DiscordServerCheck(user)
 		// if err != nil {
