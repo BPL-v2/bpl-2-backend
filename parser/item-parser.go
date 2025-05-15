@@ -684,6 +684,10 @@ func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResul
 
 func applyCheckers(checkers []*ItemObjectiveChecker, item *clientModel.Item) []*CheckResult {
 	results := make([]*CheckResult, 0)
+	// sort out foiled items
+	if item.FrameType != nil && *item.FrameType == 10 {
+		return results
+	}
 	for _, checker := range checkers {
 		if checker.Check(item) {
 			number := 1
