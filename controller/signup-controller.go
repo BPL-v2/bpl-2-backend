@@ -91,7 +91,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		if event.ApplicationStartTime.Before(time.Now()) || event.ApplicationEndTime.After(time.Now()) {
+		if event.ApplicationStartTime.After(time.Now()) || event.ApplicationEndTime.Before(time.Now()) {
 			c.JSON(400, gin.H{"error": "Applications are not open"})
 			return
 		}
