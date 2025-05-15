@@ -19,9 +19,11 @@ type StreamService struct {
 func NewStreamService() *StreamService {
 	oauthService := NewOauthService()
 	s := &StreamService{
-		userRepository: repository.NewUserRepository(),
-		teamRepository: repository.NewTeamRepository(),
-		oauthService:   oauthService,
+		userRepository:   repository.NewUserRepository(),
+		teamRepository:   repository.NewTeamRepository(),
+		ladderRepository: repository.NewLadderRepository(),
+		eventRepository:  repository.NewEventRepository(),
+		oauthService:     oauthService,
 	}
 	token, err := oauthService.GetApplicationToken("twitch")
 	if err != nil {
