@@ -8,10 +8,12 @@ import (
 )
 
 type StreamService struct {
-	teamRepository *repository.TeamRepository
-	userRepository *repository.UserRepository
-	twitchClient   *client.TwitchClient
-	oauthService   *OauthService
+	teamRepository   *repository.TeamRepository
+	userRepository   *repository.UserRepository
+	ladderRepository *repository.LadderRepository
+	eventRepository  *repository.EventRepository
+	twitchClient     *client.TwitchClient
+	oauthService     *OauthService
 }
 
 func NewStreamService() *StreamService {
@@ -46,10 +48,20 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.TwitchStream, err
 	for _, streamer := range streamers {
 		userMap[streamer.TwitchId] = streamer.UserId
 	}
-
-	streams, err := e.twitchClient.GetAllStreams(utils.Map(streamers, func(user *repository.Streamer) string {
-		return user.TwitchId
-	}))
+	event, err := e.eventRepository.GetCurrentEvent()
+	if err != nil {
+		return nil, err
+	}
+	ladderEntries, err := e.ladderRepository.GetLadderForEvent(event.Id)
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range ladderEntries {
+		if entry.TwitchAccount != nil {
+			userMap[*entry.TwitchAccount] = entry.UserId
+		}
+	}
+	streams, err := e.twitchClient.GetAllStreams(utils.Keys(userMap))
 	if err != nil {
 		return nil, err
 	}

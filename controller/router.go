@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +20,7 @@ type RouteInfo struct {
 	RequiredRoles []repository.Permission
 }
 
-func SetRoutes(r *gin.Engine) {
+func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
 	routes := make([]RouteInfo, 0)
 	group := r.Group("/api")
 	routes = append(routes, setupEventController()...)
@@ -33,7 +34,7 @@ func SetRoutes(r *gin.Engine) {
 	routes = append(routes, setupSignupController()...)
 	routes = append(routes, setupSubmissionController()...)
 	routes = append(routes, setupScoreController()...)
-	routes = append(routes, setupStreamController()...)
+	routes = append(routes, setupStreamController(cache)...)
 	routes = append(routes, setupRecurringJobsController()...)
 	routes = append(routes, setupLadderController()...)
 	routes = append(routes, setupTeamSuggestionController()...)

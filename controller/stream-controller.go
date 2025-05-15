@@ -2,7 +2,10 @@ package controller
 
 import (
 	"bpl/service"
+	"time"
 
+	"github.com/gin-contrib/cache"
+	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,11 +23,11 @@ func NewStreamController() *StreamController {
 	}
 }
 
-func setupStreamController() []RouteInfo {
+func setupStreamController(cacheStore *persistence.InMemoryStore) []RouteInfo {
 	e := NewStreamController()
 	basePath := "/streams"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getStreamsHandler()},
+		{Method: "GET", Path: "", HandlerFunc: cache.CachePage(cacheStore, 5*time.Minute, e.getStreamsHandler())},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path

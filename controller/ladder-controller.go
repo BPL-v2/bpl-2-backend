@@ -131,6 +131,7 @@ type LadderEntry struct {
 	Delve         int        `json:"delve" binding:"required"`
 	Rank          int        `json:"rank" binding:"required"`
 	Extra         *Character `json:"extra"`
+	TwitchAccount *string    `json:"twitch_account"`
 }
 
 type Atlas struct {
@@ -173,6 +174,7 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 			Experience:    entry.Experience,
 			Delve:         entry.Delve,
 			Rank:          entry.Rank,
+			TwitchAccount: entry.TwitchAccount,
 		}
 		if character != nil {
 			responseEntry.Extra = toCharacterResponse(character)

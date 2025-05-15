@@ -58,10 +58,10 @@ func NewTwitchClient(token string) *TwitchClient {
 	}
 }
 
-func (t *TwitchClient) GetAllStreams(userIds []string) ([]*TwitchStream, error) {
+func (t *TwitchClient) GetAllStreams(twitchIds []string) ([]*TwitchStream, error) {
 	streamChannel := make(chan []*TwitchStream)
 	var wg sync.WaitGroup
-	for userBatch := range utils.BatchIterator(userIds, 100) {
+	for userBatch := range utils.BatchIterator(twitchIds, 100) {
 		func(ids []string) {
 			wg.Add(1)
 			go func() {
