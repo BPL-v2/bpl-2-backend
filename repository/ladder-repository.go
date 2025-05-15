@@ -9,15 +9,16 @@ import (
 )
 
 type LadderEntry struct {
-	UserId     int    `gorm:"index;not null"`
-	Account    string `gorm:"not null"`
-	Character  string `gorm:"not null"`
-	Class      string `gorm:"not null"`
-	Level      int    `gorm:"not null"`
-	Delve      int    `gorm:"not null"`
-	Experience int    `gorm:"not null"`
-	Rank       int    `gorm:"not null"`
-	EventId    int    `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE;index;not null"`
+	UserId        int     `gorm:"index;not null"`
+	Account       string  `gorm:"not null"`
+	Character     string  `gorm:"not null"`
+	Class         string  `gorm:"not null"`
+	Level         int     `gorm:"not null"`
+	Delve         int     `gorm:"not null"`
+	Experience    int     `gorm:"not null"`
+	Rank          int     `gorm:"not null"`
+	TwitchAccount *string `gorm:"null"`
+	EventId       int     `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE;index;not null"`
 }
 
 type LadderRepository struct {
@@ -52,6 +53,9 @@ func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId in
 		}
 		if entry.Character.Experience != nil {
 			dbEntry.Experience = *entry.Character.Experience
+		}
+		if entry.Account.Twitch != nil {
+			dbEntry.TwitchAccount = &entry.Account.Twitch.Name
 		}
 		dbEntries = append(dbEntries, dbEntry)
 	}

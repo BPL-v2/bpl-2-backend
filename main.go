@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -58,8 +59,8 @@ func main() {
 	addMetrics(r)
 	addDocs(r)
 	setCors(r)
-
-	controller.SetRoutes(r)
+	cacheStore := persistence.NewInMemoryStore(60 * time.Second)
+	controller.SetRoutes(r, cacheStore)
 	fmt.Println("Server started in", time.Since(t))
 	r.Run(":8000")
 }

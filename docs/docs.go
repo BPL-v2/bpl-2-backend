@@ -2620,6 +2620,9 @@ const docTemplate = `{
                 "rank": {
                     "type": "integer"
                 },
+                "twitch_account": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }
