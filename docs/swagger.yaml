@@ -951,6 +951,7 @@ definitions:
     - NOT_IN
     - MATCHES
     - CONTAINS
+    - CONTAINS_ALL
     - CONTAINS_MATCH
     - LENGTH_EQ
     - LENGTH_GT
@@ -965,6 +966,7 @@ definitions:
     - NOT_IN
     - MATCHES
     - CONTAINS
+    - CONTAINS_ALL
     - CONTAINS_MATCH
     - LENGTH_EQ
     - LENGTH_GT

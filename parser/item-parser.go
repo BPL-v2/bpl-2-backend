@@ -151,16 +151,17 @@ func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Ite
 	case dbModel.TEMPLE_ROOMS:
 		return func(item *clientModel.Item) []string {
 			rooms := make([]string, 0)
-			if item.Properties != nil {
-				for _, property := range *item.Properties {
+			if item.AdditionalProperties != nil {
+				for _, property := range *item.AdditionalProperties {
 					if property.Type != nil && *property.Type == 49 {
 						// we can also only look for open rooms by requiring value.ID == 0
 						for _, value := range property.Values {
-							rooms = append(rooms, value.Name())
+							rooms = append(rooms, strings.Split(value.Name(), " (Tier")[0])
 						}
 					}
 				}
 			}
+			fmt.Printf("Rooms: %v\n", rooms)
 			return rooms
 		}, nil
 	case dbModel.RITUAL_BOSSES:
@@ -453,18 +454,37 @@ func StringArrayComparator(condition *dbModel.Condition) (itemChecker, error) {
 	switch condition.Operator {
 	case dbModel.CONTAINS:
 		return func(item *clientModel.Item) bool {
-			for _, fv := range getter(item) {
-				if strings.Contains(fv, condition.Value) {
+			for _, actualValue := range getter(item) {
+				if strings.Contains(actualValue, condition.Value) {
 					return true
 				}
 			}
 			return false
 		}, nil
+	case dbModel.CONTAINS_ALL:
+		values := utils.Map(strings.Split(condition.Value, ","), func(s string) string {
+			return strings.Trim(s, " ")
+		})
+		return func(item *clientModel.Item) bool {
+			for _, expectedValue := range values {
+				found := false
+				for _, actualValue := range getter(item) {
+					if strings.Contains(actualValue, expectedValue) {
+						found = true
+						break
+					}
+				}
+				if !found {
+					return false
+				}
+			}
+			return true
+		}, nil
 	case dbModel.CONTAINS_MATCH:
 		expression := regexp.MustCompile(condition.Value)
 		return func(item *clientModel.Item) bool {
-			for _, fv := range getter(item) {
-				if expression.MatchString(fv) {
+			for _, actualValues := range getter(item) {
+				if expression.MatchString(actualValues) {
 					return true
 				}
 			}

@@ -82,7 +82,7 @@ var OperatorsForTypes = map[FieldType][]Operator{
 	String:      {EQ, NEQ, IN, NOT_IN, MATCHES, CONTAINS, LENGTH_EQ, LENGTH_GT, LENGTH_LT},
 	Int:         {EQ, NEQ, GT, LT, IN, NOT_IN},
 	Bool:        {EQ, NEQ},
-	StringArray: {CONTAINS, CONTAINS_MATCH, LENGTH_EQ, LENGTH_GT, LENGTH_LT},
+	StringArray: {CONTAINS, CONTAINS_ALL, CONTAINS_MATCH, LENGTH_EQ, LENGTH_GT, LENGTH_LT},
 }
 
 const (
@@ -94,6 +94,7 @@ const (
 	NOT_IN         Operator = "NOT_IN"
 	MATCHES        Operator = "MATCHES"
 	CONTAINS       Operator = "CONTAINS"
+	CONTAINS_ALL   Operator = "CONTAINS_ALL"
 	CONTAINS_MATCH Operator = "CONTAINS_MATCH"
 	LENGTH_EQ      Operator = "LENGTH_EQ"
 	LENGTH_GT      Operator = "LENGTH_GT"
