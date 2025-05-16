@@ -32,10 +32,6 @@ func (e *SubmissionService) SaveBulkSubmissions(submissions []*repository.Submis
 		if err != nil {
 			return nil, err
 		}
-		err = e.submissionRepository.AddMatchToSubmission(submission)
-		if err != nil {
-			return nil, err
-		}
 		persisted = append(persisted, s)
 	}
 	return persisted, nil
