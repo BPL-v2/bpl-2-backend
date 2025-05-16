@@ -275,7 +275,7 @@ func (s *SubmissionCreate) toModel() *repository.Submission {
 
 func (s *TeamSubmissionCreate) toModels(eventId int, reviewerId int, teamLeads map[int][]*repository.TeamUser) []*repository.Submission {
 	now := time.Now()
-	submissions := make([]*repository.Submission, len(s.TeamIds))
+	submissions := make([]*repository.Submission, 0)
 	for place, teamId := range s.TeamIds {
 		submissions = append(submissions, &repository.Submission{
 			ObjectiveId:    s.ObjectiveId,
