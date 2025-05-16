@@ -61,3 +61,18 @@ func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]
 func (e *TeamService) GetTeamForUser(eventId int, userId int) (*repository.TeamUser, error) {
 	return e.teamRepository.GetTeamForUser(eventId, userId)
 }
+
+func (e *TeamService) GetTeamLeadsForEvent(eventId int) (map[int][]*repository.TeamUser, error) {
+	leads, err := e.teamRepository.GetTeamLeadsForEvent(eventId)
+	if err != nil {
+		return nil, err
+	}
+	teamLeads := make(map[int][]*repository.TeamUser)
+	for _, teamLead := range leads {
+		if _, ok := teamLeads[teamLead.TeamId]; !ok {
+			teamLeads[teamLead.TeamId] = make([]*repository.TeamUser, 0)
+		}
+		teamLeads[teamLead.TeamId] = append(teamLeads[teamLead.TeamId], teamLead)
+	}
+	return teamLeads, nil
+}

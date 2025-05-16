@@ -25,6 +25,22 @@ func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submissio
 	return e.submissionRepository.GetSubmissionsForObjectives(objectives)
 }
 
+func (e *SubmissionService) SaveBulkSubmissions(submissions []*repository.Submission) ([]*repository.Submission, error) {
+	persisted := make([]*repository.Submission, 0)
+	for _, submission := range submissions {
+		s, err := e.submissionRepository.SaveSubmission(submission)
+		if err != nil {
+			return nil, err
+		}
+		err = e.submissionRepository.AddMatchToSubmission(submission)
+		if err != nil {
+			return nil, err
+		}
+		persisted = append(persisted, s)
+	}
+	return persisted, nil
+}
+
 func (e *SubmissionService) SaveSubmission(submission *repository.Submission, submitter *repository.User) (*repository.Submission, error) {
 	if submission.Id != 0 {
 		existingSubmission, err := e.submissionRepository.GetSubmissionById(submission.Id)
@@ -76,13 +92,14 @@ func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview 
 	return e.submissionRepository.SaveSubmission(submission)
 }
 
-func (e *SubmissionService) DeleteSubmission(id int, user *repository.User) error {
+func (e *SubmissionService) GetSubmissionById(id int) (*repository.Submission, error) {
 	submission, err := e.submissionRepository.GetSubmissionById(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if submission.UserId != user.Id {
-		return fmt.Errorf("you are not allowed to delete this submission")
-	}
-	return e.submissionRepository.DeleteSubmission(id)
+	return submission, nil
+}
+
+func (e *SubmissionService) DeleteSubmission(submission *repository.Submission, user *repository.User) error {
+	return e.submissionRepository.DeleteSubmission(submission.Id)
 }

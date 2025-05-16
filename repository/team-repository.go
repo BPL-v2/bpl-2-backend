@@ -80,6 +80,24 @@ func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error)
 	return teamUsers, nil
 }
 
+func (r *TeamRepository) GetTeamLeadsForEvent(eventId int) ([]*TeamUser, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamLeadsForEvent"))
+	defer timer.ObserveDuration()
+	teamUsers := make([]*TeamUser, 0)
+	query := `
+		SELECT * 
+		FROM team_users
+		JOIN teams ON team_users.team_id = teams.id
+		WHERE teams.event_id = ?
+		AND team_users.is_team_lead = true
+	`
+	result := r.DB.Raw(query, eventId).Scan(&teamUsers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return teamUsers, nil
+}
+
 func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *Event) error {
 	query := `
 		DELETE FROM team_users

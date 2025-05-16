@@ -740,6 +740,18 @@ definitions:
     - allowed_classes
     - name
     type: object
+  TeamSubmissionCreate:
+    properties:
+      objective_id:
+        type: integer
+      team_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - objective_id
+    - team_ids
+    type: object
   TeamUserCreate:
     properties:
       is_team_lead:
@@ -1883,6 +1895,37 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Submission'
+      security:
+      - BearerAuth: []
+      tags:
+      - submission
+  /events/{event_id}/submissions/admin:
+    put:
+      consumes:
+      - application/json
+      description: Sets submissions for teams
+      operationId: SetBulkSubmissionForAdmin
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Submissions to create
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TeamSubmissionCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            items:
+              $ref: '#/definitions/Submission'
+            type: array
       security:
       - BearerAuth: []
       tags:

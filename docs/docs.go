@@ -1222,6 +1222,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/submissions/admin": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sets submissions for teams",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "submission"
+                ],
+                "operationId": "SetBulkSubmissionForAdmin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Submissions to create",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TeamSubmissionCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Submission"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/submissions/{submission_id}": {
             "delete": {
                 "security": [
@@ -3214,6 +3263,24 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "TeamSubmissionCreate": {
+            "type": "object",
+            "required": [
+                "objective_id",
+                "team_ids"
+            ],
+            "properties": {
+                "objective_id": {
+                    "type": "integer"
+                },
+                "team_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
