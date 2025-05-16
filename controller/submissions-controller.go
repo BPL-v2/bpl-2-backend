@@ -282,7 +282,7 @@ func (s *TeamSubmissionCreate) toModels(eventId int, reviewerId int, teamLeads m
 			Timestamp:      now.Add(time.Duration(place) * time.Second),
 			Number:         1,
 			UserId:         teamLeads[teamId][0].UserId,
-			ApprovalStatus: repository.APPROVED,
+			ApprovalStatus: repository.PENDING,
 			ReviewerId:     &reviewerId,
 			EventId:        eventId,
 		})
