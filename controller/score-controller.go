@@ -42,7 +42,7 @@ func setupScoreController() []RouteInfo {
 	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},
-		{Method: "GET", Path: "/ws", HandlerFunc: e.WebSocketHandler},
+		// {Method: "GET", Path: "/ws", HandlerFunc: e.WebSocketHandler},
 		{Method: "GET", Path: "/simple/ws", HandlerFunc: e.SimpleWebSocketHandler},
 	}
 	for i, route := range routes {
