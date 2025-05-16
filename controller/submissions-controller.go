@@ -183,8 +183,9 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 			c.JSON(404, gin.H{"error": err.Error()})
 			return
 		}
-		if submission.UserId != user.Id || !utils.Contains(user.Permissions, repository.PermissionSubmissionJudge) {
+		if submission.UserId != user.Id && !utils.Contains(user.Permissions, repository.PermissionSubmissionJudge) {
 			c.JSON(403, gin.H{"error": "You are not allowed to delete this submission"})
+			return
 		}
 		err = e.submissionService.DeleteSubmission(submission, user)
 		if err != nil {
