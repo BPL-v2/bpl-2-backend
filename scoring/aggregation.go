@@ -390,7 +390,10 @@ func getDifferencesBetweenTimestamps(objective *repository.Objective, preMatches
 		if len(objectiveMatches) == 0 {
 			continue
 		}
-		minMatch := objectiveMatches[0]
+		minMatch := &Match{
+			Timestamp: objectiveMatches[0].Timestamp.Add(-time.Hour),
+			Number:    0,
+		}
 		maxMatch := objectiveMatches[0]
 		for _, match := range objectiveMatches {
 			if match.Timestamp.Before(*objective.ValidFrom) && minMatch.Timestamp.Before(match.Timestamp) {
