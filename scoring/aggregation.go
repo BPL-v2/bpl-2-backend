@@ -85,7 +85,10 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 			return nil, err
 		}
 		for _, match := range matches {
-			match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
+			// todo: maybe move this into the aggregation steps
+			if aggregation != repository.DIFFERENCE_BETWEEN {
+				match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
+			}
 			aggregations[match.ObjectiveId][match.TeamId] = match
 		}
 		// }(aggregation)
