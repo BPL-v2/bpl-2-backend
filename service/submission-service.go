@@ -2,7 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-	"bpl/utils"
 	"fmt"
 )
 
@@ -70,9 +69,6 @@ func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview 
 	submission, err := e.submissionRepository.GetSubmissionById(submissionId)
 	if err != nil {
 		return nil, err
-	}
-	if !utils.Contains(reviewer.Permissions, "admin") {
-		return nil, fmt.Errorf("you are not allowed to review submissions")
 	}
 	if submissionReview.ApprovalStatus == repository.APPROVED {
 		err = e.submissionRepository.AddMatchToSubmission(submission)
