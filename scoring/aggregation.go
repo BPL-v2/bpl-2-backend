@@ -397,7 +397,6 @@ func getDifferencesBetweenTimestamps(objective *repository.Objective, preMatches
 				maxMatch = match
 			}
 		}
-		fmt.Println("time.Now().After(*objective.ValidTo)", time.Now().After(*objective.ValidTo))
 		matches = append(matches, &Match{
 			ObjectiveId: objective.Id,
 			Number:      maxMatch.Number - minMatch.Number,
