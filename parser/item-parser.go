@@ -213,14 +213,19 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 			}
 			return 0
 		}, nil
-	case dbModel.MAX_LINKS:
+	case dbModel.MAP_TIER:
 		return func(item *clientModel.Item) int {
-			if item.Sockets != nil {
-				groups := make(map[int]int)
-				for _, socket := range *item.Sockets {
-					groups[socket.Group]++
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Map Tier" {
+						tier, err := strconv.Atoi(property.Values[0].Name())
+						if err != nil {
+							log.Printf("Error parsing map tier %s", property.Values[0].Name())
+							return 0
+						}
+						return tier
+					}
 				}
-				return utils.Max(utils.Values(groups))
 			}
 			return 0
 		}, nil

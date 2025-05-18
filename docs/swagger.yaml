@@ -871,6 +871,7 @@ definitions:
     - ILVL
     - FRAME_TYPE
     - TALISMAN_TIER
+    - MAP_TIER
     - ENCHANT_MODS
     - EXPLICIT_MODS
     - IMPLICIT_MODS
@@ -902,6 +903,7 @@ definitions:
     - ILVL
     - FRAME_TYPE
     - TALISMAN_TIER
+    - MAP_TIER
     - ENCHANTS
     - EXPLICITS
     - IMPLICITS
