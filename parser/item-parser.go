@@ -161,7 +161,6 @@ func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Ite
 					}
 				}
 			}
-			fmt.Printf("Rooms: %v\n", rooms)
 			return rooms
 		}, nil
 	case dbModel.RITUAL_BOSSES:
