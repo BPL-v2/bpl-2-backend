@@ -139,7 +139,6 @@ func (f *FetchingService) FilterStashChanges() {
 					stashCounterFiltered.Inc()
 				}
 			}
-			fmt.Println("Stash Change: ", stashChange.ChangeId, "Stashes: ", len(stashChange.Stashes), "In League: ", len(stashes))
 			message := config.StashChangeMessage{
 				ChangeId:     stashChange.ChangeId,
 				NextChangeId: stashChange.NextChangeId,
@@ -148,6 +147,7 @@ func (f *FetchingService) FilterStashChanges() {
 			// make sure that stash changes are only saved if the messages are successfully written to kafka
 			f.stashChangeService.SaveStashChangesConditionally(stashes, message, f.event.Id,
 				func(data []byte) error {
+					fmt.Println("Writing to Kafka topic", message.ChangeId)
 					return writer.WriteMessages(context.Background(),
 						kafka.Message{
 							Value: data,

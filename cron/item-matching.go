@@ -9,6 +9,7 @@ import (
 	"bpl/utils"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -160,6 +161,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				log.Fatal(err)
 				return
 			}
+			fmt.Println("Processing stash change", stashChange.ChangeId)
 			if m.lastChangeId != nil && stashChange.ChangeId == *m.lastChangeId {
 				log.Println("Sync finished")
 				// once we reach the starting change id the sync is finished
