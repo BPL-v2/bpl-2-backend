@@ -5,6 +5,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -172,7 +173,9 @@ func (e *ScoreController) StartScoreUpdater() {
 			eventIds = append(eventIds, utils.Keys(e.simpleConnections)...)
 			e.mu.Unlock()
 			for _, eventId := range eventIds {
+				fmt.Println("Calculating scores for event", eventId)
 				diff, err := e.scoreService.GetNewDiff(eventId)
+				fmt.Println("Done calculating scores for event", eventId)
 				if err != nil {
 					continue
 				}
