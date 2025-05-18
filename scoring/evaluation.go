@@ -162,6 +162,9 @@ func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTea
 
 func handleRankedValue(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
 	rankFun := func(a, b *Match) bool {
+		if a.Number == b.Number {
+			return a.Timestamp.Before(b.Timestamp)
+		}
 		return a.Number > b.Number
 	}
 	return handleRanked(objective, aggregations, rankFun)
@@ -169,6 +172,9 @@ func handleRankedValue(objective *repository.Objective, aggregations ObjectiveTe
 
 func handleRankedReverse(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
 	rankFun := func(a, b *Match) bool {
+		if a.Number == b.Number {
+			return a.Timestamp.Before(b.Timestamp)
+		}
 		return a.Number < b.Number
 	}
 	return handleRanked(objective, aggregations, rankFun)
