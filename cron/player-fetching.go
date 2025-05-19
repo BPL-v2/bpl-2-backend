@@ -348,12 +348,13 @@ func (m *PlayerFetchingService) GetTeamMatches(players []*parser.PlayerUpdate, t
 	if len(players) == 0 {
 		return []*repository.ObjectiveMatch{}
 	}
+	now := time.Now()
 	return utils.Map(teamChecker.CheckForCompletions(players), func(result *parser.CheckResult) *repository.ObjectiveMatch {
 		return &repository.ObjectiveMatch{
 			ObjectiveId: result.ObjectiveId,
 			UserId:      players[0].UserId,
 			Number:      result.Number,
-			Timestamp:   time.Now(),
+			Timestamp:   now,
 			EventId:     m.event.Id,
 		}
 	})
