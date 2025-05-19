@@ -150,9 +150,6 @@ func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamM
 func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
 	rankFun := func(a, b *Match) bool {
 		if a.Finished && b.Finished {
-			if a.Timestamp.Equal(b.Timestamp) {
-				return a.Number > b.Number
-			}
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Finished
@@ -180,14 +177,22 @@ func handleRankedReverse(objective *repository.Objective, aggregations Objective
 	return handleRanked(objective, aggregations, rankFun)
 }
 
-func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMatches, rankFun func(*Match, *Match) bool) ([]*Score, error) {
+func isTiedWithNext(index int, matches []*Match, rankFun func(a, b *Match) bool) bool {
+	if index >= len(matches)-1 {
+		return false
+	}
+	return rankFun(matches[index], matches[index+1]) == rankFun(matches[index+1], matches[index])
+}
+
+func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMatches, rankFun func(a, b *Match) bool) ([]*Score, error) {
 	scores := make([]*Score, 0)
 	matches := make([]*Match, 0)
 	for _, match := range aggregations[objective.Id] {
 		matches = append(matches, match)
 	}
 	sort.Slice(matches, func(i, j int) bool { return rankFun(matches[i], matches[j]) })
-	for i, match := range matches {
+	i := 0
+	for j, match := range matches {
 		score := &Score{
 			Type:      OBJECTIVE,
 			Id:        objective.Id,
@@ -202,6 +207,9 @@ func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMat
 			score.Points = int(objective.ScoringPreset.Points.Get(i))
 		}
 		scores = append(scores, score)
+		if !isTiedWithNext(j, matches, rankFun) {
+			i++
+		}
 
 	}
 
