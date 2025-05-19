@@ -166,18 +166,15 @@ func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 
 func (e *ScoreController) StartScoreUpdater() {
 	go func() {
-		fmt.Println("Starting score updater")
 		for {
 			e.mu.Lock()
 			// calculate scores for events with active websocket connections
 			eventIds := utils.Keys(e.connections)
-			eventIds = append(eventIds, utils.Keys(e.simpleConnections)...)
+			eventIds = utils.Uniques(append(eventIds, utils.Keys(e.simpleConnections)...))
 			e.mu.Unlock()
-			fmt.Println("Calculating scores for events", eventIds)
 			for _, eventId := range eventIds {
 				fmt.Println("Calculating scores for event", eventId)
 				diff, err := e.scoreService.GetNewDiff(eventId)
-				fmt.Println("Done calculating scores for event", eventId)
 				if err != nil {
 					continue
 				}
@@ -207,7 +204,7 @@ func (e *ScoreController) StartScoreUpdater() {
 				}
 				e.mu.Unlock()
 			}
-			time.Sleep(10 * time.Second)
+			time.Sleep(5 * time.Second)
 		}
 	}()
 }
