@@ -39,7 +39,7 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 }
 
 func (s *PlayerFetchingService) shouldUpdateLadder() bool {
-	return time.Since(s.lastLadderUpdate) > 5*time.Minute
+	return time.Since(s.lastLadderUpdate) > 30*time.Second
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate, event *repository.Event) {
@@ -327,7 +327,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				player.Old = player.New
 			}
 			players = service.UpdatePlayerTokens(players)
-			time.Sleep(10 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
