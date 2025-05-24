@@ -1,7 +1,7 @@
 -- ALTER TABLE submissions DROP COLUMN match_id;
 -- ALTER TABLE objective_matches DROP COLUMN id;
 ALTER TABLE objective_matches
-ADD COLUMN id bigserial NOT NULL PRIMARY KEY UNIQUE;
+ADD COLUMN id bigserial NOT NULL UNIQUE;
 -- set default value for match_id
 ALTER TABLE objective_matches
 ALTER COLUMN id

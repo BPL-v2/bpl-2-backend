@@ -230,7 +230,7 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 		Conditions:     utils.Map(e.Conditions, func(c ObjectiveConditionCreate) *repository.Condition { return c.toModel() }),
 		ValidFrom:      e.ValidFrom,
 		ValidTo:        e.ValidTo,
-		CategoryId:     e.CategoryId,
+		ParentId:       &e.CategoryId,
 		ScoringId:      e.ScoringId,
 	}
 }
@@ -244,7 +244,7 @@ func toObjectiveResponse(objective *repository.Objective) *Objective {
 		Name:            objective.Name,
 		Extra:           objective.Extra,
 		RequiredNumber:  objective.RequiredAmount,
-		CategoryId:      objective.CategoryId,
+		CategoryId:      *objective.ParentId,
 		ObjectiveType:   objective.ObjectiveType,
 		ValidFrom:       objective.ValidFrom,
 		ValidTo:         objective.ValidTo,
@@ -264,7 +264,7 @@ func toPublicObjectiveResponse(objective *repository.Objective) *Objective {
 	if objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &Objective{
 			Name:            fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
-			CategoryId:      objective.CategoryId,
+			CategoryId:      *objective.ParentId,
 			ValidFrom:       objective.ValidFrom,
 			ValidTo:         objective.ValidTo,
 			ScoringPresetId: objective.ScoringId,
