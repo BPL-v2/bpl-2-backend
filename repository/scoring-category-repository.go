@@ -15,7 +15,7 @@ type ScoringCategory struct {
 	ParentId      *int               `gorm:"null;references:scoring_category(id)"`
 	ScoringId     *int               `gorm:"null;references:scoring_presets(id)"`
 	SubCategories []*ScoringCategory `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
-	Objectives    []*Objective       `gorm:"foreignKey:CategoryId;constraint:OnDelete:CASCADE"`
+	Objectives    []*Objective       `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
 	ScoringPreset *ScoringPreset     `gorm:"foreignKey:ScoringId;references:Id"`
 }
 

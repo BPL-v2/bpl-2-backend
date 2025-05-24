@@ -146,7 +146,7 @@ func (e *ConditionController) testConditionHandler() gin.HandlerFunc {
 		objectives := make([]*repository.Objective, 0, len(conditionTest.Conditions))
 		objectives = append(objectives, &repository.Objective{
 			Conditions:    conditions,
-			ObjectiveType: repository.ITEM,
+			ObjectiveType: repository.ObjectiveTypeItem,
 		})
 		checker, _ := parser.NewItemChecker(objectives)
 		checker.CheckForCompletions(&conditionTest.Item)

@@ -128,7 +128,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	}
 	desyncedObjectiveIds := make([]int, 0)
 	for _, objective := range objectives {
-		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ITEM {
+		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ObjectiveTypeItem {
 			desyncedObjectiveIds = append(desyncedObjectiveIds, objective.Id)
 		}
 	}

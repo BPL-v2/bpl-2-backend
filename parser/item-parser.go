@@ -637,7 +637,7 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 		dbModel.ITEM_CLASS: make(map[string][]*ItemObjectiveChecker),
 	}
 	for _, objective := range objectives {
-		if objective.ObjectiveType != dbModel.ITEM {
+		if objective.ObjectiveType != dbModel.ObjectiveTypeItem {
 			continue
 		}
 		discriminators, remainingConditions, err := GetDiscriminators(objective.Conditions)

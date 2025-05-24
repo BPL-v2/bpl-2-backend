@@ -96,34 +96,34 @@ type TeamObjectiveChecker func(p []*Player) int
 type PlayerObjectiveChecker func(p *Player) int
 
 func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, error) {
-	if (objective.ObjectiveType != repository.PLAYER) && (objective.ObjectiveType != repository.TEAM) {
+	if (objective.ObjectiveType != repository.ObjectiveTypePlayer) && (objective.ObjectiveType != repository.ObjectiveTypeTeam) {
 		return nil, fmt.Errorf("not a player objective")
 	}
 	switch objective.NumberField {
-	case repository.PLAYER_LEVEL:
+	case repository.NumberFieldPlayerLevel:
 		return func(p *Player) int {
 			return p.CharacterLevel
 		}, nil
-	case repository.DELVE_DEPTH:
+	case repository.NumberFieldDelveDepth:
 		return func(p *Player) int {
 			return p.DelveDepth
 		}, nil
-	case repository.DELVE_DEPTH_PAST_100:
+	case repository.NumberFieldDelveDepthPast100:
 		return func(p *Player) int {
 			return max(p.DelveDepth-100, 0)
 		}, nil
-	case repository.PANTHEON:
+	case repository.NumberFieldPantheon:
 		return func(p *Player) int {
 			if p.Pantheon {
 				return 1
 			}
 			return 0
 		}, nil
-	case repository.ASCENDANCY:
+	case repository.NumberFieldAscendancy:
 		return func(p *Player) int {
 			return p.AscendancyPoints
 		}, nil
-	case repository.PLAYER_SCORE:
+	case repository.NumberFieldPlayerScore:
 		return func(p *Player) int {
 			score := 0
 			if p.CharacterLevel >= 75 {
@@ -147,7 +147,7 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 }
 
 func GetTeamChecker(objective *repository.Objective) (TeamObjectiveChecker, error) {
-	if objective.ObjectiveType != repository.TEAM {
+	if objective.ObjectiveType != repository.ObjectiveTypeTeam {
 		return nil, fmt.Errorf("not a team objective")
 	}
 	checker, err := GetPlayerChecker(objective)
@@ -169,7 +169,7 @@ type TeamChecker map[int]TeamObjectiveChecker
 func NewPlayerChecker(objectives []*repository.Objective) (*PlayerChecker, error) {
 	checkers := make(map[int]PlayerObjectiveChecker)
 	for _, objective := range objectives {
-		if objective.ObjectiveType != repository.PLAYER {
+		if objective.ObjectiveType != repository.ObjectiveTypePlayer {
 			continue
 		}
 		checker, err := GetPlayerChecker(objective)
@@ -184,7 +184,7 @@ func NewPlayerChecker(objectives []*repository.Objective) (*PlayerChecker, error
 func NewTeamChecker(objectives []*repository.Objective) (*TeamChecker, error) {
 	checkers := make(map[int]TeamObjectiveChecker)
 	for _, objective := range objectives {
-		if objective.ObjectiveType != repository.TEAM {
+		if objective.ObjectiveType != repository.ObjectiveTypeTeam {
 			continue
 		}
 		checker, err := GetTeamChecker(objective)

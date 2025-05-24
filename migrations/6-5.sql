@@ -1,1 +1,1 @@
-ALTER TABLE DROP COLUMN "atlas_node_count";
+ALTER TABLE "characters" DROP COLUMN "atlas_node_count";
