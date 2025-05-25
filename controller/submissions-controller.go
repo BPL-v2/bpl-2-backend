@@ -300,13 +300,11 @@ func (s *SubmissionReview) toModel() *repository.Submission {
 
 type Submission struct {
 	Id             int                       `json:"id" binding:"required"`
-	Objective      *Objective                `json:"objective"`
 	Number         int                       `json:"number" binding:"required"`
 	Proof          string                    `json:"proof" binding:"required"`
 	Timestamp      time.Time                 `json:"timestamp" binding:"required"`
 	ApprovalStatus repository.ApprovalStatus `json:"approval_status" binding:"required"`
 	Comment        string                    `json:"comment" binding:"required"`
-	User           *NonSensitiveUser         `json:"user"`
 	TeamId         *int                      `json:"team_id"`
 	ReviewComment  *string                   `json:"review_comment"`
 	ReviewerId     *int                      `json:"reviewer_id"`
@@ -315,13 +313,11 @@ type Submission struct {
 func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]int) *Submission {
 	response := &Submission{
 		Id:             submission.Id,
-		Objective:      toObjectiveResponse(submission.Objective),
 		Number:         submission.Number,
 		Proof:          submission.Proof,
 		Timestamp:      submission.Timestamp,
 		ApprovalStatus: submission.ApprovalStatus,
 		Comment:        submission.Comment,
-		User:           toNonSensitiveUserResponse(submission.User),
 		ReviewComment:  submission.ReviewComment,
 		ReviewerId:     submission.ReviewerId,
 	}

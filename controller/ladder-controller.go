@@ -122,7 +122,7 @@ func (c *LadderController) getAtlasesForEvent() gin.HandlerFunc {
 }
 
 type LadderEntry struct {
-	UserId        int        `json:"user_id" binding:"required"`
+	UserId        *int       `json:"user_id"`
 	CharacterName string     `json:"character_name" binding:"required"`
 	AccountName   string     `json:"account_name" binding:"required"`
 	Level         int        `json:"level" binding:"required"`
@@ -164,7 +164,6 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 		characterMap[character.UserID] = character
 	}
 	for _, entry := range entries {
-		character := characterMap[entry.UserId]
 		responseEntry := &LadderEntry{
 			UserId:        entry.UserId,
 			CharacterName: entry.Character,
@@ -176,8 +175,8 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 			Rank:          entry.Rank,
 			TwitchAccount: entry.TwitchAccount,
 		}
-		if character != nil {
-			responseEntry.Extra = toCharacterResponse(character)
+		if entry.UserId != nil && characterMap[*entry.UserId] != nil {
+			responseEntry.Extra = toCharacterResponse(characterMap[*entry.UserId])
 		}
 		response = append(response, responseEntry)
 	}
