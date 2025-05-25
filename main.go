@@ -136,7 +136,6 @@ func setCors(r *gin.Engine) {
 
 func autoMigrate(db *gorm.DB) {
 	err := db.AutoMigrate(
-		&repository.ScoringCategory{},
 		&repository.Objective{},
 		&repository.Condition{},
 		&repository.Event{},

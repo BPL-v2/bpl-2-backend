@@ -8,12 +8,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type ScoreMap map[string]*ScoreDifference
+type ScoreMap map[int]map[int]*ScoreDifference
+
+func (s ScoreMap) setDiff(score *scoring.Score, diff *ScoreDifference) {
+	if _, ok := s[score.TeamId]; !ok {
+		s[score.TeamId] = make(map[int]*ScoreDifference)
+	}
+	s[score.TeamId][score.Id] = diff
+}
 
 func (s ScoreMap) GetSimpleScore() map[int]int {
 	scores := make(map[int]int)
-	for _, value := range s {
-		scores[value.Score.TeamId] += value.Score.Points
+	for _, teamScore := range s {
+		for _, scoreDiff := range teamScore {
+			scores[scoreDiff.Score.TeamId] += scoreDiff.Score.Points
+		}
 	}
 	return scores
 }
@@ -34,23 +43,20 @@ type ScoreDifference struct {
 }
 
 type ScoreService struct {
-	LatestScores           map[int]ScoreMap
-	eventService           *EventService
-	scoringCategoryService *ScoringCategoryService
-	objectiveService       *ObjectiveService
-	db                     *gorm.DB
+	LatestScores     map[int]ScoreMap
+	eventService     *EventService
+	objectiveService *ObjectiveService
+	db               *gorm.DB
 }
 
 func NewScoreService() *ScoreService {
 	eventService := NewEventService()
-	scoringCategoryService := NewScoringCategoryService()
 	objectiveService := NewObjectiveService()
 	return &ScoreService{
-		db:                     config.DatabaseConnection(),
-		eventService:           eventService,
-		scoringCategoryService: scoringCategoryService,
-		objectiveService:       objectiveService,
-		LatestScores:           make(map[int]ScoreMap),
+		db:               config.DatabaseConnection(),
+		eventService:     eventService,
+		objectiveService: objectiveService,
+		LatestScores:     make(map[int]ScoreMap),
 	}
 }
 
@@ -81,20 +87,24 @@ func GetScoreDifference(prevDiff *ScoreDifference, scoreA *scoring.Score) *Score
 	return &ScoreDifference{Score: scoreA, FieldDiff: fieldDiff, DiffType: Changed}
 }
 
-func Diff(scoreMap map[string]*ScoreDifference, scores []*scoring.Score) (ScoreMap, ScoreMap) {
+func Diff(scoreMap ScoreMap, scores []*scoring.Score) (ScoreMap, ScoreMap) {
 	newMap := make(ScoreMap)
 	diffMap := make(ScoreMap)
 	for _, score := range scores {
-		id := score.Identifier()
-		scorediff := GetScoreDifference(scoreMap[id], score)
-		newMap[id] = scorediff
+		scorediff := GetScoreDifference(scoreMap[score.TeamId][score.Id], score)
+		newMap.setDiff(score, scorediff)
 		if scorediff.DiffType != Unchanged {
-			diffMap[id] = scorediff
+			diffMap.setDiff(score, scorediff)
 		}
 	}
-	for id, oldScore := range scoreMap {
-		if _, ok := newMap[id]; !ok {
-			diffMap[id] = &ScoreDifference{Score: oldScore.Score, DiffType: Removed}
+	for teamId, oldTeamScore := range scoreMap {
+		for objectiveId, scoreDiff := range oldTeamScore {
+			if _, ok := newMap[teamId][objectiveId]; !ok {
+				diffMap.setDiff(scoreDiff.Score, &ScoreDifference{
+					Score:    scoreDiff.Score,
+					DiffType: Removed,
+				})
+			}
 		}
 	}
 	return newMap, diffMap
@@ -120,20 +130,17 @@ func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err erro
 	if err != nil {
 		return nil, err
 	}
-	rules, err := s.scoringCategoryService.GetRulesForEvent(event.Id, "Objectives", "Objectives.Conditions", "ScoringPreset", "Objectives.ScoringPreset")
-	if err != nil {
-		return nil, err
-	}
-	objectives, err := s.objectiveService.GetObjectivesByEventId(event.Id)
+
+	rootObjective, err := s.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPreset", "Conditions")
 	if err != nil {
 		return nil, err
 	}
 
-	matches, err := scoring.AggregateMatches(s.db, event, objectives)
+	matches, err := scoring.AggregateMatches(s.db, event, rootObjective.FlatMap())
 	if err != nil {
 		return nil, err
 	}
-	scores, err := scoring.EvaluateAggregations(rules, matches)
+	scores, err := scoring.EvaluateAggregations(rootObjective, matches)
 	if err != nil {
 		return nil, err
 	}

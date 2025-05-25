@@ -15,23 +15,20 @@ import (
 )
 
 type ScoreController struct {
-	scoringCategoryService *service.ScoringCategoryService
-	eventService           *service.EventService
-	scoreService           *service.ScoreService
-	mu                     sync.Mutex
-	connections            map[int]map[*websocket.Conn]bool
-	simpleConnections      map[int]map[*websocket.Conn]bool
+	eventService      *service.EventService
+	scoreService      *service.ScoreService
+	mu                sync.Mutex
+	connections       map[int]map[*websocket.Conn]bool
+	simpleConnections map[int]map[*websocket.Conn]bool
 }
 
 func NewScoreController() *ScoreController {
-	scoringCategoryService := service.NewScoringCategoryService()
 	eventService := service.NewEventService()
 	controller := &ScoreController{
-		scoringCategoryService: scoringCategoryService,
-		eventService:           eventService,
-		scoreService:           service.NewScoreService(),
-		connections:            make(map[int]map[*websocket.Conn]bool),
-		simpleConnections:      make(map[int]map[*websocket.Conn]bool),
+		eventService:      eventService,
+		scoreService:      service.NewScoreService(),
+		connections:       make(map[int]map[*websocket.Conn]bool),
+		simpleConnections: make(map[int]map[*websocket.Conn]bool),
 	}
 	controller.StartScoreUpdater()
 	return controller
@@ -212,7 +209,7 @@ func (e *ScoreController) StartScoreUpdater() {
 // @Description Fetches the latest scores for the current event
 // @Tags scores
 // @Produce json
-// @Success 200 {object} ScoreMap
+// @Success 200 {array} ScoreDiff
 // @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/scores/latest [get]
 func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
@@ -240,25 +237,29 @@ type Score struct {
 }
 
 type ScoreDiff struct {
-	Score     *Score           `json:"score" binding:"required"`
-	FieldDiff []string         `json:"field_diff" binding:"required"`
-	DiffType  service.Difftype `json:"diff_type" binding:"required"`
+	ObjectiveId int              `json:"objective_id" binding:"required"`
+	TeamId      int              `json:"team_id" binding:"required"`
+	Score       *Score           `json:"score" binding:"required"`
+	FieldDiff   []string         `json:"field_diff" binding:"required"`
+	DiffType    service.Difftype `json:"diff_type" binding:"required"`
 }
-
-type ScoreMap map[string]*ScoreDiff
 
 func toScoreDiffResponse(scoreDiff *service.ScoreDifference) *ScoreDiff {
 	return &ScoreDiff{
-		Score:     toScoreResponse(scoreDiff.Score),
-		FieldDiff: scoreDiff.FieldDiff,
-		DiffType:  scoreDiff.DiffType,
+		Score:       toScoreResponse(scoreDiff.Score),
+		FieldDiff:   scoreDiff.FieldDiff,
+		DiffType:    scoreDiff.DiffType,
+		ObjectiveId: scoreDiff.Score.Id,
+		TeamId:      scoreDiff.Score.TeamId,
 	}
 }
 
-func toScoreMapResponse(scoreMap service.ScoreMap) ScoreMap {
-	response := make(ScoreMap)
-	for id, score := range scoreMap {
-		response[id] = toScoreDiffResponse(score)
+func toScoreMapResponse(scoreMap service.ScoreMap) []*ScoreDiff {
+	response := make([]*ScoreDiff, 0)
+	for _, teamScores := range scoreMap {
+		for _, scoreDiff := range teamScores {
+			response = append(response, toScoreDiffResponse(scoreDiff))
+		}
 	}
 	return response
 }

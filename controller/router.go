@@ -26,7 +26,6 @@ func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
 	routes = append(routes, setupEventController()...)
 	routes = append(routes, setupTeamController()...)
 	routes = append(routes, setupConditionController()...)
-	routes = append(routes, setupScoringCategoryController()...)
 	routes = append(routes, setupObjectiveController()...)
 	routes = append(routes, setupOauthController()...)
 	routes = append(routes, setupUserController()...)

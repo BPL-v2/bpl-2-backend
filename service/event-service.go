@@ -24,20 +24,20 @@ type EventStatus struct {
 }
 
 type EventService struct {
-	eventRepository           *repository.EventRepository
-	scoringCategoryRepository *repository.ScoringCategoryRepository
-	scoringPresetRepository   *repository.ScoringPresetRepository
-	teamService               *TeamService
-	signupService             *SignupService
+	eventRepository         *repository.EventRepository
+	scoringPresetRepository *repository.ScoringPresetRepository
+	objectiveRepository     *repository.ObjectiveRepository
+	teamService             *TeamService
+	signupService           *SignupService
 }
 
 func NewEventService() *EventService {
 	return &EventService{
-		eventRepository:           repository.NewEventRepository(),
-		scoringCategoryRepository: repository.NewScoringCategoryRepository(),
-		scoringPresetRepository:   repository.NewScoringPresetRepository(),
-		teamService:               NewTeamService(),
-		signupService:             NewSignupService(),
+		eventRepository:         repository.NewEventRepository(),
+		scoringPresetRepository: repository.NewScoringPresetRepository(),
+		objectiveRepository:     repository.NewObjectiveRepository(),
+		teamService:             NewTeamService(),
+		signupService:           NewSignupService(),
 	}
 }
 
@@ -47,7 +47,7 @@ func (e *EventService) GetAllEvents(preloads ...string) ([]*repository.Event, er
 
 func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
 	if event.Id == 0 {
-		event.ScoringCategories = []*repository.ScoringCategory{{
+		event.Objectives = []*repository.Objective{{
 			Name: "default",
 		}}
 	}
@@ -86,7 +86,7 @@ func (e *EventService) GetCurrentEvent(preloads ...string) (*repository.Event, e
 }
 
 func (e *EventService) DeleteEvent(event *repository.Event) error {
-	err := e.scoringCategoryRepository.DeleteCategoriesForEvent(event.Id)
+	err := e.objectiveRepository.DeleteObjectivesByEventId(event.Id)
 	if err != nil {
 		return err
 	}
