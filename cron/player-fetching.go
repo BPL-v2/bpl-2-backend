@@ -247,7 +247,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 		log.Print(err)
 		return
 	}
-	objectives, err := service.objectiveService.GetObjectivesByEventId(service.event.Id)
+	objectives, err := service.objectiveService.GetObjectivesForEvent(service.event.Id)
 	if err != nil {
 		log.Print(err)
 		return

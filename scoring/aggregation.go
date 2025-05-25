@@ -61,13 +61,12 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		return team.Id
 	})
 	objectiveMap := make(map[int]repository.Objective)
-	objectiveLists := make(map[repository.AggregationType][]*repository.Objective)
+	objectivesByAggregation := make(map[repository.AggregationType][]*repository.Objective)
 	for _, objective := range objectives {
-		objectiveLists[objective.Aggregation] = append(objectiveLists[objective.Aggregation], objective)
+		objectivesByAggregation[objective.Aggregation] = append(objectivesByAggregation[objective.Aggregation], objective)
 		objectiveMap[objective.Id] = *objective
 		aggregations[objective.Id] = make(TeamMatches)
 	}
-	// wg := sync.WaitGroup{}
 	for _, aggregation := range []repository.AggregationType{
 		repository.AggregationTypeEarliestFreshItem,
 		repository.AggregationTypeEarliest,
@@ -76,24 +75,21 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		repository.AggregationTypeSumLatest,
 		repository.AggregationTypeDifferenceBetween,
 	} {
-		// wg.Add(1)
-		// go func(aggregation repository.AggregationType) {
-		// 	defer wg.Done()
-		matches, err := aggregationMap[aggregation](db, objectiveLists[aggregation], teamIds, event.Id)
-		if err != nil {
-			log.Print(err)
-			return nil, err
-		}
-		for _, match := range matches {
-			// todo: maybe move this into the aggregation steps
-			if aggregation != repository.AggregationTypeDifferenceBetween {
-				match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
+		if handler, ok := aggregationMap[aggregation]; ok {
+			matches, err := handler(db, objectivesByAggregation[aggregation], teamIds, event.Id)
+			if err != nil {
+				log.Print(err)
+				continue
 			}
-			aggregations[match.ObjectiveId][match.TeamId] = match
+			for _, match := range matches {
+				// todo: maybe move this into the aggregation steps
+				if aggregation != repository.AggregationTypeDifferenceBetween {
+					match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
+				}
+				aggregations[match.ObjectiveId][match.TeamId] = match
+			}
 		}
-		// }(aggregation)
 	}
-	// wg.Wait()
 	return aggregations, nil
 }
 

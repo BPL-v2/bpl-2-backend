@@ -73,7 +73,6 @@ func TestMain(m *testing.M) {
 		// }
 		err = db.AutoMigrate(
 			&repository.Event{},
-			&repository.ScoringCategory{},
 			&repository.Objective{},
 			&repository.Condition{},
 			&repository.Team{},
@@ -153,7 +152,7 @@ func SetUp() *repository.Event {
 				AllowedClasses: []string{},
 			},
 		},
-		ScoringCategories: []*repository.ScoringCategory{
+		Objectives: []*repository.Objective{
 			{
 				Name: "category1",
 			},
@@ -175,7 +174,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.AggregationTypeEarliestFreshItem,
 		RequiredAmount: 1,
-		ParentId:       &event.ScoringCategories[0].Id,
+		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
 		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -265,7 +264,7 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.AggregationTypeEarliestFreshItem,
 		RequiredAmount: 1,
-		ParentId:       &event.ScoringCategories[0].Id,
+		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
 		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -343,7 +342,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.AggregationTypeEarliestFreshItem,
 		RequiredAmount: 100,
-		ParentId:       &event.ScoringCategories[0].Id,
+		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
 		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
@@ -432,7 +431,7 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 		Name:           "objective1",
 		Aggregation:    repository.AggregationTypeDifferenceBetween,
 		RequiredAmount: 1,
-		ParentId:       &event.ScoringCategories[0].Id,
+		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
 		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,

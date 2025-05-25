@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/utils"
 	"time"
 
 	"gorm.io/gorm"
@@ -78,6 +79,15 @@ type Objective struct {
 	ScoringId      *int            `gorm:"null;references:scoring_presets(id)"`
 	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:Id"`
 	SyncStatus     SyncStatus      `gorm:"not null;default:DESYNCED"`
+	Children       []*Objective    `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
+}
+
+func (o *Objective) FlatMap() []*Objective {
+	result := []*Objective{o}
+	for _, child := range o.Children {
+		result = append(result, child.FlatMap()...)
+	}
+	return result
 }
 
 type ObjectiveRepository struct {
@@ -115,6 +125,11 @@ func (r *ObjectiveRepository) DeleteObjective(objectiveId int) error {
 	return result.Error
 }
 
+func (r *ObjectiveRepository) DeleteObjectivesByEventId(eventId int) error {
+	result := r.DB.Where("event_id = ?", eventId).Delete(&Objective{})
+	return result.Error
+}
+
 func (r *ObjectiveRepository) RemoveScoringId(scoringId int) error {
 	result := r.DB.Model(&Objective{}).Where(Objective{ScoringId: &scoringId}).Update("scoring_id", nil)
 	return result.Error
@@ -135,4 +150,43 @@ func (r *ObjectiveRepository) FinishSync(objectiveIds []int) error {
 		Model(&Objective{}).Where("id IN ? and sync_status = ?", objectiveIds, SyncStatusSyncing).
 		Update("sync_status", SyncStatusSynced)
 	return result.Error
+}
+
+func (r *ObjectiveRepository) GetObjectivesByEventId(eventId int, preloads ...string) (*Objective, error) {
+	objectives, err := r.GetObjectivesByEventIdFlat(eventId, preloads...)
+	if err != nil {
+		return nil, err
+	}
+	idMap := make(map[int]*Objective)
+	for _, objective := range objectives {
+		idMap[objective.Id] = objective
+	}
+	for _, objective := range objectives {
+		if objective.ParentId != nil {
+			parent, exists := idMap[*objective.ParentId]
+			if exists {
+				parent.Children = append(parent.Children, objective)
+			}
+		}
+	}
+	rootObjective, found := utils.FindFirst(objectives, func(o *Objective) bool {
+		return o.ParentId == nil
+	})
+	if !found {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return rootObjective, nil
+}
+
+func (r *ObjectiveRepository) GetObjectivesByEventIdFlat(eventId int, preloads ...string) ([]*Objective, error) {
+	var objectives []*Objective
+	query := r.DB.Model(&Objective{}).Where("event_id = ?", eventId)
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	result := query.Find(&objectives)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return objectives, nil
 }

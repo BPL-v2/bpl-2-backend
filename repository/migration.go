@@ -70,6 +70,22 @@ func Migration() error {
 			fmt.Println("Error updating objective with new parent ID:", err)
 			return err
 		}
+		suggestions := make([]*TeamSuggestion, 0)
+		if err := tx.Find(&suggestions).Error; err != nil {
+			fmt.Println("Error fetching team suggestions:", err)
+		}
+		for _, suggestion := range suggestions {
+			if !suggestion.IsObjective {
+				if newParentId, exists := catIDMapping[suggestion.Id]; exists {
+					suggestion.Id = newParentId
+				}
+			}
+			if err := tx.Save(suggestion).Error; err != nil {
+				fmt.Println("Error updating team suggestion with new parent ID:", err)
+				return err
+			}
+		}
+
 		tx.Exec("UPDATE migrations SET version = 16")
 		fmt.Println("Migration completed successfully")
 		return nil
