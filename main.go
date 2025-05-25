@@ -62,7 +62,6 @@ func main() {
 	cacheStore := persistence.NewInMemoryStore(60 * time.Second)
 	controller.SetRoutes(r, cacheStore)
 	fmt.Println("Server started in", time.Since(t))
-	repository.Migration()
 	r.Run(":8000")
 }
 
