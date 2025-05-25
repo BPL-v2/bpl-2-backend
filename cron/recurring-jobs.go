@@ -19,26 +19,24 @@ type RecurringJob struct {
 }
 
 type RecurringJobService struct {
-	objectiveRepository       *repository.ObjectiveRepository
-	conditionRepository       *repository.ConditionRepository
-	scoringCategoryRepository *repository.ScoringCategoryRepository
-	eventService              *service.EventService
-	poeClient                 *client.PoEClient
-	jobRepository             *repository.RecurringJobsRepository
-	Jobs                      map[repository.JobType]*RecurringJob
+	objectiveRepository *repository.ObjectiveRepository
+	conditionRepository *repository.ConditionRepository
+	eventService        *service.EventService
+	poeClient           *client.PoEClient
+	jobRepository       *repository.RecurringJobsRepository
+	Jobs                map[repository.JobType]*RecurringJob
 }
 
 func NewRecurringJobService(poeClient *client.PoEClient) *RecurringJobService {
 	eventService := service.NewEventService()
 
 	s := &RecurringJobService{
-		objectiveRepository:       repository.NewObjectiveRepository(),
-		conditionRepository:       repository.NewConditionRepository(),
-		scoringCategoryRepository: repository.NewScoringCategoryRepository(),
-		jobRepository:             repository.NewRecurringJobsRepository(),
-		eventService:              eventService,
-		poeClient:                 poeClient,
-		Jobs:                      make(map[repository.JobType]*RecurringJob),
+		objectiveRepository: repository.NewObjectiveRepository(),
+		conditionRepository: repository.NewConditionRepository(),
+		jobRepository:       repository.NewRecurringJobsRepository(),
+		eventService:        eventService,
+		poeClient:           poeClient,
+		Jobs:                make(map[repository.JobType]*RecurringJob),
 	}
 
 	jobs, err := s.InitializeJobs()

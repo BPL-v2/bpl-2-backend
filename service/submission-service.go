@@ -17,7 +17,7 @@ func NewSubmissionService() *SubmissionService {
 
 func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submission, error) {
 	objectiveService := NewObjectiveService()
-	objectives, err := objectiveService.GetObjectivesByEventId(eventId)
+	objectives, err := objectiveService.GetObjectivesForEvent(eventId)
 	if err != nil {
 		return nil, err
 	}

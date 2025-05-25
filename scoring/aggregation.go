@@ -40,12 +40,12 @@ type ObjectiveTeamMatches = map[int]TeamMatches
 type AggregationHandler func(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error)
 
 var aggregationMap = map[repository.AggregationType]AggregationHandler{
-	repository.EARLIEST_FRESH_ITEM: handleEarliestFreshItem,
-	repository.EARLIEST:            handleEarliest,
-	repository.SUM_LATEST:          handleLatestSum,
-	repository.MAXIMUM:             handleMaximum,
-	repository.MINIMUM:             handleMinimum,
-	repository.DIFFERENCE_BETWEEN:  handleDifferenceBetween,
+	repository.AggregationTypeEarliestFreshItem: handleEarliestFreshItem,
+	repository.AggregationTypeEarliest:          handleEarliest,
+	repository.AggregationTypeSumLatest:         handleLatestSum,
+	repository.AggregationTypeMaximum:           handleMaximum,
+	repository.AggregationTypeMinimum:           handleMinimum,
+	repository.AggregationTypeDifferenceBetween: handleDifferenceBetween,
 }
 var scoreAggregationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Name: "score_aggregation_duration_s",
@@ -61,39 +61,35 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		return team.Id
 	})
 	objectiveMap := make(map[int]repository.Objective)
-	objectiveLists := make(map[repository.AggregationType][]*repository.Objective)
+	objectivesByAggregation := make(map[repository.AggregationType][]*repository.Objective)
 	for _, objective := range objectives {
-		objectiveLists[objective.Aggregation] = append(objectiveLists[objective.Aggregation], objective)
+		objectivesByAggregation[objective.Aggregation] = append(objectivesByAggregation[objective.Aggregation], objective)
 		objectiveMap[objective.Id] = *objective
 		aggregations[objective.Id] = make(TeamMatches)
 	}
-	// wg := sync.WaitGroup{}
 	for _, aggregation := range []repository.AggregationType{
-		repository.EARLIEST_FRESH_ITEM,
-		repository.EARLIEST,
-		repository.MAXIMUM,
-		repository.MINIMUM,
-		repository.SUM_LATEST,
-		repository.DIFFERENCE_BETWEEN,
+		repository.AggregationTypeEarliestFreshItem,
+		repository.AggregationTypeEarliest,
+		repository.AggregationTypeMaximum,
+		repository.AggregationTypeMinimum,
+		repository.AggregationTypeSumLatest,
+		repository.AggregationTypeDifferenceBetween,
 	} {
-		// wg.Add(1)
-		// go func(aggregation repository.AggregationType) {
-		// 	defer wg.Done()
-		matches, err := aggregationMap[aggregation](db, objectiveLists[aggregation], teamIds, event.Id)
-		if err != nil {
-			log.Print(err)
-			return nil, err
-		}
-		for _, match := range matches {
-			// todo: maybe move this into the aggregation steps
-			if aggregation != repository.DIFFERENCE_BETWEEN {
-				match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
+		if handler, ok := aggregationMap[aggregation]; ok {
+			matches, err := handler(db, objectivesByAggregation[aggregation], teamIds, event.Id)
+			if err != nil {
+				log.Print(err)
+				continue
 			}
-			aggregations[match.ObjectiveId][match.TeamId] = match
+			for _, match := range matches {
+				// todo: maybe move this into the aggregation steps
+				if aggregation != repository.AggregationTypeDifferenceBetween {
+					match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
+				}
+				aggregations[match.ObjectiveId][match.TeamId] = match
+			}
 		}
-		// }(aggregation)
 	}
-	// wg.Wait()
 	return aggregations, nil
 }
 
@@ -186,9 +182,9 @@ func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, te
 
 func getExtremeQuery(aggregationType repository.AggregationType) (string, error) {
 	var operator string
-	if aggregationType == repository.MAXIMUM {
+	if aggregationType == repository.AggregationTypeMaximum {
 		operator = "MAX"
-	} else if aggregationType == repository.MINIMUM {
+	} else if aggregationType == repository.AggregationTypeMinimum {
 		operator = "MIN"
 	} else {
 		return "", fmt.Errorf("invalid aggregation type")
@@ -232,7 +228,7 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMaximum"))
 	defer timer.ObserveDuration()
-	query, err := getExtremeQuery(repository.MAXIMUM)
+	query, err := getExtremeQuery(repository.AggregationTypeMaximum)
 	if err != nil {
 		return nil, err
 	}
@@ -247,7 +243,7 @@ func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMinimum"))
 	defer timer.ObserveDuration()
-	query, err := getExtremeQuery(repository.MINIMUM)
+	query, err := getExtremeQuery(repository.AggregationTypeMinimum)
 	if err != nil {
 		return nil, err
 	}

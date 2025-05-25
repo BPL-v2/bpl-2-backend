@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/utils"
 	"time"
 
 	"gorm.io/gorm"
@@ -10,43 +11,48 @@ import (
 type ObjectiveType string
 
 const (
-	ITEM       ObjectiveType = "ITEM"
-	PLAYER     ObjectiveType = "PLAYER"
-	TEAM       ObjectiveType = "TEAM"
-	SUBMISSION ObjectiveType = "SUBMISSION"
+	ObjectiveTypeItem       ObjectiveType = "ITEM"
+	ObjectiveTypePlayer     ObjectiveType = "PLAYER"
+	ObjectiveTypeTeam       ObjectiveType = "TEAM"
+	ObjectiveTypeSubmission ObjectiveType = "SUBMISSION"
+	ObjectiveTypeCategory   ObjectiveType = "CATEGORY"
 )
 
 type AggregationType string
 
 const (
-	SUM_LATEST          AggregationType = "SUM_LATEST"
-	EARLIEST            AggregationType = "EARLIEST"
-	EARLIEST_FRESH_ITEM AggregationType = "EARLIEST_FRESH_ITEM"
-	MAXIMUM             AggregationType = "MAXIMUM"
-	MINIMUM             AggregationType = "MINIMUM"
-	DIFFERENCE_BETWEEN  AggregationType = "DIFFERENCE_BETWEEN"
+	AggregationTypeSumLatest         AggregationType = "SUM_LATEST"
+	AggregationTypeEarliest          AggregationType = "EARLIEST"
+	AggregationTypeEarliestFreshItem AggregationType = "EARLIEST_FRESH_ITEM"
+	AggregationTypeMaximum           AggregationType = "MAXIMUM"
+	AggregationTypeMinimum           AggregationType = "MINIMUM"
+	AggregationTypeDifferenceBetween AggregationType = "DIFFERENCE_BETWEEN"
+	AggregationTypeNone              AggregationType = "NONE"
 )
 
 type NumberField string
 
 const (
-	STACK_SIZE NumberField = "STACK_SIZE"
+	NumberFieldStackSize NumberField = "STACK_SIZE"
 
-	PLAYER_LEVEL         NumberField = "PLAYER_LEVEL"
-	DELVE_DEPTH          NumberField = "DELVE_DEPTH"
-	DELVE_DEPTH_PAST_100 NumberField = "DELVE_DEPTH_PAST_100"
-	PANTHEON             NumberField = "PANTHEON"
-	ASCENDANCY           NumberField = "ASCENDANCY"
-	PLAYER_SCORE         NumberField = "PLAYER_SCORE"
+	NumberFieldPlayerLevel       NumberField = "PLAYER_LEVEL"
+	NumberFieldDelveDepth        NumberField = "DELVE_DEPTH"
+	NumberFieldDelveDepthPast100 NumberField = "DELVE_DEPTH_PAST_100"
+	NumberFieldPantheon          NumberField = "PANTHEON"
+	NumberFieldAscendancy        NumberField = "ASCENDANCY"
+	NumberFieldPlayerScore       NumberField = "PLAYER_SCORE"
 
-	SUBMISSION_VALUE NumberField = "SUBMISSION_VALUE"
+	NumberFieldSubmissionValue NumberField = "SUBMISSION_VALUE"
+
+	NumberFieldFinishedObjectives NumberField = "FINISHED_OBJECTIVES"
 )
 
 var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
-	ITEM:       {STACK_SIZE},
-	PLAYER:     {PLAYER_LEVEL, DELVE_DEPTH, DELVE_DEPTH_PAST_100, PANTHEON, ASCENDANCY, PLAYER_SCORE},
-	TEAM:       {PLAYER_LEVEL, DELVE_DEPTH, DELVE_DEPTH_PAST_100, PANTHEON, ASCENDANCY, PLAYER_SCORE},
-	SUBMISSION: {SUBMISSION_VALUE},
+	ObjectiveTypeItem:       {NumberFieldStackSize},
+	ObjectiveTypePlayer:     {NumberFieldPlayerLevel, NumberFieldDelveDepth, NumberFieldDelveDepthPast100, NumberFieldPantheon, NumberFieldAscendancy, NumberFieldPlayerScore},
+	ObjectiveTypeTeam:       {NumberFieldPlayerLevel, NumberFieldDelveDepth, NumberFieldDelveDepthPast100, NumberFieldPantheon, NumberFieldAscendancy, NumberFieldPlayerScore},
+	ObjectiveTypeSubmission: {NumberFieldSubmissionValue},
+	ObjectiveTypeCategory:   {NumberFieldFinishedObjectives},
 }
 
 type SyncStatus string
@@ -63,7 +69,8 @@ type Objective struct {
 	Extra          string          `gorm:"null"`
 	RequiredAmount int             `gorm:"not null"`
 	Conditions     []*Condition    `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE"`
-	CategoryId     int             `gorm:"not null"`
+	ParentId       *int            `gorm:"null"`
+	EventId        int             `gorm:"not null;references:events(id)"`
 	ObjectiveType  ObjectiveType   `gorm:"not null"`
 	NumberField    NumberField     `gorm:"not null"`
 	Aggregation    AggregationType `gorm:"not null"`
@@ -71,7 +78,16 @@ type Objective struct {
 	ValidTo        *time.Time      `gorm:"null"`
 	ScoringId      *int            `gorm:"null;references:scoring_presets(id)"`
 	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:Id"`
-	SyncStatus     SyncStatus
+	SyncStatus     SyncStatus      `gorm:"not null;default:DESYNCED"`
+	Children       []*Objective    `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
+}
+
+func (o *Objective) FlatMap() []*Objective {
+	result := []*Objective{o}
+	for _, child := range o.Children {
+		result = append(result, child.FlatMap()...)
+	}
+	return result
 }
 
 type ObjectiveRepository struct {
@@ -109,6 +125,11 @@ func (r *ObjectiveRepository) DeleteObjective(objectiveId int) error {
 	return result.Error
 }
 
+func (r *ObjectiveRepository) DeleteObjectivesByEventId(eventId int) error {
+	result := r.DB.Where("event_id = ?", eventId).Delete(&Objective{})
+	return result.Error
+}
+
 func (r *ObjectiveRepository) RemoveScoringId(scoringId int) error {
 	result := r.DB.Model(&Objective{}).Where(Objective{ScoringId: &scoringId}).Update("scoring_id", nil)
 	return result.Error
@@ -129,4 +150,43 @@ func (r *ObjectiveRepository) FinishSync(objectiveIds []int) error {
 		Model(&Objective{}).Where("id IN ? and sync_status = ?", objectiveIds, SyncStatusSyncing).
 		Update("sync_status", SyncStatusSynced)
 	return result.Error
+}
+
+func (r *ObjectiveRepository) GetObjectivesByEventId(eventId int, preloads ...string) (*Objective, error) {
+	objectives, err := r.GetObjectivesByEventIdFlat(eventId, preloads...)
+	if err != nil {
+		return nil, err
+	}
+	idMap := make(map[int]*Objective)
+	for _, objective := range objectives {
+		idMap[objective.Id] = objective
+	}
+	for _, objective := range objectives {
+		if objective.ParentId != nil {
+			parent, exists := idMap[*objective.ParentId]
+			if exists {
+				parent.Children = append(parent.Children, objective)
+			}
+		}
+	}
+	rootObjective, found := utils.FindFirst(objectives, func(o *Objective) bool {
+		return o.ParentId == nil
+	})
+	if !found {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return rootObjective, nil
+}
+
+func (r *ObjectiveRepository) GetObjectivesByEventIdFlat(eventId int, preloads ...string) ([]*Objective, error) {
+	var objectives []*Objective
+	query := r.DB.Model(&Objective{}).Where("event_id = ?", eventId)
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	result := query.Find(&objectives)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return objectives, nil
 }

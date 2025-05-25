@@ -84,44 +84,6 @@ definitions:
     - last_path
     - user
     type: object
-  Category:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-      objectives:
-        items:
-          $ref: '#/definitions/Objective'
-        type: array
-      scoring_preset:
-        $ref: '#/definitions/ScoringPreset'
-      scoring_preset_id:
-        type: integer
-      sub_categories:
-        items:
-          $ref: '#/definitions/Category'
-        type: array
-    required:
-    - id
-    - name
-    - objectives
-    - sub_categories
-    type: object
-  CategoryCreate:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-      parent_id:
-        type: integer
-      scoring_preset_id:
-        type: integer
-    required:
-    - name
-    - parent_id
-    type: object
   Character:
     properties:
       ascendancy:
@@ -373,8 +335,10 @@ definitions:
     properties:
       aggregation:
         $ref: '#/definitions/AggregationType'
-      category_id:
-        type: integer
+      children:
+        items:
+          $ref: '#/definitions/Objective'
+        type: array
       conditions:
         items:
           $ref: '#/definitions/Condition'
@@ -389,6 +353,8 @@ definitions:
         $ref: '#/definitions/NumberField'
       objective_type:
         $ref: '#/definitions/ObjectiveType'
+      parent_id:
+        type: integer
       required_number:
         type: integer
       scoring_preset:
@@ -401,13 +367,14 @@ definitions:
         type: string
     required:
     - aggregation
-    - category_id
+    - children
     - conditions
     - extra
     - id
     - name
     - number_field
     - objective_type
+    - parent_id
     - required_number
     type: object
   ObjectiveConditionCreate:
@@ -459,8 +426,6 @@ definitions:
     properties:
       aggregation:
         $ref: '#/definitions/AggregationType'
-      category_id:
-        type: integer
       conditions:
         items:
           $ref: '#/definitions/ObjectiveConditionCreate'
@@ -475,6 +440,8 @@ definitions:
         $ref: '#/definitions/NumberField'
       objective_type:
         $ref: '#/definitions/ObjectiveType'
+      parent_id:
+        type: integer
       required_number:
         type: integer
       scoring_preset_id:
@@ -485,11 +452,11 @@ definitions:
         type: string
     required:
     - aggregation
-    - category_id
     - conditions
     - name
     - number_field
     - objective_type
+    - parent_id
     - required_number
     type: object
   Score:
@@ -522,16 +489,18 @@ definitions:
         items:
           type: string
         type: array
+      objective_id:
+        type: integer
       score:
         $ref: '#/definitions/Score'
+      team_id:
+        type: integer
     required:
     - diff_type
     - field_diff
+    - objective_id
     - score
-    type: object
-  ScoreMap:
-    additionalProperties:
-      $ref: '#/definitions/ScoreDiff'
+    - team_id
     type: object
   ScoringPreset:
     properties:
@@ -683,27 +652,6 @@ definitions:
     required:
     - approval_status
     type: object
-  SuggestionCreate:
-    properties:
-      id:
-        type: integer
-    required:
-    - id
-    type: object
-  Suggestions:
-    properties:
-      category_ids:
-        items:
-          type: integer
-        type: array
-      objective_ids:
-        items:
-          type: integer
-        type: array
-    required:
-    - category_ids
-    - objective_ids
-    type: object
   Team:
     properties:
       allowed_classes:
@@ -821,14 +769,16 @@ definitions:
     - MAXIMUM
     - MINIMUM
     - DIFFERENCE_BETWEEN
+    - NONE
     type: string
     x-enum-varnames:
-    - SUM_LATEST
-    - EARLIEST
-    - EARLIEST_FRESH_ITEM
-    - MAXIMUM
-    - MINIMUM
-    - DIFFERENCE_BETWEEN
+    - AggregationTypeSumLatest
+    - AggregationTypeEarliest
+    - AggregationTypeEarliestFreshItem
+    - AggregationTypeMaximum
+    - AggregationTypeMinimum
+    - AggregationTypeDifferenceBetween
+    - AggregationTypeNone
   ApprovalStatus:
     enum:
     - APPROVED
@@ -941,28 +891,32 @@ definitions:
     - ASCENDANCY
     - PLAYER_SCORE
     - SUBMISSION_VALUE
+    - FINISHED_OBJECTIVES
     type: string
     x-enum-varnames:
-    - STACK_SIZE
-    - PLAYER_LEVEL
-    - DELVE_DEPTH
-    - DELVE_DEPTH_PAST_100
-    - PANTHEON
-    - ASCENDANCY
-    - PLAYER_SCORE
-    - SUBMISSION_VALUE
+    - NumberFieldStackSize
+    - NumberFieldPlayerLevel
+    - NumberFieldDelveDepth
+    - NumberFieldDelveDepthPast100
+    - NumberFieldPantheon
+    - NumberFieldAscendancy
+    - NumberFieldPlayerScore
+    - NumberFieldSubmissionValue
+    - NumberFieldFinishedObjectives
   ObjectiveType:
     enum:
     - ITEM
     - PLAYER
     - TEAM
     - SUBMISSION
+    - CATEGORY
     type: string
     x-enum-varnames:
-    - ITEM
-    - PLAYER
-    - TEAM
-    - SUBMISSION
+    - ObjectiveTypeItem
+    - ObjectiveTypePlayer
+    - ObjectiveTypeTeam
+    - ObjectiveTypeSubmission
+    - ObjectiveTypeCategory
   Operator:
     enum:
     - EQ
@@ -1229,102 +1183,6 @@ paths:
       - BearerAuth: []
       tags:
       - atlas
-  /events/{event_id}/categories:
-    get:
-      description: Fetches the rules for the current event
-      operationId: GetRulesForEvent
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Category'
-      tags:
-      - scoring
-    put:
-      consumes:
-      - application/json
-      description: Creates a new scoring category
-      operationId: CreateCategory
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Category to create
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/CategoryCreate'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/Category'
-      security:
-      - BearerAuth: []
-      tags:
-      - scoring
-  /events/{event_id}/categories/{id}:
-    delete:
-      description: Deletes a scoring category
-      operationId: DeleteCategory
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Category Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      security:
-      - BearerAuth: []
-      tags:
-      - scoring
-    get:
-      description: Fetches a scoring category by id
-      operationId: GetScoringCategory
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Category Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Category'
-      security:
-      - BearerAuth: []
-      tags:
-      - scoring
   /events/{event_id}/characters:
     get:
       consumes:
@@ -1471,6 +1329,24 @@ paths:
       tags:
       - ladder
   /events/{event_id}/objectives:
+    get:
+      description: Gets all objectives for an event
+      operationId: GetObjectiveTreeForEvent
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Objective'
+      tags:
+      - objective
     put:
       consumes:
       - application/json
@@ -1564,7 +1440,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/ScoreMap'
+            items:
+              $ref: '#/definitions/ScoreDiff'
+            type: array
       tags:
       - scores
   /events/{event_id}/scores/simple/ws:
@@ -1948,90 +1826,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/Suggestions'
+            items:
+              type: integer
+            type: array
       security:
       - BearerAuth: []
       tags:
       - team
-  /events/{event_id}/suggestions/categories:
-    post:
-      consumes:
-      - application/json
-      description: Creates a suggestion for a category for your team for an event
-      operationId: CreateCategoryTeamSuggestion
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Suggestion to create
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/SuggestionCreate'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-      security:
-      - BearerAuth: []
-      tags:
-      - team
-  /events/{event_id}/suggestions/categories/{category_id}:
-    delete:
-      description: Deletes a suggestion for a category for your team for an event
-      operationId: DeleteCategoryTeamSuggestion
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Category Id
-        in: path
-        name: category_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      security:
-      - BearerAuth: []
-      tags:
-      - team
-  /events/{event_id}/suggestions/objectives:
-    post:
-      consumes:
-      - application/json
-      description: Creates a suggestion for an objective for your team for an event
-      operationId: CreateObjectiveTeamSuggestion
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Suggestion to create
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/SuggestionCreate'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-      security:
-      - BearerAuth: []
-      tags:
-      - team
-  /events/{event_id}/suggestions/objectives/{objective_id}:
+  /events/{event_id}/suggestions/{objective_id}:
     delete:
       description: Deletes a suggestion for an objective for your team for an event
       operationId: DeleteObjectiveTeamSuggestion
@@ -2051,6 +1853,31 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
+      tags:
+      - team
+    post:
+      consumes:
+      - application/json
+      description: Creates a suggestion for an objective for your team for an event
+      operationId: CreateObjectiveTeamSuggestion
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Objective Id
+        in: path
+        name: objective_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
       security:
       - BearerAuth: []
       tags:

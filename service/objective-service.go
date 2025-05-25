@@ -3,20 +3,17 @@ package service
 import (
 	"bpl/parser"
 	"bpl/repository"
-	"bpl/utils"
 )
 
 type ObjectiveService struct {
-	objectiveRepository       *repository.ObjectiveRepository
-	conditionRepository       *repository.ConditionRepository
-	scoringCategoryRepository *repository.ScoringCategoryRepository
+	objectiveRepository *repository.ObjectiveRepository
+	conditionRepository *repository.ConditionRepository
 }
 
 func NewObjectiveService() *ObjectiveService {
 	return &ObjectiveService{
-		objectiveRepository:       repository.NewObjectiveRepository(),
-		conditionRepository:       repository.NewConditionRepository(),
-		scoringCategoryRepository: repository.NewScoringCategoryRepository(),
+		objectiveRepository: repository.NewObjectiveRepository(),
+		conditionRepository: repository.NewConditionRepository(),
 	}
 }
 
@@ -47,31 +44,12 @@ func (e *ObjectiveService) GetObjectiveById(objectiveId int) (*repository.Object
 	return e.objectiveRepository.GetObjectiveById(objectiveId, "Conditions")
 }
 
-func (e *ObjectiveService) GetObjectivesByEventId(eventId int) ([]*repository.Objective, error) {
-	category, err := e.scoringCategoryRepository.GetRulesForEvent(eventId, "Objectives", "Objectives.Conditions")
-	if err != nil {
-		return nil, err
-	}
-	objectives := make([]*repository.Objective, 0)
-	extractObjectives(category, &objectives)
-	return objectives, nil
-}
-
-func extractObjectives(category *repository.ScoringCategory, objectives *[]*repository.Objective) {
-	for _, subCategory := range category.SubCategories {
-		*objectives = append(*objectives, subCategory.Objectives...)
-		extractObjectives(subCategory, objectives)
-	}
-}
-
 func (e *ObjectiveService) GetParser(eventId int) (*parser.ItemChecker, error) {
-	cats, err := e.scoringCategoryRepository.GetCategoriesForEvent(eventId, "Objectives", "Objectives.Conditions")
+	objectives, err := e.GetObjectivesForEvent(eventId, "ScoringPreset", "Conditions")
 	if err != nil {
 		return nil, err
 	}
-	objectives := utils.FlatMap(cats, func(cat *repository.ScoringCategory) []*repository.Objective {
-		return cat.Objectives
-	})
+
 	return parser.NewItemChecker(objectives)
 }
 
@@ -81,4 +59,50 @@ func (e *ObjectiveService) StartSync(objectiveIds []int) error {
 
 func (e *ObjectiveService) SetSynced(objectiveIds []int) error {
 	return e.objectiveRepository.FinishSync(objectiveIds)
+}
+
+func (e *ObjectiveService) GetObjectiveTreeForEvent(eventId int, preloads ...string) (*repository.Objective, error) {
+	return e.objectiveRepository.GetObjectivesByEventId(eventId, preloads...)
+}
+
+func (e *ObjectiveService) GetObjectivesForEvent(eventId int, preloads ...string) ([]*repository.Objective, error) {
+	return e.objectiveRepository.GetObjectivesByEventIdFlat(eventId, preloads...)
+}
+
+func (e *ObjectiveService) DuplicateObjectives(oldEventId, newEventId int, presetIdMap map[int]int) error {
+	objectives, err := e.objectiveRepository.GetObjectivesByEventIdFlat(oldEventId, "Conditions")
+	if err != nil {
+		return err
+	}
+	objectiveIdMap := make(map[int]int)
+	for _, objective := range objectives {
+		oldId := objective.Id
+		for _, condition := range objective.Conditions {
+			condition.Id = 0
+		}
+		objective.EventId = newEventId
+		if objective.ScoringId != nil {
+			if newId, ok := presetIdMap[*objective.ScoringId]; ok {
+				objective.ScoringId = &newId
+			}
+		}
+		newObjective, err := e.objectiveRepository.SaveObjective(objective)
+		if err != nil {
+			return err
+		}
+		objectiveIdMap[oldId] = newObjective.Id
+
+	}
+	for _, objective := range objectives {
+		if objective.ParentId != nil {
+			if newId, ok := objectiveIdMap[*objective.ParentId]; ok {
+				objective.ParentId = &newId
+				_, err := e.objectiveRepository.SaveObjective(objective)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }

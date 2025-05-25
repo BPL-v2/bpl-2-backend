@@ -257,156 +257,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/{event_id}/categories": {
-            "get": {
-                "description": "Fetches the rules for the current event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "GetRulesForEvent",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Category"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a new scoring category",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "CreateCategory",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Category to create",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CategoryCreate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Category"
-                        }
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/categories/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Fetches a scoring category by id",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "GetScoringCategory",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Category Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Category"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes a scoring category",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "scoring"
-                ],
-                "operationId": "DeleteCategory",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Category Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
-        },
         "/events/{event_id}/characters": {
             "get": {
                 "description": "Get all characters for an event",
@@ -635,6 +485,33 @@ const docTemplate = `{
             }
         },
         "/events/{event_id}/objectives": {
+            "get": {
+                "description": "Gets all objectives for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "operationId": "GetObjectiveTreeForEvent",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Objective"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -780,7 +657,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/ScoreMap"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ScoreDiff"
+                            }
                         }
                     }
                 }
@@ -1390,94 +1270,16 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Suggestions"
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
                         }
                     }
                 }
             }
         },
-        "/events/{event_id}/suggestions/categories": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a suggestion for a category for your team for an event",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "team"
-                ],
-                "operationId": "CreateCategoryTeamSuggestion",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Suggestion to create",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/SuggestionCreate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created"
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/suggestions/categories/{category_id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes a suggestion for a category for your team for an event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "team"
-                ],
-                "operationId": "DeleteCategoryTeamSuggestion",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Category Id",
-                        "name": "category_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/suggestions/objectives": {
+        "/events/{event_id}/suggestions/{objective_id}": {
             "post": {
                 "security": [
                     {
@@ -1504,13 +1306,11 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Suggestion to create",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/SuggestionCreate"
-                        }
+                        "type": "integer",
+                        "description": "Objective Id",
+                        "name": "objective_id",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1518,9 +1318,7 @@ const docTemplate = `{
                         "description": "Created"
                     }
                 }
-            }
-        },
-        "/events/{event_id}/suggestions/objectives/{objective_id}": {
+            },
             "delete": {
                 "security": [
                     {
@@ -2321,62 +2119,6 @@ const docTemplate = `{
                 }
             }
         },
-        "Category": {
-            "type": "object",
-            "required": [
-                "id",
-                "name",
-                "objectives",
-                "sub_categories"
-            ],
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "objectives": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Objective"
-                    }
-                },
-                "scoring_preset": {
-                    "$ref": "#/definitions/ScoringPreset"
-                },
-                "scoring_preset_id": {
-                    "type": "integer"
-                },
-                "sub_categories": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Category"
-                    }
-                }
-            }
-        },
-        "CategoryCreate": {
-            "type": "object",
-            "required": [
-                "name",
-                "parent_id"
-            ],
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parent_id": {
-                    "type": "integer"
-                },
-                "scoring_preset_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "Character": {
             "type": "object",
             "required": [
@@ -2734,21 +2476,25 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "aggregation",
-                "category_id",
+                "children",
                 "conditions",
                 "extra",
                 "id",
                 "name",
                 "number_field",
                 "objective_type",
+                "parent_id",
                 "required_number"
             ],
             "properties": {
                 "aggregation": {
                     "$ref": "#/definitions/AggregationType"
                 },
-                "category_id": {
-                    "type": "integer"
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Objective"
+                    }
                 },
                 "conditions": {
                     "type": "array",
@@ -2770,6 +2516,9 @@ const docTemplate = `{
                 },
                 "objective_type": {
                     "$ref": "#/definitions/ObjectiveType"
+                },
+                "parent_id": {
+                    "type": "integer"
                 },
                 "required_number": {
                     "type": "integer"
@@ -2852,19 +2601,16 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "aggregation",
-                "category_id",
                 "conditions",
                 "name",
                 "number_field",
                 "objective_type",
+                "parent_id",
                 "required_number"
             ],
             "properties": {
                 "aggregation": {
                     "$ref": "#/definitions/AggregationType"
-                },
-                "category_id": {
-                    "type": "integer"
                 },
                 "conditions": {
                     "type": "array",
@@ -2886,6 +2632,9 @@ const docTemplate = `{
                 },
                 "objective_type": {
                     "$ref": "#/definitions/ObjectiveType"
+                },
+                "parent_id": {
+                    "type": "integer"
                 },
                 "required_number": {
                     "type": "integer"
@@ -2937,7 +2686,9 @@ const docTemplate = `{
             "required": [
                 "diff_type",
                 "field_diff",
-                "score"
+                "objective_id",
+                "score",
+                "team_id"
             ],
             "properties": {
                 "diff_type": {
@@ -2949,15 +2700,15 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "objective_id": {
+                    "type": "integer"
+                },
                 "score": {
                     "$ref": "#/definitions/Score"
+                },
+                "team_id": {
+                    "type": "integer"
                 }
-            }
-        },
-        "ScoreMap": {
-            "type": "object",
-            "additionalProperties": {
-                "$ref": "#/definitions/ScoreDiff"
             }
         },
         "ScoringPreset": {
@@ -3181,38 +2932,6 @@ const docTemplate = `{
                 }
             }
         },
-        "SuggestionCreate": {
-            "type": "object",
-            "required": [
-                "id"
-            ],
-            "properties": {
-                "id": {
-                    "type": "integer"
-                }
-            }
-        },
-        "Suggestions": {
-            "type": "object",
-            "required": [
-                "category_ids",
-                "objective_ids"
-            ],
-            "properties": {
-                "category_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "objective_ids": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                }
-            }
-        },
         "Team": {
             "type": "object",
             "required": [
@@ -3383,15 +3102,17 @@ const docTemplate = `{
                 "EARLIEST_FRESH_ITEM",
                 "MAXIMUM",
                 "MINIMUM",
-                "DIFFERENCE_BETWEEN"
+                "DIFFERENCE_BETWEEN",
+                "NONE"
             ],
             "x-enum-varnames": [
-                "SUM_LATEST",
-                "EARLIEST",
-                "EARLIEST_FRESH_ITEM",
-                "MAXIMUM",
-                "MINIMUM",
-                "DIFFERENCE_BETWEEN"
+                "AggregationTypeSumLatest",
+                "AggregationTypeEarliest",
+                "AggregationTypeEarliestFreshItem",
+                "AggregationTypeMaximum",
+                "AggregationTypeMinimum",
+                "AggregationTypeDifferenceBetween",
+                "AggregationTypeNone"
             ]
         },
         "ApprovalStatus": {
@@ -3522,17 +3243,19 @@ const docTemplate = `{
                 "PANTHEON",
                 "ASCENDANCY",
                 "PLAYER_SCORE",
-                "SUBMISSION_VALUE"
+                "SUBMISSION_VALUE",
+                "FINISHED_OBJECTIVES"
             ],
             "x-enum-varnames": [
-                "STACK_SIZE",
-                "PLAYER_LEVEL",
-                "DELVE_DEPTH",
-                "DELVE_DEPTH_PAST_100",
-                "PANTHEON",
-                "ASCENDANCY",
-                "PLAYER_SCORE",
-                "SUBMISSION_VALUE"
+                "NumberFieldStackSize",
+                "NumberFieldPlayerLevel",
+                "NumberFieldDelveDepth",
+                "NumberFieldDelveDepthPast100",
+                "NumberFieldPantheon",
+                "NumberFieldAscendancy",
+                "NumberFieldPlayerScore",
+                "NumberFieldSubmissionValue",
+                "NumberFieldFinishedObjectives"
             ]
         },
         "ObjectiveType": {
@@ -3541,13 +3264,15 @@ const docTemplate = `{
                 "ITEM",
                 "PLAYER",
                 "TEAM",
-                "SUBMISSION"
+                "SUBMISSION",
+                "CATEGORY"
             ],
             "x-enum-varnames": [
-                "ITEM",
-                "PLAYER",
-                "TEAM",
-                "SUBMISSION"
+                "ObjectiveTypeItem",
+                "ObjectiveTypePlayer",
+                "ObjectiveTypeTeam",
+                "ObjectiveTypeSubmission",
+                "ObjectiveTypeCategory"
             ]
         },
         "Operator": {

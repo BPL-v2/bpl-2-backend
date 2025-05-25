@@ -128,7 +128,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	}
 	desyncedObjectiveIds := make([]int, 0)
 	for _, objective := range objectives {
-		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ITEM {
+		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ObjectiveTypeItem {
 			desyncedObjectiveIds = append(desyncedObjectiveIds, objective.Id)
 		}
 	}
@@ -203,8 +203,7 @@ func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event
 		log.Fatal("Failed to create matching service:", err)
 		return err
 	}
-
-	objectives, err := m.objectiveService.GetObjectivesByEventId(event.Id)
+	objectives, err := m.objectiveService.GetObjectivesForEvent(event.Id)
 	if err != nil {
 		return err
 	}

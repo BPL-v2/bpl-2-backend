@@ -27,6 +27,7 @@ func setupObjectiveController() []RouteInfo {
 	e := NewObjectiveController()
 	baseUrl := "/events/:event_id/objectives"
 	routes := []RouteInfo{
+		{Method: "GET", Path: "", HandlerFunc: e.GetObjectiveTreeForEventHandler()},
 		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
@@ -37,6 +38,42 @@ func setupObjectiveController() []RouteInfo {
 		routes[i].Path = baseUrl + route.Path
 	}
 	return routes
+}
+
+// @id GetObjectiveTreeForEvent
+// @Description Gets all objectives for an event
+// @Tags objective
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Success 200 {object} Objective
+// @Router /events/{event_id}/objectives [get]
+func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		rootObjective, err := e.service.GetObjectiveTreeForEvent(event.Id, "Conditions")
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "Objectives not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
+			return
+		}
+		if rootObjective == nil {
+			c.JSON(404, gin.H{"error": "Objectives not found"})
+			return
+		}
+		if !getEvent(c).Public {
+			c.JSON(200, toObjectiveResponse(rootObjective))
+			return
+		}
+		// if the event is public, we return a public version of the objective
+		c.JSON(200, toPublicObjectiveResponse(rootObjective))
+
+	}
 }
 
 // @id CreateObjective
@@ -195,7 +232,7 @@ type ObjectiveCreate struct {
 	ObjectiveType  repository.ObjectiveType   `json:"objective_type" binding:"required"`
 	NumberField    repository.NumberField     `json:"number_field" binding:"required"`
 	Aggregation    repository.AggregationType `json:"aggregation" binding:"required"`
-	CategoryId     int                        `json:"category_id" binding:"required"`
+	ParentId       int                        `json:"parent_id" binding:"required"`
 	Conditions     []ObjectiveConditionCreate `json:"conditions" binding:"required"`
 	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
@@ -207,7 +244,7 @@ type Objective struct {
 	Name            string                     `json:"name" binding:"required"`
 	Extra           string                     `json:"extra" binding:"required"`
 	RequiredNumber  int                        `json:"required_number" binding:"required"`
-	CategoryId      int                        `json:"category_id" binding:"required"`
+	ParentId        *int                       `json:"parent_id" binding:"required"`
 	ObjectiveType   repository.ObjectiveType   `json:"objective_type" binding:"required"`
 	Conditions      []*Condition               `json:"conditions" binding:"required"`
 	ValidFrom       *time.Time                 `json:"valid_from" binding:"omitempty"`
@@ -216,6 +253,7 @@ type Objective struct {
 	ScoringPreset   *ScoringPreset             `json:"scoring_preset"`
 	NumberField     repository.NumberField     `json:"number_field" binding:"required"`
 	Aggregation     repository.AggregationType `json:"aggregation" binding:"required"`
+	Children        []*Objective               `json:"children" binding:"required"`
 }
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {
@@ -230,7 +268,7 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 		Conditions:     utils.Map(e.Conditions, func(c ObjectiveConditionCreate) *repository.Condition { return c.toModel() }),
 		ValidFrom:      e.ValidFrom,
 		ValidTo:        e.ValidTo,
-		CategoryId:     e.CategoryId,
+		ParentId:       &e.ParentId,
 		ScoringId:      e.ScoringId,
 	}
 }
@@ -244,7 +282,7 @@ func toObjectiveResponse(objective *repository.Objective) *Objective {
 		Name:            objective.Name,
 		Extra:           objective.Extra,
 		RequiredNumber:  objective.RequiredAmount,
-		CategoryId:      objective.CategoryId,
+		ParentId:        objective.ParentId,
 		ObjectiveType:   objective.ObjectiveType,
 		ValidFrom:       objective.ValidFrom,
 		ValidTo:         objective.ValidTo,
@@ -253,6 +291,7 @@ func toObjectiveResponse(objective *repository.Objective) *Objective {
 		Aggregation:     objective.Aggregation,
 		ScoringPresetId: objective.ScoringId,
 		ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
+		Children:        utils.Map(objective.Children, toObjectiveResponse),
 	}
 }
 
@@ -264,7 +303,7 @@ func toPublicObjectiveResponse(objective *repository.Objective) *Objective {
 	if objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &Objective{
 			Name:            fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
-			CategoryId:      objective.CategoryId,
+			ParentId:        objective.ParentId,
 			ValidFrom:       objective.ValidFrom,
 			ValidTo:         objective.ValidTo,
 			ScoringPresetId: objective.ScoringId,

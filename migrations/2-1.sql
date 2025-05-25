@@ -7,10 +7,6 @@ SET scoring_category_id = sc.id
 FROM scoring_categories sc
 WHERE sc.event_id = e.id
     AND sc.parent_id IS NULL;
--- Add not null constraint
-ALTER TABLE events
-ALTER COLUMN scoring_category_id
-SET NOT NULL;
 -- Add foreign key constraint
 ALTER TABLE events
 ADD CONSTRAINT fk_events_scoring_category_id FOREIGN KEY (scoring_category_id) REFERENCES scoring_categories (id);

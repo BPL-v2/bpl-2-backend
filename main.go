@@ -62,6 +62,7 @@ func main() {
 	cacheStore := persistence.NewInMemoryStore(60 * time.Second)
 	controller.SetRoutes(r, cacheStore)
 	fmt.Println("Server started in", time.Since(t))
+	repository.Migration()
 	r.Run(":8000")
 }
 
@@ -135,7 +136,6 @@ func setCors(r *gin.Engine) {
 
 func autoMigrate(db *gorm.DB) {
 	err := db.AutoMigrate(
-		&repository.ScoringCategory{},
 		&repository.Objective{},
 		&repository.Condition{},
 		&repository.Event{},
