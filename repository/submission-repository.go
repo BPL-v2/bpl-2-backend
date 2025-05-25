@@ -52,6 +52,15 @@ func NewSubmissionRepository() *SubmissionRepository {
 	return &SubmissionRepository{DB: config.DatabaseConnection()}
 }
 
+func (r *SubmissionRepository) GetSubmissionsForEvent(eventId int) ([]*Submission, error) {
+	var submissions []*Submission
+	result := r.DB.Find(&submissions, "event_id = ?", eventId)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return submissions, nil
+}
+
 func (r *SubmissionRepository) GetSubmissionsForObjectives(objectives []*Objective) ([]*Submission, error) {
 	var submissions []*Submission
 	result := r.DB.Preload("Objective").Preload("User").Find(&submissions, "objective_id IN ?", utils.Map(objectives, func(o *Objective) int { return o.Id }))

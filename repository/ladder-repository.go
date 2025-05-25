@@ -9,7 +9,7 @@ import (
 )
 
 type LadderEntry struct {
-	UserId        int     `gorm:"index;not null"`
+	UserId        *int    `gorm:"index"`
 	Account       string  `gorm:"not null"`
 	Character     string  `gorm:"not null"`
 	Class         string  `gorm:"not null"`
@@ -45,8 +45,10 @@ func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId in
 			Class:     entry.Character.Class,
 			Account:   entry.Account.Name,
 			EventId:   eventId,
-			UserId:    playerMap[entry.Character.Name],
 			Rank:      entry.Rank,
+		}
+		if userId, exists := playerMap[entry.Character.Name]; exists {
+			dbEntry.UserId = &userId
 		}
 		if entry.Character.Depth != nil && entry.Character.Depth.Default != nil {
 			dbEntry.Delve = *entry.Character.Depth.Default

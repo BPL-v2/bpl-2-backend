@@ -59,8 +59,8 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.TwitchStream, err
 		return nil, err
 	}
 	for _, entry := range ladderEntries {
-		if entry.TwitchAccount != nil {
-			userMap[*entry.TwitchAccount] = entry.UserId
+		if entry.TwitchAccount != nil && entry.UserId != nil {
+			userMap[*entry.TwitchAccount] = *entry.UserId
 		}
 	}
 	streams, err := e.twitchClient.GetAllStreams(utils.Keys(userMap))

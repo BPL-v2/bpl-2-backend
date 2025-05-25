@@ -16,12 +16,7 @@ func NewSubmissionService() *SubmissionService {
 }
 
 func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submission, error) {
-	objectiveService := NewObjectiveService()
-	objectives, err := objectiveService.GetObjectivesForEvent(eventId)
-	if err != nil {
-		return nil, err
-	}
-	return e.submissionRepository.GetSubmissionsForObjectives(objectives)
+	return e.submissionRepository.GetSubmissionsForEvent(eventId)
 }
 
 func (e *SubmissionService) SaveBulkSubmissions(submissions []*repository.Submission) ([]*repository.Submission, error) {
