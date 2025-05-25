@@ -18,20 +18,20 @@ const (
 )
 
 type Event struct {
-	Id                   int                `gorm:"primaryKey"`
-	Name                 string             `gorm:"not null"`
-	IsCurrent            bool               `gorm:"not null"`
-	GameVersion          GameVersion        `gorm:"not null"`
-	MaxSize              int                `gorm:"not null"`
-	WaitlistSize         int                `gorm:"not null"`
-	ApplicationStartTime time.Time          `gorm:"not null"`
-	ApplicationEndTime   time.Time          `gorm:"not null"`
-	EventStartTime       time.Time          `gorm:"not null"`
-	EventEndTime         time.Time          `gorm:"not null"`
-	Public               bool               `gorm:"not null"`
-	Locked               bool               `gorm:"not null"`
-	Teams                []*Team            `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
-	ScoringCategories    []*ScoringCategory `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
+	Id                   int          `gorm:"primaryKey"`
+	Name                 string       `gorm:"not null"`
+	IsCurrent            bool         `gorm:"not null"`
+	GameVersion          GameVersion  `gorm:"not null"`
+	MaxSize              int          `gorm:"not null"`
+	WaitlistSize         int          `gorm:"not null"`
+	ApplicationStartTime time.Time    `gorm:"not null"`
+	ApplicationEndTime   time.Time    `gorm:"not null"`
+	EventStartTime       time.Time    `gorm:"not null"`
+	EventEndTime         time.Time    `gorm:"not null"`
+	Public               bool         `gorm:"not null"`
+	Locked               bool         `gorm:"not null"`
+	Teams                []*Team      `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
+	Objectives           []*Objective `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
 }
 
 func (e *Event) GetRealm() *client.Realm {

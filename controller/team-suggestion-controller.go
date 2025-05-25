@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -27,10 +28,8 @@ func setupTeamSuggestionController() []RouteInfo {
 	basePath := "events/:event_id/suggestions"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamSuggestionsHandler(), Authenticated: true},
-		{Method: "POST", Path: "/objectives", HandlerFunc: e.createObjectiveTeamSuggestionHandler(), Authenticated: true},
-		{Method: "POST", Path: "/categories", HandlerFunc: e.createCategoryTeamSuggestionHandler(), Authenticated: true},
-		{Method: "DELETE", Path: "/objectives/:objective_id", HandlerFunc: e.deleteObjectiveTeamSuggestionHandler(), Authenticated: true},
-		{Method: "DELETE", Path: "/categories/:category_id", HandlerFunc: e.deleteCategoryTeamSuggestionHandler(), Authenticated: true},
+		{Method: "POST", Path: "/:objective_id", HandlerFunc: e.createTeamSuggestionHandler(), Authenticated: true},
+		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteTeamSuggestionHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -63,7 +62,7 @@ func (e *TeamSuggestionController) getTeamForUser(c *gin.Context) *repository.Te
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Success 200 {object} Suggestions
+// @Success 200 {array} int
 // @Router /events/{event_id}/suggestions [get]
 func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -87,77 +86,10 @@ func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Param body body SuggestionCreate true "Suggestion to create"
-// @Success 201
-// @Router /events/{event_id}/suggestions/objectives [POST]
-func (e *TeamSuggestionController) createObjectiveTeamSuggestionHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		team := e.getTeamForUser(c)
-		if team == nil {
-			return
-		}
-		if !team.IsTeamLead {
-			c.JSON(403, gin.H{"error": "You are not a team lead"})
-			return
-		}
-		var suggestionCreate SuggestionCreate
-		if err := c.BindJSON(&suggestionCreate); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		err := e.teamSuggestionService.SaveSuggestion(suggestionCreate.Id, team.TeamId, true)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(201, suggestionCreate)
-	}
-}
-
-// @id CreateCategoryTeamSuggestion
-// @Description Creates a suggestion for a category for your team for an event
-// @Tags team
-// @Accept json
-// @Security BearerAuth
-// @Produce json
-// @Param event_id path int true "Event Id"
-// @Param body body SuggestionCreate true "Suggestion to create"
-// @Success 201
-// @Router /events/{event_id}/suggestions/categories [POST]
-func (e *TeamSuggestionController) createCategoryTeamSuggestionHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		team := e.getTeamForUser(c)
-		if team == nil {
-			return
-		}
-		if !team.IsTeamLead {
-			c.JSON(403, gin.H{"error": "You are not a team lead"})
-			return
-		}
-		var suggestionCreate SuggestionCreate
-		if err := c.BindJSON(&suggestionCreate); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-		err := e.teamSuggestionService.SaveSuggestion(suggestionCreate.Id, team.TeamId, false)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(201, suggestionCreate)
-	}
-}
-
-// @id DeleteObjectiveTeamSuggestion
-// @Description Deletes a suggestion for an objective for your team for an event
-// @Tags team
-// @Security BearerAuth
-// @Produce json
-// @Param event_id path int true "Event Id"
 // @Param objective_id path int true "Objective Id"
-// @Success 204
-// @Router /events/{event_id}/suggestions/objectives/{objective_id} [delete]
-func (e *TeamSuggestionController) deleteObjectiveTeamSuggestionHandler() gin.HandlerFunc {
+// @Success 201
+// @Router /events/{event_id}/suggestions/{objective_id} [POST]
+func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		team := e.getTeamForUser(c)
 		if team == nil {
@@ -172,25 +104,25 @@ func (e *TeamSuggestionController) deleteObjectiveTeamSuggestionHandler() gin.Ha
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.teamSuggestionService.DeleteSuggestion(objectiveId, team.TeamId, true)
+		err = e.teamSuggestionService.SaveSuggestion(objectiveId, team.TeamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(204, nil)
+		c.JSON(201, gin.H{"message": "Suggestion created successfully"})
 	}
 }
 
-// @id DeleteCategoryTeamSuggestion
-// @Description Deletes a suggestion for a category for your team for an event
+// @id DeleteObjectiveTeamSuggestion
+// @Description Deletes a suggestion for an objective for your team for an event
 // @Tags team
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Param category_id path int true "Category Id"
+// @Param objective_id path int true "Objective Id"
 // @Success 204
-// @Router /events/{event_id}/suggestions/categories/{category_id} [delete]
-func (e *TeamSuggestionController) deleteCategoryTeamSuggestionHandler() gin.HandlerFunc {
+// @Router /events/{event_id}/suggestions/{objective_id} [delete]
+func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		team := e.getTeamForUser(c)
 		if team == nil {
@@ -200,12 +132,12 @@ func (e *TeamSuggestionController) deleteCategoryTeamSuggestionHandler() gin.Han
 			c.JSON(403, gin.H{"error": "You are not a team lead"})
 			return
 		}
-		categoryId, err := strconv.Atoi(c.Param("category_id"))
+		objectiveId, err := strconv.Atoi(c.Param("objective_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.teamSuggestionService.DeleteSuggestion(categoryId, team.TeamId, false)
+		err = e.teamSuggestionService.DeleteSuggestion(objectiveId, team.TeamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -214,27 +146,8 @@ func (e *TeamSuggestionController) deleteCategoryTeamSuggestionHandler() gin.Han
 	}
 }
 
-type SuggestionCreate struct {
-	Id int `json:"id" binding:"required"`
-}
-
-type Suggestions struct {
-	CategoryIds  []int `json:"category_ids" binding:"required"`
-	ObjectiveIds []int `json:"objective_ids"  binding:"required"`
-}
-
-func toSuggestionResponse(suggestions []*repository.TeamSuggestion) *Suggestions {
-	category_ids := make([]int, 0)
-	objective_ids := make([]int, 0)
-	for _, suggestion := range suggestions {
-		if suggestion.IsObjective {
-			objective_ids = append(objective_ids, suggestion.Id)
-		} else {
-			category_ids = append(category_ids, suggestion.Id)
-		}
-	}
-	return &Suggestions{
-		CategoryIds:  category_ids,
-		ObjectiveIds: objective_ids,
-	}
+func toSuggestionResponse(suggestions []*repository.TeamSuggestion) []int {
+	return utils.Map(suggestions, func(s *repository.TeamSuggestion) int {
+		return s.Id
+	})
 }

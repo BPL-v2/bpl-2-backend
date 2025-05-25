@@ -73,7 +73,6 @@ func TestMain(m *testing.M) {
 		// }
 		err = db.AutoMigrate(
 			&repository.Event{},
-			&repository.ScoringCategory{},
 			&repository.Objective{},
 			&repository.Condition{},
 			&repository.Team{},
@@ -153,7 +152,7 @@ func SetUp() *repository.Event {
 				AllowedClasses: []string{},
 			},
 		},
-		ScoringCategories: []*repository.ScoringCategory{
+		Objectives: []*repository.Objective{
 			{
 				Name: "category1",
 			},
@@ -173,11 +172,11 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 	defer TearDown()
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.EARLIEST_FRESH_ITEM,
+		Aggregation:    repository.AggregationTypeEarliestFreshItem,
 		RequiredAmount: 1,
-		CategoryId:     event.ScoringCategories[0].Id,
-		ObjectiveType:  repository.ITEM,
-		NumberField:    repository.STACK_SIZE,
+		ParentId:       &event.Objectives[0].Id,
+		ObjectiveType:  repository.ObjectiveTypeItem,
+		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 	}
 	err := db.Create(objective).Error
@@ -263,11 +262,11 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 	// defer TearDown()
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.EARLIEST_FRESH_ITEM,
+		Aggregation:    repository.AggregationTypeEarliestFreshItem,
 		RequiredAmount: 1,
-		CategoryId:     event.ScoringCategories[0].Id,
-		ObjectiveType:  repository.ITEM,
-		NumberField:    repository.STACK_SIZE,
+		ParentId:       &event.Objectives[0].Id,
+		ObjectiveType:  repository.ObjectiveTypeItem,
+		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 	}
 	err := db.Create(objective).Error
@@ -341,11 +340,11 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 	// defer TearDown()
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.EARLIEST_FRESH_ITEM,
+		Aggregation:    repository.AggregationTypeEarliestFreshItem,
 		RequiredAmount: 100,
-		CategoryId:     event.ScoringCategories[0].Id,
-		ObjectiveType:  repository.ITEM,
-		NumberField:    repository.STACK_SIZE,
+		ParentId:       &event.Objectives[0].Id,
+		ObjectiveType:  repository.ObjectiveTypeItem,
+		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 	}
 	err := db.Create(objective).Error
@@ -430,11 +429,11 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.DIFFERENCE_BETWEEN,
+		Aggregation:    repository.AggregationTypeDifferenceBetween,
 		RequiredAmount: 1,
-		CategoryId:     event.ScoringCategories[0].Id,
-		ObjectiveType:  repository.ITEM,
-		NumberField:    repository.STACK_SIZE,
+		ParentId:       &event.Objectives[0].Id,
+		ObjectiveType:  repository.ObjectiveTypeItem,
+		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 		ValidFrom:      &timeStart,
 		ValidTo:        &timeEnd,

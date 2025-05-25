@@ -19,7 +19,7 @@ func Reduce[A any](input []*A, reducer func(*A, *A) *A) *A {
 	return result
 }
 
-func Find[A any](input []*A, predicate func(*A) bool) (*A, bool) {
+func FindFirst[A any](input []*A, predicate func(*A) bool) (*A, bool) {
 	for _, item := range input {
 		if predicate(item) {
 			return item, true
