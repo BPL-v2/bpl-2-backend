@@ -256,7 +256,7 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 		return func(item *clientModel.Item) int {
 			if item.Properties != nil {
 				for _, property := range *item.Properties {
-					if property.Name == "Quality" {
+					if strings.Contains(property.Name, "Quality") {
 						quality, err := strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(property.Values[0].Name(), "%", ""), "+", ""))
 						if err != nil {
 							log.Printf("Error parsing quality %s", property.Values[0].Name())

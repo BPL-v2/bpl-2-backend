@@ -44,7 +44,6 @@ func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event 
 	}
 	changeId, err := service.NewStashChangeService().GetCurrentChangeIdForEvent(event)
 	if err == nil {
-		log.Printf("Last change id: %s", changeId)
 		matchingService.lastChangeId = &changeId
 	}
 	return matchingService, nil
@@ -65,7 +64,6 @@ func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, 
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 	for _, stash := range stashChange.Stashes {
-
 		if stash.League != nil && *stash.League == m.event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
 			userId := userMap[*stash.AccountName]
 			completions := make(map[int]int)
@@ -79,7 +77,12 @@ func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, 
 				}
 			}
 			teamMatchesTotal.WithLabelValues(teamMap[*stash.AccountName]).Add(float64(len(completions)))
-			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, userId, stash.StashChangeId, m.event.Id, stashChange.Timestamp)...)
+			stashChange := &repository.StashChange{
+				StashId:   stash.Id,
+				EventId:   m.event.Id,
+				Timestamp: stashChange.Timestamp,
+			}
+			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, userId, stashChange)...)
 		}
 	}
 	return matches

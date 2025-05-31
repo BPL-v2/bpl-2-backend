@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bpl/client"
 	"bpl/config"
 	"bpl/repository"
 	"encoding/json"
@@ -36,15 +35,23 @@ func NewStashChangeService() *StashChangeService {
 	}
 }
 
-func (s *StashChangeService) SaveStashChangesConditionally(stashChanges []client.PublicStashChange, message config.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
-	return s.stashChangeRepository.SaveStashChangesConditionally(stashChanges, message, eventId, sendFunc)
+func (s *StashChangeService) SaveStashChangesConditionally(message config.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
+	return s.stashChangeRepository.SaveStashChangesConditionally(message, eventId, sendFunc)
 }
 
 func (s *StashChangeService) GetNextChangeIdForEvent(event *repository.Event) (string, error) {
-	return s.stashChangeRepository.GetNextChangeIdForEvent(event)
+	changeId, err := s.stashChangeRepository.GetChangeIdForEvet(event)
+	if err != nil {
+		return "", fmt.Errorf("failed to get next change id for event %d: %s", event.Id, err)
+	}
+	return changeId.NextChangeId, nil
 }
 func (s *StashChangeService) GetCurrentChangeIdForEvent(event *repository.Event) (string, error) {
-	return s.stashChangeRepository.GetCurrentChangeIdForEvent(event)
+	changeId, err := s.stashChangeRepository.GetChangeIdForEvet(event)
+	if err != nil {
+		return "", fmt.Errorf("failed to get current change id for event %d: %s", event.Id, err)
+	}
+	return changeId.CurrentChangeId, nil
 }
 
 func (s *StashChangeService) GetNinjaChangeId() (string, error) {
