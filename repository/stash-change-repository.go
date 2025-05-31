@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"bpl/client"
 	"bpl/config"
 	"encoding/json"
 	"time"
@@ -12,59 +11,68 @@ import (
 type StashChangeRepository struct {
 	DB *gorm.DB
 }
+
+type ChangeId struct {
+	CurrentChangeId string `gorm:"not null"`
+	NextChangeId    string `gorm:"not null"`
+	EventId         int    `gorm:"primaryKey;references events(id)"`
+}
+
 type StashChange struct {
-	Id           int    `gorm:"primaryKey;autoIncrement"`
-	StashId      string `gorm:"not null"`
-	NextChangeId string `gorm:"not null"`
-	EventId      int    `gorm:"index;not null;references events(id)"`
-	Timestamp    time.Time
+	Id        int    `gorm:"primaryKey;autoIncrement"`
+	StashId   string `gorm:"not null"`
+	EventId   int    `gorm:"index;not null;references events(id)"`
+	Timestamp time.Time
 }
 
 func NewStashChangeRepository() *StashChangeRepository {
 	return &StashChangeRepository{DB: config.DatabaseConnection()}
 }
 
-func (r *StashChangeRepository) SaveStashChangesConditionally(publicStashChanges []client.PublicStashChange, message config.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
+func (r *StashChangeRepository) CreateStashChangeIfNotExists(stashChange *StashChange) (*StashChange, error) {
+	existing := &StashChange{}
+	err := r.DB.First(existing, "stash_id = ? AND event_id = ?", stashChange.StashId, stashChange.EventId).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+	if existing.Id != 0 {
+		return existing, nil
+	}
+	err = r.DB.Create(stashChange).Error
+	if err != nil {
+		return nil, err
+	}
+	return stashChange, nil
+
+}
+
+func (r *StashChangeRepository) Save(stashChange *StashChange) error {
+	return r.DB.Save(&stashChange).Error
+}
+func (r *StashChangeRepository) SaveStashChangesConditionally(message config.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
-		dbStashChanges := make([]StashChange, 0)
-		for _, stashChange := range publicStashChanges {
-			dbStashChanges = append(dbStashChanges, StashChange{
-				StashId:      stashChange.Id,
-				EventId:      eventId,
-				NextChangeId: message.NextChangeId,
-				Timestamp:    message.Timestamp,
-			})
+		currentId := &ChangeId{
+			CurrentChangeId: message.ChangeId,
+			NextChangeId:    message.NextChangeId,
+			EventId:         eventId,
 		}
-
-		result := r.DB.CreateInBatches(dbStashChanges, 500)
-		if result.Error != nil {
-			return result.Error
+		err := tx.Save(currentId).Error
+		if err != nil {
+			return err
 		}
-		idMap := make(map[string]int)
-		for _, stashChange := range dbStashChanges {
-			idMap[stashChange.StashId] = stashChange.Id
-		}
-		for i, s := range publicStashChanges {
-			publicStashChanges[i].StashChangeId = idMap[s.Id]
-		}
-		message.Stashes = publicStashChanges
-
 		data, err := json.Marshal(message)
-
 		if err != nil {
 			return err
 		}
 		return sendFunc(data)
 	})
 }
-func (r *StashChangeRepository) GetNextChangeIdForEvent(event *Event) (changeId string, err error) {
-	query := "SELECT DISTINCT next_change_id FROM stash_changes WHERE event_id = ? ORDER BY next_change_id desc LIMIT 1"
-	err = r.DB.Raw(query, event.Id).First(&changeId).Error
-	return changeId, err
-}
 
-func (r *StashChangeRepository) GetCurrentChangeIdForEvent(event *Event) (changeId string, err error) {
-	query := "SELECT DISTINCT next_change_id FROM stash_changes WHERE event_id = ? ORDER BY next_change_id desc OFFSET 1 LIMIT 1"
-	err = r.DB.Raw(query, event.Id).First(&changeId).Error
-	return changeId, err
+func (r *StashChangeRepository) GetChangeIdForEvet(event *Event) (ChangeId, error) {
+	var changeId ChangeId
+	err := r.DB.First(&changeId, "event_id = ?", event.Id).Error
+	if err != nil {
+		return ChangeId{}, err
+	}
+	return changeId, nil
 }

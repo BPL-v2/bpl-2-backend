@@ -2,29 +2,34 @@ package service
 
 import (
 	"bpl/repository"
-	"time"
 )
 
 type ObjectiveMatchService struct {
 	objectiveMatchRepository *repository.ObjectiveMatchRepository
+	stashchangeRepository    *repository.StashChangeRepository
 }
 
 func NewObjectiveMatchService() *ObjectiveMatchService {
 	return &ObjectiveMatchService{
 		objectiveMatchRepository: repository.NewObjectiveMatchRepository(),
+		stashchangeRepository:    repository.NewStashChangeRepository(),
 	}
 }
 
-func (e *ObjectiveMatchService) CreateItemMatches(matches map[int]int, userId int, stashChangeId int, eventId int, timestamp time.Time) []*repository.ObjectiveMatch {
+func (e *ObjectiveMatchService) CreateItemMatches(matches map[int]int, userId int, stashChange *repository.StashChange) []*repository.ObjectiveMatch {
+	stashChange, err := e.stashchangeRepository.CreateStashChangeIfNotExists(stashChange)
+	if err != nil {
+		return nil
+	}
 	objectiveMatches := make([]*repository.ObjectiveMatch, 0)
 	for objectiveId, number := range matches {
 		objectiveMatch := &repository.ObjectiveMatch{
 			ObjectiveId:   objectiveId,
-			Timestamp:     timestamp,
+			Timestamp:     stashChange.Timestamp,
 			Number:        number,
 			UserId:        userId,
-			EventId:       eventId,
-			StashChangeId: &stashChangeId,
+			EventId:       stashChange.EventId,
+			StashChangeId: &stashChange.Id,
 		}
 		objectiveMatches = append(objectiveMatches, objectiveMatch)
 	}

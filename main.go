@@ -150,6 +150,7 @@ func autoMigrate(db *gorm.DB) {
 		&repository.KafkaConsumer{},
 		&repository.RecurringJob{},
 		&repository.LadderEntry{},
+		&repository.ChangeId{},
 	)
 	if err != nil {
 		panic(err)

@@ -186,29 +186,25 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 	now := time.Now()
 	stashChanges := []*repository.StashChange{
 		{
-			StashId:      "stash1",
-			NextChangeId: "1",
-			EventId:      event.Id,
-			Timestamp:    now,
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now,
 		},
 		{
-			StashId:      "stash2",
-			NextChangeId: "1",
-			EventId:      event.Id,
-			Timestamp:    now,
+			StashId:   "stash2",
+			EventId:   event.Id,
+			Timestamp: now,
 		},
 		// stashes is found again in another change later
 		{
-			StashId:      "stash1",
-			NextChangeId: "2",
-			EventId:      event.Id,
-			Timestamp:    now.Add(time.Hour),
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now.Add(time.Hour),
 		},
 		{
-			StashId:      "stash2",
-			NextChangeId: "2",
-			EventId:      event.Id,
-			Timestamp:    now.Add(time.Hour),
+			StashId:   "stash2",
+			EventId:   event.Id,
+			Timestamp: now.Add(time.Hour),
 		},
 	}
 	db.Create(stashChanges)
@@ -276,22 +272,19 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 	now := time.Now()
 	stashChanges := []*repository.StashChange{
 		{
-			StashId:      "stash1",
-			NextChangeId: "1",
-			EventId:      event.Id,
-			Timestamp:    now,
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now,
 		},
 		{
-			StashId:      "stash1",
-			NextChangeId: "1",
-			EventId:      event.Id,
-			Timestamp:    now.Add(time.Hour),
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now.Add(time.Hour),
 		},
 		{
-			StashId:      "stash2",
-			NextChangeId: "2",
-			EventId:      event.Id,
-			Timestamp:    now.Add(time.Hour),
+			StashId:   "stash2",
+			EventId:   event.Id,
+			Timestamp: now.Add(time.Hour),
 		},
 	}
 	db.Create(stashChanges)
@@ -354,22 +347,19 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 	now := time.Now()
 	stashChanges := []*repository.StashChange{
 		{
-			StashId:      "stash1",
-			NextChangeId: "1",
-			EventId:      event.Id,
-			Timestamp:    now,
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now,
 		},
 		{
-			StashId:      "stash1",
-			NextChangeId: "2",
-			EventId:      event.Id,
-			Timestamp:    now.Add(time.Hour),
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now.Add(time.Hour),
 		},
 		{
-			StashId:      "stash1",
-			NextChangeId: "3",
-			EventId:      event.Id,
-			Timestamp:    now.Add(2 * time.Hour),
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now.Add(2 * time.Hour),
 		},
 	}
 	db.Create(stashChanges)
@@ -444,10 +434,9 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 	}
 	stashChanges := []*repository.StashChange{
 		{
-			StashId:      "stash1",
-			NextChangeId: "1",
-			EventId:      event.Id,
-			Timestamp:    now,
+			StashId:   "stash1",
+			EventId:   event.Id,
+			Timestamp: now,
 		},
 	}
 	db.Create(stashChanges)
