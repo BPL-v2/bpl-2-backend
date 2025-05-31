@@ -2391,8 +2391,7 @@ const docTemplate = `{
                 "delve",
                 "experience",
                 "level",
-                "rank",
-                "user_id"
+                "rank"
             ],
             "properties": {
                 "account_name": {
@@ -2859,8 +2858,8 @@ const docTemplate = `{
                 "number": {
                     "type": "integer"
                 },
-                "objective": {
-                    "$ref": "#/definitions/Objective"
+                "objective_id": {
+                    "type": "integer"
                 },
                 "proof": {
                     "type": "string"
@@ -2877,8 +2876,8 @@ const docTemplate = `{
                 "timestamp": {
                     "type": "string"
                 },
-                "user": {
-                    "$ref": "#/definitions/NonSensitiveUser"
+                "user_id": {
+                    "type": "integer"
                 }
             }
         },

@@ -299,7 +299,6 @@ definitions:
     - experience
     - level
     - rank
-    - user_id
     type: object
   MinimalUser:
     properties:
@@ -598,8 +597,8 @@ definitions:
         type: integer
       number:
         type: integer
-      objective:
-        $ref: '#/definitions/Objective'
+      objective_id:
+        type: integer
       proof:
         type: string
       review_comment:
@@ -610,8 +609,8 @@ definitions:
         type: integer
       timestamp:
         type: string
-      user:
-        $ref: '#/definitions/NonSensitiveUser'
+      user_id:
+        type: integer
     required:
     - approval_status
     - comment

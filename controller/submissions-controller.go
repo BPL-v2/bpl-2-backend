@@ -308,6 +308,8 @@ type Submission struct {
 	TeamId         *int                      `json:"team_id"`
 	ReviewComment  *string                   `json:"review_comment"`
 	ReviewerId     *int                      `json:"reviewer_id"`
+	ObjectiveId    int                       `json:"objective_id"`
+	UserId         int                       `json:"user_id"`
 }
 
 func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]int) *Submission {
@@ -320,6 +322,8 @@ func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]
 		Comment:        submission.Comment,
 		ReviewComment:  submission.ReviewComment,
 		ReviewerId:     submission.ReviewerId,
+		ObjectiveId:    submission.ObjectiveId,
+		UserId:         submission.UserId,
 	}
 	if teamUsers != nil {
 		teamId, ok := (*teamUsers)[submission.UserId]
