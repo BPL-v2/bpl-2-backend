@@ -308,8 +308,8 @@ type Submission struct {
 	TeamId         *int                      `json:"team_id"`
 	ReviewComment  *string                   `json:"review_comment"`
 	ReviewerId     *int                      `json:"reviewer_id"`
-	ObjectiveId    int                       `json:"objective_id"`
-	UserId         int                       `json:"user_id"`
+	ObjectiveId    int                       `json:"objective_id" binding:"required"`
+	UserId         int                       `json:"user_id" binding:"required"`
 }
 
 func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]int) *Submission {

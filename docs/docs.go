@@ -2842,8 +2842,10 @@ const docTemplate = `{
                 "comment",
                 "id",
                 "number",
+                "objective_id",
                 "proof",
-                "timestamp"
+                "timestamp",
+                "user_id"
             ],
             "properties": {
                 "approval_status": {

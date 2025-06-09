@@ -104,7 +104,7 @@ func NewOauthService() *OauthService {
 			repository.ProviderPoE: {
 				ClientID:     os.Getenv("POE_CLIENT_ID"),
 				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
-				Scopes:       []string{"account:characters", "account:league_accounts", "account:profile"},
+				Scopes:       []string{"account:characters", "account:league_accounts", "account:profile", "account:guild:stashes"},
 				Endpoint: oauth2.Endpoint{
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
@@ -116,6 +116,12 @@ func NewOauthService() *OauthService {
 				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
 				ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
 				TokenURL:     "https://id.twitch.tv/oauth2/token",
+			},
+			repository.ProviderPoE: {
+				ClientID:     os.Getenv("POE_CLIENT_ID"),
+				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
+				TokenURL:     "https://www.pathofexile.com/oauth/token",
+				Scopes:       []string{"service:psapi"},
 			},
 		},
 
@@ -290,28 +296,50 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 	return e.addAccountToUser(&authState, profile.UUId, profile.Name, token, repository.ProviderPoE)
 }
 
-func (e *OauthService) GetApplicationToken(provider repository.Provider) (*string, error) {
+func (e *OauthService) GetApplicationToken(provider repository.Provider) (string, error) {
 	credentials, err := e.clientCredentialRepository.GetClientCredentialsByName(provider)
-	if err != nil || credentials.Expiry.Before(time.Now()) {
-		config, ok := e.clientConfig[provider]
-		if !ok {
-			return nil, fmt.Errorf("provider not found")
-		}
-		token, err := config.Token(context.Background())
+	if err != nil || (credentials.Expiry != nil && credentials.Expiry.Before(time.Now())) {
+		token, expiry, err := e.GetToken(provider)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		if credentials == nil {
 			credentials = &repository.ClientCredentials{
 				Name:        provider,
-				AccessToken: token.AccessToken,
-				Expiry:      token.Expiry,
+				AccessToken: token,
+				Expiry:      expiry,
 			}
 		} else {
-			credentials.AccessToken = token.AccessToken
-			credentials.Expiry = token.Expiry
+			credentials.AccessToken = token
+			credentials.Expiry = expiry
 		}
 		e.clientCredentialRepository.DB.Save(credentials)
 	}
-	return &credentials.AccessToken, nil
+	return credentials.AccessToken, nil
+}
+
+func (e *OauthService) GetToken(provider repository.Provider) (token string, expiry *time.Time, err error) {
+	if provider == repository.ProviderPoE {
+		poeClient := client.NewPoEClient(1, false, 10)
+		tokenResponse, hhtpErr := poeClient.GetClientCredentials(os.Getenv("POE_CLIENT_ID"), os.Getenv("POE_CLIENT_SECRET"))
+		if hhtpErr != nil {
+			return "", nil, fmt.Errorf("failed to get PoE token: %s", hhtpErr.Description)
+		}
+		var expiry *time.Time = nil
+		if tokenResponse.ExpiresIn != nil {
+			x := time.Now().Add(time.Duration(*tokenResponse.ExpiresIn) * time.Second)
+			expiry = &x
+		}
+		return tokenResponse.AccessToken, expiry, nil
+	}
+
+	config, ok := e.clientConfig[provider]
+	if !ok {
+		return "", nil, fmt.Errorf("provider not found")
+	}
+	oauthToken, err := config.Token(context.Background())
+	if err != nil {
+		return "", nil, err
+	}
+	return oauthToken.AccessToken, &oauthToken.Expiry, nil
 }
