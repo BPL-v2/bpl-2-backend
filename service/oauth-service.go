@@ -104,7 +104,7 @@ func NewOauthService() *OauthService {
 			repository.ProviderPoE: {
 				ClientID:     os.Getenv("POE_CLIENT_ID"),
 				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
-				Scopes:       []string{"account:characters", "account:league_accounts", "account:profile"},
+				Scopes:       []string{"account:characters", "account:league_accounts", "account:guild:stashes"},
 				Endpoint: oauth2.Endpoint{
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
@@ -291,6 +291,7 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 	}
 	profile, clientError := client.GetAccountProfile(token.AccessToken)
 	if clientError != nil {
+		fmt.Println("PoE Token:", token.AccessToken)
 		return nil, fmt.Errorf("failed to get profile: %v", clientError)
 	}
 	return e.addAccountToUser(&authState, profile.UUId, profile.Name, token, repository.ProviderPoE)
