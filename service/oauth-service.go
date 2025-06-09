@@ -104,7 +104,7 @@ func NewOauthService() *OauthService {
 			repository.ProviderPoE: {
 				ClientID:     os.Getenv("POE_CLIENT_ID"),
 				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
-				Scopes:       []string{"account:characters", "account:league_accounts", "account:profile", "account:guild:stashes"},
+				Scopes:       []string{"account:characters", "account:league_accounts", "account:profile"},
 				Endpoint: oauth2.Endpoint{
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
