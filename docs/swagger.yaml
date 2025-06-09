@@ -616,8 +616,10 @@ definitions:
     - comment
     - id
     - number
+    - objective_id
     - proof
     - timestamp
+    - user_id
     type: object
   SubmissionCreate:
     properties:

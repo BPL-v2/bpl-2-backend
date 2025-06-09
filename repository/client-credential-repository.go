@@ -8,9 +8,9 @@ import (
 )
 
 type ClientCredentials struct {
-	Name        Provider  `gorm:"primaryKey"`
-	AccessToken string    `json:"access_token"`
-	Expiry      time.Time `json:"expiry"`
+	Name        Provider   `gorm:"primaryKey"`
+	AccessToken string     `json:"access_token"`
+	Expiry      *time.Time `gorm:"null" json:"expiry"`
 }
 
 type ClientCredentialsRepository struct {

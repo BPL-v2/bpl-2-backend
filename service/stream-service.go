@@ -25,12 +25,12 @@ func NewStreamService() *StreamService {
 		eventRepository:  repository.NewEventRepository(),
 		oauthService:     oauthService,
 	}
-	token, err := oauthService.GetApplicationToken("twitch")
+	token, err := oauthService.GetApplicationToken(repository.ProviderTwitch)
 	if err != nil {
 		log.Fatalf("Failed to get twitch token: %v", err)
 		return s
 	}
-	s.twitchClient = client.NewTwitchClient(*token)
+	s.twitchClient = client.NewTwitchClient(token)
 	return s
 
 }
@@ -40,11 +40,11 @@ func (e *StreamService) GetStreamsForCurrentEvent() ([]*client.TwitchStream, err
 	if err != nil {
 		return nil, err
 	}
-	token, err := e.oauthService.GetApplicationToken("twitch")
+	token, err := e.oauthService.GetApplicationToken(repository.ProviderTwitch)
 	if err != nil {
 		return nil, err
 	}
-	e.twitchClient.Token = *token
+	e.twitchClient.Token = token
 
 	userMap := make(map[string]int)
 	for _, streamer := range streamers {

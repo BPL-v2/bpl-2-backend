@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"time"
 
@@ -43,6 +42,7 @@ type FetchingService struct {
 	poeClient          *client.PoEClient
 	stashChangeService *service.StashChangeService
 	stashChannel       chan config.StashChangeMessage
+	oauthService       *service.OauthService
 }
 
 func NewFetchingService(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) *FetchingService {
@@ -53,14 +53,16 @@ func NewFetchingService(ctx context.Context, event *repository.Event, poeClient 
 		event:              event,
 		poeClient:          poeClient,
 		stashChangeService: stashChangeService,
+		oauthService:       service.NewOauthService(),
 		stashChannel:       make(chan config.StashChangeMessage),
 	}
 }
 
 func (f *FetchingService) FetchStashChanges() error {
-	token := os.Getenv("POE_CLIENT_TOKEN")
-	if token == "" {
-		return fmt.Errorf("POE_CLIENT_TOKEN environment variable not set")
+	token, err := f.oauthService.GetApplicationToken(repository.ProviderPoE)
+	if err != nil {
+		log.Printf("Failed to get PoE token: %v", err)
+		return fmt.Errorf("failed to get PoE token: %w", err)
 	}
 	initialStashChange, err := f.stashChangeService.GetInitialChangeId(f.event)
 	if err != nil {

@@ -484,7 +484,7 @@ func (c *PoEClient) GetPublicStashes(token string, realm string, id string) (*Ge
 	)
 }
 
-func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string, scope string) (*ClientCredentialsGrantResponse, *ClientError) {
+func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string) (*ClientCredentialsGrantResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetClientCredentials"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetClientCredentials").Inc()
@@ -492,7 +492,7 @@ func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string, s
 		"grant_type":    {"client_credentials"},
 		"client_id":     {clientId},
 		"client_secret": {clientSecret},
-		"scope":         {scope},
+		"scope":         {"service:psapi"},
 	}
 	return sendRequest[ClientCredentialsGrantResponse](c, RequestArgs{
 		Endpoint:      "https://www.pathofexile.com/oauth/token",
@@ -500,6 +500,9 @@ func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string, s
 		Method:        "POST",
 		Body:          strings.NewReader(form.Encode()),
 		IgnoreBaseURL: true,
+		Headers: map[string]string{
+			"Content-Type": "application/x-www-form-urlencoded",
+		},
 	},
 	)
 }
