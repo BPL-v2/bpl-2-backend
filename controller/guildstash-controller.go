@@ -29,6 +29,7 @@ func setupGuildStashController(PoEClient *client.PoEClient) []RouteInfo {
 		{Method: "GET", Path: "", HandlerFunc: e.getGuildStashForUser(), Authenticated: true},
 		{Method: "POST", Path: "", HandlerFunc: e.updateGuildStash(), Authenticated: true},
 		{Method: "PATCH", Path: "/:stash_id", HandlerFunc: e.switchStashFetch(), Authenticated: true},
+		{Method: "POST", Path: "/:stash_id/update", HandlerFunc: e.updateStashTab(), Authenticated: true},
 		{Method: "GET", Path: "/:stash_id/items", HandlerFunc: e.getGuildStashTabItems(), Authenticated: true},
 	}
 	for i, route := range routes {
@@ -90,6 +91,38 @@ func (e *GuildStashController) updateGuildStash() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, utils.Map(tabs, toModel))
+	}
+}
+
+// @id UpdateStashTab
+// @Description Fetches current items for specific guild stash tab
+// @Tags guild-stash
+// @Security BearerAuth
+// @Produce json
+// @Param eventId path int true "Event Id"
+// @Param stash_id path string true "Stash Tab Id"
+// @Success 200 {array} client.DisplayItem
+// @Router /{eventId}/guild-stash/{stash_id}/update [post]
+func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		teamUser, user, err := e.userService.GetTeamForUser(c, event)
+		if err != nil || !teamUser.IsTeamLead {
+			c.JSON(403, "unauthorized")
+			return
+		}
+		stashId := c.Param("stash_id")
+		tab, err := e.guildStashService.UpdateStashTab(stashId, event, teamUser, user)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(200)
+		c.Writer.Header().Set("Content-Type", "application/json")
+		c.Writer.Write([]byte(tab.Items))
 	}
 }
 

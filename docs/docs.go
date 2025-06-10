@@ -2147,6 +2147,50 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/{eventId}/guild-stash/{stash_id}/update": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches current items for specific guild stash tab",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "UpdateStashTab",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Stash Tab Id",
+                        "name": "stash_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/DisplayItem"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

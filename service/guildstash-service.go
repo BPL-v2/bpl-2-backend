@@ -4,6 +4,7 @@ import (
 	"bpl/client"
 	"bpl/repository"
 	"bpl/utils"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -87,6 +88,44 @@ func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, 
 		return nil, fmt.Errorf("failed to upsert guild stash tabs: %w", err)
 	}
 	return stashesToPersist, nil
+}
+
+func (s *GuildStashService) UpdateStashTab(stashId string, event *repository.Event, teamUser *repository.TeamUser, user *repository.User) (*repository.GuildStashTab, error) {
+	tab, err := s.GuildStashRepository.GetById(stashId, event.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get guild stash tab: %w", err)
+	}
+	if tab.TeamId != teamUser.TeamId || !teamUser.IsTeamLead {
+		return nil, fmt.Errorf("unauthorized to update stash tab")
+	}
+	// todo: use random team member's token
+	token, found := utils.FindFirst(user.OauthAccounts, func(o *repository.Oauth) bool {
+		return o.Provider == repository.ProviderPoE
+	})
+	if !found || token.AccessToken == "" || token.Expiry.Before(time.Now()) {
+		return nil, fmt.Errorf("invalid PoE token")
+	}
+	resp, httpError := s.PoEClient.GetGuildStash(token.AccessToken, event.Name, stashId, nil)
+	if httpError != nil {
+		return nil, fmt.Errorf("failed to fetch guild stash tab: %d - %s", httpError.StatusCode, httpError.Description)
+	}
+	tab.Name = resp.Stash.Name
+	tab.Type = resp.Stash.Type
+	tab.Index = resp.Stash.Index
+	tab.Color = resp.Stash.Metadata.Colour
+	if resp.Stash.Items != nil {
+		items, err := json.Marshal(resp.Stash.Items)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal items for stash %s: %w", tab.Id, err)
+		}
+		tab.Items = string(items)
+	}
+	tab.LastFetch = time.Now()
+	err = s.GuildStashRepository.Save(tab)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save guild stash tab: %w", err)
+	}
+	return tab, nil
 }
 
 func (s *GuildStashService) SwitchStashFetch(stashId string, eventId int) (*repository.GuildStashTab, error) {
