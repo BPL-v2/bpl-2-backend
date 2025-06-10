@@ -1634,6 +1634,34 @@ paths:
       - BearerAuth: []
       tags:
       - guild-stash
+  /{eventId}/guild-stash/{stash_id}/update:
+    post:
+      description: Fetches current items for specific guild stash tab
+      operationId: UpdateStashTab
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Stash Tab Id
+        in: path
+        name: stash_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DisplayItem'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
   /characters/{user_id}/{event_id}:
     get:
       consumes:
