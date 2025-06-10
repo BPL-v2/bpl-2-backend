@@ -37,25 +37,6 @@ func setupTeamSuggestionController() []RouteInfo {
 	return routes
 }
 
-func (e *TeamSuggestionController) getTeamForUser(c *gin.Context) *repository.TeamUser {
-	event := getEvent(c)
-	if event == nil {
-		return nil
-	}
-	user, err := e.userService.GetUserFromAuthHeader(c)
-	if err != nil {
-		c.JSON(401, gin.H{"error": err.Error()})
-		return nil
-	}
-
-	team, err := e.teamService.GetTeamForUser(event.Id, user.Id)
-	if err != nil {
-		c.JSON(404, gin.H{"error": err.Error()})
-		return nil
-	}
-	return team
-}
-
 // @id GetTeamSuggestions
 // @Description Fetches all suggestions for your team for an event
 // @Tags team
@@ -66,11 +47,16 @@ func (e *TeamSuggestionController) getTeamForUser(c *gin.Context) *repository.Te
 // @Router /events/{event_id}/suggestions [get]
 func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		team := e.getTeamForUser(c)
-		if team == nil {
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		suggestions, err := e.teamSuggestionService.GetSuggestionsForTeam(team.TeamId)
+		teamUser, _, err := e.userService.GetTeamForUser(c, event)
+		if err != nil {
+			c.JSON(403, gin.H{"error": err.Error()})
+			return
+		}
+		suggestions, err := e.teamSuggestionService.GetSuggestionsForTeam(teamUser.TeamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -91,11 +77,16 @@ func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 // @Router /events/{event_id}/suggestions/{objective_id} [POST]
 func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		team := e.getTeamForUser(c)
-		if team == nil {
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		if !team.IsTeamLead {
+		teamUser, _, err := e.userService.GetTeamForUser(c, event)
+		if err != nil {
+			c.JSON(403, gin.H{"error": err.Error()})
+			return
+		}
+		if !teamUser.IsTeamLead {
 			c.JSON(403, gin.H{"error": "You are not a team lead"})
 			return
 		}
@@ -104,7 +95,7 @@ func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.teamSuggestionService.SaveSuggestion(objectiveId, team.TeamId)
+		err = e.teamSuggestionService.SaveSuggestion(objectiveId, teamUser.TeamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -124,11 +115,16 @@ func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc
 // @Router /events/{event_id}/suggestions/{objective_id} [delete]
 func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		team := e.getTeamForUser(c)
-		if team == nil {
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		if !team.IsTeamLead {
+		teamUser, _, err := e.userService.GetTeamForUser(c, event)
+		if err != nil {
+			c.JSON(403, gin.H{"error": err.Error()})
+			return
+		}
+		if !teamUser.IsTeamLead {
 			c.JSON(403, gin.H{"error": "You are not a team lead"})
 			return
 		}
@@ -137,7 +133,7 @@ func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.teamSuggestionService.DeleteSuggestion(objectiveId, team.TeamId)
+		err = e.teamSuggestionService.DeleteSuggestion(objectiveId, teamUser.TeamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

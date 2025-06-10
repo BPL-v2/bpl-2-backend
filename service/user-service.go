@@ -163,3 +163,16 @@ func (s *UserService) AddUserFromStashchange(userName string, event *repository.
 func (s *UserService) GetUsersForEvent(eventId int) ([]*repository.TeamUserWithPoEToken, error) {
 	return s.userRepository.GetUsersForEvent(eventId)
 }
+
+func (s *UserService) GetTeamForUser(c *gin.Context, event *repository.Event) (*repository.TeamUser, *repository.User, error) {
+	user, err := s.GetUserFromAuthHeader(c)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get user from auth header: %w", err)
+	}
+
+	team, err := s.teamService.GetTeamForUser(event.Id, user.Id)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get team for user: %w", err)
+	}
+	return team, user, nil
+}

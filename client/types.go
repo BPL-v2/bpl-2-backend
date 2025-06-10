@@ -325,6 +325,17 @@ const (
 	W GemSocket = "W"
 )
 
+type DisplayItem struct {
+	*Item
+	SocketedItems *[]DisplayItem `json:"socketedItems,omitempty"`
+	W             int            `json:"w"`
+	H             int            `json:"h"`
+	X             *int           `json:"x,omitempty"`
+	Y             *int           `json:"y,omitempty"`
+	Identified    bool           `json:"identified"`
+	Icon          string         `json:"icon"`
+}
+
 type Item struct {
 	Support                *bool               `json:"support,omitempty"`
 	StackSize              *int                `json:"stackSize,omitempty"`
@@ -388,14 +399,10 @@ type Item struct {
 	// UnidentifiedTier      *int            `json:"unidentifiedTier,omitempty"` // PoE2 only
 	// Realm                 *Realm          `json:"realm,omitempty"` // PoE2 only
 	// Verified              bool            `json:"verified"`
-	// W                     int             `json:"w"`
-	// H                     int             `json:"h"`
-	// Icon                  string          `json:"icon"`
 	// MaxStackSize          *int            `json:"maxStackSize,omitempty"`
 	// StackSizeText         *string         `json:"stackSizeText,omitempty"`
 	// League                string          `json:"league"`
 	// Id                    string          `json:"id"`
-	// Identified            bool            `json:"identified"`
 	// Note                  *string         `json:"note,omitempty"`
 	// ForumNote             *string         `json:"forum_note,omitempty"`
 	// LockedToCharacter     *bool           `json:"lockedToCharacter,omitempty"`
@@ -414,8 +421,6 @@ type Item struct {
 	// Replica               *bool           `json:"replica,omitempty"`
 	// Scourged              *ItemScourged   `json:"scourged,omitempty"`
 	// ArtFilename           *string         `json:"artFilename,omitempty"`
-	// X                     *int            `json:"x,omitempty"`
-	// Y                     *int            `json:"y,omitempty"`
 	// InventoryId           *string         `json:"inventoryId,omitempty"`
 }
 
@@ -482,6 +487,12 @@ type StashTab struct {
 	Metadata StashTabMetadata `json:"metadata"`
 	Children *[]StashTab      `json:"children,omitempty"`
 	Items    *[]Item          `json:"items,omitempty"`
+}
+
+type GuildStashTab struct {
+	*StashTab
+	Items    *[]DisplayItem   `json:"items,omitempty"`
+	Children *[]GuildStashTab `json:"children,omitempty"`
 }
 
 type AtlasPassiveTree struct {
@@ -721,11 +732,11 @@ type GetLeagueAccountResponse struct {
 }
 
 type ListGuildStashesResponse struct {
-	Stashes []PublicStashChange `json:"stashes"`
+	Stashes []GuildStashTab `json:"stashes"`
 }
 
 type GetGuildStashResponse struct {
-	Stash *PublicStashChange `json:"stash"`
+	Stash *GuildStashTab `json:"stash"`
 }
 
 type GetPublicStashTabsResponse struct {

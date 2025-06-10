@@ -50,10 +50,10 @@ var jobList = []repository.JobType{
 	repository.EvaluateStashChanges,
 	// service.CalculateScores,
 	repository.FetchCharacterData,
+	repository.FetchGuildStashes,
 }
 
-func NewRecurringJobsController() *RecurringJobsController {
-	poeClient := client.NewPoEClient(10, false, 600)
+func NewRecurringJobsController(poeClient *client.PoEClient) *RecurringJobsController {
 	controller := &RecurringJobsController{
 		service: cron.NewRecurringJobService(poeClient),
 	}
@@ -61,8 +61,8 @@ func NewRecurringJobsController() *RecurringJobsController {
 	return controller
 }
 
-func setupRecurringJobsController() []RouteInfo {
-	c := NewRecurringJobsController()
+func setupRecurringJobsController(poeClient *client.PoEClient) []RouteInfo {
+	c := NewRecurringJobsController(poeClient)
 	baseUrl := "jobs"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: c.getJobsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},

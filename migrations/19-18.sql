@@ -1,0 +1,1 @@
+DROP TABLE guild_stash_tabs;

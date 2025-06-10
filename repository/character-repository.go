@@ -3,6 +3,7 @@ package repository
 import (
 	"bpl/client"
 	"bpl/config"
+	"bpl/utils"
 	"strings"
 	"time"
 
@@ -51,14 +52,6 @@ func (r *CharacterRepository) CreateCharacterCheckpoint(character *Character) er
 	return r.DB.Create(&character).Error
 }
 
-func convert(hashes []int) pq.Int32Array {
-	arr := pq.Int32Array{}
-	for _, v := range hashes {
-		arr = append(arr, int32(v))
-	}
-	return arr
-}
-
 func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassiveTrees []client.AtlasPassiveTree) error {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("SaveAtlasTrees"))
 	defer timer.ObserveDuration()
@@ -74,11 +67,11 @@ func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassi
 	atlas.Index = -1
 	for i, v := range atlasPassiveTrees {
 		if i == 0 {
-			atlas.Tree1 = convert(v.Hashes)
+			atlas.Tree1 = utils.ConvertIntSlice(v.Hashes)
 		} else if i == 1 {
-			atlas.Tree2 = convert(v.Hashes)
+			atlas.Tree2 = utils.ConvertIntSlice(v.Hashes)
 		} else if i == 2 {
-			atlas.Tree3 = convert(v.Hashes)
+			atlas.Tree3 = utils.ConvertIntSlice(v.Hashes)
 		}
 		if strings.HasPrefix(v.Name, "x") {
 			atlas.Index = i
