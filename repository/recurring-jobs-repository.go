@@ -13,6 +13,7 @@ const (
 	FetchStashChanges    JobType = "FetchStashChanges"
 	EvaluateStashChanges JobType = "EvaluateStashChanges"
 	FetchCharacterData   JobType = "FetchCharacterData"
+	FetchGuildStashes    JobType = "FetchGuildStashes"
 	// CalculateScores      JobType = "CalculateScores"
 )
 

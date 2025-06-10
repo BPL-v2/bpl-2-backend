@@ -151,9 +151,10 @@ func (c *PoEClient) GetLeague(token string, league string, realm string) (*GetLe
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeague").Inc()
 	return sendRequest[GetLeagueResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("league/%s", league),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "league/%s",
+		PathParams: []string{league},
+		Token:      token,
+		Method:     "GET",
 		QueryParams: map[string]string{
 			"realm": realm,
 		},
@@ -166,9 +167,10 @@ func (c *PoEClient) GetLeagueLadder(token string, league string, realm string, s
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeagueLadder").Inc()
 	return sendRequest[GetLeagueLadderResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("league/%s/ladder", league),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "league/%s/ladder",
+		PathParams: []string{league},
+		Token:      token,
+		Method:     "GET",
 		QueryParams: map[string]string{
 			"realm":  realm,
 			"sort":   sort,
@@ -206,7 +208,8 @@ func (c *PoEClient) GetPoE2Ladder(league string) (*GetLeagueLadderResponse, *Cli
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetPoE2Ladder").Inc()
 	resp, err := sendRequest[GetPoE2LadderResponse](c, RequestArgs{
-		Endpoint:      fmt.Sprintf("https://pathofexile2.com/internal-api/content/game-ladder/id/%s", league),
+		Endpoint:      "https://pathofexile2.com/internal-api/content/game-ladder/id/%s",
+		PathParams:    []string{league},
 		Method:        "GET",
 		IgnoreBaseURL: true,
 	},
@@ -222,9 +225,10 @@ func (c *PoEClient) GetLeagueEventLadder(token string, league string, realm stri
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeagueEventLadder").Inc()
 	return sendRequest[GetLeagueEventLadderResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("league/%s/event-ladder", league),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "league/%s/event-ladder",
+		PathParams: []string{league},
+		Token:      token,
+		Method:     "GET",
 		QueryParams: map[string]string{
 			"realm":  realm,
 			"limit":  fmt.Sprintf("%d", limit),
@@ -255,9 +259,10 @@ func (c *PoEClient) GetPvPMatch(token string, match string, realm string) (*GetP
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetPvPMatch").Inc()
 	return sendRequest[GetPvPMatchResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("pvp-match/%s", match),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "pvp-match/%s",
+		PathParams: []string{match},
+		Token:      token,
+		Method:     "GET",
 		QueryParams: map[string]string{
 			"realm": realm,
 		},
@@ -270,9 +275,10 @@ func (c *PoEClient) GetPvPMatchLadder(token string, match string, realm string, 
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetPvPMatchLadder").Inc()
 	return sendRequest[GetPvPMatchLadderResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("pvp-match/%s/ladder", match),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "pvp-match/%s/ladder",
+		PathParams: []string{match},
+		Token:      token,
+		Method:     "GET",
 		QueryParams: map[string]string{
 			"realm":  realm,
 			"limit":  fmt.Sprintf("%d", limit),
@@ -332,9 +338,10 @@ func (c *PoEClient) GetCharacter(token string, character string, realm *Realm) (
 	}
 	poeRequestCounter.WithLabelValues("GetCharacter").Inc()
 	return sendRequest[GetCharacterResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("%s/%s", endpoint, character),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   endpoint + "/%s",
+		PathParams: []string{character},
+		Token:      token,
+		Method:     "GET",
 	},
 	)
 }
@@ -344,9 +351,10 @@ func (c *PoEClient) ListAccountStashes(token string, league string) (*ListAccoun
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("ListAccountStashes").Inc()
 	return sendRequest[ListAccountStashesResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("stash/%s", league),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "stash/%s",
+		PathParams: []string{league},
+		Token:      token,
+		Method:     "GET",
 	},
 	)
 }
@@ -384,9 +392,10 @@ func (c *PoEClient) GetItemFilter(token string, filterId string) (*GetItemFilter
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetItemFilter").Inc()
 	return sendRequest[GetItemFilterResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("item-filter/%s", filterId),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "item-filter/%s",
+		PathParams: []string{filterId},
+		Token:      token,
+		Method:     "GET",
 	},
 	)
 }
@@ -412,9 +421,10 @@ func (c *PoEClient) UpdateItemFilter(token string, filterId string, body UpdateF
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("UpdateItemFilter").Inc()
 	return sendRequest[UpdateItemFilterResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("item-filter/%s", filterId),
-		Token:    token,
-		Method:   "POST",
+		Endpoint:   "item-filter/%s",
+		PathParams: []string{filterId},
+		Token:      token,
+		Method:     "POST",
 		QueryParams: map[string]string{
 			"validate": validate,
 		},
@@ -428,9 +438,10 @@ func (c *PoEClient) GetLeagueAccount(token string, league string) (*GetLeagueAcc
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeagueAccount").Inc()
 	return sendRequest[GetLeagueAccountResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("league-account/%s", league),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "league-account/%s",
+		PathParams: []string{league},
+		Token:      token,
+		Method:     "GET",
 	},
 	)
 }
@@ -440,9 +451,10 @@ func (c *PoEClient) ListGuildStashes(token string, league string) (*ListGuildSta
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("ListGuildStashes").Inc()
 	return sendRequest[ListGuildStashesResponse](c, RequestArgs{
-		Endpoint: fmt.Sprintf("guild/stash/%s", league),
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   "guild/stash/%s",
+		PathParams: []string{league},
+		Token:      token,
+		Method:     "GET",
 	},
 	)
 }
@@ -451,14 +463,17 @@ func (c *PoEClient) GetGuildStash(token string, league string, stashId string, s
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetGuildStash"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetGuildStash").Inc()
-	endpoint := fmt.Sprintf("guild/stash/%s/%s", league, stashId)
+	endpoint := "guild/stash/%s/%s"
+	pathParams := []string{league, stashId}
 	if substashId != nil {
-		endpoint += fmt.Sprintf("/%s", *substashId)
+		endpoint += "/%s"
+		pathParams = append(pathParams, *substashId)
 	}
 	return sendRequest[GetGuildStashResponse](c, RequestArgs{
-		Endpoint: endpoint,
-		Token:    token,
-		Method:   "GET",
+		Endpoint:   endpoint,
+		PathParams: pathParams,
+		Token:      token,
+		Method:     "GET",
 	},
 	)
 }

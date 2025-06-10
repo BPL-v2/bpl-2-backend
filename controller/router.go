@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bpl/auth"
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -21,6 +22,8 @@ type RouteInfo struct {
 }
 
 func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
+	poeClient := client.NewPoEClient(10, false, 600)
+
 	routes := make([]RouteInfo, 0)
 	group := r.Group("/api")
 	routes = append(routes, setupEventController()...)
@@ -33,11 +36,12 @@ func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
 	routes = append(routes, setupSignupController()...)
 	routes = append(routes, setupSubmissionController()...)
 	routes = append(routes, setupScoreController()...)
-	routes = append(routes, setupStreamController(cache)...)
-	routes = append(routes, setupRecurringJobsController()...)
 	routes = append(routes, setupLadderController()...)
 	routes = append(routes, setupTeamSuggestionController()...)
 	routes = append(routes, setupCharacterController()...)
+	routes = append(routes, setupStreamController(cache)...)
+	routes = append(routes, setupRecurringJobsController(poeClient)...)
+	routes = append(routes, setupGuildStashController(poeClient)...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
 		if route.Authenticated {

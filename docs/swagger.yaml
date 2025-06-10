@@ -1,4 +1,479 @@
 definitions:
+  DisplayItem:
+    properties:
+      abyssJewel:
+        type: boolean
+      additionalProperties:
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      baseType:
+        type: string
+      colour:
+        type: string
+      corrupted:
+        type: boolean
+      cosmeticMods:
+        items:
+          type: string
+        type: array
+      craftedMods:
+        items:
+          type: string
+        type: array
+      delve:
+        type: boolean
+      duplicated:
+        type: boolean
+      elder:
+        type: boolean
+      enchantMods:
+        items:
+          type: string
+        type: array
+      explicitMods:
+        items:
+          type: string
+        type: array
+      extended:
+        $ref: '#/definitions/ItemExtended'
+      foilVariation:
+        type: integer
+      foreseeing:
+        type: boolean
+      fractured:
+        type: boolean
+      fracturedMods:
+        items:
+          type: string
+        type: array
+      frameType:
+        type: integer
+      gemSockets:
+        items:
+          $ref: '#/definitions/GemSocket'
+        type: array
+      grantedSkills:
+        description: PoE2 only
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      h:
+        type: integer
+      hybrid:
+        $ref: '#/definitions/ItemHybrid'
+      icon:
+        type: string
+      identified:
+        type: boolean
+      ilvl:
+        type: integer
+      implicitMods:
+        items:
+          type: string
+        type: array
+      incubatedItem:
+        $ref: '#/definitions/ItemIncubatedItem'
+      influences:
+        additionalProperties:
+          type: boolean
+        type: object
+      isRelic:
+        type: boolean
+      itemLevel:
+        type: integer
+      logbookMods:
+        items:
+          $ref: '#/definitions/ItemLogbookMod'
+        type: array
+      name:
+        type: string
+      notableProperties:
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      properties:
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      rarity:
+        type: string
+      rewards:
+        items:
+          $ref: '#/definitions/ItemReward'
+        type: array
+      ruthless:
+        type: boolean
+      scourgeMods:
+        items:
+          type: string
+        type: array
+      searing:
+        type: boolean
+      shaper:
+        type: boolean
+      socket:
+        type: integer
+      socketedItems:
+        items:
+          $ref: '#/definitions/DisplayItem'
+        type: array
+      sockets:
+        items:
+          $ref: '#/definitions/ItemSocket'
+        type: array
+      split:
+        type: boolean
+      stackSize:
+        type: integer
+      support:
+        type: boolean
+      supportGemRequirements:
+        description: PoE2 only
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      synthesised:
+        type: boolean
+      talismanTier:
+        type: integer
+      tangled:
+        type: boolean
+      typeLine:
+        type: string
+      ultimatumMods:
+        items:
+          $ref: '#/definitions/ItemUltimatumMod'
+        type: array
+      unmodifiable:
+        type: boolean
+      utilityMods:
+        items:
+          type: string
+        type: array
+      veiled:
+        type: boolean
+      veiledMods:
+        items:
+          type: string
+        type: array
+      w:
+        type: integer
+      weaponRequirements:
+        description: PoE2 only
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      x:
+        type: integer
+      "y":
+        type: integer
+    type: object
+  GemSocket:
+    enum:
+    - W
+    type: string
+    x-enum-varnames:
+    - W
+  Item:
+    properties:
+      abyssJewel:
+        type: boolean
+      additionalProperties:
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      baseType:
+        type: string
+      colour:
+        type: string
+      corrupted:
+        type: boolean
+      cosmeticMods:
+        items:
+          type: string
+        type: array
+      craftedMods:
+        items:
+          type: string
+        type: array
+      delve:
+        type: boolean
+      duplicated:
+        type: boolean
+      elder:
+        type: boolean
+      enchantMods:
+        items:
+          type: string
+        type: array
+      explicitMods:
+        items:
+          type: string
+        type: array
+      extended:
+        $ref: '#/definitions/ItemExtended'
+      foilVariation:
+        type: integer
+      foreseeing:
+        type: boolean
+      fractured:
+        type: boolean
+      fracturedMods:
+        items:
+          type: string
+        type: array
+      frameType:
+        type: integer
+      gemSockets:
+        items:
+          $ref: '#/definitions/GemSocket'
+        type: array
+      grantedSkills:
+        description: PoE2 only
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      hybrid:
+        $ref: '#/definitions/ItemHybrid'
+      ilvl:
+        type: integer
+      implicitMods:
+        items:
+          type: string
+        type: array
+      incubatedItem:
+        $ref: '#/definitions/ItemIncubatedItem'
+      influences:
+        additionalProperties:
+          type: boolean
+        type: object
+      isRelic:
+        type: boolean
+      itemLevel:
+        type: integer
+      logbookMods:
+        items:
+          $ref: '#/definitions/ItemLogbookMod'
+        type: array
+      name:
+        type: string
+      notableProperties:
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      properties:
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      rarity:
+        type: string
+      rewards:
+        items:
+          $ref: '#/definitions/ItemReward'
+        type: array
+      ruthless:
+        type: boolean
+      scourgeMods:
+        items:
+          type: string
+        type: array
+      searing:
+        type: boolean
+      shaper:
+        type: boolean
+      socket:
+        type: integer
+      socketedItems:
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+      sockets:
+        items:
+          $ref: '#/definitions/ItemSocket'
+        type: array
+      split:
+        type: boolean
+      stackSize:
+        type: integer
+      support:
+        type: boolean
+      supportGemRequirements:
+        description: PoE2 only
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      synthesised:
+        type: boolean
+      talismanTier:
+        type: integer
+      tangled:
+        type: boolean
+      typeLine:
+        type: string
+      ultimatumMods:
+        items:
+          $ref: '#/definitions/ItemUltimatumMod'
+        type: array
+      unmodifiable:
+        type: boolean
+      utilityMods:
+        items:
+          type: string
+        type: array
+      veiled:
+        type: boolean
+      veiledMods:
+        items:
+          type: string
+        type: array
+      weaponRequirements:
+        description: PoE2 only
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+    type: object
+  ItemExtended:
+    properties:
+      category:
+        type: string
+      prefixes:
+        type: integer
+      subcategories:
+        items:
+          type: string
+        type: array
+      suffixes:
+        type: integer
+    type: object
+  ItemHybrid:
+    properties:
+      baseTypeName:
+        type: string
+      explicitMods:
+        items:
+          type: string
+        type: array
+      isVaalGem:
+        type: boolean
+      properties:
+        items:
+          $ref: '#/definitions/ItemProperty'
+        type: array
+      secDescrText:
+        type: string
+    type: object
+  ItemIncubatedItem:
+    properties:
+      level:
+        type: integer
+      name:
+        type: string
+      progress:
+        type: integer
+      total:
+        type: integer
+    type: object
+  ItemLogbookMod:
+    properties:
+      faction:
+        $ref: '#/definitions/ItemLogbookModFaction'
+      mods:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+    type: object
+  ItemLogbookModFaction:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  ItemProperty:
+    properties:
+      displayMode:
+        type: integer
+      icon:
+        description: PoE2 only
+        type: string
+      name:
+        type: string
+      progress:
+        type: number
+      suffix:
+        type: string
+      type:
+        type: integer
+      values:
+        items:
+          items: {}
+          type: array
+        type: array
+    type: object
+  ItemReward:
+    properties:
+      label:
+        type: string
+      rewards:
+        additionalProperties:
+          type: integer
+        type: object
+    type: object
+  ItemSocket:
+    properties:
+      attr:
+        type: string
+      group:
+        type: integer
+      item:
+        allOf:
+        - $ref: '#/definitions/ItemSocketItem'
+        description: PoE2 only
+      sColour:
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/ItemSocketType'
+        description: PoE2 only
+    type: object
+  ItemSocketItem:
+    enum:
+    - emerald
+    - sapphire
+    - ruby
+    - rune
+    - soulcore
+    - activegem
+    - supportgem
+    type: string
+    x-enum-varnames:
+    - ItemSocketItemEmerald
+    - ItemSocketItemSapphire
+    - ItemSocketItemRuby
+    - ItemSocketItemRune
+    - ItemSocketItemSoulcore
+    - ItemSocketItemActiveGem
+    - ItemSocketItemSupportGem
+  ItemSocketType:
+    enum:
+    - gem
+    - jewel
+    - rune
+    type: string
+    x-enum-varnames:
+    - ItemSocketTypeGem
+    - ItemSocketTypeJewel
+    - ItemSocketTypeRune
+  ItemUltimatumMod:
+    properties:
+      tier:
+        type: integer
+      type:
+        type: string
+    type: object
   TwitchStream:
     properties:
       backend_user_id:
@@ -255,6 +730,31 @@ definitions:
     - max_size
     - name
     - waitlist_size
+    type: object
+  GuildStashTab:
+    properties:
+      color:
+        type: string
+      fetch_enabled:
+        type: boolean
+      id:
+        type: string
+      index:
+        type: integer
+      last_fetch:
+        type: string
+      name:
+        type: string
+      parent_id:
+        type: string
+      type:
+        type: string
+    required:
+    - fetch_enabled
+    - id
+    - last_fetch
+    - name
+    - type
     type: object
   JobCreate:
     properties:
@@ -877,11 +1377,13 @@ definitions:
     - FetchStashChanges
     - EvaluateStashChanges
     - FetchCharacterData
+    - FetchGuildStashes
     type: string
     x-enum-varnames:
     - FetchStashChanges
     - EvaluateStashChanges
     - FetchCharacterData
+    - FetchGuildStashes
   NumberField:
     enum:
     - STACK_SIZE
@@ -1033,6 +1535,105 @@ info:
   title: BPL Backend API
   version: "2.0"
 paths:
+  /{eventId}/guild-stash:
+    get:
+      description: Fetches all guild stash tabs for a user
+      operationId: GetGuildStashForUser
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/GuildStashTab'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+    post:
+      description: Updates the guild stash tabs for a user
+      operationId: UpdateGuildStash
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/GuildStashTab'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guild-stash/{stash_id}:
+    patch:
+      description: Enables fetching for a specific guild stash tab
+      operationId: SwitchStashFetching
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Stash Tab Id
+        in: path
+        name: stash_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GuildStashTab'
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guild-stash/{stash_id}/items:
+    get:
+      description: Fetches all items in a specific guild stash tab
+      operationId: GetGuildStashTabItems
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Stash Tab Id
+        in: path
+        name: stash_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/DisplayItem'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
   /characters/{user_id}/{event_id}:
     get:
       consumes:

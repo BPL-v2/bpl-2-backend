@@ -1,5 +1,7 @@
 package utils
 
+import "github.com/lib/pq"
+
 func Map[A any, B any](input []A, mapper func(A) B) []B {
 	output := make([]B, len(input))
 	for i, item := range input {
@@ -168,4 +170,12 @@ func (s1 Set[T]) Union(s2 Set[T]) Set[T] {
 		union[k] = true
 	}
 	return union
+}
+
+func ConvertIntSlice(slice []int) pq.Int32Array {
+	arr := pq.Int32Array{}
+	for _, integer := range slice {
+		arr = append(arr, int32(integer))
+	}
+	return arr
 }

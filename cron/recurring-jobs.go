@@ -100,6 +100,8 @@ func (s *RecurringJobService) StartJob(job *RecurringJob) error {
 	// 	return s.CalculateScores(job)
 	case repository.FetchCharacterData:
 		return s.FetchCharacterData(job)
+	case repository.FetchGuildStashes:
+		return s.FetchGuildStashes(job)
 	default:
 		return fmt.Errorf("invalid job type")
 	}
@@ -138,5 +140,17 @@ func (s *RecurringJobService) FetchCharacterData(job *RecurringJob) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
 	job.Cancel = cancel
 	go PlayerFetchLoop(ctx, event, s.poeClient)
+	return nil
+}
+
+func (s *RecurringJobService) FetchGuildStashes(job *RecurringJob) error {
+	event, err := s.eventService.GetEventById(job.EventId, "Teams")
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
+	job.Cancel = cancel
+	go GuildStashFetchLoop(ctx, event, s.poeClient)
 	return nil
 }

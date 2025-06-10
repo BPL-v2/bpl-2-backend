@@ -99,6 +99,7 @@ type RequestArgs struct {
 	Endpoint      string
 	Token         string
 	Method        string
+	PathParams    []string
 	QueryParams   map[string]string
 	Body          *strings.Reader
 	BodyRaw       any
@@ -136,13 +137,17 @@ func (c *AsyncHttpClient) SendRequest(
 		return nil, err
 	}
 	var requestUrl *url.URL
+	pathParams := make([]any, len(requestArgs.PathParams))
+	for i, v := range requestArgs.PathParams {
+		pathParams[i] = v
+	}
 	if requestArgs.IgnoreBaseURL {
-		requestUrl, err = url.Parse(requestArgs.Endpoint)
+		requestUrl, err = url.Parse(fmt.Sprintf(requestArgs.Endpoint, pathParams...))
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		requestUrl = c.baseURL.ResolveReference(&url.URL{Path: c.baseURL.Path + "/" + requestArgs.Endpoint})
+		requestUrl = c.baseURL.ResolveReference(&url.URL{Path: c.baseURL.Path + "/" + fmt.Sprintf(requestArgs.Endpoint, pathParams...)})
 	}
 	if requestArgs.QueryParams != nil {
 		query := requestUrl.Query()

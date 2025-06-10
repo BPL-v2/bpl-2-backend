@@ -151,6 +151,7 @@ func autoMigrate(db *gorm.DB) {
 		&repository.RecurringJob{},
 		&repository.LadderEntry{},
 		&repository.ChangeId{},
+		&repository.GuildStashTab{},
 	)
 	if err != nil {
 		panic(err)
