@@ -47,7 +47,10 @@ func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, 
 		stashMap[stash.Id] = stash
 	}
 	stashesToPersist := make([]*repository.GuildStashTab, 0)
-	for _, stash := range resp.Stashes {
+	responseStashes := utils.FlatMap(resp.Stashes, func(stash client.GuildStashTab) []*client.GuildStashTab {
+		return stash.FlatMap()
+	})
+	for _, stash := range responseStashes {
 		if existingStash, exists := stashMap[stash.Id]; exists {
 			existingStash.UserIds = append(utils.Filter(existingStash.UserIds, func(id int32) bool {
 				return id != int32(user.Id)

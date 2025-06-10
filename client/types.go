@@ -495,6 +495,17 @@ type GuildStashTab struct {
 	Children *[]GuildStashTab `json:"children,omitempty"`
 }
 
+func (g *GuildStashTab) FlatMap() []*GuildStashTab {
+	var result []*GuildStashTab
+	result = append(result, g)
+	if g.Children != nil {
+		for _, child := range *g.Children {
+			result = append(result, child.FlatMap()...)
+		}
+	}
+	return result
+}
+
 type AtlasPassiveTree struct {
 	Name   string `json:"name"`
 	Hashes []int  `json:"hashes"`
