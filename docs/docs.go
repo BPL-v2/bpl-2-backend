@@ -3008,10 +3008,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "x": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "y": {
-                    "type": "integer"
+                    "type": "number"
                 }
             }
         },
