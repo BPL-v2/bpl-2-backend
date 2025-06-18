@@ -548,9 +548,9 @@ definitions:
       w:
         type: integer
       x:
-        type: integer
+        type: number
       "y":
-        type: integer
+        type: number
     type: object
   StashTabMetadata:
     properties:

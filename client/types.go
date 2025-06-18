@@ -482,8 +482,8 @@ type StashTabMetadata struct {
 }
 
 type StashTabLayout struct {
-	Sections *[]string `json:"sections,omitempty"`
-	Layout   *map[string]StashTabLayoutItem
+	Sections *[]string                      `json:"sections,omitempty"`
+	Layout   *map[string]StashTabLayoutItem `json:"layout,omitempty"`
 }
 
 type StashTabLayoutItem struct {
