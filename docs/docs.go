@@ -1998,19 +1998,26 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches all guild stash tabs for a user",
+                "description": "Fetches a specific guild stash tab",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "guild-stash"
                 ],
-                "operationId": "GetGuildStashForUser",
+                "operationId": "GetGuildStashTab",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Event Id",
                         "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Stash Tab Id",
+                        "name": "stash_id",
                         "in": "path",
                         "required": true
                     }
@@ -2021,7 +2028,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/GuildStashTab"
+                                "$ref": "#/definitions/DisplayItem"
                             }
                         }
                     }
@@ -2099,50 +2106,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/GuildStashTab"
-                        }
-                    }
-                }
-            }
-        },
-        "/{eventId}/guild-stash/{stash_id}/items": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Fetches all items in a specific guild stash tab",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "guild-stash"
-                ],
-                "operationId": "GetGuildStashTabItems",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "eventId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Stash Tab Id",
-                        "name": "stash_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/DisplayItem"
-                            }
                         }
                     }
                 }

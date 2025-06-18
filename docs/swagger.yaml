@@ -1592,14 +1592,19 @@ info:
 paths:
   /{eventId}/guild-stash:
     get:
-      description: Fetches all guild stash tabs for a user
-      operationId: GetGuildStashForUser
+      description: Fetches a specific guild stash tab
+      operationId: GetGuildStashTab
       parameters:
       - description: Event Id
         in: path
         name: eventId
         required: true
         type: integer
+      - description: Stash Tab Id
+        in: path
+        name: stash_id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1607,7 +1612,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/GuildStashTab'
+              $ref: '#/definitions/DisplayItem'
             type: array
       security:
       - BearerAuth: []
@@ -1657,34 +1662,6 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/GuildStashTab'
-      security:
-      - BearerAuth: []
-      tags:
-      - guild-stash
-  /{eventId}/guild-stash/{stash_id}/items:
-    get:
-      description: Fetches all items in a specific guild stash tab
-      operationId: GetGuildStashTabItems
-      parameters:
-      - description: Event Id
-        in: path
-        name: eventId
-        required: true
-        type: integer
-      - description: Stash Tab Id
-        in: path
-        name: stash_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/DisplayItem'
-            type: array
       security:
       - BearerAuth: []
       tags:
