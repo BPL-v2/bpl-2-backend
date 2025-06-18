@@ -28,9 +28,9 @@ func setupGuildStashController(PoEClient *client.PoEClient) []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getGuildStashForUser(), Authenticated: true},
 		{Method: "POST", Path: "", HandlerFunc: e.updateGuildStash(), Authenticated: true},
+		{Method: "GET", Path: "/:stash_id", HandlerFunc: e.getGuildStashTab(), Authenticated: true},
 		{Method: "PATCH", Path: "/:stash_id", HandlerFunc: e.switchStashFetch(), Authenticated: true},
 		{Method: "POST", Path: "/:stash_id/update", HandlerFunc: e.updateStashTab(), Authenticated: true},
-		{Method: "GET", Path: "/:stash_id/items", HandlerFunc: e.getGuildStashTabItems(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -156,16 +156,16 @@ func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 	}
 }
 
-// @id GetGuildStashTabItems
-// @Description Fetches all items in a specific guild stash tab
+// @id GetGuildStashTab
+// @Description Fetches a specific guild stash tab
 // @Tags guild-stash
 // @Security BearerAuth
 // @Produce json
 // @Param eventId path int true "Event Id"
 // @Param stash_id path string true "Stash Tab Id"
 // @Success 200 {array} client.DisplayItem
-// @Router /{eventId}/guild-stash/{stash_id}/items [get]
-func (e *GuildStashController) getGuildStashTabItems() gin.HandlerFunc {
+// @Router /{eventId}/guild-stash [get]
+func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
