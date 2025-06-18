@@ -1,5 +1,9 @@
 package client
 
+import (
+	"encoding/json"
+)
+
 type Realm string
 
 const (
@@ -484,6 +488,48 @@ type StashTabMetadata struct {
 type StashTabLayout struct {
 	Sections *[]string                      `json:"sections,omitempty"`
 	Layout   *map[string]StashTabLayoutItem `json:"layout,omitempty"`
+
+	EmbeddedLayout map[string]StashTabLayoutItem `json:"-"`
+}
+
+// stupid stuff we have to do because gggs types are a mess
+func (m *StashTabLayout) UnmarshalJSON(data []byte) error {
+	type Alias StashTabLayout // Prevent recursion
+	aux := struct{ *Alias }{Alias: (*Alias)(m)}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	m.EmbeddedLayout = make(map[string]StashTabLayoutItem)
+	for k, v := range raw {
+		if k == "sections" || k == "layout" {
+			continue
+		}
+		var item StashTabLayoutItem
+		if err := json.Unmarshal(v, &item); err != nil {
+			return err
+		}
+		m.EmbeddedLayout[k] = item
+	}
+	return nil
+}
+func (m *StashTabLayout) MarshalJSON() ([]byte, error) {
+	result := make(map[string]any)
+	if m.Sections != nil {
+		result["sections"] = m.Sections
+	}
+	if m.Layout != nil {
+		result["layout"] = m.Layout
+	}
+
+	for k, v := range m.EmbeddedLayout {
+		result[k] = v
+	}
+
+	return json.Marshal(result)
 }
 
 type StashTabLayoutItem struct {
