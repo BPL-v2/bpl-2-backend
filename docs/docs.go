@@ -2972,49 +2972,6 @@ const docTemplate = `{
                 }
             }
         },
-        "StashTabLayout": {
-            "type": "object",
-            "properties": {
-                "layout": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "$ref": "#/definitions/StashTabLayoutItem"
-                    }
-                },
-                "sections": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "StashTabLayoutItem": {
-            "type": "object",
-            "properties": {
-                "h": {
-                    "type": "integer"
-                },
-                "hidden": {
-                    "type": "boolean"
-                },
-                "scale": {
-                    "type": "number"
-                },
-                "section": {
-                    "type": "string"
-                },
-                "w": {
-                    "type": "integer"
-                },
-                "x": {
-                    "type": "number"
-                },
-                "y": {
-                    "type": "number"
-                }
-            }
-        },
         "StashTabMetadata": {
             "type": "object",
             "properties": {
@@ -3027,9 +2984,7 @@ const docTemplate = `{
                 "items": {
                     "type": "integer"
                 },
-                "layout": {
-                    "$ref": "#/definitions/StashTabLayout"
-                },
+                "layout": {},
                 "public": {
                     "type": "boolean"
                 }

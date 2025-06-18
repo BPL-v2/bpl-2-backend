@@ -524,34 +524,6 @@ definitions:
       type:
         type: string
     type: object
-  StashTabLayout:
-    properties:
-      layout:
-        additionalProperties:
-          $ref: '#/definitions/StashTabLayoutItem'
-        type: object
-      sections:
-        items:
-          type: string
-        type: array
-    type: object
-  StashTabLayoutItem:
-    properties:
-      h:
-        type: integer
-      hidden:
-        type: boolean
-      scale:
-        type: number
-      section:
-        type: string
-      w:
-        type: integer
-      x:
-        type: number
-      "y":
-        type: number
-    type: object
   StashTabMetadata:
     properties:
       colour:
@@ -560,8 +532,7 @@ definitions:
         type: boolean
       items:
         type: integer
-      layout:
-        $ref: '#/definitions/StashTabLayout'
+      layout: {}
       public:
         type: boolean
     type: object
