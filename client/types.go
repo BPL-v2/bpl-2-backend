@@ -391,6 +391,7 @@ type Item struct {
 	Colour                 *string             `json:"colour,omitempty"`
 	GemSockets             *[]GemSocket        `json:"gemSockets,omitempty"`
 	Influences             *map[string]bool    `json:"influences,omitempty"`
+	MemoryItem             *bool               `json:"memoryItem,omitempty"`
 
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only
@@ -473,9 +474,26 @@ type ItemJewelData struct {
 }
 
 type StashTabMetadata struct {
-	Public *bool   `json:"public,omitempty"`
-	Folder *bool   `json:"folder,omitempty"`
-	Colour *string `json:"colour,omitempty"`
+	Public *bool           `json:"public,omitempty"`
+	Folder *bool           `json:"folder,omitempty"`
+	Colour *string         `json:"colour,omitempty"`
+	Layout *StashTabLayout `json:"layout,omitempty"`
+	Items  *int            `json:"items,omitempty"`
+}
+
+type StashTabLayout struct {
+	Sections *[]string `json:"sections,omitempty"`
+	Layout   *map[string]StashTabLayoutItem
+}
+
+type StashTabLayoutItem struct {
+	Section *string  `json:"section,omitempty"`
+	X       int      `json:"x,omitempty"`
+	Y       int      `json:"y,omitempty"`
+	W       int      `json:"w,omitempty"`
+	H       int      `json:"h,omitempty"`
+	Scale   *float64 `json:"scale,omitempty"`
+	Hidden  *bool    `json:"hidden,omitempty"`
 }
 
 type StashTab struct {
@@ -489,14 +507,14 @@ type StashTab struct {
 	Items    *[]Item          `json:"items,omitempty"`
 }
 
-type GuildStashTab struct {
+type GuildStashTabGGG struct {
 	*StashTab
-	Items    *[]DisplayItem   `json:"items,omitempty"`
-	Children *[]GuildStashTab `json:"children,omitempty"`
+	Items    *[]DisplayItem      `json:"items,omitempty"`
+	Children *[]GuildStashTabGGG `json:"children,omitempty"`
 }
 
-func (g *GuildStashTab) FlatMap() []*GuildStashTab {
-	var result []*GuildStashTab
+func (g *GuildStashTabGGG) FlatMap() []*GuildStashTabGGG {
+	var result []*GuildStashTabGGG
 	result = append(result, g)
 	if g.Children != nil {
 		for _, child := range *g.Children {
@@ -743,11 +761,11 @@ type GetLeagueAccountResponse struct {
 }
 
 type ListGuildStashesResponse struct {
-	Stashes []GuildStashTab `json:"stashes"`
+	Stashes []GuildStashTabGGG `json:"stashes"`
 }
 
 type GetGuildStashResponse struct {
-	Stash *GuildStashTab `json:"stash"`
+	Stash *GuildStashTabGGG `json:"stash"`
 }
 
 type GetPublicStashTabsResponse struct {

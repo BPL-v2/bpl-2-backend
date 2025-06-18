@@ -2098,10 +2098,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/GuildStashTab"
-                            }
+                            "$ref": "#/definitions/GuildStashTabGGG"
                         }
                     }
                 }
@@ -2181,10 +2178,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/GuildStashTab"
-                            }
+                            "$ref": "#/definitions/GuildStashTabGGG"
                         }
                     }
                 }
@@ -2322,6 +2316,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/ItemLogbookMod"
                     }
                 },
+                "memoryItem": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2455,13 +2452,13 @@ const docTemplate = `{
                 "W"
             ]
         },
-        "GuildStashTab": {
+        "GuildStashTabGGG": {
             "type": "object",
             "properties": {
                 "children": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/GuildStashTab"
+                        "$ref": "#/definitions/GuildStashTabGGG"
                     }
                 },
                 "id": {
@@ -2610,6 +2607,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/ItemLogbookMod"
                     }
+                },
+                "memoryItem": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
@@ -2972,6 +2972,49 @@ const docTemplate = `{
                 }
             }
         },
+        "StashTabLayout": {
+            "type": "object",
+            "properties": {
+                "layout": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/StashTabLayoutItem"
+                    }
+                },
+                "sections": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "StashTabLayoutItem": {
+            "type": "object",
+            "properties": {
+                "h": {
+                    "type": "integer"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "scale": {
+                    "type": "number"
+                },
+                "section": {
+                    "type": "string"
+                },
+                "w": {
+                    "type": "integer"
+                },
+                "x": {
+                    "type": "integer"
+                },
+                "y": {
+                    "type": "integer"
+                }
+            }
+        },
         "StashTabMetadata": {
             "type": "object",
             "properties": {
@@ -2980,6 +3023,12 @@ const docTemplate = `{
                 },
                 "folder": {
                     "type": "boolean"
+                },
+                "items": {
+                    "type": "integer"
+                },
+                "layout": {
+                    "$ref": "#/definitions/StashTabLayout"
                 },
                 "public": {
                     "type": "boolean"

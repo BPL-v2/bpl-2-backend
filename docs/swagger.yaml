@@ -86,6 +86,8 @@ definitions:
         items:
           $ref: '#/definitions/ItemLogbookMod'
         type: array
+      memoryItem:
+        type: boolean
       name:
         type: string
       notableProperties:
@@ -175,11 +177,11 @@ definitions:
     type: string
     x-enum-varnames:
     - W
-  GuildStashTab:
+  GuildStashTabGGG:
     properties:
       children:
         items:
-          $ref: '#/definitions/GuildStashTab'
+          $ref: '#/definitions/GuildStashTabGGG'
         type: array
       id:
         type: string
@@ -279,6 +281,8 @@ definitions:
         items:
           $ref: '#/definitions/ItemLogbookMod'
         type: array
+      memoryItem:
+        type: boolean
       name:
         type: string
       notableProperties:
@@ -520,12 +524,44 @@ definitions:
       type:
         type: string
     type: object
+  StashTabLayout:
+    properties:
+      layout:
+        additionalProperties:
+          $ref: '#/definitions/StashTabLayoutItem'
+        type: object
+      sections:
+        items:
+          type: string
+        type: array
+    type: object
+  StashTabLayoutItem:
+    properties:
+      h:
+        type: integer
+      hidden:
+        type: boolean
+      scale:
+        type: number
+      section:
+        type: string
+      w:
+        type: integer
+      x:
+        type: integer
+      "y":
+        type: integer
+    type: object
   StashTabMetadata:
     properties:
       colour:
         type: string
       folder:
         type: boolean
+      items:
+        type: integer
+      layout:
+        $ref: '#/definitions/StashTabLayout'
       public:
         type: boolean
     type: object
@@ -1656,9 +1692,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/GuildStashTab'
-            type: array
+            $ref: '#/definitions/GuildStashTabGGG'
       security:
       - BearerAuth: []
       tags:
@@ -1709,9 +1743,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/GuildStashTab'
-            type: array
+            $ref: '#/definitions/GuildStashTabGGG'
       security:
       - BearerAuth: []
       tags:
