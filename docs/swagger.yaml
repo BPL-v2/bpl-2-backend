@@ -1657,7 +1657,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/DisplayItem'
+              $ref: '#/definitions/GuildStashTab'
             type: array
       security:
       - BearerAuth: []

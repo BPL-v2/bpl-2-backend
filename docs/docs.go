@@ -2100,7 +2100,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/DisplayItem"
+                                "$ref": "#/definitions/GuildStashTab"
                             }
                         }
                     }
