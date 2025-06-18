@@ -488,8 +488,8 @@ type StashTabLayout struct {
 
 type StashTabLayoutItem struct {
 	Section *string  `json:"section,omitempty"`
-	X       int      `json:"x,omitempty"`
-	Y       int      `json:"y,omitempty"`
+	X       float64  `json:"x,omitempty"`
+	Y       float64  `json:"y,omitempty"`
 	W       int      `json:"w,omitempty"`
 	H       int      `json:"h,omitempty"`
 	Scale   *float64 `json:"scale,omitempty"`
