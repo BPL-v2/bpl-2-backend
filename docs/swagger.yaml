@@ -175,6 +175,29 @@ definitions:
     type: string
     x-enum-varnames:
     - W
+  GuildStashTab:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/GuildStashTab'
+        type: array
+      id:
+        type: string
+      index:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/DisplayItem'
+        type: array
+      metadata:
+        $ref: '#/definitions/StashTabMetadata'
+      name:
+        type: string
+      parent:
+        type: string
+      type:
+        type: string
+    type: object
   Item:
     properties:
       abyssJewel:
@@ -473,6 +496,38 @@ definitions:
         type: integer
       type:
         type: string
+    type: object
+  StashTab:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/StashTab'
+        type: array
+      id:
+        type: string
+      index:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+      metadata:
+        $ref: '#/definitions/StashTabMetadata'
+      name:
+        type: string
+      parent:
+        type: string
+      type:
+        type: string
+    type: object
+  StashTabMetadata:
+    properties:
+      colour:
+        type: string
+      folder:
+        type: boolean
+      public:
+        type: boolean
     type: object
   TwitchStream:
     properties:
@@ -1656,7 +1711,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/DisplayItem'
+              $ref: '#/definitions/GuildStashTab'
             type: array
       security:
       - BearerAuth: []

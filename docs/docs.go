@@ -2185,7 +2185,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/DisplayItem"
+                                "$ref": "#/definitions/GuildStashTab"
                             }
                         }
                     }
@@ -2456,6 +2456,41 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "W"
             ]
+        },
+        "GuildStashTab": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/GuildStashTab"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "index": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayItem"
+                    }
+                },
+                "metadata": {
+                    "$ref": "#/definitions/StashTabMetadata"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
         },
         "Item": {
             "type": "object",
@@ -2901,6 +2936,55 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "StashTab": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/StashTab"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "index": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    }
+                },
+                "metadata": {
+                    "$ref": "#/definitions/StashTabMetadata"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "StashTabMetadata": {
+            "type": "object",
+            "properties": {
+                "colour": {
+                    "type": "string"
+                },
+                "folder": {
+                    "type": "boolean"
+                },
+                "public": {
+                    "type": "boolean"
                 }
             }
         },

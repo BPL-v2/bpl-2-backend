@@ -72,7 +72,7 @@ func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, 
 				Type:    stash.Type,
 				Color:   stash.Metadata.Colour,
 				UserIds: utils.ConvertIntSlice([]int{user.Id}),
-				Items:   "[]",
+				Raw:     "{}",
 			}
 			if stash.Parent != nil {
 				newStash.ParentId = stash.Parent
@@ -114,11 +114,11 @@ func (s *GuildStashService) UpdateStashTab(stashId string, event *repository.Eve
 	tab.Index = resp.Stash.Index
 	tab.Color = resp.Stash.Metadata.Colour
 	if resp.Stash.Items != nil {
-		items, err := json.Marshal(resp.Stash.Items)
+		raw, err := json.Marshal(resp.Stash)
 		if err != nil {
-			return nil, fmt.Errorf("failed to marshal items for stash %s: %w", tab.Id, err)
+			return nil, fmt.Errorf("failed to marshal stash %s: %w", tab.Id, err)
 		}
-		tab.Items = string(items)
+		tab.Raw = string(raw)
 	}
 	tab.LastFetch = time.Now()
 	err = s.GuildStashRepository.Save(tab)
