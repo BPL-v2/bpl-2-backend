@@ -1998,26 +1998,19 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a specific guild stash tab",
+                "description": "Fetches all guild stash tabs for a user",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "guild-stash"
                 ],
-                "operationId": "GetGuildStashTab",
+                "operationId": "GetGuildStashForUser",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Event Id",
                         "name": "eventId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Stash Tab Id",
-                        "name": "stash_id",
                         "in": "path",
                         "required": true
                     }
@@ -2028,7 +2021,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/DisplayItem"
+                                "$ref": "#/definitions/GuildStashTab"
                             }
                         }
                     }
@@ -2071,6 +2064,48 @@ const docTemplate = `{
             }
         },
         "/{eventId}/guild-stash/{stash_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a specific guild stash tab",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "GetGuildStashTab",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Stash Tab Id",
+                        "name": "stash_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/DisplayItem"
+                            }
+                        }
+                    }
+                }
+            },
             "patch": {
                 "security": [
                     {
