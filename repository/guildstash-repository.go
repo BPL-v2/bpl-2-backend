@@ -19,7 +19,7 @@ type GuildStashTab struct {
 	Color         *string       `gorm:"null"`
 	ParentId      *string       `gorm:"null;references:Id"`
 	ParentEventId *int          `gorm:"null"`
-	Items         string        `gorm:"type:text;not null;default:''"`
+	Raw           string        `gorm:"type:text;not null;default:''"`
 	FetchEnabled  bool          `gorm:"not null"`
 	UserIds       pq.Int32Array `gorm:"not null;type:integer[]"`
 	LastFetch     time.Time     `gorm:"not null;default:CURRENT_TIMESTAMP"`

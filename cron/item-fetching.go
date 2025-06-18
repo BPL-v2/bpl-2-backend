@@ -206,7 +206,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 				fmt.Printf("Failed to marshal items for stash %s: %v\n", stash.Id, err)
 				return fmt.Errorf("failed to marshal items for stash %s: %w", stash.Id, err)
 			}
-			stash.Items = string(items)
+			stash.Raw = string(items)
 		}
 		f.guildStashRepository.Save(stash)
 

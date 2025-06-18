@@ -101,7 +101,7 @@ func (e *GuildStashController) updateGuildStash() gin.HandlerFunc {
 // @Produce json
 // @Param eventId path int true "Event Id"
 // @Param stash_id path string true "Stash Tab Id"
-// @Success 200 {array} client.DisplayItem
+// @Success 200 {array} client.GuildStashTab
 // @Router /{eventId}/guild-stash/{stash_id}/update [post]
 func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -122,7 +122,7 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 		}
 		c.Status(200)
 		c.Writer.Header().Set("Content-Type", "application/json")
-		c.Writer.Write([]byte(tab.Items))
+		c.Writer.Write([]byte(tab.Raw))
 	}
 }
 
@@ -179,7 +179,7 @@ func (e *GuildStashController) getGuildStashTabItems() gin.HandlerFunc {
 		}
 		c.Status(200)
 		c.Writer.Header().Set("Content-Type", "application/json")
-		c.Writer.Write([]byte(tab.Items))
+		c.Writer.Write([]byte(tab.Raw))
 	}
 }
 
