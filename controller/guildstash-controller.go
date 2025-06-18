@@ -101,7 +101,7 @@ func (e *GuildStashController) updateGuildStash() gin.HandlerFunc {
 // @Produce json
 // @Param eventId path int true "Event Id"
 // @Param stash_id path string true "Stash Tab Id"
-// @Success 200 {array} client.GuildStashTab
+// @Success 200 {object} client.GuildStashTabGGG
 // @Router /{eventId}/guild-stash/{stash_id}/update [post]
 func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -163,7 +163,7 @@ func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 // @Produce json
 // @Param eventId path int true "Event Id"
 // @Param stash_id path string true "Stash Tab Id"
-// @Success 200 {array} client.GuildStashTab
+// @Success 200 {object} client.GuildStashTabGGG
 // @Router /{eventId}/guild-stash/{stash_id}  [get]
 func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 	return func(c *gin.Context) {

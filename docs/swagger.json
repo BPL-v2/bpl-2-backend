@@ -2090,10 +2090,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/GuildStashTab"
-                            }
+                            "$ref": "#/definitions/GuildStashTabGGG"
                         }
                     }
                 }
@@ -2173,10 +2170,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/GuildStashTab"
-                            }
+                            "$ref": "#/definitions/GuildStashTabGGG"
                         }
                     }
                 }
@@ -2314,6 +2308,9 @@
                         "$ref": "#/definitions/ItemLogbookMod"
                     }
                 },
+                "memoryItem": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -2447,13 +2444,13 @@
                 "W"
             ]
         },
-        "GuildStashTab": {
+        "GuildStashTabGGG": {
             "type": "object",
             "properties": {
                 "children": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/GuildStashTab"
+                        "$ref": "#/definitions/GuildStashTabGGG"
                     }
                 },
                 "id": {
@@ -2602,6 +2599,9 @@
                     "items": {
                         "$ref": "#/definitions/ItemLogbookMod"
                     }
+                },
+                "memoryItem": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
@@ -2964,6 +2964,49 @@
                 }
             }
         },
+        "StashTabLayout": {
+            "type": "object",
+            "properties": {
+                "layout": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/StashTabLayoutItem"
+                    }
+                },
+                "sections": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "StashTabLayoutItem": {
+            "type": "object",
+            "properties": {
+                "h": {
+                    "type": "integer"
+                },
+                "hidden": {
+                    "type": "boolean"
+                },
+                "scale": {
+                    "type": "number"
+                },
+                "section": {
+                    "type": "string"
+                },
+                "w": {
+                    "type": "integer"
+                },
+                "x": {
+                    "type": "integer"
+                },
+                "y": {
+                    "type": "integer"
+                }
+            }
+        },
         "StashTabMetadata": {
             "type": "object",
             "properties": {
@@ -2972,6 +3015,12 @@
                 },
                 "folder": {
                     "type": "boolean"
+                },
+                "items": {
+                    "type": "integer"
+                },
+                "layout": {
+                    "$ref": "#/definitions/StashTabLayout"
                 },
                 "public": {
                     "type": "boolean"
