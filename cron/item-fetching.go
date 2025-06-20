@@ -245,9 +245,11 @@ func (f *FetchingService) FetchGuildStashes() {
 	}
 	defer kafkaWriter.Close()
 
-	wg := sync.WaitGroup{}
 	for {
-		changeChannel := make(chan *client.PublicStashChange)
+		stashChanges := []client.PublicStashChange{}
+		persistedStashes := make([]*repository.GuildStashTab, 0)
+		mu := sync.Mutex{}
+		wg := sync.WaitGroup{}
 		for _, stash := range guildStashes {
 			if !stash.FetchEnabled {
 				continue
@@ -260,62 +262,67 @@ func (f *FetchingService) FetchGuildStashes() {
 					fmt.Printf("No token found for team %d: %v\n", stash.TeamId, err)
 					return
 				}
-				f.fetchStash(stash, *token, userNameMap, changeChannel)
+				mu.Lock()
+				defer mu.Unlock()
+				change, updatedStash, err := f.fetchStash(stash, *token, userNameMap)
+				if err != nil {
+					fmt.Printf("Failed to fetch stash %s for team %d: %v\n", stash.Id, stash.TeamId, err)
+					return
+				}
+				stashChanges = append(stashChanges, *change)
+				persistedStashes = append(persistedStashes, updatedStash)
 			}(stash)
 		}
 		wg.Wait()
-		addGuildStashesToQueue(kafkaWriter, changeChannel)
-		f.guildStashRepository.SaveAll(guildStashes)
+		addGuildStashesToQueue(kafkaWriter, stashChanges)
+		err := f.guildStashRepository.SaveAll(persistedStashes)
+		if err != nil {
+			fmt.Printf("Failed to save guild stashes: %v\n", err)
+		}
+		fmt.Printf("Processed %d guild stashes\n", len(stashChanges))
 		select {
 		case <-f.ctx.Done():
+			fmt.Println("Stopping guild stash fetch loop")
 			return
 		case <-time.After(1 * time.Minute):
-			fmt.Println("Waiting for next fetch cycle...")
 		}
 	}
 }
 
-func (f *FetchingService) fetchStash(stash *repository.GuildStashTab, token string, userNameMap map[int]*string, stashChangeChannel chan *client.PublicStashChange) error {
-	fmt.Printf("Fetching guild stash %s for team %d in event %s with token %s\n", stash.Id, stash.TeamId, f.event.Name, token)
+func (f *FetchingService) fetchStash(stash *repository.GuildStashTab, token string, userNameMap map[int]*string) (*client.PublicStashChange, *repository.GuildStashTab, error) {
 	response, httpError := f.poeClient.GetGuildStash(token, f.event.Name, stash.Id, nil)
 	if httpError != nil {
-		fmt.Printf("Failed to fetch guild stash %s for team %d: %d - %s\n", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
-		return fmt.Errorf("failed to fetch guild stash %s for team %d: %d - %s", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
+		return nil, nil, fmt.Errorf("failed to fetch guild stash %s for team %d: %d - %s", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
 	}
-	fmt.Printf("Fetched guild stash %s for team %d in event %s\n", stash.Id, stash.TeamId, f.event.Name)
 	stash.LastFetch = time.Now()
 	stash.Index = response.Stash.Index
 	stash.Name = response.Stash.Name
 	stash.Type = response.Stash.Type
 	stash.Color = response.Stash.Metadata.Colour
-	if response.Stash.Items != nil {
-		stashChangeChannel <- &client.PublicStashChange{
-			Id:          stash.Id,
-			Public:      true,
-			AccountName: userNameMap[stash.OwnerId],
-			League:      &f.event.Name,
-			Items: utils.Map(
-				*response.Stash.Items,
-				func(item client.DisplayItem) client.Item { return *item.Item }),
-			StashType: stash.Type,
-		}
+	if response.Stash.Items == nil {
+		return nil, nil, fmt.Errorf("no items found in guild stash %s for team %d", stash.Id, stash.TeamId)
+	}
+	change := &client.PublicStashChange{
+		Id:          stash.Id,
+		Public:      true,
+		AccountName: userNameMap[stash.OwnerId],
+		League:      &f.event.Name,
+		Items: utils.Map(
+			*response.Stash.Items,
+			func(item client.DisplayItem) client.Item { return *item.Item }),
+		StashType: stash.Type,
 	}
 	raw, err := json.Marshal(response.Stash)
 	if err != nil {
 		fmt.Printf("Failed to marshal items for stash %s: %v\n", stash.Id, err)
-		return fmt.Errorf("failed to marshal items for stash %s: %w", stash.Id, err)
+		return nil, nil, fmt.Errorf("failed to marshal items for stash %s: %w", stash.Id, err)
 	}
 	stash.Raw = string(raw)
-	return nil
+	return change, stash, nil
 
 }
 
-func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changeChannel chan *client.PublicStashChange) {
-	close(changeChannel)
-	changes := make([]client.PublicStashChange, 0)
-	for stashChange := range changeChannel {
-		changes = append(changes, *stashChange)
-	}
+func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []client.PublicStashChange) {
 	message, err := json.Marshal(config.StashChangeMessage{
 		ChangeId:     "",
 		NextChangeId: "",

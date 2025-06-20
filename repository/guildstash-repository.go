@@ -47,11 +47,19 @@ func (r *GuildStashRepository) DeleteAll(tabs []*GuildStashTab) error {
 	return r.db.Delete(tabs).Error
 }
 
-func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) error {
+func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
 	if len(tabs) == 0 {
 		return nil
 	}
-	return r.db.Save(tabs).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		for _, tab := range tabs {
+			err = r.db.Save(tab).Error
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (r *GuildStashRepository) Save(tab *GuildStashTab) error {
