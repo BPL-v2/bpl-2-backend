@@ -59,8 +59,13 @@ func (r *TeamRepository) Save(team *Team) (*Team, error) {
 }
 
 func (r *TeamRepository) Delete(teamId int) error {
-	result := r.DB.Delete(Team{Id: teamId})
-	return result.Error
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		err := r.DB.Delete(&TeamUser{}, "team_id = ?", teamId)
+		if err != nil {
+			return err.Error
+		}
+		return r.DB.Delete(Team{Id: teamId}).Error
+	})
 }
 
 func (r *TeamRepository) GetTeamUsersForEvent(event *Event) ([]*TeamUser, error) {

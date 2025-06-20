@@ -2,9 +2,13 @@ package controller
 
 import (
 	"bpl/client"
+	"bpl/cron"
+	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +17,16 @@ import (
 type GuildStashController struct {
 	guildStashService *service.GuildStashService
 	userService       *service.UserService
+	objectiveService  *service.ObjectiveService
+	poeClient         *client.PoEClient
 }
 
 func NewGuildStashController(PoEClient *client.PoEClient) *GuildStashController {
 	return &GuildStashController{
 		guildStashService: service.NewGuildStashService(PoEClient),
 		userService:       service.NewUserService(),
+		objectiveService:  service.NewObjectiveService(),
+		poeClient:         PoEClient,
 	}
 }
 
@@ -101,7 +109,7 @@ func (e *GuildStashController) updateGuildStash() gin.HandlerFunc {
 // @Produce json
 // @Param eventId path int true "Event Id"
 // @Param stash_id path string true "Stash Tab Id"
-// @Success 200 {object} client.GuildStashTabGGG
+// @Success 204
 // @Router /{eventId}/guild-stash/{stash_id}/update [post]
 func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -109,20 +117,28 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		teamUser, user, err := e.userService.GetTeamForUser(c, event)
+		teamUser, _, err := e.userService.GetTeamForUser(c, event)
 		if err != nil || !teamUser.IsTeamLead {
 			c.JSON(403, "unauthorized")
 			return
 		}
 		stashId := c.Param("stash_id")
-		tab, err := e.guildStashService.UpdateStashTab(stashId, event, teamUser, user)
+		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.Status(200)
-		c.Writer.Header().Set("Content-Type", "application/json")
-		c.Writer.Write([]byte(tab.Raw))
+		if tab.TeamId != teamUser.TeamId || !teamUser.IsTeamLead {
+			c.JSON(403, gin.H{"error": "unauthorized to update stash tab"})
+			return
+		}
+		ctx, _ := context.WithTimeout(context.Background(), 1*time.Minute)
+		err = cron.NewFetchingService(ctx, event, e.poeClient).FetchGuildStashTab(tab)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(204)
 	}
 }
 
@@ -172,14 +188,23 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 			return
 		}
 		stashId := c.Param("stash_id")
-		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id)
+		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id, "Children")
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
+		if tab.Raw == "" || tab.Raw == "{}" {
+			c.JSON(404, gin.H{"error": "stash tab not found"})
+			return
+		}
+		parser, err := e.objectiveService.GetParser(event.Id)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+
 		c.Status(200)
-		c.Writer.Header().Set("Content-Type", "application/json")
-		c.Writer.Write([]byte(tab.Raw))
+		c.JSON(200, toGGGModel(tab, parser))
 	}
 }
 
@@ -208,4 +233,39 @@ func toModel(tab *repository.GuildStashTab) *GuildStashTab {
 		FetchEnabled: tab.FetchEnabled,
 		LastFetch:    tab.LastFetch,
 	}
+}
+
+func toGGGModel(tab *repository.GuildStashTab, parser *parser.ItemChecker) *client.GuildStashTabGGG {
+	if tab == nil {
+		return nil
+	}
+	model := &client.GuildStashTabGGG{}
+	err := json.Unmarshal([]byte(tab.Raw), &model)
+	if err != nil {
+		return nil
+	}
+
+	model.Name = tab.Name
+	if model.Items != nil {
+		items := make([]client.DisplayItem, 0, len(*model.Items))
+		for _, item := range *model.Items {
+			completions := parser.CheckForCompletions(item.Item)
+			if len(completions) > 0 {
+				item.ObjectiveId = completions[0].ObjectiveId
+			}
+			items = append(items, item)
+		}
+		model.Items = &items
+	}
+
+	children := make([]client.GuildStashTabGGG, 0, len(tab.Children))
+	for _, child := range tab.Children {
+		childModel := toGGGModel(child, parser)
+		if childModel != nil {
+			children = append(children, *childModel)
+		}
+	}
+	model.Children = &children
+	return model
+
 }

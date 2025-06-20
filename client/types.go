@@ -334,6 +334,8 @@ type DisplayItem struct {
 	Y             *int           `json:"y,omitempty"`
 	Identified    bool           `json:"identified"`
 	Icon          string         `json:"icon"`
+	// field added by our backend
+	ObjectiveId int `json:"objectiveId,omitempty"`
 }
 
 type Item struct {

@@ -190,11 +190,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 		}
 		parser, err := e.service.GetParser(currentEvent.Id)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Category not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
