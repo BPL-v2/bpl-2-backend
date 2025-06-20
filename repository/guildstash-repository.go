@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -24,10 +25,11 @@ type GuildStashTab struct {
 	UserIds       pq.Int32Array `gorm:"not null;type:integer[]"`
 	LastFetch     time.Time     `gorm:"not null;default:CURRENT_TIMESTAMP"`
 
-	Event  Event          `gorm:"foreignKey:EventId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Team   Team           `gorm:"foreignKey:TeamId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
-	Parent *GuildStashTab `gorm:"foreignKey:ParentId,ParentEventId;references:Id,EventId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	Owner  User           `gorm:"foreignKey:OwnerId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Event    Event            `gorm:"foreignKey:EventId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Team     Team             `gorm:"foreignKey:TeamId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Parent   *GuildStashTab   `gorm:"foreignKey:ParentId,ParentEventId;references:Id,EventId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Owner    User             `gorm:"foreignKey:OwnerId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Children []*GuildStashTab `gorm:"foreignKey:ParentId,ParentEventId;references:Id,EventId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
 type GuildStashRepository struct {
@@ -48,11 +50,13 @@ func (r *GuildStashRepository) DeleteAll(tabs []*GuildStashTab) error {
 }
 
 func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
+	fmt.Println("Saving guild stash tabs:", len(tabs))
 	if len(tabs) == 0 {
 		return nil
 	}
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		for _, tab := range tabs {
+			fmt.Println("Saving tab:", tab.Id, "EventId:", tab.EventId, "TeamId:", tab.TeamId)
 			err = r.db.Save(tab).Error
 			if err != nil {
 				return err
@@ -65,9 +69,13 @@ func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
 func (r *GuildStashRepository) Save(tab *GuildStashTab) error {
 	return r.db.Save(tab).Error
 }
-func (r *GuildStashRepository) GetById(stashId string, eventId int) (tab *GuildStashTab, err error) {
+func (r *GuildStashRepository) GetById(stashId string, eventId int, preloads ...string) (tab *GuildStashTab, err error) {
 	tab = &GuildStashTab{}
-	err = r.db.Where(GuildStashTab{Id: stashId, EventId: eventId}).First(tab).Error
+	query := r.db
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	err = query.Where(GuildStashTab{Id: stashId, EventId: eventId}).First(tab).Error
 	return tab, err
 }
 

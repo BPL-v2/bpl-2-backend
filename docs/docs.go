@@ -2175,11 +2175,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/GuildStashTabGGG"
-                        }
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -2327,6 +2324,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/ItemProperty"
                     }
+                },
+                "objectiveId": {
+                    "description": "field added by our backend",
+                    "type": "integer"
                 },
                 "properties": {
                     "type": "array",
@@ -4260,13 +4261,15 @@ const docTemplate = `{
                 "FetchStashChanges",
                 "EvaluateStashChanges",
                 "FetchCharacterData",
-                "FetchGuildStashes"
+                "FetchGuildStashes",
+                "DetermineGuildStashAccess"
             ],
             "x-enum-varnames": [
                 "FetchStashChanges",
                 "EvaluateStashChanges",
                 "FetchCharacterData",
-                "FetchGuildStashes"
+                "FetchGuildStashes",
+                "DetermineGuildStashAccess"
             ]
         },
         "NumberField": {

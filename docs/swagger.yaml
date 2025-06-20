@@ -94,6 +94,9 @@ definitions:
         items:
           $ref: '#/definitions/ItemProperty'
         type: array
+      objectiveId:
+        description: field added by our backend
+        type: integer
       properties:
         items:
           $ref: '#/definitions/ItemProperty'
@@ -1440,12 +1443,14 @@ definitions:
     - EvaluateStashChanges
     - FetchCharacterData
     - FetchGuildStashes
+    - DetermineGuildStashAccess
     type: string
     x-enum-varnames:
     - FetchStashChanges
     - EvaluateStashChanges
     - FetchCharacterData
     - FetchGuildStashes
+    - DetermineGuildStashAccess
   NumberField:
     enum:
     - STACK_SIZE
@@ -1711,10 +1716,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/GuildStashTabGGG'
+        "204":
+          description: No Content
       security:
       - BearerAuth: []
       tags:

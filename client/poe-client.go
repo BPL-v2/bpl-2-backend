@@ -498,16 +498,17 @@ func (c *PoEClient) ListGuildStashes(token string, league string) (*ListGuildSta
 	)
 }
 
-func (c *PoEClient) GetGuildStash(token string, league string, stashId string, substashId *string) (*GetGuildStashResponse, *ClientError) {
+func (c *PoEClient) GetGuildStash(token string, league string, stashId string, parentId *string) (*GetGuildStashResponse, *ClientError) {
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetGuildStash"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetGuildStash").Inc()
 	endpoint := "guild/stash/%s/%s"
-	pathParams := []string{league, stashId}
-	if substashId != nil {
+	pathParams := []string{league}
+	if parentId != nil {
 		endpoint += "/%s"
-		pathParams = append(pathParams, *substashId)
+		pathParams = append(pathParams, *parentId)
 	}
+	pathParams = append(pathParams, stashId)
 	return sendRequest[GetGuildStashResponse](c,
 		"GetGuildStash",
 		RequestArgs{
