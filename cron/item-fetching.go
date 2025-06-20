@@ -51,19 +51,26 @@ type FetchingService struct {
 	guildStashRepository *repository.GuildStashRepository
 }
 
-func NewFetchingService(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) *FetchingService {
-	stashChangeService := service.NewStashChangeService()
+var (
+	fetchingService *FetchingService
+	once            sync.Once
+)
 
-	return &FetchingService{
-		ctx:                  ctx,
-		event:                event,
-		poeClient:            poeClient,
-		stashChangeService:   stashChangeService,
-		oauthService:         service.NewOauthService(),
-		stashChannel:         make(chan config.StashChangeMessage),
-		userRepository:       repository.NewUserRepository(),
-		guildStashRepository: repository.NewGuildStashRepository(),
-	}
+func NewFetchingService(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) *FetchingService {
+	once.Do(func() {
+		stashChangeService := service.NewStashChangeService()
+		fetchingService = &FetchingService{
+			ctx:                  ctx,
+			event:                event,
+			poeClient:            poeClient,
+			stashChangeService:   stashChangeService,
+			oauthService:         service.NewOauthService(),
+			stashChannel:         make(chan config.StashChangeMessage),
+			userRepository:       repository.NewUserRepository(),
+			guildStashRepository: repository.NewGuildStashRepository(),
+		}
+	})
+	return fetchingService
 }
 
 func (f *FetchingService) FetchStashChanges() error {
@@ -170,50 +177,6 @@ func InitFetchers(users []*repository.TeamUserWithPoEToken) *GuildStashFetchers 
 	}
 }
 
-func (f *FetchingService) FetchGuildStashes() error {
-	users, err := f.userRepository.GetUsersForEvent(f.event.Id)
-	if err != nil {
-		return err
-	}
-	guildStashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
-	if err != nil {
-		return fmt.Errorf("failed to get guild stashes for event %d: %w", f.event.Id, err)
-	}
-	fetchers := InitFetchers(users)
-	for _, stash := range guildStashes {
-		if !stash.FetchEnabled {
-			continue
-		}
-		token, err := fetchers.GetToken(stash.TeamId)
-		if err != nil {
-			fmt.Printf("No token found for team %d: %v\n", stash.TeamId, err)
-			continue
-		}
-		fmt.Printf("Fetching guild stash %s for team %d in event %s with token %s\n", stash.Id, stash.TeamId, f.event.Name, *token)
-		response, httpError := f.poeClient.GetGuildStash(*token, f.event.Name, stash.Id, nil)
-		if httpError != nil {
-			fmt.Printf("Failed to fetch guild stash %s for team %d: %d - %s\n", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
-			return fmt.Errorf("failed to fetch guild stash %s for team %d: %d - %s", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
-		}
-		stash.LastFetch = time.Now()
-		stash.Index = response.Stash.Index
-		stash.Name = response.Stash.Name
-		stash.Type = response.Stash.Type
-		stash.Color = response.Stash.Metadata.Colour
-		if response.Stash.Items != nil {
-			items, err := json.Marshal(response.Stash.Items)
-			if err != nil {
-				fmt.Printf("Failed to marshal items for stash %s: %v\n", stash.Id, err)
-				return fmt.Errorf("failed to marshal items for stash %s: %w", stash.Id, err)
-			}
-			stash.Raw = string(items)
-		}
-		f.guildStashRepository.Save(stash)
-
-	}
-	return f.guildStashRepository.SaveAll(guildStashes)
-}
-
 func (f *FetchingService) FilterStashChanges() {
 	err := config.CreateTopic(f.event.Id)
 	if err != nil {
@@ -233,7 +196,6 @@ func (f *FetchingService) FilterStashChanges() {
 		case <-f.ctx.Done():
 			return
 		default:
-
 			stashes := make([]client.PublicStashChange, 0)
 			for _, stash := range stashChange.Stashes {
 				stashCounterTotal.Inc()
@@ -260,14 +222,126 @@ func (f *FetchingService) FilterStashChanges() {
 		}
 	}
 }
+func (f *FetchingService) FetchGuildStashes() {
+	users, err := f.userRepository.GetUsersForEvent(f.event.Id)
+	if err != nil {
+		log.Printf("Failed to get users for event %d: %v", f.event.Id, err)
+		return
+	}
+	guildStashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
+	if err != nil {
+		fmt.Printf("failed to get guild stashes for event %d: %v\n", f.event.Id, err)
+		return
+	}
+	userNameMap := make(map[int]*string)
+	for _, user := range users {
+		userNameMap[user.UserId] = &user.AccountName
+	}
+	fetchers := InitFetchers(users)
+	kafkaWriter, err := config.GetWriter(f.event.Id)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	defer kafkaWriter.Close()
 
-func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
-	fetchingService := NewFetchingService(ctx, event, poeClient)
-	go fetchingService.FetchStashChanges()
-	go fetchingService.FilterStashChanges()
+	wg := sync.WaitGroup{}
+	for {
+		changeChannel := make(chan *client.PublicStashChange)
+		for _, stash := range guildStashes {
+			if !stash.FetchEnabled {
+				continue
+			}
+			wg.Add(1)
+			go func(stash *repository.GuildStashTab) {
+				defer wg.Done()
+				token, err := fetchers.GetToken(stash.TeamId)
+				if err != nil {
+					fmt.Printf("No token found for team %d: %v\n", stash.TeamId, err)
+					return
+				}
+				f.fetchStash(stash, *token, userNameMap, changeChannel)
+			}(stash)
+		}
+		wg.Wait()
+		addGuildStashesToQueue(kafkaWriter, changeChannel)
+		f.guildStashRepository.SaveAll(guildStashes)
+		select {
+		case <-f.ctx.Done():
+			return
+		case <-time.After(1 * time.Minute):
+			fmt.Println("Waiting for next fetch cycle...")
+		}
+	}
+}
+
+func (f *FetchingService) fetchStash(stash *repository.GuildStashTab, token string, userNameMap map[int]*string, stashChangeChannel chan *client.PublicStashChange) error {
+	fmt.Printf("Fetching guild stash %s for team %d in event %s with token %s\n", stash.Id, stash.TeamId, f.event.Name, token)
+	response, httpError := f.poeClient.GetGuildStash(token, f.event.Name, stash.Id, nil)
+	if httpError != nil {
+		fmt.Printf("Failed to fetch guild stash %s for team %d: %d - %s\n", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
+		return fmt.Errorf("failed to fetch guild stash %s for team %d: %d - %s", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
+	}
+	fmt.Printf("Fetched guild stash %s for team %d in event %s\n", stash.Id, stash.TeamId, f.event.Name)
+	stash.LastFetch = time.Now()
+	stash.Index = response.Stash.Index
+	stash.Name = response.Stash.Name
+	stash.Type = response.Stash.Type
+	stash.Color = response.Stash.Metadata.Colour
+	if response.Stash.Items != nil {
+		stashChangeChannel <- &client.PublicStashChange{
+			Id:          stash.Id,
+			Public:      true,
+			AccountName: userNameMap[stash.OwnerId],
+			League:      &f.event.Name,
+			Items: utils.Map(
+				*response.Stash.Items,
+				func(item client.DisplayItem) client.Item { return *item.Item }),
+			StashType: stash.Type,
+		}
+	}
+	raw, err := json.Marshal(response.Stash)
+	if err != nil {
+		fmt.Printf("Failed to marshal items for stash %s: %v\n", stash.Id, err)
+		return fmt.Errorf("failed to marshal items for stash %s: %w", stash.Id, err)
+	}
+	stash.Raw = string(raw)
+	return nil
+
+}
+
+func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changeChannel chan *client.PublicStashChange) {
+	close(changeChannel)
+	changes := make([]client.PublicStashChange, 0)
+	for stashChange := range changeChannel {
+		changes = append(changes, *stashChange)
+	}
+	message, err := json.Marshal(config.StashChangeMessage{
+		ChangeId:     "",
+		NextChangeId: "",
+		Stashes:      changes,
+		Timestamp:    time.Now(),
+	})
+	if err != nil {
+		fmt.Printf("Failed to marshal stash change message: %v\n", err)
+		return
+	}
+	err = kafkaWriter.WriteMessages(
+		context.Background(),
+		kafka.Message{Value: message},
+	)
+	if err != nil {
+		fmt.Printf("Failed to write stash change message to kafka: %v\n", err)
+	}
 }
 
 func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	go fetchingService.FetchGuildStashes()
+}
+
+func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
+	fetchingService := NewFetchingService(ctx, event, poeClient)
+	go fetchingService.FetchStashChanges()
+	go fetchingService.FilterStashChanges()
 }

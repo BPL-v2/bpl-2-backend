@@ -10,10 +10,11 @@ import (
 type JobType string
 
 const (
-	FetchStashChanges    JobType = "FetchStashChanges"
-	EvaluateStashChanges JobType = "EvaluateStashChanges"
-	FetchCharacterData   JobType = "FetchCharacterData"
-	FetchGuildStashes    JobType = "FetchGuildStashes"
+	FetchStashChanges         JobType = "FetchStashChanges"
+	EvaluateStashChanges      JobType = "EvaluateStashChanges"
+	FetchCharacterData        JobType = "FetchCharacterData"
+	FetchGuildStashes         JobType = "FetchGuildStashes"
+	DetermineGuildStashAccess JobType = "DetermineGuildStashAccess"
 	// CalculateScores      JobType = "CalculateScores"
 )
 
