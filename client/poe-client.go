@@ -58,7 +58,7 @@ var requestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Help: "Duration of requests to the PoE API",
 }, []string{"endpoint"})
 
-func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) {
+func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) (*T, *ClientError) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(client.TimeOutSeconds)*time.Second)
 	defer cancel()
 
@@ -73,7 +73,7 @@ func sendRequest[T any](client *PoEClient, args RequestArgs) (*T, *ClientError) 
 		}
 		args.Body = strings.NewReader(string(bodyString))
 	}
-	response, err := client.Client.SendRequest(ctx, args)
+	response, err := client.Client.SendRequest(ctx, requestKey, args)
 	if err != nil {
 		return nil, &ClientError{
 			StatusCode:  0,
@@ -131,17 +131,19 @@ func (c *PoEClient) ListLeagues(token string, realm string, leagueType string, l
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListLeagues"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("ListLeagues").Inc()
-	return sendRequest[ListLeaguesResponse](c, RequestArgs{
-		Endpoint: "league",
-		Token:    token,
-		Method:   "GET",
-		QueryParams: map[string]string{
-			"realm":  realm,
-			"type":   leagueType,
-			"limit":  fmt.Sprintf("%d", limit),
-			"offset": fmt.Sprintf("%d", offset),
+	return sendRequest[ListLeaguesResponse](c,
+		"ListLeagues",
+		RequestArgs{
+			Path:   "league",
+			Token:  token,
+			Method: "GET",
+			QueryParams: map[string]string{
+				"realm":  realm,
+				"type":   leagueType,
+				"limit":  fmt.Sprintf("%d", limit),
+				"offset": fmt.Sprintf("%d", offset),
+			},
 		},
-	},
 	)
 
 }
@@ -150,15 +152,17 @@ func (c *PoEClient) GetLeague(token string, league string, realm string) (*GetLe
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeague"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeague").Inc()
-	return sendRequest[GetLeagueResponse](c, RequestArgs{
-		Endpoint:   "league/%s",
-		PathParams: []string{league},
-		Token:      token,
-		Method:     "GET",
-		QueryParams: map[string]string{
-			"realm": realm,
+	return sendRequest[GetLeagueResponse](c,
+		"GetLeague",
+		RequestArgs{
+			Path:       "league/%s",
+			PathParams: []string{league},
+			Token:      token,
+			Method:     "GET",
+			QueryParams: map[string]string{
+				"realm": realm,
+			},
 		},
-	},
 	)
 }
 
@@ -166,18 +170,20 @@ func (c *PoEClient) GetLeagueLadder(token string, league string, realm string, s
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeagueLadder"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeagueLadder").Inc()
-	return sendRequest[GetLeagueLadderResponse](c, RequestArgs{
-		Endpoint:   "league/%s/ladder",
-		PathParams: []string{league},
-		Token:      token,
-		Method:     "GET",
-		QueryParams: map[string]string{
-			"realm":  realm,
-			"sort":   sort,
-			"limit":  fmt.Sprintf("%d", limit),
-			"offset": fmt.Sprintf("%d", offset),
+	return sendRequest[GetLeagueLadderResponse](c,
+		"GetLeagueLadder",
+		RequestArgs{
+			Path:       "league/%s/ladder",
+			PathParams: []string{league},
+			Token:      token,
+			Method:     "GET",
+			QueryParams: map[string]string{
+				"realm":  realm,
+				"sort":   sort,
+				"limit":  fmt.Sprintf("%d", limit),
+				"offset": fmt.Sprintf("%d", offset),
+			},
 		},
-	},
 	)
 }
 
@@ -207,12 +213,14 @@ func (c *PoEClient) GetPoE2Ladder(league string) (*GetLeagueLadderResponse, *Cli
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPoE2Ladder"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetPoE2Ladder").Inc()
-	resp, err := sendRequest[GetPoE2LadderResponse](c, RequestArgs{
-		Endpoint:      "https://pathofexile2.com/internal-api/content/game-ladder/id/%s",
-		PathParams:    []string{league},
-		Method:        "GET",
-		IgnoreBaseURL: true,
-	},
+	resp, err := sendRequest[GetPoE2LadderResponse](c,
+		"GetPoE2Ladder",
+		RequestArgs{
+			Path:          "https://pathofexile2.com/internal-api/content/game-ladder/id/%s",
+			PathParams:    []string{league},
+			Method:        "GET",
+			IgnoreBaseURL: true,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -224,17 +232,19 @@ func (c *PoEClient) GetLeagueEventLadder(token string, league string, realm stri
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeagueEventLadder"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeagueEventLadder").Inc()
-	return sendRequest[GetLeagueEventLadderResponse](c, RequestArgs{
-		Endpoint:   "league/%s/event-ladder",
-		PathParams: []string{league},
-		Token:      token,
-		Method:     "GET",
-		QueryParams: map[string]string{
-			"realm":  realm,
-			"limit":  fmt.Sprintf("%d", limit),
-			"offset": fmt.Sprintf("%d", offset),
+	return sendRequest[GetLeagueEventLadderResponse](c,
+		"GetLeagueEventLadder",
+		RequestArgs{
+			Path:       "league/%s/event-ladder",
+			PathParams: []string{league},
+			Token:      token,
+			Method:     "GET",
+			QueryParams: map[string]string{
+				"realm":  realm,
+				"limit":  fmt.Sprintf("%d", limit),
+				"offset": fmt.Sprintf("%d", offset),
+			},
 		},
-	},
 	)
 }
 
@@ -242,15 +252,17 @@ func (c *PoEClient) GetPvPMatches(token string, realm string, matchType string) 
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPvPMatches"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetPvPMatches").Inc()
-	return sendRequest[GetPvPMatchesResponse](c, RequestArgs{
-		Endpoint: "pvp-match",
-		Token:    token,
-		Method:   "GET",
-		QueryParams: map[string]string{
-			"realm": realm,
-			"type":  matchType,
+	return sendRequest[GetPvPMatchesResponse](c,
+		"GetPvPMatches",
+		RequestArgs{
+			Path:   "pvp-match",
+			Token:  token,
+			Method: "GET",
+			QueryParams: map[string]string{
+				"realm": realm,
+				"type":  matchType,
+			},
 		},
-	},
 	)
 }
 
@@ -258,15 +270,17 @@ func (c *PoEClient) GetPvPMatch(token string, match string, realm string) (*GetP
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPvPMatch"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetPvPMatch").Inc()
-	return sendRequest[GetPvPMatchResponse](c, RequestArgs{
-		Endpoint:   "pvp-match/%s",
-		PathParams: []string{match},
-		Token:      token,
-		Method:     "GET",
-		QueryParams: map[string]string{
-			"realm": realm,
+	return sendRequest[GetPvPMatchResponse](c,
+		"GetPvPMatch",
+		RequestArgs{
+			Path:       "pvp-match/%s",
+			PathParams: []string{match},
+			Token:      token,
+			Method:     "GET",
+			QueryParams: map[string]string{
+				"realm": realm,
+			},
 		},
-	},
 	)
 }
 
@@ -274,17 +288,19 @@ func (c *PoEClient) GetPvPMatchLadder(token string, match string, realm string, 
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPvPMatchLadder"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetPvPMatchLadder").Inc()
-	return sendRequest[GetPvPMatchLadderResponse](c, RequestArgs{
-		Endpoint:   "pvp-match/%s/ladder",
-		PathParams: []string{match},
-		Token:      token,
-		Method:     "GET",
-		QueryParams: map[string]string{
-			"realm":  realm,
-			"limit":  fmt.Sprintf("%d", limit),
-			"offset": fmt.Sprintf("%d", offset),
+	return sendRequest[GetPvPMatchLadderResponse](c,
+		"GetPvPMatchLadder",
+		RequestArgs{
+			Path:       "pvp-match/%s/ladder",
+			PathParams: []string{match},
+			Token:      token,
+			Method:     "GET",
+			QueryParams: map[string]string{
+				"realm":  realm,
+				"limit":  fmt.Sprintf("%d", limit),
+				"offset": fmt.Sprintf("%d", offset),
+			},
 		},
-	},
 	)
 }
 
@@ -292,11 +308,13 @@ func (c *PoEClient) GetAccountProfile(token string) (*GetAccountProfileResponse,
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetAccountProfile"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetAccountProfile").Inc()
-	return sendRequest[GetAccountProfileResponse](c, RequestArgs{
-		Endpoint: "profile",
-		Token:    token,
-		Method:   "GET",
-	},
+	return sendRequest[GetAccountProfileResponse](c,
+		"GetAccountProfile",
+		RequestArgs{
+			Path:   "profile",
+			Token:  token,
+			Method: "GET",
+		},
 	)
 }
 
@@ -305,10 +323,11 @@ func (c *PoEClient) GetAccountLeagues(token string) (*ListLeaguesResponse, *Clie
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetAccountLeagues").Inc()
 	return sendRequest[ListLeaguesResponse](c,
+		"GetAccountLeagues",
 		RequestArgs{
-			Endpoint: "account/leagues",
-			Token:    token,
-			Method:   "GET",
+			Path:   "account/leagues",
+			Token:  token,
+			Method: "GET",
 		},
 	)
 }
@@ -321,11 +340,13 @@ func (c *PoEClient) ListCharacters(token string, realm *Realm) (*ListCharactersR
 	if realm != nil {
 		endpoint += fmt.Sprintf("/%s", *realm)
 	}
-	return sendRequest[ListCharactersResponse](c, RequestArgs{
-		Endpoint: endpoint,
-		Token:    token,
-		Method:   "GET",
-	},
+	return sendRequest[ListCharactersResponse](c,
+		"ListCharacters",
+		RequestArgs{
+			Path:   endpoint,
+			Token:  token,
+			Method: "GET",
+		},
 	)
 }
 
@@ -337,12 +358,14 @@ func (c *PoEClient) GetCharacter(token string, character string, realm *Realm) (
 		endpoint += fmt.Sprintf("/%s", *realm)
 	}
 	poeRequestCounter.WithLabelValues("GetCharacter").Inc()
-	return sendRequest[GetCharacterResponse](c, RequestArgs{
-		Endpoint:   endpoint + "/%s",
-		PathParams: []string{character},
-		Token:      token,
-		Method:     "GET",
-	},
+	return sendRequest[GetCharacterResponse](c,
+		"GetCharacter",
+		RequestArgs{
+			Path:       endpoint + "/%s",
+			PathParams: []string{character},
+			Token:      token,
+			Method:     "GET",
+		},
 	)
 }
 
@@ -350,12 +373,14 @@ func (c *PoEClient) ListAccountStashes(token string, league string) (*ListAccoun
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListAccountStashes"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("ListAccountStashes").Inc()
-	return sendRequest[ListAccountStashesResponse](c, RequestArgs{
-		Endpoint:   "stash/%s",
-		PathParams: []string{league},
-		Token:      token,
-		Method:     "GET",
-	},
+	return sendRequest[ListAccountStashesResponse](c,
+		"ListAccountStashes",
+		RequestArgs{
+			Path:       "stash/%s",
+			PathParams: []string{league},
+			Token:      token,
+			Method:     "GET",
+		},
 	)
 }
 
@@ -367,11 +392,13 @@ func (c *PoEClient) GetAccountStash(token string, league string, stashId string,
 	if substashId != nil {
 		endpoint += fmt.Sprintf("/%s", *substashId)
 	}
-	return sendRequest[GetAccountStashResponse](c, RequestArgs{
-		Endpoint: endpoint,
-		Token:    token,
-		Method:   "GET",
-	},
+	return sendRequest[GetAccountStashResponse](c,
+		"GetAccountStash",
+		RequestArgs{
+			Path:   endpoint,
+			Token:  token,
+			Method: "GET",
+		},
 	)
 }
 
@@ -379,11 +406,13 @@ func (c *PoEClient) ListItemFilters(token string) (*ListItemFiltersResponse, *Cl
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListItemFilters"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("ListItemFilters").Inc()
-	return sendRequest[ListItemFiltersResponse](c, RequestArgs{
-		Endpoint: "item-filter",
-		Token:    token,
-		Method:   "GET",
-	},
+	return sendRequest[ListItemFiltersResponse](c,
+		"ListItemFilters",
+		RequestArgs{
+			Path:   "item-filter",
+			Token:  token,
+			Method: "GET",
+		},
 	)
 }
 
@@ -391,12 +420,14 @@ func (c *PoEClient) GetItemFilter(token string, filterId string) (*GetItemFilter
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetItemFilter"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetItemFilter").Inc()
-	return sendRequest[GetItemFilterResponse](c, RequestArgs{
-		Endpoint:   "item-filter/%s",
-		PathParams: []string{filterId},
-		Token:      token,
-		Method:     "GET",
-	},
+	return sendRequest[GetItemFilterResponse](c,
+		"GetItemFilter",
+		RequestArgs{
+			Path:       "item-filter/%s",
+			PathParams: []string{filterId},
+			Token:      token,
+			Method:     "GET",
+		},
 	)
 }
 
@@ -404,15 +435,17 @@ func (c *PoEClient) CreateItemFilter(token string, body CreateFilterBody, valida
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("CreateItemFilter"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("CreateItemFilter").Inc()
-	return sendRequest[CreateItemFilterResponse](c, RequestArgs{
-		Endpoint: "item-filter",
-		Token:    token,
-		Method:   "POST",
-		QueryParams: map[string]string{
-			"validate": validate,
+	return sendRequest[CreateItemFilterResponse](c,
+		"CreateItemFilter",
+		RequestArgs{
+			Path:   "item-filter",
+			Token:  token,
+			Method: "POST",
+			QueryParams: map[string]string{
+				"validate": validate,
+			},
+			BodyRaw: body,
 		},
-		BodyRaw: body,
-	},
 	)
 }
 
@@ -420,16 +453,18 @@ func (c *PoEClient) UpdateItemFilter(token string, filterId string, body UpdateF
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("UpdateItemFilter"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("UpdateItemFilter").Inc()
-	return sendRequest[UpdateItemFilterResponse](c, RequestArgs{
-		Endpoint:   "item-filter/%s",
-		PathParams: []string{filterId},
-		Token:      token,
-		Method:     "POST",
-		QueryParams: map[string]string{
-			"validate": validate,
+	return sendRequest[UpdateItemFilterResponse](c,
+		"UpdateItemFilter",
+		RequestArgs{
+			Path:       "item-filter/%s",
+			PathParams: []string{filterId},
+			Token:      token,
+			Method:     "POST",
+			QueryParams: map[string]string{
+				"validate": validate,
+			},
+			BodyRaw: body,
 		},
-		BodyRaw: body,
-	},
 	)
 }
 
@@ -437,12 +472,14 @@ func (c *PoEClient) GetLeagueAccount(token string, league string) (*GetLeagueAcc
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeagueAccount"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("GetLeagueAccount").Inc()
-	return sendRequest[GetLeagueAccountResponse](c, RequestArgs{
-		Endpoint:   "league-account/%s",
-		PathParams: []string{league},
-		Token:      token,
-		Method:     "GET",
-	},
+	return sendRequest[GetLeagueAccountResponse](c,
+		"GetLeagueAccount",
+		RequestArgs{
+			Path:       "league-account/%s",
+			PathParams: []string{league},
+			Token:      token,
+			Method:     "GET",
+		},
 	)
 }
 
@@ -450,12 +487,14 @@ func (c *PoEClient) ListGuildStashes(token string, league string) (*ListGuildSta
 	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListGuildStashes"))
 	defer timer.ObserveDuration()
 	poeRequestCounter.WithLabelValues("ListGuildStashes").Inc()
-	return sendRequest[ListGuildStashesResponse](c, RequestArgs{
-		Endpoint:   "guild/stash/%s",
-		PathParams: []string{league},
-		Token:      token,
-		Method:     "GET",
-	},
+	return sendRequest[ListGuildStashesResponse](c,
+		"ListGuildStashes",
+		RequestArgs{
+			Path:       "guild/stash/%s",
+			PathParams: []string{league},
+			Token:      token,
+			Method:     "GET",
+		},
 	)
 }
 
@@ -469,12 +508,14 @@ func (c *PoEClient) GetGuildStash(token string, league string, stashId string, s
 		endpoint += "/%s"
 		pathParams = append(pathParams, *substashId)
 	}
-	return sendRequest[GetGuildStashResponse](c, RequestArgs{
-		Endpoint:   endpoint,
-		PathParams: pathParams,
-		Token:      token,
-		Method:     "GET",
-	},
+	return sendRequest[GetGuildStashResponse](c,
+		"GetGuildStash",
+		RequestArgs{
+			Path:       endpoint,
+			PathParams: pathParams,
+			Token:      token,
+			Method:     "GET",
+		},
 	)
 }
 
@@ -490,12 +531,14 @@ func (c *PoEClient) GetPublicStashes(token string, realm string, id string) (*Ge
 	if id != "" {
 		params["id"] = id
 	}
-	return sendRequest[GetPublicStashTabsResponse](c, RequestArgs{
-		Endpoint:    url,
-		Token:       token,
-		Method:      "GET",
-		QueryParams: params,
-	},
+	return sendRequest[GetPublicStashTabsResponse](c,
+		"GetPublicStashes",
+		RequestArgs{
+			Path:        url,
+			Token:       token,
+			Method:      "GET",
+			QueryParams: params,
+		},
 	)
 }
 
@@ -509,16 +552,18 @@ func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string) (
 		"client_secret": {clientSecret},
 		"scope":         {"service:psapi"},
 	}
-	return sendRequest[ClientCredentialsGrantResponse](c, RequestArgs{
-		Endpoint:      "https://www.pathofexile.com/oauth/token",
-		Token:         "",
-		Method:        "POST",
-		Body:          strings.NewReader(form.Encode()),
-		IgnoreBaseURL: true,
-		Headers: map[string]string{
-			"Content-Type": "application/x-www-form-urlencoded",
+	return sendRequest[ClientCredentialsGrantResponse](c,
+		"GetClientCredentials",
+		RequestArgs{
+			Path:          "https://www.pathofexile.com/oauth/token",
+			Token:         "",
+			Method:        "POST",
+			Body:          strings.NewReader(form.Encode()),
+			IgnoreBaseURL: true,
+			Headers: map[string]string{
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
 		},
-	},
 	)
 }
 
@@ -535,15 +580,17 @@ func (c *PoEClient) GetAccessToken(clientId string, clientSecret string, code st
 		"scope":         {strings.Join(scopes, " ")},
 		"code_verifier": {code_verifier},
 	}
-	return sendRequest[AccessTokenGrantResponse](c, RequestArgs{
-		Endpoint: "https://www.pathofexile.com/oauth/token",
-		Method:   "POST",
-		Body:     strings.NewReader(form.Encode()),
-		Headers: map[string]string{
-			"Content-Type": "application/x-www-form-urlencoded",
+	return sendRequest[AccessTokenGrantResponse](c,
+		"GetAccessToken",
+		RequestArgs{
+			Path:   "https://www.pathofexile.com/oauth/token",
+			Method: "POST",
+			Body:   strings.NewReader(form.Encode()),
+			Headers: map[string]string{
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			IgnoreBaseURL: true,
 		},
-		IgnoreBaseURL: true,
-	},
 	)
 }
 func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, refreshToken string) (*AccessTokenGrantResponse, *ClientError) {
@@ -556,14 +603,16 @@ func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, ref
 		"client_secret": {clientSecret},
 		"refresh_token": {refreshToken},
 	}
-	return sendRequest[AccessTokenGrantResponse](c, RequestArgs{
-		Endpoint: "https://www.pathofexile.com/oauth/token",
-		Method:   "POST",
-		Body:     strings.NewReader(form.Encode()),
-		Headers: map[string]string{
-			"Content-Type": "application/x-www-form-urlencoded",
+	return sendRequest[AccessTokenGrantResponse](c,
+		"RefreshAccessToken",
+		RequestArgs{
+			Path:   "https://www.pathofexile.com/oauth/token",
+			Method: "POST",
+			Body:   strings.NewReader(form.Encode()),
+			Headers: map[string]string{
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			IgnoreBaseURL: true,
 		},
-		IgnoreBaseURL: true,
-	},
 	)
 }
