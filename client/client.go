@@ -96,7 +96,7 @@ func NewAsyncHttpClient(baseURL *url.URL, userAgent string, maxRequestsPerSecond
 }
 
 type RequestArgs struct {
-	Endpoint      string
+	Path          string
 	Token         string
 	Method        string
 	PathParams    []string
@@ -109,6 +109,7 @@ type RequestArgs struct {
 
 func (c *AsyncHttpClient) SendRequest(
 	ctx context.Context,
+	endpoint string,
 	requestArgs RequestArgs,
 ) (*http.Response, error) {
 	err := error(nil)
@@ -127,7 +128,7 @@ func (c *AsyncHttpClient) SendRequest(
 	} else {
 		token = "IP"
 	}
-	key := RequestKey{Token: token, Endpoint: requestArgs.Endpoint}
+	key := RequestKey{Token: token, Endpoint: endpoint}
 
 	method := requestArgs.Method
 	if method == "" {
@@ -142,12 +143,12 @@ func (c *AsyncHttpClient) SendRequest(
 		pathParams[i] = v
 	}
 	if requestArgs.IgnoreBaseURL {
-		requestUrl, err = url.Parse(fmt.Sprintf(requestArgs.Endpoint, pathParams...))
+		requestUrl, err = url.Parse(fmt.Sprintf(requestArgs.Path, pathParams...))
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		requestUrl = c.baseURL.ResolveReference(&url.URL{Path: c.baseURL.Path + "/" + fmt.Sprintf(requestArgs.Endpoint, pathParams...)})
+		requestUrl = c.baseURL.ResolveReference(&url.URL{Path: c.baseURL.Path + "/" + fmt.Sprintf(requestArgs.Path, pathParams...)})
 	}
 	if requestArgs.QueryParams != nil {
 		query := requestUrl.Query()
