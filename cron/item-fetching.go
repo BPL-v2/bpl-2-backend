@@ -141,9 +141,13 @@ type GuildStashFetchers struct {
 	mu       sync.Mutex
 }
 
-func (f *GuildStashFetchers) GetToken(stashId string) (*string, error) {
+func (f *GuildStashFetchers) GetToken(stash *repository.GuildStashTab) (*string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	stashId := stash.Id
+	if stash.ParentId != nil {
+		stashId = *stash.ParentId
+	}
 	fetchersForStashTab, exists := f.Fetchers[stashId]
 	if exists && len(fetchersForStashTab) > 0 {
 		// Return the token of the first fetcher for the team
@@ -333,7 +337,7 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 	fmt.Printf("Fetching guild stash %s for team %d\n", stash.Id, stash.TeamId)
 	updatedStashes := make([]*repository.GuildStashTab, 0)
 	stashChanges := make([]*client.PublicStashChange, 0)
-	token, err := fetchers.GetToken(stash.Id)
+	token, err := fetchers.GetToken(&stash)
 	if err != nil {
 		fmt.Printf("No token found for team %d: %v\n", stash.TeamId, err)
 	}
