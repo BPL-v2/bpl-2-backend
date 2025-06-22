@@ -157,6 +157,7 @@ func (c *AsyncHttpClient) SendRequest(
 		}
 		requestUrl.RawQuery = query.Encode()
 	}
+	fmt.Println("requesting", requestUrl.String())
 
 	req := &http.Request{}
 	if requestArgs.Body != nil {
