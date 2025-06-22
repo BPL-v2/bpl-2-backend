@@ -101,7 +101,9 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "event is locked"})
 			return
 		}
-		objective, err := e.service.CreateObjective(objectiveCreate.toModel())
+		model := objectiveCreate.toModel()
+		model.EventId = event.Id
+		objective, err := e.service.CreateObjective(model)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})

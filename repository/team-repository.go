@@ -60,9 +60,9 @@ func (r *TeamRepository) Save(team *Team) (*Team, error) {
 
 func (r *TeamRepository) Delete(teamId int) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
-		err := r.DB.Delete(&TeamUser{}, "team_id = ?", teamId)
+		err := r.DB.Delete(&TeamUser{}, "team_id = ?", teamId).Error
 		if err != nil {
-			return err.Error
+			return err
 		}
 		return r.DB.Delete(Team{Id: teamId}).Error
 	})
