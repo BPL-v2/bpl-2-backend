@@ -340,8 +340,9 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 	token, err := fetchers.GetToken(&stash)
 	if err != nil {
 		fmt.Printf("No token found for team %d: %v\n", stash.TeamId, err)
+		updatedStashes = append(updatedStashes, &stash)
+		return stashChanges, updatedStashes, nil
 	}
-
 	response, httpError := f.poeClient.GetGuildStash(*token, f.event.Name, stash.Id, stash.ParentId)
 	if httpError != nil {
 		return nil, nil, fmt.Errorf("failed to fetch guild stash %s for team %d: %d - %s", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
