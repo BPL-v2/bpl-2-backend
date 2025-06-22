@@ -1,7 +1,6 @@
 -- missing primary keys
 ALTER TABLE team_suggestions
 ADD PRIMARY KEY (id, team_id);
-DROP INDEX stash_changes_id_idx;
 ALTER TABLE stash_changes
 ADD PRIMARY KEY (id);
 -- missing indexes

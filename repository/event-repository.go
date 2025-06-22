@@ -122,8 +122,7 @@ func (r *EventRepository) GetEventByObjectiveId(objectiveId int) (*Event, error)
 	var event Event
 	query := `
 		SELECT * FROM events
-		JOIN scoring_categories ON events.id = scoring_categories.event_id
-		JOIN objectives ON scoring_categories.id = objectives.category_id
+		JOIN objectives ON objectives.event_id = events.id
 		WHERE objectives.id = ?
 	`
 	result := r.DB.Raw(query, objectiveId).Scan(&event)
@@ -137,8 +136,7 @@ func (r *EventRepository) GetEventByConditionId(conditionId int) (*Event, error)
 	var event Event
 	query := `
 		SELECT * FROM events
-		JOIN scoring_categories ON events.id = scoring_categories.event_id
-		JOIN objectives ON scoring_categories.id = objectives.category_id
+		JOIN objectives ON objectives.event_id = events.id
 		JOIN conditions ON objectives.id = conditions.objective_id
 		WHERE conditions.id = ?
 	`
