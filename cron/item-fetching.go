@@ -137,20 +137,20 @@ type GuildStashFetcher struct {
 }
 
 type GuildStashFetchers struct {
-	Fetchers map[int][]*GuildStashFetcher // key is team ID
+	Fetchers map[string][]*GuildStashFetcher // key is team ID
 	mu       sync.Mutex
 }
 
-func (f *GuildStashFetchers) GetToken(teamId int) (*string, error) {
+func (f *GuildStashFetchers) GetToken(stashId string) (*string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	fetchersForTeam, exists := f.Fetchers[teamId]
-	if exists && len(fetchersForTeam) > 0 {
+	fetchersForStashTab, exists := f.Fetchers[stashId]
+	if exists && len(fetchersForStashTab) > 0 {
 		// Return the token of the first fetcher for the team
-		sort.Slice(fetchersForTeam, func(i, j int) bool {
-			return fetchersForTeam[i].LastUse.Before(fetchersForTeam[j].LastUse)
+		sort.Slice(fetchersForStashTab, func(i, j int) bool {
+			return fetchersForStashTab[i].LastUse.Before(fetchersForStashTab[j].LastUse)
 		})
-		fetcher, found := utils.FindFirst(fetchersForTeam, func(f *GuildStashFetcher) bool {
+		fetcher, found := utils.FindFirst(fetchersForStashTab, func(f *GuildStashFetcher) bool {
 			return f.TokenExpiry.After(time.Now())
 		})
 		if found {
@@ -158,11 +158,12 @@ func (f *GuildStashFetchers) GetToken(teamId int) (*string, error) {
 			return &fetcher.Token, nil
 		}
 	}
-	return nil, fmt.Errorf("no fetcher found for team %d", teamId)
+	return nil, fmt.Errorf("no fetcher found for stash %s", stashId)
 }
 
-func InitFetchers(users []*repository.TeamUserWithPoEToken) *GuildStashFetchers {
-	fetchers := make(map[int][]*GuildStashFetcher)
+func InitFetchers(users []*repository.TeamUserWithPoEToken, stashes []*repository.GuildStashTab) *GuildStashFetchers {
+	fetchers := make(map[string][]*GuildStashFetcher)
+	fetcherMap := make(map[int]*GuildStashFetcher)
 	for _, user := range users {
 		fetcher := &GuildStashFetcher{
 			UserId:      user.UserId,
@@ -170,7 +171,12 @@ func InitFetchers(users []*repository.TeamUserWithPoEToken) *GuildStashFetchers 
 			TokenExpiry: user.TokenExpiry,
 			LastUse:     time.Now(),
 		}
-		fetchers[user.TeamId] = append(fetchers[user.TeamId], fetcher)
+		fetcherMap[user.UserId] = fetcher
+	}
+	for _, stash := range stashes {
+		for _, userId := range stash.UserIds {
+			fetchers[stash.Id] = append(fetchers[stash.Id], fetcherMap[int(userId)])
+		}
 	}
 	return &GuildStashFetchers{
 		Fetchers: fetchers,
@@ -234,7 +240,13 @@ func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, f
 	for _, user := range users {
 		userNameMap[user.UserId] = &user.AccountName
 	}
-	fetchers = InitFetchers(users)
+	// todo: move this redundant db call
+	stashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
+	if err != nil {
+		log.Printf("Failed to get stashes for event %d: %v", f.event.Id, err)
+		return
+	}
+	fetchers = InitFetchers(users, stashes)
 	kafkaWriter, err = config.GetWriter(f.event.Id)
 	if err != nil {
 		log.Print(err)
@@ -321,7 +333,7 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 	fmt.Printf("Fetching guild stash %s for team %d\n", stash.Id, stash.TeamId)
 	updatedStashes := make([]*repository.GuildStashTab, 0)
 	stashChanges := make([]*client.PublicStashChange, 0)
-	token, err := fetchers.GetToken(stash.TeamId)
+	token, err := fetchers.GetToken(stash.Id)
 	if err != nil {
 		fmt.Printf("No token found for team %d: %v\n", stash.TeamId, err)
 	}
