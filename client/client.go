@@ -157,7 +157,7 @@ func (c *AsyncHttpClient) SendRequest(
 		}
 		requestUrl.RawQuery = query.Encode()
 	}
-	fmt.Println("requesting", requestUrl.String())
+	fmt.Printf("requesting %s with token %s\n", requestUrl.String(), requestArgs.Token)
 
 	req := &http.Request{}
 	if requestArgs.Body != nil {
