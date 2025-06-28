@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -26,12 +27,100 @@ func setupCharacterController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/:user_id", HandlerFunc: e.getUserCharactersHandler()},
 		{Method: "GET", Path: "/:user_id/:event_id", HandlerFunc: e.getCharacterEventHistoryForUser()},
+		// {Method: "POST", Path: "/:user_id/pob/:character_name", HandlerFunc: e.getPoBExportHandler()},
+		{Method: "GET", Path: "/:user_id/:event_id/:character_name", HandlerFunc: e.getTimeSeries()},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
 	}
 	return routes
 }
+
+// @id GetCharacterTimeSeries
+// @Description Get the time series for a character
+// @Tags characters
+// @Produce json
+// @Param user_id path int true "User ID"
+// @Param event_id path int true "Event ID"
+// @Param character_name path string true "Character name"
+// @Param start query string true "Start time"
+// @Param end query string true "End time"
+// @Success 200 {object} client.StatValues
+// @Router /characters/{user_id}/{event_id}/{character_name} [get]
+func (e *CharacterController) getTimeSeries() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		start := c.Request.URL.Query().Get("start")
+		end := c.Request.URL.Query().Get("end")
+		if start == "" || end == "" {
+			c.JSON(400, gin.H{"error": "start and end are required"})
+			return
+		}
+		startTime, err := time.Parse(time.RFC3339, start)
+		if err != nil {
+			c.JSON(400, gin.H{"error": "start is invalid"})
+			return
+		}
+		endTime, err := time.Parse(time.RFC3339, end)
+		if err != nil {
+			c.JSON(400, gin.H{"error": "end is invalid"})
+			return
+		}
+		characterName := c.Param("character_name")
+		metrics := []string{
+			"XP",
+			"EHP",
+			"DPS",
+			"PhysMaxHit",
+			"EleMaxHit",
+			"HP",
+			"Mana",
+		}
+		statValues := client.GetCharacterMetrics(characterName, metrics, startTime, endTime)
+		c.JSON(200, statValues)
+	}
+}
+
+// func (e *CharacterController) getPoBExportHandler() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		fmt.Println("getPoBExportHandler")
+// 		userId, err := strconv.Atoi(c.Param("user_id"))
+// 		if err != nil {
+// 			c.JSON(400, gin.H{"error": err.Error()})
+// 			return
+// 		}
+// 		user, err := service.NewUserService().GetUserById(userId, "OauthAccounts")
+// 		if err != nil {
+// 			c.JSON(500, gin.H{"error": err.Error()})
+// 			return
+// 		}
+// 		characterName := c.Param("character_name")
+// 		poeClient := client.NewPoEClient(100, true, 100)
+// 		token := user.GetPoEToken()
+// 		if token == "" {
+// 			c.JSON(400, gin.H{"error": "User does not have a PoE token"})
+// 			return
+// 		}
+// 		character, httpError := poeClient.GetCharacter(token, characterName, nil)
+// 		if httpError != nil {
+// 			c.JSON(httpError.StatusCode, gin.H{"error": httpError.Error})
+// 			return
+// 		}
+// 		pob, export, err := client.GetPoBExport(character.Character)
+// 		armourGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Armour)
+// 		evasionGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Evasion)
+// 		energyShieldGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.EnergyShield)
+// 		ehpGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.TotalEHP)
+// 		hpGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Life)
+// 		manaGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Mana)
+// 		physMaxHitGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.PhysicalMaximumHitTaken)
+// 		eleMaxHitGauge.WithLabelValues(character.Character.Name).Set(utils.Max(pob.Build.PlayerStats.LightningMaximumHitTaken, pob.Build.PlayerStats.FireMaximumHitTaken, pob.Build.PlayerStats.ColdMaximumHitTaken))
+// 		if err != nil {
+// 			c.JSON(500, gin.H{"error": err.Error()})
+// 			return
+// 		}
+// 		c.JSON(200, gin.H{"pob": pob, "export": export})
+// 	}
+// }
 
 // @id GetUserCharacters
 // @Description Fetches all event characters for a user

@@ -7,12 +7,66 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
+
+var dpsGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "DPS",
+	Help: "Character DPS",
+}, []string{"CharacterName"})
+
+var ehpGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "EHP",
+	Help: "Character EHP",
+}, []string{"CharacterName"})
+
+var physMaxHitGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "PhysMaxHit",
+	Help: "Character Phys Max Hit",
+}, []string{"CharacterName"})
+
+var eleMaxHitGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "EleMaxHit",
+	Help: "Character Ele Max Hit",
+}, []string{"CharacterName"})
+
+var hpGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "HP",
+	Help: "Character HP",
+}, []string{"CharacterName"})
+
+var manaGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "Mana",
+	Help: "Character Mana",
+}, []string{"CharacterName"})
+
+var armourGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "Armour",
+	Help: "Character Armour",
+}, []string{"CharacterName"})
+
+var evasionGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "Evasion",
+	Help: "Character Evasion",
+}, []string{"CharacterName"})
+
+var energyShieldGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "EnergyShield",
+	Help: "Character Energy Shield",
+}, []string{"CharacterName"})
+
+var xpGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	Name: "XP",
+	Help: "Character XP",
+}, []string{"CharacterName"})
 
 type PlayerFetchingService struct {
 	userRepository        *repository.UserRepository
@@ -39,10 +93,12 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 }
 
 func (s *PlayerFetchingService) shouldUpdateLadder() bool {
+	return false
 	return time.Since(s.lastLadderUpdate) > 30*time.Second
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate, event *repository.Event) {
+	fmt.Println("Updating character name for player", player.UserId)
 	charactersResponse, err := s.client.ListCharacters(player.Token, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
@@ -67,7 +123,34 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 	}
 }
 
+func DoPoBStuff(character *client.Character) {
+	fmt.Println("Doing PoB stuff for character", character.Name)
+	pob, export, err := client.GetPoBExport(character)
+	if err != nil {
+		character_string, err := json.Marshal(character)
+		if err != nil {
+			log.Printf("Error marshalling character %s: %v", character.Name, err)
+			return
+		}
+		fmt.Println(string(character_string))
+		log.Printf("Error fetching PoB export for character %s: %v", character.Name, err)
+		return
+	}
+	armourGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Armour)
+	evasionGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Evasion)
+	energyShieldGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.EnergyShield)
+	ehpGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.TotalEHP)
+	hpGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Life)
+	manaGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Mana)
+	physMaxHitGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.PhysicalMaximumHitTaken)
+	xpGauge.WithLabelValues(character.Name).Set(float64(character.Experience))
+	dpsGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.TotalDPS)
+	eleMaxHitGauge.WithLabelValues(character.Name).Set(utils.Max(pob.Build.PlayerStats.LightningMaximumHitTaken, pob.Build.PlayerStats.FireMaximumHitTaken, pob.Build.PlayerStats.ColdMaximumHitTaken))
+	_ = export
+}
+
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
+	fmt.Println("Updating character", player.New.CharacterName)
 	characterResponse, err := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
@@ -87,6 +170,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		log.Printf("Error fetching character for player %d: %v", player.UserId, err)
 		return
 	}
+	go DoPoBStuff(characterResponse.Character)
 	player.SuccessiveErrors = 0
 	player.New.CharacterLevel = characterResponse.Character.Level
 	player.New.CharacterXP = characterResponse.Character.Experience

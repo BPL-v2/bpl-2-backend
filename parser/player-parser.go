@@ -43,7 +43,7 @@ type PlayerUpdate struct {
 func (p *Player) MaxAtlasTreeNodes() int {
 	return utils.Max(utils.Map(p.AtlasPassiveTrees, func(tree client.AtlasPassiveTree) int {
 		return len(tree.Hashes)
-	}))
+	})...)
 }
 
 func (p *PlayerUpdate) CanMakeRequests() bool {
@@ -55,7 +55,7 @@ func (p *PlayerUpdate) ShouldUpdateCharacterName() bool {
 		return false
 	}
 	if p.New.CharacterName == "" {
-		return time.Since(p.LastUpdateTimes.CharacterName) > 10*time.Minute
+		return time.Since(p.LastUpdateTimes.CharacterName) > 1*time.Minute
 	}
 	return time.Since(p.LastUpdateTimes.CharacterName) > 10*time.Minute
 }
@@ -73,7 +73,7 @@ func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
 	if p.New.CharacterLevel > 68 && !(p.New.AscendancyPoints >= 8) {
 		return time.Since(p.LastUpdateTimes.Character) > 1*time.Minute
 	}
-	return time.Since(p.LastUpdateTimes.Character) > 10*time.Minute
+	return time.Since(p.LastUpdateTimes.Character) > 1*time.Minute
 }
 
 func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
