@@ -74,32 +74,32 @@ func (e *ObjectiveService) DuplicateObjectives(oldEventId, newEventId int, prese
 	if err != nil {
 		return err
 	}
-	objectiveIdMap := make(map[int]int)
+	newObjectiveMap := make(map[int]*repository.Objective)
 	for _, objective := range objectives {
-		oldId := objective.Id
-		for _, condition := range objective.Conditions {
+		newObjective := *objective
+		oldId := newObjective.Id
+		for _, condition := range newObjective.Conditions {
 			condition.Id = 0
 		}
-		objective.EventId = newEventId
-		if objective.ScoringId != nil {
-			if newId, ok := presetIdMap[*objective.ScoringId]; ok {
-				objective.ScoringId = &newId
+		newObjective.Id = 0
+		newObjective.EventId = newEventId
+		if newObjective.ScoringId != nil {
+			if newId, ok := presetIdMap[*newObjective.ScoringId]; ok {
+				newObjective.ScoringId = &newId
 			}
 		}
-		newObjective, err := e.objectiveRepository.SaveObjective(objective)
-		if err != nil {
-			return err
-		}
-		objectiveIdMap[oldId] = newObjective.Id
-
+		e.objectiveRepository.SaveObjective(&newObjective)
+		newObjectiveMap[oldId] = &newObjective
 	}
 	for _, objective := range objectives {
 		if objective.ParentId != nil {
-			if newId, ok := objectiveIdMap[*objective.ParentId]; ok {
-				objective.ParentId = &newId
-				_, err := e.objectiveRepository.SaveObjective(objective)
-				if err != nil {
-					return err
+			if parent, ok := newObjectiveMap[*objective.ParentId]; ok {
+				if child, ok := newObjectiveMap[objective.Id]; ok {
+					child.ParentId = &parent.Id
+					_, err := e.objectiveRepository.SaveObjective(child)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
