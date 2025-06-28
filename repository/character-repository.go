@@ -23,9 +23,39 @@ type Character struct {
 	Pantheon         bool      `gorm:"not null"`
 	Timestamp        time.Time `gorm:"not null;index"`
 	AtlasNodeCount   int       `gorm:"not null"`
-	// Pob        string    `gorm:"not null"`
-	User  *User  `gorm:"foreignKey:UserID"`
-	Event *Event `gorm:"foreignKey:EventID"`
+	User             *User     `gorm:"foreignKey:UserID"`
+	Event            *Event    `gorm:"foreignKey:EventID"`
+}
+
+type PoB struct {
+	ID        int       `gorm:"not null;primaryKey"`
+	UserID    int       `gorm:"not null;index"`
+	EventID   int       `gorm:"not null;index"`
+	Name      string    `gorm:"not null"`
+	Timestamp time.Time `gorm:"not null;index"`
+
+	MainSkill  string `gorm:"not null"`
+	Ascendancy string `gorm:"not null"`
+	Level      int    `gorm:"not null"`
+
+	DPS              int `gorm:"not null"`
+	EHP              int `gorm:"not null"`
+	MaxPhysHit       int `gorm:"not null"`
+	MaxEleHit        int `gorm:"not null"`
+	SpellSuppression int `gorm:"not null"`
+	Block            int `gorm:"not null"`
+	SpellBlock       int `gorm:"not null"`
+	HP               int `gorm:"not null"`
+	Mana             int `gorm:"not null"`
+	ES               int `gorm:"not null"`
+	Armour           int `gorm:"not null"`
+	Evasion          int `gorm:"not null"`
+
+	Uniques pq.StringArray `gorm:"not null;type:text[];default:{}"`
+
+	Export string `gorm:"not null"`
+	User   *User  `gorm:"foreignKey:UserID"`
+	Event  *Event `gorm:"foreignKey:EventID"`
 }
 
 type Atlas struct {

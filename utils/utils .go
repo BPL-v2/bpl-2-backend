@@ -107,9 +107,10 @@ type Ordered interface {
 		~string
 }
 
-func Max(a []int) int {
+func Max[T Ordered](a ...T) T {
 	if len(a) == 0 {
-		return 0
+		var zero T
+		return zero
 	}
 	max := a[0]
 	for _, v := range a {

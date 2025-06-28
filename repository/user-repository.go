@@ -51,6 +51,15 @@ type User struct {
 	OauthAccounts []*Oauth `gorm:"foreignKey:UserId"`
 }
 
+func (u *User) GetPoEToken() string {
+	for _, oauth := range u.OauthAccounts {
+		if oauth.Provider == "poe" {
+			return oauth.AccessToken
+		}
+	}
+	return ""
+}
+
 type UserRepository struct {
 	DB *gorm.DB
 }

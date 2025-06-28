@@ -64,6 +64,8 @@ definitions:
         $ref: '#/definitions/ItemHybrid'
       icon:
         type: string
+      id:
+        type: string
       identified:
         type: boolean
       ilvl:
@@ -78,6 +80,8 @@ definitions:
         additionalProperties:
           type: boolean
         type: object
+      inventoryId:
+        type: string
       isRelic:
         type: boolean
       itemLevel:
@@ -264,6 +268,8 @@ definitions:
         type: array
       hybrid:
         $ref: '#/definitions/ItemHybrid'
+      id:
+        type: string
       ilvl:
         type: integer
       implicitMods:
@@ -276,6 +282,8 @@ definitions:
         additionalProperties:
           type: boolean
         type: object
+      inventoryId:
+        type: string
       isRelic:
         type: boolean
       itemLevel:
@@ -362,6 +370,10 @@ definitions:
         items:
           $ref: '#/definitions/ItemProperty'
         type: array
+      x:
+        type: integer
+      "y":
+        type: integer
     type: object
   ItemExtended:
     properties:
@@ -538,6 +550,11 @@ definitions:
       layout: {}
       public:
         type: boolean
+    type: object
+  StatValues:
+    additionalProperties:
+      items: {}
+      type: array
     type: object
   TwitchStream:
     properties:
@@ -1748,6 +1765,45 @@ paths:
             items:
               $ref: '#/definitions/Character'
             type: array
+      tags:
+      - characters
+  /characters/{user_id}/{event_id}/{character_name}:
+    get:
+      description: Get the time series for a character
+      operationId: GetCharacterTimeSeries
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Character name
+        in: path
+        name: character_name
+        required: true
+        type: string
+      - description: Start time
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: End time
+        in: query
+        name: end
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/StatValues'
       tags:
       - characters
   /characters/{userId}:

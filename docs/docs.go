@@ -92,6 +92,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/characters/{user_id}/{event_id}/{character_name}": {
+            "get": {
+                "description": "Get the time series for a character",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "GetCharacterTimeSeries",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Character name",
+                        "name": "character_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start time",
+                        "name": "start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End time",
+                        "name": "end",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/StatValues"
+                        }
+                    }
+                }
+            }
+        },
         "/events": {
             "get": {
                 "security": [
@@ -2280,6 +2337,9 @@ const docTemplate = `{
                 "icon": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "identified": {
                     "type": "boolean"
                 },
@@ -2300,6 +2360,9 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "boolean"
                     }
+                },
+                "inventoryId": {
+                    "type": "string"
                 },
                 "isRelic": {
                     "type": "boolean"
@@ -2579,6 +2642,9 @@ const docTemplate = `{
                 "hybrid": {
                     "$ref": "#/definitions/ItemHybrid"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "ilvl": {
                     "type": "integer"
                 },
@@ -2596,6 +2662,9 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "boolean"
                     }
+                },
+                "inventoryId": {
+                    "type": "string"
                 },
                 "isRelic": {
                     "type": "boolean"
@@ -2724,6 +2793,12 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/ItemProperty"
                     }
+                },
+                "x": {
+                    "type": "integer"
+                },
+                "y": {
+                    "type": "integer"
                 }
             }
         },
@@ -2989,6 +3064,13 @@ const docTemplate = `{
                 "public": {
                     "type": "boolean"
                 }
+            }
+        },
+        "StatValues": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {}
             }
         },
         "TwitchStream": {

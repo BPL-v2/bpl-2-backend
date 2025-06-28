@@ -330,8 +330,6 @@ type DisplayItem struct {
 	SocketedItems *[]DisplayItem `json:"socketedItems,omitempty"`
 	W             int            `json:"w"`
 	H             int            `json:"h"`
-	X             *int           `json:"x,omitempty"`
-	Y             *int           `json:"y,omitempty"`
 	Identified    bool           `json:"identified"`
 	Icon          string         `json:"icon"`
 	// field added by our backend
@@ -394,6 +392,10 @@ type Item struct {
 	GemSockets             *[]GemSocket        `json:"gemSockets,omitempty"`
 	Influences             *map[string]bool    `json:"influences,omitempty"`
 	MemoryItem             *bool               `json:"memoryItem,omitempty"`
+	X                      *int                `json:"x,omitempty"`
+	Y                      *int                `json:"y,omitempty"`
+	InventoryId            *string             `json:"inventoryId,omitempty"`
+	Id                     string              `json:"id"`
 
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only
@@ -405,7 +407,6 @@ type Item struct {
 	// MaxStackSize          *int            `json:"maxStackSize,omitempty"`
 	// StackSizeText         *string         `json:"stackSizeText,omitempty"`
 	// League                string          `json:"league"`
-	// Id                    string          `json:"id"`
 	// Note                  *string         `json:"note,omitempty"`
 	// ForumNote             *string         `json:"forum_note,omitempty"`
 	// LockedToCharacter     *bool           `json:"lockedToCharacter,omitempty"`
@@ -413,7 +414,6 @@ type Item struct {
 	// CisRaceReward         *bool           `json:"cisRaceReward,omitempty"`
 	// SeaRaceReward         *bool           `json:"seaRaceReward,omitempty"`
 	// ThRaceReward          *bool           `json:"thRaceReward,omitempty"`
-	// Requirements          *[]ItemProperty `json:"requirements,omitempty"`
 	// NextLevelRequirements *[]ItemProperty `json:"nextLevelRequirements,omitempty"`
 	// SecDescrText          *string         `json:"secDescrText,omitempty"`
 	// DescrText             *string         `json:"descrText,omitempty"`
@@ -424,7 +424,7 @@ type Item struct {
 	// Replica               *bool           `json:"replica,omitempty"`
 	// Scourged              *ItemScourged   `json:"scourged,omitempty"`
 	// ArtFilename           *string         `json:"artFilename,omitempty"`
-	// InventoryId           *string         `json:"inventoryId,omitempty"`
+	// Requirements           *[]ItemProperty     `json:"requirements,omitempty"`
 }
 
 type GemTab struct {
