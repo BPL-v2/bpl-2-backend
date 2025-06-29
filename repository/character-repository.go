@@ -13,49 +13,35 @@ import (
 )
 
 type Character struct {
-	UserID           int       `gorm:"not null;index"`
-	EventID          int       `gorm:"not null;index"`
-	Name             string    `gorm:"not null"`
-	Level            int       `gorm:"not null"`
-	MainSkill        string    `gorm:"not null"`
-	Ascendancy       string    `gorm:"not null"`
-	AscendancyPoints int       `gorm:"not null"`
-	Pantheon         bool      `gorm:"not null"`
-	Timestamp        time.Time `gorm:"not null;index"`
-	AtlasNodeCount   int       `gorm:"not null"`
-	User             *User     `gorm:"foreignKey:UserID"`
-	Event            *Event    `gorm:"foreignKey:EventID"`
+	Id               int    `gorm:"not null;primaryKey"`
+	UserId           int    `gorm:"not null;index"`
+	EventId          int    `gorm:"not null;index"`
+	Name             string `gorm:"not null"`
+	Level            int    `gorm:"not null"`
+	MainSkill        string `gorm:"not null"`
+	Ascendancy       string `gorm:"not null"`
+	AscendancyPoints int    `gorm:"not null"`
+	Pantheon         bool   `gorm:"not null"`
+	AtlasPoints      int    `gorm:"not null"`
 }
 
-type PoB struct {
-	ID        int       `gorm:"not null;primaryKey"`
-	UserID    int       `gorm:"not null;index"`
-	EventID   int       `gorm:"not null;index"`
-	Name      string    `gorm:"not null"`
-	Timestamp time.Time `gorm:"not null;index"`
+type CharacterStat struct {
+	Time        time.Time `gorm:"not null;index"`
+	EventId     int       `gorm:"not null;index"`
+	CharacterId int       `gorm:"not null;index"`
+	DPS         int       `gorm:"not null"`
+	EHP         int       `gorm:"not null"`
+	PhysMaxHit  int       `gorm:"not null"`
+	EleMaxHit   int       `gorm:"not null"`
+	HP          int       `gorm:"not null"`
+	Mana        int       `gorm:"not null"`
+	ES          int       `gorm:"not null"`
+	Armour      int       `gorm:"not null"`
+	Evasion     int       `gorm:"not null"`
+	XP          int       `gorm:"not null"`
 
-	MainSkill  string `gorm:"not null"`
-	Ascendancy string `gorm:"not null"`
-	Level      int    `gorm:"not null"`
-
-	DPS              int `gorm:"not null"`
-	EHP              int `gorm:"not null"`
-	MaxPhysHit       int `gorm:"not null"`
-	MaxEleHit        int `gorm:"not null"`
-	SpellSuppression int `gorm:"not null"`
-	Block            int `gorm:"not null"`
-	SpellBlock       int `gorm:"not null"`
-	HP               int `gorm:"not null"`
-	Mana             int `gorm:"not null"`
-	ES               int `gorm:"not null"`
-	Armour           int `gorm:"not null"`
-	Evasion          int `gorm:"not null"`
-
-	Uniques pq.StringArray `gorm:"not null;type:text[];default:{}"`
-
-	Export string `gorm:"not null"`
-	User   *User  `gorm:"foreignKey:UserID"`
-	Event  *Event `gorm:"foreignKey:EventID"`
+	Character *Character `gorm:"foreignKey:CharacterId"`
+	Event     *Event     `gorm:"foreignKey:EventId"`
 }
 
 type Atlas struct {
@@ -96,11 +82,12 @@ func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassi
 	}
 	atlas.Index = -1
 	for i, v := range atlasPassiveTrees {
-		if i == 0 {
+		switch i {
+		case 0:
 			atlas.Tree1 = utils.ConvertIntSlice(v.Hashes)
-		} else if i == 1 {
+		case 1:
 			atlas.Tree2 = utils.ConvertIntSlice(v.Hashes)
-		} else if i == 2 {
+		case 2:
 			atlas.Tree3 = utils.ConvertIntSlice(v.Hashes)
 		}
 		if strings.HasPrefix(v.Name, "x") {
@@ -132,32 +119,22 @@ func (r *CharacterRepository) GetLatestCharactersForEvent(eventId int) ([]*Chara
 	}
 	return charData, nil
 }
-func (r *CharacterRepository) GetLatestEventCharactersForUser(userId int) ([]*Character, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestEventCharactersForUser"))
+func (r *CharacterRepository) GetCharactersForUser(userId int) ([]*Character, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharactersForUser"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
-	query := `
-		SELECT c.* FROM characters c
-		INNER JOIN (
-			SELECT event_id, MAX(timestamp) AS timestamp
-			FROM characters
-			WHERE user_id = ?
-			GROUP BY event_id
-		) latest
-		ON c.event_id = latest.event_id AND c.timestamp = latest.timestamp
-	`
-	err := r.DB.Raw(query, userId).Scan(&charData).Error
+	err := r.DB.Find(&charData, Character{UserId: userId}).Error
 	if err != nil {
 		return nil, err
 	}
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetEventCharacterHistoryForUser(userId int, eventId int) ([]*Character, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetEventCharacterHistoryForUser"))
+func (r *CharacterRepository) GetCharacterHistory(characterId int) ([]*CharacterStat, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharacterHistory"))
 	defer timer.ObserveDuration()
-	charData := []*Character{}
-	err := r.DB.Where(Character{UserID: userId, EventID: eventId}).Find(&charData).Error
+	charData := []*CharacterStat{}
+	err := r.DB.Where(CharacterStat{CharacterId: characterId}).Find(&charData).Error
 	if err != nil {
 		return nil, err
 	}
