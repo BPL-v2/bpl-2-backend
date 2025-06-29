@@ -95,6 +95,11 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "Applications are not open"})
 			return
 		}
+		_, err = e.teamService.GetTeamForUser(event.Id, user.Id)
+		if err == nil {
+			c.JSON(400, gin.H{"error": "Cannot change signup after being added to a team"})
+			return
+		}
 		//  TODO: Uncomment this when discord server check is implemented
 		// err = e.userService.DiscordServerCheck(user)
 		// if err != nil {
@@ -106,15 +111,29 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		signup := &repository.Signup{
-			UserId:           user.Id,
-			EventId:          event.Id,
-			Timestamp:        time.Now(),
-			ExpectedPlayTime: signupCreate.ExpectedPlaytime,
-			NeedsHelp:        signupCreate.NeedsHelp,
-			WantsToHelp:      signupCreate.WantsToHelp,
+
+		signup, err := e.signupService.GetSignupForUser(user.Id, event.Id)
+		if err != nil {
+			signup = &repository.Signup{
+				UserId:    user.Id,
+				User:      user,
+				EventId:   event.Id,
+				Timestamp: time.Now(),
+			}
 		}
-		signup, err = e.signupService.CreateSignup(signup)
+		signup.ExpectedPlayTime = signupCreate.ExpectedPlaytime
+		signup.NeedsHelp = signupCreate.NeedsHelp
+		signup.WantsToHelp = signupCreate.WantsToHelp
+		if signupCreate.PartnerAccountName != "" {
+			partner, err := e.userService.GetUserByOauthProviderAndAccountName(repository.ProviderDiscord, signupCreate.PartnerAccountName)
+			if err != nil {
+				c.JSON(404, gin.H{"error": "Could not find partner account"})
+				return
+			}
+			signup.PartnerId = &partner.Id
+			signup.Partner = partner
+		}
+		signup, err = e.signupService.SaveSignup(signup)
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -183,8 +202,8 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 		signupsWithUsers := make([]*Signup, 0)
 		for _, signup := range signups {
 			resp := &Signup{
-				Id:               signup.Id,
 				User:             toNonSensitiveUserResponse(signup.User),
+				PartnerId:        signup.PartnerId,
 				Timestamp:        signup.Timestamp,
 				ExpectedPlaytime: signup.ExpectedPlayTime,
 			}
@@ -200,8 +219,9 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 }
 
 type Signup struct {
-	Id               int               `json:"id" binding:"required"`
 	User             *NonSensitiveUser `json:"user" binding:"required"`
+	Partner          *NonSensitiveUser `json:"partner"`
+	PartnerId        *int              `json:"partner_id"`
 	Timestamp        time.Time         `json:"timestamp" binding:"required"`
 	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
 	TeamId           *int              `json:"team_id"`
@@ -211,9 +231,10 @@ type Signup struct {
 }
 
 type SignupCreate struct {
-	ExpectedPlaytime int  `json:"expected_playtime" binding:"required"`
-	NeedsHelp        bool `json:"needs_help"`
-	WantsToHelp      bool `json:"wants_to_help"`
+	ExpectedPlaytime   int    `json:"expected_playtime" binding:"required"`
+	NeedsHelp          bool   `json:"needs_help"`
+	WantsToHelp        bool   `json:"wants_to_help"`
+	PartnerAccountName string `json:"partner_account_name"`
 }
 
 func toSignupResponse(signup *repository.Signup) *Signup {
@@ -222,8 +243,9 @@ func toSignupResponse(signup *repository.Signup) *Signup {
 	}
 
 	return &Signup{
-		Id:               signup.Id,
 		User:             toNonSensitiveUserResponse(signup.User),
+		Partner:          toNonSensitiveUserResponse(signup.Partner),
+		PartnerId:        signup.PartnerId,
 		Timestamp:        signup.Timestamp,
 		ExpectedPlaytime: signup.ExpectedPlayTime,
 		NeedsHelp:        signup.NeedsHelp,

@@ -18,8 +18,8 @@ func NewSignupService() *SignupService {
 	}
 }
 
-func (r *SignupService) CreateSignup(signup *repository.Signup) (*repository.Signup, error) {
-	return r.signupRepository.CreateSignup(signup)
+func (r *SignupService) SaveSignup(signup *repository.Signup) (*repository.Signup, error) {
+	return r.signupRepository.SaveSignup(signup)
 }
 
 func (r *SignupService) RemoveSignup(userId int, eventId int) error {

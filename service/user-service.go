@@ -27,8 +27,16 @@ func NewUserService() *UserService {
 	}
 }
 
-func (s *UserService) GetUserByOauthProvider(provider repository.Provider, accountId string) (*repository.User, error) {
+func (s *UserService) GetUserByOauthProviderAndAccountId(provider repository.Provider, accountId string) (*repository.User, error) {
 	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountId(provider, accountId)
+	if err != nil {
+		return nil, err
+	}
+	return oauth.User, nil
+}
+
+func (s *UserService) GetUserByOauthProviderAndAccountName(provider repository.Provider, accountName string) (*repository.User, error) {
+	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountName(provider, accountName)
 	if err != nil {
 		return nil, err
 	}

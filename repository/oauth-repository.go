@@ -16,7 +16,7 @@ const (
 )
 
 type Oauth struct {
-	UserId       int       `gorm:"primaryKey"`
+	UserId       int       `gorm:"primaryKey;references:user(id);constraint:OnDelete:CASCADE"`
 	Provider     Provider  `gorm:"primaryKey"`
 	AccessToken  string    `gorm:"not null"`
 	RefreshToken string    `gorm:"null"`
@@ -38,6 +38,15 @@ func NewOauthRepository() *OauthRepository {
 func (r *OauthRepository) GetOauthByProviderAndAccountId(provider Provider, accountId string) (*Oauth, error) {
 	var oauth Oauth
 	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, Oauth{Provider: provider, AccountId: accountId})
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &oauth, nil
+}
+
+func (r *OauthRepository) GetOauthByProviderAndAccountName(provider Provider, accountName string) (*Oauth, error) {
+	var oauth Oauth
+	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, Oauth{Provider: provider, Name: accountName})
 	if result.Error != nil {
 		return nil, result.Error
 	}

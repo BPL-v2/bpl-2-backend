@@ -21,6 +21,7 @@ type EventStatus struct {
 	IsTeamLead        bool              `json:"is_team_lead" binding:"required"`
 	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
 	NumberOfSignups   int               `json:"number_of_signups" binding:"required"`
+	Partner           *string           `json:"partner"`
 }
 
 type EventService struct {
@@ -121,22 +122,31 @@ func (e *EventService) GetEventStatus(event *repository.Event, user *repository.
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return eventStatus, err
 	}
+	count := 0
+	partnerId := 0
+	for _, signup := range signups {
+		count++
+		if signup.UserId == user.Id {
+			if signup.PartnerId != nil {
+				partnerId = *signup.PartnerId
+			}
+
+			if count > event.MaxSize {
+				eventStatus.ApplicationStatus = ApplicationStatusWaitlisted
+			} else {
+				eventStatus.ApplicationStatus = ApplicationStatusApplied
+			}
+		}
+	}
+	for _, signup := range signups {
+		if signup.UserId == partnerId && signup.PartnerId != nil && *signup.PartnerId == user.Id {
+			eventStatus.Partner = signup.User.GetAccountName(repository.ProviderPoE)
+		}
+	}
 	if team != nil {
 		eventStatus.TeamId = &team.TeamId
 		eventStatus.IsTeamLead = team.IsTeamLead
 		eventStatus.ApplicationStatus = ApplicationStatusAccepted
-	} else {
-		count := 0
-		for _, signup := range signups {
-			count++
-			if signup.UserId == user.Id {
-				if count > event.MaxSize {
-					eventStatus.ApplicationStatus = ApplicationStatusWaitlisted
-				} else {
-					eventStatus.ApplicationStatus = ApplicationStatusApplied
-				}
-			}
-		}
 	}
 	return eventStatus, nil
 }

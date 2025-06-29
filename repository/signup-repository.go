@@ -9,11 +9,12 @@ import (
 )
 
 type Signup struct {
-	Id               int       `gorm:"primaryKey"`
-	EventId          int       `gorm:"not null;references:event(id)"`
-	UserId           int       `gorm:"not null;references:event(id)"`
+	EventId          int       `gorm:"not null;references:event(id);primaryKey"`
+	UserId           int       `gorm:"not null;references:event(id);primaryKey"`
 	Timestamp        time.Time `gorm:"not null"`
-	User             *User     `gorm:"foreignKey:UserId;references:Id"`
+	User             *User     `gorm:"foreignKey:UserId;references:Id;constraint:OnDelete:CASCADE"`
+	PartnerId        *int      `gorm:"null"`
+	Partner          *User     `gorm:"foreignKey:PartnerId;references:Id;constraint:OnDelete:CASCADE"`
 	ExpectedPlayTime int       `gorm:"not null"`
 	NeedsHelp        bool      `gorm:"not null"`
 	WantsToHelp      bool      `gorm:"not null"`
@@ -27,7 +28,7 @@ func NewSignupRepository() *SignupRepository {
 	return &SignupRepository{DB: config.DatabaseConnection()}
 }
 
-func (r *SignupRepository) CreateSignup(signup *Signup) (*Signup, error) {
+func (r *SignupRepository) SaveSignup(signup *Signup) (*Signup, error) {
 	result := r.DB.Save(signup)
 	if result.Error != nil {
 		return nil, result.Error
@@ -45,7 +46,6 @@ func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, e
 	if result.Error != nil {
 		return nil, result.Error
 	}
-
 	return &signup, nil
 }
 
