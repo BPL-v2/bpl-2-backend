@@ -292,7 +292,7 @@ func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdat
 	}
 	characterMap := make(map[int]*repository.Character, len(latestCharacters))
 	for _, character := range latestCharacters {
-		characterMap[character.UserID] = character
+		characterMap[character.UserId] = character
 	}
 
 	for _, player := range players {

@@ -18,137 +18,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/characters/{userId}": {
-            "get": {
-                "description": "Fetches all event characters for a user",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "characters"
-                ],
-                "operationId": "GetUserCharacters",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User Id",
-                        "name": "userId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Character"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/characters/{user_id}/{event_id}": {
-            "get": {
-                "description": "Get all character data for an event for a user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "characters"
-                ],
-                "operationId": "GetCharacterEventHistoryForUser",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event ID",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Character"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/characters/{user_id}/{event_id}/{character_name}": {
-            "get": {
-                "description": "Get the time series for a character",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "characters"
-                ],
-                "operationId": "GetCharacterTimeSeries",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "User ID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Event ID",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Character name",
-                        "name": "character_name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Start time",
-                        "name": "start",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "End time",
-                        "name": "end",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/StatValues"
-                        }
-                    }
-                }
-            }
-        },
         "/events": {
             "get": {
                 "security": [
@@ -2048,6 +1917,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{user_id}/characters": {
+            "get": {
+                "description": "Fetches all event characters for a user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "GetUserCharacters",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User Id",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Character"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/characters/{character_id}": {
+            "get": {
+                "description": "Get all character data for an event for a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "GetCharacterHistory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Character ID",
+                        "name": "character_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/CharacterStat"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/{eventId}/guild-stash": {
             "get": {
                 "security": [
@@ -3066,13 +3009,6 @@ const docTemplate = `{
                 }
             }
         },
-        "StatValues": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "array",
-                "items": {}
-            }
-        },
         "TwitchStream": {
             "type": "object",
             "properties": {
@@ -3206,11 +3142,11 @@ const docTemplate = `{
                 "ascendancy_points",
                 "atlas_node_count",
                 "event_id",
+                "id",
                 "level",
                 "main_skill",
                 "name",
                 "pantheon",
-                "timestamp",
                 "user_id"
             ],
             "properties": {
@@ -3226,6 +3162,9 @@ const docTemplate = `{
                 "event_id": {
                     "type": "integer"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "level": {
                     "type": "integer"
                 },
@@ -3238,10 +3177,58 @@ const docTemplate = `{
                 "pantheon": {
                     "type": "boolean"
                 },
-                "timestamp": {
-                    "type": "string"
-                },
                 "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "CharacterStat": {
+            "type": "object",
+            "required": [
+                "armour",
+                "dps",
+                "ehp",
+                "ele_max_hit",
+                "es",
+                "evasion",
+                "hp",
+                "mana",
+                "phys_max_hit",
+                "timestamp",
+                "xp"
+            ],
+            "properties": {
+                "armour": {
+                    "type": "integer"
+                },
+                "dps": {
+                    "type": "integer"
+                },
+                "ehp": {
+                    "type": "integer"
+                },
+                "ele_max_hit": {
+                    "type": "integer"
+                },
+                "es": {
+                    "type": "integer"
+                },
+                "evasion": {
+                    "type": "integer"
+                },
+                "hp": {
+                    "type": "integer"
+                },
+                "mana": {
+                    "type": "integer"
+                },
+                "phys_max_hit": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "xp": {
                     "type": "integer"
                 }
             }

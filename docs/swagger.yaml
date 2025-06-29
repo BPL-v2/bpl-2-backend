@@ -551,11 +551,6 @@ definitions:
       public:
         type: boolean
     type: object
-  StatValues:
-    additionalProperties:
-      items: {}
-      type: array
-    type: object
   TwitchStream:
     properties:
       backend_user_id:
@@ -651,6 +646,8 @@ definitions:
         type: integer
       event_id:
         type: integer
+      id:
+        type: integer
       level:
         type: integer
       main_skill:
@@ -659,8 +656,6 @@ definitions:
         type: string
       pantheon:
         type: boolean
-      timestamp:
-        type: string
       user_id:
         type: integer
     required:
@@ -668,12 +663,49 @@ definitions:
     - ascendancy_points
     - atlas_node_count
     - event_id
+    - id
     - level
     - main_skill
     - name
     - pantheon
-    - timestamp
     - user_id
+    type: object
+  CharacterStat:
+    properties:
+      armour:
+        type: integer
+      dps:
+        type: integer
+      ehp:
+        type: integer
+      ele_max_hit:
+        type: integer
+      es:
+        type: integer
+      evasion:
+        type: integer
+      hp:
+        type: integer
+      mana:
+        type: integer
+      phys_max_hit:
+        type: integer
+      timestamp:
+        type: integer
+      xp:
+        type: integer
+    required:
+    - armour
+    - dps
+    - ehp
+    - ele_max_hit
+    - es
+    - evasion
+    - hp
+    - mana
+    - phys_max_hit
+    - timestamp
+    - xp
     type: object
   Condition:
     properties:
@@ -1744,94 +1776,6 @@ paths:
       - BearerAuth: []
       tags:
       - guild-stash
-  /characters/{user_id}/{event_id}:
-    get:
-      consumes:
-      - application/json
-      description: Get all character data for an event for a user
-      operationId: GetCharacterEventHistoryForUser
-      parameters:
-      - description: Event ID
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: User ID
-        in: path
-        name: user_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Character'
-            type: array
-      tags:
-      - characters
-  /characters/{user_id}/{event_id}/{character_name}:
-    get:
-      description: Get the time series for a character
-      operationId: GetCharacterTimeSeries
-      parameters:
-      - description: User ID
-        in: path
-        name: user_id
-        required: true
-        type: integer
-      - description: Event ID
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Character name
-        in: path
-        name: character_name
-        required: true
-        type: string
-      - description: Start time
-        in: query
-        name: start
-        required: true
-        type: string
-      - description: End time
-        in: query
-        name: end
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/StatValues'
-      tags:
-      - characters
-  /characters/{userId}:
-    get:
-      description: Fetches all event characters for a user
-      operationId: GetUserCharacters
-      parameters:
-      - description: User Id
-        in: path
-        name: userId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Character'
-            type: array
-      tags:
-      - characters
   /events:
     get:
       description: Fetches all events
@@ -2980,6 +2924,55 @@ paths:
       - BearerAuth: []
       tags:
       - user
+  /users/{user_id}/characters:
+    get:
+      description: Fetches all event characters for a user
+      operationId: GetUserCharacters
+      parameters:
+      - description: User Id
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Character'
+            type: array
+      tags:
+      - characters
+  /users/{user_id}/characters/{character_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get all character data for an event for a user
+      operationId: GetCharacterHistory
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Character ID
+        in: path
+        name: character_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/CharacterStat'
+            type: array
+      tags:
+      - characters
   /users/remove-auth:
     post:
       description: Removes an authentication provider from the authenticated user

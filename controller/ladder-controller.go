@@ -161,7 +161,7 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 	response := make([]*LadderEntry, 0, len(entries))
 	characterMap := make(map[int]*repository.Character)
 	for _, character := range characters {
-		characterMap[character.UserID] = character
+		characterMap[character.UserId] = character
 	}
 	for _, entry := range entries {
 		responseEntry := &LadderEntry{

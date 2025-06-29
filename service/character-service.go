@@ -4,7 +4,6 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	"fmt"
-	"time"
 )
 
 type CharacterService struct {
@@ -37,16 +36,15 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 		update.New.MaxAtlasTreeNodes() != update.Old.MaxAtlasTreeNodes() {
 
 		character := &repository.Character{
-			UserID:           update.UserId,
-			EventID:          eventId,
+			UserId:           update.UserId,
+			EventId:          eventId,
 			Name:             update.New.CharacterName,
 			Level:            update.New.CharacterLevel,
 			MainSkill:        update.New.MainSkill,
 			Ascendancy:       update.New.Ascendancy,
 			AscendancyPoints: update.New.AscendancyPoints,
 			Pantheon:         update.New.Pantheon,
-			AtlasNodeCount:   update.New.MaxAtlasTreeNodes(),
-			Timestamp:        time.Now(),
+			AtlasPoints:      update.New.MaxAtlasTreeNodes(),
 		}
 		err := c.repository.CreateCharacterCheckpoint(character)
 		if err != nil {
@@ -58,16 +56,16 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 	return nil
 }
 
-func (c *CharacterService) GetLatestEventCharactersForUser(userId int) ([]*repository.Character, error) {
-	return c.repository.GetLatestEventCharactersForUser(userId)
+func (c *CharacterService) GetCharactersForUser(userId int) ([]*repository.Character, error) {
+	return c.repository.GetCharactersForUser(userId)
 }
 
 func (c *CharacterService) GetLatestCharactersForEvent(eventId int) ([]*repository.Character, error) {
 	return c.repository.GetLatestCharactersForEvent(eventId)
 }
 
-func (c *CharacterService) GetEventCharacterHistoryForUser(userId int, eventId int) ([]*repository.Character, error) {
-	return c.repository.GetEventCharacterHistoryForUser(userId, eventId)
+func (c *CharacterService) GetCharacterHistory(characterId int) ([]*repository.CharacterStat, error) {
+	return c.repository.GetCharacterHistory(characterId)
 }
 
 func (c *CharacterService) GetTeamAtlasesForEvent(eventId int, userId int) ([]*repository.Atlas, error) {
