@@ -177,7 +177,7 @@ func (e *OauthService) Verify(state string, code string, provider repository.Pro
 
 func (e *OauthService) addAccountToUser(authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	if authState.User == nil {
-		user, err := e.userService.GetUserByOauthProvider(provider, accountId)
+		user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
 		if err != nil {
 			user = &repository.User{
 				Permissions:   []repository.Permission{},

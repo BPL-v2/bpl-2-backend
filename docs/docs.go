@@ -3902,7 +3902,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "expected_playtime",
-                "id",
                 "team_lead",
                 "timestamp",
                 "user"
@@ -3911,11 +3910,14 @@ const docTemplate = `{
                 "expected_playtime": {
                     "type": "integer"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "needs_help": {
                     "type": "boolean"
+                },
+                "partner": {
+                    "$ref": "#/definitions/NonSensitiveUser"
+                },
+                "partner_id": {
+                    "type": "integer"
                 },
                 "team_id": {
                     "type": "integer"
@@ -3945,6 +3947,9 @@ const docTemplate = `{
                 },
                 "needs_help": {
                     "type": "boolean"
+                },
+                "partner_account_name": {
+                    "type": "string"
                 },
                 "wants_to_help": {
                     "type": "boolean"
@@ -4522,6 +4527,9 @@ const docTemplate = `{
                 },
                 "number_of_signups": {
                     "type": "integer"
+                },
+                "partner": {
+                    "type": "string"
                 },
                 "team_id": {
                     "type": "integer"

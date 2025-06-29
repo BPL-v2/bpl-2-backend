@@ -299,9 +299,6 @@ func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUser {
 		case repository.ProviderDiscord:
 			response.DiscordId = &oauth.AccountId
 			response.DiscordName = &oauth.Name
-		case repository.ProviderTwitch:
-			response.TwitchId = &oauth.AccountId
-			response.TwitchName = &oauth.Name
 		case repository.ProviderPoE:
 			response.AcountName = &oauth.Name
 		}

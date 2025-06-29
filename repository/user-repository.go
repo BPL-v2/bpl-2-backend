@@ -60,6 +60,15 @@ func (u *User) GetPoEToken() string {
 	return ""
 }
 
+func (u *User) GetAccountName(provider Provider) *string {
+	for _, oauth := range u.OauthAccounts {
+		if oauth.Provider == provider {
+			return &oauth.Name
+		}
+	}
+	return nil
+}
+
 type UserRepository struct {
 	DB *gorm.DB
 }
