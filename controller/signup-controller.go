@@ -125,7 +125,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 		signup.NeedsHelp = signupCreate.NeedsHelp
 		signup.WantsToHelp = signupCreate.WantsToHelp
 		if signupCreate.PartnerAccountName != "" {
-			partner, err := e.userService.GetUserByOauthProviderAndAccountName(repository.ProviderDiscord, signupCreate.PartnerAccountName)
+			partner, err := e.userService.GetUserByOauthProviderAndAccountName(repository.ProviderPoE, signupCreate.PartnerAccountName)
 			if err != nil {
 				c.JSON(404, gin.H{"error": "Could not find partner account"})
 				return
