@@ -159,9 +159,9 @@ func toAtlasResponse(atlas *repository.Atlas) *Atlas {
 
 func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character) []*LadderEntry {
 	response := make([]*LadderEntry, 0, len(entries))
-	characterMap := make(map[int]*repository.Character)
+	characterMap := make(map[string]*repository.Character)
 	for _, character := range characters {
-		characterMap[character.UserId] = character
+		characterMap[character.Name] = character
 	}
 	for _, entry := range entries {
 		responseEntry := &LadderEntry{
@@ -174,9 +174,7 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 			Delve:         entry.Delve,
 			Rank:          entry.Rank,
 			TwitchAccount: entry.TwitchAccount,
-		}
-		if entry.UserId != nil && characterMap[*entry.UserId] != nil {
-			responseEntry.Extra = toCharacterResponse(characterMap[*entry.UserId])
+			Extra:         toCharacterResponse(characterMap[entry.Character]),
 		}
 		response = append(response, responseEntry)
 	}
