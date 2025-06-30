@@ -2,9 +2,7 @@ package repository
 
 import (
 	"bpl/config"
-	"bpl/utils"
 	"database/sql/driver"
-	"errors"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -67,24 +65,6 @@ type ScoringPreset struct {
 	Type          ScoringPresetType    `gorm:"not null"`
 }
 
-func (s *ScoringPresetType) GetValidMethods() []ScoringMethod {
-	switch *s {
-	case OBJECTIVE:
-		return []ScoringMethod{PRESENCE, POINTS_FROM_VALUE, RANKED_TIME, RANKED_VALUE, RANKED_REVERSE}
-	case CATEGORY:
-		return []ScoringMethod{RANKED_COMPLETION, BONUS_PER_COMPLETION}
-	default:
-		return []ScoringMethod{}
-	}
-}
-
-func (s *ScoringPreset) Validate() error {
-	if !utils.Contains(s.Type.GetValidMethods(), s.ScoringMethod) {
-		return errors.New("invalid scoring method for scoring preset type")
-	}
-	return nil
-}
-
 type ScoringPresetRepository struct {
 	DB *gorm.DB
 }
@@ -94,10 +74,6 @@ func NewScoringPresetRepository() *ScoringPresetRepository {
 }
 
 func (r *ScoringPresetRepository) SavePreset(preset *ScoringPreset) (*ScoringPreset, error) {
-	err := preset.Validate()
-	if err != nil {
-		return nil, err
-	}
 	result := r.DB.Save(preset)
 	if result.Error != nil {
 		return nil, result.Error
