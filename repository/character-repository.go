@@ -102,18 +102,7 @@ func (r *CharacterRepository) GetLatestCharactersForEvent(eventId int) ([]*Chara
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharactersForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
-	query := `
-		SELECT c.* FROM characters c
-		INNER JOIN (
-			SELECT user_id, MAX(timestamp) AS timestamp
-			FROM characters
-			WHERE event_id = ?
-			GROUP BY user_id
-		) latest
-		ON c.user_id = latest.user_id AND c.timestamp = latest.timestamp
-		`
-
-	err := r.DB.Raw(query, eventId).Scan(&charData).Error
+	err := r.DB.Find(&charData, Character{EventId: eventId}).Error
 	if err != nil {
 		return nil, err
 	}
