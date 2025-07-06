@@ -20,6 +20,10 @@ func NewGuildStashService(PoEClient *client.PoEClient) *GuildStashService {
 	}
 }
 
+func (s *GuildStashService) GetGuildStashesForUserForEvent(user repository.User, event repository.Event) ([]*repository.GuildStashTab, error) {
+	return s.GuildStashRepository.GetByUserAndEvent(user.Id, event.Id)
+}
+
 func (s *GuildStashService) GetGuildStashesForTeam(teamId int) ([]*repository.GuildStashTab, error) {
 	return s.GuildStashRepository.GetByTeam(teamId)
 }

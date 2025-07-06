@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/segmentio/kafka-go"
@@ -137,7 +138,7 @@ type GuildStashFetcher struct {
 }
 
 type GuildStashFetchers struct {
-	Fetchers map[string][]*GuildStashFetcher // key is team ID
+	Fetchers map[int]*GuildStashFetcher // key is team ID
 	mu       sync.Mutex
 }
 
@@ -148,8 +149,13 @@ func (f *GuildStashFetchers) GetToken(stash *repository.GuildStashTab) (*string,
 	if stash.ParentId != nil {
 		stashId = *stash.ParentId
 	}
-	fetchersForStashTab, exists := f.Fetchers[stashId]
-	if exists && len(fetchersForStashTab) > 0 {
+	fetchersForStashTab := []*GuildStashFetcher{}
+	for _, userId := range stash.UserIds {
+		if fetcher, exists := f.Fetchers[int(userId)]; exists {
+			fetchersForStashTab = append(fetchersForStashTab, fetcher)
+		}
+	}
+	if len(fetchersForStashTab) > 0 {
 		// Return the token of the first fetcher for the team
 		sort.Slice(fetchersForStashTab, func(i, j int) bool {
 			return fetchersForStashTab[i].LastUse.Before(fetchersForStashTab[j].LastUse)
@@ -166,7 +172,6 @@ func (f *GuildStashFetchers) GetToken(stash *repository.GuildStashTab) (*string,
 }
 
 func InitFetchers(users []*repository.TeamUserWithPoEToken, stashes []*repository.GuildStashTab) *GuildStashFetchers {
-	fetchers := make(map[string][]*GuildStashFetcher)
 	fetcherMap := make(map[int]*GuildStashFetcher)
 	for _, user := range users {
 		fetcher := &GuildStashFetcher{
@@ -177,13 +182,8 @@ func InitFetchers(users []*repository.TeamUserWithPoEToken, stashes []*repositor
 		}
 		fetcherMap[user.UserId] = fetcher
 	}
-	for _, stash := range stashes {
-		for _, userId := range stash.UserIds {
-			fetchers[stash.Id] = append(fetchers[stash.Id], fetcherMap[int(userId)])
-		}
-	}
 	return &GuildStashFetchers{
-		Fetchers: fetchers,
+		Fetchers: fetcherMap,
 		mu:       sync.Mutex{},
 	}
 }
@@ -276,8 +276,108 @@ func (f *FetchingService) FetchGuildStashTab(tab *repository.GuildStashTab) erro
 		fmt.Printf("Failed to save guild stashes: %v\n", err)
 		return err
 	}
-	fmt.Printf("Processed guild stash %s for team %d\n", tab.Id, tab.TeamId)
 	return nil
+}
+
+func (f *FetchingService) AccessDeterminationLoop() {
+	for {
+		err := f.DetermineStashAccess()
+		if err != nil {
+			fmt.Printf("Failed to determine stash access: %v\n", err)
+		}
+		select {
+		case <-f.ctx.Done():
+			return
+		case <-time.After(10 * time.Minute):
+		}
+	}
+}
+
+func (f *FetchingService) DetermineStashAccess() error {
+	users, err := f.userRepository.GetUsersForEvent(f.event.Id)
+	if err != nil {
+		return err
+	}
+	stashToUsers := make(map[string]pq.Int32Array)
+	stashMap := make(map[string]client.GuildStashTabGGG)
+	userMap := make(map[int]*repository.TeamUserWithPoEToken)
+	for _, user := range users {
+		userMap[user.UserId] = user
+	}
+	mu := sync.Mutex{}
+	wg := sync.WaitGroup{}
+	for _, user := range users {
+		wg.Add(1)
+		go func(user *repository.TeamUserWithPoEToken) {
+			defer wg.Done()
+			stashes, err := f.GetAvailableStashes(user)
+			if err != nil {
+				return
+			}
+			mu.Lock()
+			for _, stash := range *stashes {
+				stashToUsers[stash.Id] = append(stashToUsers[stash.Id], int32(user.UserId))
+				stashMap[stash.Id] = stash
+			}
+			mu.Unlock()
+		}(user)
+	}
+	wg.Wait()
+
+	existingStashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
+	if err != nil {
+		return err
+	}
+	existingStashMap := make(map[string]*repository.GuildStashTab)
+	for _, stash := range existingStashes {
+		existingStashMap[stash.Id] = stash
+	}
+
+	persistedStashes := make([]*repository.GuildStashTab, 0)
+	for _, stash := range stashMap {
+		users := stashToUsers[stash.Id]
+		existingStash, exists := existingStashMap[stash.Id]
+		if !exists {
+			user := userMap[int(users[0])]
+			persistedStashes = append(persistedStashes, &repository.GuildStashTab{
+				Id:           stash.Id,
+				EventId:      f.event.Id,
+				TeamId:       user.TeamId,
+				OwnerId:      user.UserId,
+				Name:         stash.Name,
+				Type:         stash.Type,
+				Index:        stash.Index,
+				Color:        stash.Metadata.Colour,
+				FetchEnabled: false,
+				LastFetch:    time.Now(),
+				UserIds:      stashToUsers[stash.Id],
+				Raw:          "{}",
+			})
+		} else {
+			existingStash.UserIds = stashToUsers[stash.Id]
+			existingStash.Color = stash.Metadata.Colour
+			existingStash.Name = stash.Name
+			existingStash.Type = stash.Type
+			existingStash.Index = stash.Index
+			persistedStashes = append(persistedStashes, existingStash)
+		}
+	}
+	err = f.guildStashRepository.SaveAll(persistedStashes)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (f *FetchingService) GetAvailableStashes(user *repository.TeamUserWithPoEToken) (*[]client.GuildStashTabGGG, error) {
+	if user.TokenExpiry.Before(time.Now()) {
+		return nil, fmt.Errorf("token expired")
+	}
+	response, err := f.poeClient.ListGuildStashes(user.Token, f.event.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list guild stashes for user %d: %w", user.UserId, err)
+	}
+	return &response.Stashes, nil
 }
 
 func (f *FetchingService) FetchGuildStashes() {
@@ -286,14 +386,15 @@ func (f *FetchingService) FetchGuildStashes() {
 		fmt.Printf("Failed to initialize guild stash fetching: %v\n", err)
 		return
 	}
-	guildStashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
-	if err != nil {
-		fmt.Printf("failed to get guild stashes for event %d: %v\n", f.event.Id, err)
-		return
-	}
+
 	defer kafkaWriter.Close()
 
 	for {
+		guildStashes, err := f.guildStashRepository.GetActiveByEvent(f.event.Id)
+		if err != nil {
+			fmt.Printf("failed to get guild stashes for event %d: %v\n", f.event.Id, err)
+			return
+		}
 		stashChanges := []*client.PublicStashChange{}
 		persistedStashes := make([]*repository.GuildStashTab, 0)
 		mu := sync.Mutex{}
@@ -319,11 +420,10 @@ func (f *FetchingService) FetchGuildStashes() {
 		}
 		wg.Wait()
 		addGuildStashesToQueue(kafkaWriter, stashChanges)
-		err := f.guildStashRepository.SaveAll(persistedStashes)
+		err = f.guildStashRepository.SaveAll(persistedStashes)
 		if err != nil {
 			fmt.Printf("Failed to save guild stashes: %v\n", err)
 		}
-		fmt.Printf("Processed %d guild stashes\n", len(stashChanges))
 		select {
 		case <-f.ctx.Done():
 			fmt.Println("Stopping guild stash fetch loop")
@@ -334,7 +434,6 @@ func (f *FetchingService) FetchGuildStashes() {
 }
 
 func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *GuildStashFetchers, userNameMap map[int]*string) ([]*client.PublicStashChange, []*repository.GuildStashTab, error) {
-	fmt.Printf("Fetching guild stash %s for team %d\n", stash.Id, stash.TeamId)
 	updatedStashes := make([]*repository.GuildStashTab, 0)
 	stashChanges := make([]*client.PublicStashChange, 0)
 	token, err := fetchers.GetToken(&stash)
@@ -441,6 +540,7 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	go fetchingService.FetchGuildStashes()
+	go fetchingService.AccessDeterminationLoop()
 }
 
 func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {

@@ -3462,6 +3462,12 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string"
+                },
+                "user_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },

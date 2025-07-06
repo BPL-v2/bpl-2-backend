@@ -863,6 +863,10 @@ definitions:
         type: string
       type:
         type: string
+      user_ids:
+        items:
+          type: integer
+        type: array
     required:
     - fetch_enabled
     - id
