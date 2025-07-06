@@ -93,7 +93,6 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 }
 
 func (s *PlayerFetchingService) shouldUpdateLadder() bool {
-	return false
 	return time.Since(s.lastLadderUpdate) > 30*time.Second
 }
 

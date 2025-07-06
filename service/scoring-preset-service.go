@@ -46,6 +46,7 @@ func (s *ScoringPresetService) DuplicatePresets(oldEventId int, newEventId int) 
 			Points:        preset.Points,
 			ScoringMethod: preset.ScoringMethod,
 			Type:          preset.Type,
+			PointCap:      preset.PointCap,
 		}
 		newPreset, err := s.SavePreset(newPreset)
 		if err != nil {

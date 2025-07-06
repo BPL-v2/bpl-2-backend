@@ -126,11 +126,26 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 	case repository.NumberFieldPlayerScore:
 		return func(p *Player) int {
 			score := 0
-			if p.CharacterLevel >= 75 {
+			if p.CharacterLevel >= 40 {
+				score += 1
+			}
+			if p.CharacterLevel >= 60 {
+				score += 1
+			}
+			if p.CharacterLevel >= 80 {
+				score += 1
+			}
+			if p.CharacterLevel >= 90 {
 				score += 3
-				if p.CharacterLevel >= 90 {
-					score += 3
-				}
+			}
+			if p.AscendancyPoints >= 4 {
+				score += 1
+			}
+			if p.AscendancyPoints >= 6 {
+				score += 1
+			}
+			if p.AscendancyPoints >= 8 {
+				score += 1
 			}
 			if p.MaxAtlasTreeNodes() >= 40 {
 				score += 3
