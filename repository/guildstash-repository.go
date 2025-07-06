@@ -56,7 +56,6 @@ func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
 	}
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		for _, tab := range tabs {
-			fmt.Println("Saving tab:", tab.Id, "EventId:", tab.EventId, "TeamId:", tab.TeamId)
 			err = r.db.Save(tab).Error
 			if err != nil {
 				return err
@@ -88,9 +87,27 @@ func (r *GuildStashRepository) GetByEvent(eventId int) ([]*GuildStashTab, error)
 	return tabs, nil
 }
 
+func (r *GuildStashRepository) GetActiveByEvent(eventId int) ([]*GuildStashTab, error) {
+	var tabs []*GuildStashTab
+	err := r.db.Where(GuildStashTab{EventId: eventId, FetchEnabled: true}).Find(&tabs).Error
+	if err != nil {
+		return nil, err
+	}
+	return tabs, nil
+}
+
 func (r *GuildStashRepository) GetByTeam(teamId int) ([]*GuildStashTab, error) {
 	var tabs []*GuildStashTab
 	err := r.db.Where(GuildStashTab{TeamId: teamId}).Find(&tabs).Error
+	if err != nil {
+		return nil, err
+	}
+	return tabs, nil
+}
+
+func (r *GuildStashRepository) GetByUserAndEvent(userId int, eventId int) ([]*GuildStashTab, error) {
+	var tabs []*GuildStashTab
+	err := r.db.Where("event_id = ? AND ? = ANY(user_ids)", eventId, userId).Find(&tabs).Error
 	if err != nil {
 		return nil, err
 	}

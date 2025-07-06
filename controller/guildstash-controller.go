@@ -60,12 +60,12 @@ func (e *GuildStashController) getGuildStashForUser() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		team, _, err := e.userService.GetTeamForUser(c, event)
+		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
-			c.JSON(403, gin.H{"error": err.Error()})
+			c.JSON(401, gin.H{"error": "unauthorized"})
 			return
 		}
-		tabs, err := e.guildStashService.GetGuildStashesForTeam(team.TeamId)
+		tabs, err := e.guildStashService.GetGuildStashesForUserForEvent(*user, *event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -217,6 +217,7 @@ type GuildStashTab struct {
 	ParentId     *string   `json:"parent_id"`
 	FetchEnabled bool      `json:"fetch_enabled" binding:"required"`
 	LastFetch    time.Time `json:"last_fetch" binding:"required"`
+	UserIds      []int     `json:"user_ids"`
 }
 
 func toModel(tab *repository.GuildStashTab) *GuildStashTab {
@@ -232,6 +233,7 @@ func toModel(tab *repository.GuildStashTab) *GuildStashTab {
 		ParentId:     tab.ParentId,
 		FetchEnabled: tab.FetchEnabled,
 		LastFetch:    tab.LastFetch,
+		UserIds:      utils.Map(tab.UserIds, func(id int32) int { return int(id) }),
 	}
 }
 
