@@ -217,7 +217,7 @@ type GuildStashTab struct {
 	ParentId     *string   `json:"parent_id"`
 	FetchEnabled bool      `json:"fetch_enabled" binding:"required"`
 	LastFetch    time.Time `json:"last_fetch" binding:"required"`
-	UserIds      []int     `json:"user_ids"`
+	UserIds      []int     `json:"user_ids" binding:"required"`
 }
 
 func toModel(tab *repository.GuildStashTab) *GuildStashTab {

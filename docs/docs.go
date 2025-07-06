@@ -3436,7 +3436,8 @@ const docTemplate = `{
                 "id",
                 "last_fetch",
                 "name",
-                "type"
+                "type",
+                "user_ids"
             ],
             "properties": {
                 "color": {

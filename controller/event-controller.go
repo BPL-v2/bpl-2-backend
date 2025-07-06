@@ -62,7 +62,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		roles, _ := getUserRoles(c)
+		roles := getUserRoles(c)
 		if !utils.Contains(roles, repository.PermissionAdmin) {
 			events = utils.Filter(events, func(event *repository.Event) bool {
 				return event.Public
@@ -95,7 +95,7 @@ func (e *EventController) getEvent() gin.HandlerFunc {
 			}
 			return
 		}
-		roles, _ := getUserRoles(c)
+		roles := getUserRoles(c)
 		if !utils.Contains(roles, repository.PermissionAdmin) && !event.Public {
 			c.JSON(403, gin.H{"error": "You are not allowed to view this event"})
 			return
