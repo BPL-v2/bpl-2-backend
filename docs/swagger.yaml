@@ -873,6 +873,7 @@ definitions:
     - last_fetch
     - name
     - type
+    - user_ids
     type: object
   JobCreate:
     properties:

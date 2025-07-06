@@ -6,7 +6,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"fmt"
 	"strconv"
 
 	"github.com/gin-contrib/cache/persistence"
@@ -44,8 +43,9 @@ func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
 	routes = append(routes, setupGuildStashController(poeClient)...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
-		if route.Authenticated {
-			handlerfuncs = append(handlerfuncs, AuthMiddleware(route.RequiredRoles))
+		handlerfuncs = append(handlerfuncs, AuthenticationMiddleware())
+		if len(route.RequiredRoles) > 0 {
+			handlerfuncs = append(handlerfuncs, AuthorizationMiddleware(route.RequiredRoles))
 		}
 		handlerfuncs = append(handlerfuncs, LoadEventMiddleware())
 		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
@@ -92,18 +92,25 @@ func getEvent(c *gin.Context) *repository.Event {
 		c.AbortWithStatus(400)
 		return nil
 	}
-	return event.(*repository.Event)
+	ev := event.(*repository.Event)
+	roles, ok := c.Get("userRoles")
+	if !ev.Public && (!ok || len(roles.([]repository.Permission)) == 0) {
+		c.AbortWithStatus(404)
+		return nil
+	}
+	return ev
 }
 
-func AuthMiddleware(requiredRoles []repository.Permission) gin.HandlerFunc {
+func AuthenticationMiddleware() gin.HandlerFunc {
 	return func(r *gin.Context) {
-		userRoles, err := getUserRoles(r)
-		if err != nil {
-			r.AbortWithStatus(401)
-			return
-		}
-
+		userRoles := getUserRoles(r)
 		r.Set("userRoles", userRoles)
+	}
+}
+
+func AuthorizationMiddleware(requiredRoles []repository.Permission) gin.HandlerFunc {
+	return func(r *gin.Context) {
+		userRoles := getUserRoles(r)
 		if len(requiredRoles) == 0 {
 			r.Next()
 			return
@@ -120,24 +127,24 @@ func AuthMiddleware(requiredRoles []repository.Permission) gin.HandlerFunc {
 	}
 }
 
-func getUserRoles(r *gin.Context) (permissions []repository.Permission, err error) {
+func getUserRoles(r *gin.Context) (permissions []repository.Permission) {
 	authHeader := r.Request.Header.Get("Authorization")
 	if len(authHeader) < 7 || authHeader[:7] != "Bearer " {
-		return nil, fmt.Errorf("authorization header is invalid")
+		return permissions
 	}
 	token, err := auth.ParseToken(authHeader[7:])
 	if err != nil {
-		return permissions, err
+		return permissions
 	}
 	claims := &auth.Claims{}
 	if !token.Valid {
-		return permissions, err
+		return permissions
 	}
 	claims.FromJWTClaims(token.Claims)
 	if err := claims.Valid(); err != nil {
-		return permissions, err
+		return permissions
 	}
 	return utils.Map(claims.Permissions, func(perm string) repository.Permission {
 		return repository.Permission(perm)
-	}), nil
+	})
 }
