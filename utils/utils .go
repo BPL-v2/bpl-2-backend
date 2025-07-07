@@ -121,7 +121,11 @@ func Max[T Ordered](a ...T) T {
 	return max
 }
 
-func Min[T Ordered](a []T) T {
+func Min[T Ordered](a ...T) T {
+	if len(a) == 0 {
+		var zero T
+		return zero
+	}
 	min := a[0]
 	for _, v := range a {
 		if v < min {

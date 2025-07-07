@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 )
 
 func GetPoBExport(characterData *Character) (*PathOfBuilding, string, error) {
@@ -12,7 +13,7 @@ func GetPoBExport(characterData *Character) (*PathOfBuilding, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	request, err := http.NewRequest("POST", "http://localhost:8080", bytes.NewReader(jsonData))
+	request, err := http.NewRequest("POST", os.Getenv("POB_SERVER_URL"), bytes.NewReader(jsonData))
 	if err != nil {
 		return nil, "", err
 	}

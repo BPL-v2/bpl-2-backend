@@ -10,6 +10,7 @@ import (
 )
 
 type Player struct {
+	CharacterId       string
 	CharacterName     string
 	CharacterLevel    int
 	CharacterXP       int
@@ -37,6 +38,7 @@ type PlayerUpdate struct {
 		CharacterName time.Time
 		Character     time.Time
 		LeagueAccount time.Time
+		PoB           time.Time
 	}
 }
 

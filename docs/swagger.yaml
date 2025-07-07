@@ -647,7 +647,7 @@ definitions:
       event_id:
         type: integer
       id:
-        type: integer
+        type: string
       level:
         type: integer
       main_skill:
@@ -2966,7 +2966,7 @@ paths:
         in: path
         name: character_id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:

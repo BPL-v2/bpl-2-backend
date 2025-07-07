@@ -36,6 +36,7 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 		update.New.MaxAtlasTreeNodes() != update.Old.MaxAtlasTreeNodes() {
 
 		character := &repository.Character{
+			Id:               update.New.CharacterId,
 			UserId:           update.UserId,
 			EventId:          eventId,
 			Name:             update.New.CharacterName,
@@ -64,7 +65,7 @@ func (c *CharacterService) GetLatestCharactersForEvent(eventId int) ([]*reposito
 	return c.repository.GetLatestCharactersForEvent(eventId)
 }
 
-func (c *CharacterService) GetCharacterHistory(characterId int) ([]*repository.CharacterStat, error) {
+func (c *CharacterService) GetCharacterHistory(characterId string) ([]*repository.CharacterStat, error) {
 	return c.repository.GetCharacterHistory(characterId)
 }
 

@@ -4,6 +4,7 @@ import (
 	"bpl/client"
 	"bpl/config"
 	"bpl/utils"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 )
 
 type Character struct {
-	Id               int    `gorm:"not null;primaryKey"`
+	Id               string `gorm:"not null;primaryKey"`
 	UserId           int    `gorm:"not null;index"`
 	EventId          int    `gorm:"not null;index"`
 	Name             string `gorm:"not null"`
@@ -28,7 +29,7 @@ type Character struct {
 type CharacterStat struct {
 	Time        time.Time `gorm:"not null;index"`
 	EventId     int       `gorm:"not null;index"`
-	CharacterId int       `gorm:"not null;index"`
+	CharacterId string    `gorm:"not null;index"`
 	DPS         int       `gorm:"not null"`
 	EHP         int       `gorm:"not null"`
 	PhysMaxHit  int       `gorm:"not null"`
@@ -42,6 +43,29 @@ type CharacterStat struct {
 
 	Character *Character `gorm:"foreignKey:CharacterId"`
 	Event     *Event     `gorm:"foreignKey:EventId"`
+}
+
+func (c *CharacterStat) IsEqual(other *CharacterStat) bool {
+	return c.DPS == other.DPS &&
+		c.EHP == other.EHP &&
+		c.PhysMaxHit == other.PhysMaxHit &&
+		c.EleMaxHit == other.EleMaxHit &&
+		c.HP == other.HP &&
+		c.Mana == other.Mana &&
+		c.ES == other.ES &&
+		c.Armour == other.Armour &&
+		c.Evasion == other.Evasion &&
+		c.XP == other.XP
+}
+
+type CharacterPob struct {
+	Id          int       `gorm:"not null;primaryKey"`
+	CharacterId string    `gorm:"not null;index"`
+	Level       int       `gorm:"not null"`
+	MainSkill   string    `gorm:"not null"`
+	Ascendancy  string    `gorm:"not null"`
+	Export      string    `gorm:"not null;type:text"`
+	Timestamp   time.Time `gorm:"not null;index"`
 }
 
 type Atlas struct {
@@ -64,8 +88,17 @@ func NewCharacterRepository() *CharacterRepository {
 	return &CharacterRepository{DB: config.DatabaseConnection()}
 }
 
+func (r *CharacterRepository) CreateCharacterStat(characterStat *CharacterStat) error {
+	return r.DB.Create(&characterStat).Error
+}
+
+func (r *CharacterRepository) SavePoB(characterPoB *CharacterPob) error {
+	return r.DB.Save(&characterPoB).Error
+}
+
 func (r *CharacterRepository) CreateCharacterCheckpoint(character *Character) error {
-	return r.DB.Create(&character).Error
+	fmt.Println("Creating character checkpoint for", character.Name, "with id", character.Id)
+	return r.DB.Save(&character).Error
 }
 
 func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassiveTrees []client.AtlasPassiveTree) error {
@@ -119,7 +152,7 @@ func (r *CharacterRepository) GetCharactersForUser(userId int) ([]*Character, er
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetCharacterHistory(characterId int) ([]*CharacterStat, error) {
+func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*CharacterStat, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharacterHistory"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterStat{}
