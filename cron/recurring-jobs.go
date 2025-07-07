@@ -140,6 +140,7 @@ func (s *RecurringJobService) FetchCharacterData(job *RecurringJob) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
 	job.Cancel = cancel
 	go PlayerFetchLoop(ctx, event, s.poeClient)
+	go PlayerStatsLoop(ctx, event)
 	return nil
 }
 

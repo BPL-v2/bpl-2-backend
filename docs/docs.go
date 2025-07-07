@@ -1971,7 +1971,7 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Character ID",
                         "name": "character_id",
                         "in": "path",
@@ -3163,7 +3163,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "level": {
                     "type": "integer"

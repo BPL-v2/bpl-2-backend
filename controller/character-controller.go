@@ -150,16 +150,12 @@ func (e *CharacterController) getUserCharactersHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param user_id path int true "User ID"
-// @Param character_id path int true "Character ID"
+// @Param character_id path string true "Character ID"
 // @Success 200 {array} CharacterStat
 // @Router /users/{user_id}/characters/{character_id} [get]
 func (c *CharacterController) getCharacterHistoryHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		characterId, err := strconv.Atoi(ctx.Param("character_id"))
-		if err != nil {
-			ctx.JSON(400, gin.H{"error": "Invalid character ID"})
-			return
-		}
+		characterId := ctx.Param("character_id")
 		stats, err := c.characterService.GetCharacterHistory(characterId)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
@@ -170,7 +166,7 @@ func (c *CharacterController) getCharacterHistoryHandler() gin.HandlerFunc {
 }
 
 type Character struct {
-	Id               int    `json:"id" binding:"required"`
+	Id               string `json:"id" binding:"required"`
 	UserId           int    `json:"user_id" binding:"required"`
 	EventId          int    `json:"event_id" binding:"required"`
 	Name             string `json:"name" binding:"required"`

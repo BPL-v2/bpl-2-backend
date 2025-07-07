@@ -13,60 +13,11 @@ import (
 	"os"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-var dpsGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "DPS",
-	Help: "Character DPS",
-}, []string{"CharacterName"})
-
-var ehpGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "EHP",
-	Help: "Character EHP",
-}, []string{"CharacterName"})
-
-var physMaxHitGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "PhysMaxHit",
-	Help: "Character Phys Max Hit",
-}, []string{"CharacterName"})
-
-var eleMaxHitGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "EleMaxHit",
-	Help: "Character Ele Max Hit",
-}, []string{"CharacterName"})
-
-var hpGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "HP",
-	Help: "Character HP",
-}, []string{"CharacterName"})
-
-var manaGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "Mana",
-	Help: "Character Mana",
-}, []string{"CharacterName"})
-
-var armourGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "Armour",
-	Help: "Character Armour",
-}, []string{"CharacterName"})
-
-var evasionGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "Evasion",
-	Help: "Character Evasion",
-}, []string{"CharacterName"})
-
-var energyShieldGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "EnergyShield",
-	Help: "Character Energy Shield",
-}, []string{"CharacterName"})
-
-var xpGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "XP",
-	Help: "Character XP",
-}, []string{"CharacterName"})
+var (
+	charQueue = make(chan *client.Character, 100)
+)
 
 type PlayerFetchingService struct {
 	userRepository        *repository.UserRepository
@@ -97,7 +48,7 @@ func (s *PlayerFetchingService) shouldUpdateLadder() bool {
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate, event *repository.Event) {
-	fmt.Println("Updating character name for player", player.UserId)
+	// fmt.Println("Updating character name for player", player.UserId)
 	charactersResponse, err := s.client.ListCharacters(player.Token, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
@@ -122,32 +73,6 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 	}
 }
 
-func DoPoBStuff(character *client.Character) {
-	fmt.Println("Doing PoB stuff for character", character.Name)
-	pob, export, err := client.GetPoBExport(character)
-	if err != nil {
-		character_string, err := json.Marshal(character)
-		if err != nil {
-			log.Printf("Error marshalling character %s: %v", character.Name, err)
-			return
-		}
-		fmt.Println(string(character_string))
-		log.Printf("Error fetching PoB export for character %s: %v", character.Name, err)
-		return
-	}
-	armourGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Armour)
-	evasionGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Evasion)
-	energyShieldGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.EnergyShield)
-	ehpGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.TotalEHP)
-	hpGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Life)
-	manaGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.Mana)
-	physMaxHitGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.PhysicalMaximumHitTaken)
-	xpGauge.WithLabelValues(character.Name).Set(float64(character.Experience))
-	dpsGauge.WithLabelValues(character.Name).Set(pob.Build.PlayerStats.TotalDPS)
-	eleMaxHitGauge.WithLabelValues(character.Name).Set(utils.Max(pob.Build.PlayerStats.LightningMaximumHitTaken, pob.Build.PlayerStats.FireMaximumHitTaken, pob.Build.PlayerStats.ColdMaximumHitTaken))
-	_ = export
-}
-
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
 	fmt.Println("Updating character", player.New.CharacterName)
 	characterResponse, err := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
@@ -169,8 +94,11 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		log.Printf("Error fetching character for player %d: %v", player.UserId, err)
 		return
 	}
-	go DoPoBStuff(characterResponse.Character)
+
+	charQueue <- characterResponse.Character
+
 	player.SuccessiveErrors = 0
+	player.New.CharacterId = characterResponse.Character.Id
 	player.New.CharacterLevel = characterResponse.Character.Level
 	player.New.CharacterXP = characterResponse.Character.Experience
 	player.New.Ascendancy = characterResponse.Character.Class
@@ -213,7 +141,7 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 		resp, clientError = s.client.GetPoE2Ladder(s.event.Name)
 	} else {
 		// todo: once we have a token that allows us to request the ladder api
-		token := os.Getenv("POE_CLIENT_TOKEN")
+		token := os.Getenv("OLD_POE_CLIENT_TOKEN")
 		resp, clientError = s.client.GetFullLadder(token, s.event.Name)
 	}
 	if clientError != nil {
@@ -282,6 +210,7 @@ func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdat
 				CharacterName time.Time
 				Character     time.Time
 				LeagueAccount time.Time
+				PoB           time.Time
 			}{},
 		}
 	})
@@ -321,6 +250,105 @@ func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.Playe
 		}
 	}
 	return players
+}
+
+type PlayerStatsCache struct {
+	OldStats      *repository.CharacterStat
+	OldPoBString  string
+	LastPoBUpdate time.Time
+}
+
+func updateStats(character *client.Character, event *repository.Event, characterRepo *repository.CharacterRepository, cache map[string]*PlayerStatsCache, mu *sync.Mutex) {
+	fmt.Printf("Updating stats for character %s\n", character.Name)
+	pob, export, err := client.GetPoBExport(character)
+	if err != nil {
+		fmt.Printf("Error fetching PoB export for character %s: %v\n", character.Name, err)
+		// write local json with character data and filename character name
+		file, err := os.Create(fmt.Sprintf("debug_pob_%s.json", character.Name))
+		if err != nil {
+			log.Printf("Error creating debug file for character %s: %v", character.Name, err)
+			return
+		}
+		defer file.Close()
+		data, err := json.MarshalIndent(character, "", "  ")
+		if err != nil {
+			log.Printf("Error marshalling character data for %s: %v", character.Name, err)
+			return
+		}
+		_, err = file.Write(data)
+		if err != nil {
+			log.Printf("Error writing debug file for character %s: %v", character.Name, err)
+			return
+		}
+		log.Printf("Debug file created for character %s", character.Name)
+		return
+	}
+	stats := pob.Build.PlayerStats
+	newStats := &repository.CharacterStat{
+		Time:        time.Now(),
+		EventId:     event.Id,
+		CharacterId: character.Id,
+		DPS:         int(stats.CombinedDPS),
+		EHP:         int(stats.TotalEHP),
+		PhysMaxHit:  int(stats.PhysicalMaximumHitTaken),
+		EleMaxHit:   int(utils.Min(stats.FireMaximumHitTaken, stats.ColdMaximumHitTaken, stats.LightningMaximumHitTaken)),
+		HP:          int(stats.Life),
+		Mana:        int(stats.Mana),
+		ES:          int(stats.EnergyShield),
+		Armour:      int(stats.Armour),
+		Evasion:     int(stats.Evasion),
+		XP:          int(character.Experience),
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if cache[character.Name] == nil {
+		cache[character.Name] = &PlayerStatsCache{
+			OldStats: &repository.CharacterStat{},
+		}
+	}
+	cacheItem := cache[character.Name]
+	if time.Since(cacheItem.LastPoBUpdate) > 30*time.Minute && export != cacheItem.OldPoBString {
+		cacheItem.OldPoBString = export
+		cacheItem.LastPoBUpdate = time.Now()
+		err := characterRepo.SavePoB(&repository.CharacterPob{
+			CharacterId: character.Id,
+			Level:       character.Level,
+			MainSkill:   character.GetMainSkill(),
+			Ascendancy:  character.Class,
+			Export:      export,
+			Timestamp:   time.Now(),
+		})
+		if err != nil {
+			log.Printf("Error saving PoB for character %s: %v", character.Name, err)
+		}
+	}
+	if !cacheItem.OldStats.IsEqual(newStats) {
+		cacheItem.OldStats = newStats
+		err := characterRepo.CreateCharacterStat(newStats)
+		if err != nil {
+			log.Printf("Error saving character stats for %s: %v", character.Name, err)
+		}
+	}
+}
+
+func PlayerStatsLoop(ctx context.Context, event *repository.Event) {
+	characterRepo := repository.NewCharacterRepository()
+	cache := make(map[string]*PlayerStatsCache)
+	mu := sync.Mutex{}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			character, ok := <-charQueue
+			if !ok {
+				log.Println("PoB queue closed, stopping player stats loop")
+				return
+			}
+			// todo: make this a goroutine once the pob server is stable enough to handle concurrent requests
+			updateStats(character, event, characterRepo, cache, &mu)
+		}
+	}
 }
 
 func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {

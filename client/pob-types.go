@@ -11,9 +11,8 @@ import (
 )
 
 type PathOfBuilding struct {
-	XMLName xml.Name `xml:"PathOfBuilding"`
-	Build   Build    `xml:"Build"`
-	Skills  Skills   `xml:"Skills"`
+	Build  Build  `xml:"Build"`
+	Skills Skills `xml:"Skills"`
 }
 
 type Build struct {
