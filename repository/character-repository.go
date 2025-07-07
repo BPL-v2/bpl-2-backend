@@ -177,3 +177,32 @@ func (r *CharacterRepository) GetTeamAtlasesForEvent(eventId int, teamId int) (a
 	}
 	return atlas, nil
 }
+
+func (r *CharacterRepository) GetLatestStatsForEvent(eventId int) ([]*CharacterStat, error) {
+	charData := []*CharacterStat{}
+	// for each unique character_id in the event, get the latest stat
+	query := `		SELECT DISTINCT ON (character_id) * FROM character_stats
+		WHERE event_id = ?
+		ORDER BY character_id, time DESC	
+	`
+	err := r.DB.Raw(query, eventId).Scan(&charData).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting latest stats for event %d: %w", eventId, err)
+	}
+	return charData, nil
+}
+
+func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPob, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestPoBsForEvent"))
+	defer timer.ObserveDuration()
+	charData := []*CharacterPob{}
+	query := `SELECT DISTINCT ON (character_id) pobs.* from character_pobs as pobs
+		JOIN characters ON pobs.character_id = characters.id
+		WHERE characters.event_id = ?
+		ORDER BY character_id, timestamp DESC`
+	err := r.DB.Raw(query, eventId).Scan(&charData).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting latest PoBs for event %d: %w", eventId, err)
+	}
+	return charData, nil
+}

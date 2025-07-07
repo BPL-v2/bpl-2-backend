@@ -259,7 +259,6 @@ type PlayerStatsCache struct {
 }
 
 func updateStats(character *client.Character, event *repository.Event, characterRepo *repository.CharacterRepository, cache map[string]*PlayerStatsCache, mu *sync.Mutex) {
-	fmt.Printf("Updating stats for character %s\n", character.Name)
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
 		fmt.Printf("Error fetching PoB export for character %s: %v\n", character.Name, err)
@@ -331,9 +330,39 @@ func updateStats(character *client.Character, event *repository.Event, character
 	}
 }
 
+func InitCharacterStatsCache(eventId int, characterRepo *repository.CharacterRepository) map[string]*PlayerStatsCache {
+	cache := make(map[string]*PlayerStatsCache)
+	stats, err := characterRepo.GetLatestStatsForEvent(eventId)
+	if err != nil {
+		log.Printf("Error fetching latest stats for event %d: %v", eventId, err)
+		return cache
+	}
+	pobs, err := characterRepo.GetLatestPoBsForEvent(eventId)
+	if err != nil {
+		log.Printf("Error fetching latest PoBs for event %d: %v", eventId, err)
+		return cache
+	}
+	for _, stat := range stats {
+		cache[stat.CharacterId] = &PlayerStatsCache{
+			OldStats: stat,
+		}
+	}
+	for _, pob := range pobs {
+		if cache[pob.CharacterId] == nil {
+			cache[pob.CharacterId] = &PlayerStatsCache{
+				OldStats: &repository.CharacterStat{},
+			}
+		}
+		cache[pob.CharacterId].OldPoBString = pob.Export
+		cache[pob.CharacterId].LastPoBUpdate = pob.Timestamp
+	}
+	return cache
+
+}
+
 func PlayerStatsLoop(ctx context.Context, event *repository.Event) {
 	characterRepo := repository.NewCharacterRepository()
-	cache := make(map[string]*PlayerStatsCache)
+	cache := InitCharacterStatsCache(event.Id, characterRepo)
 	mu := sync.Mutex{}
 	for {
 		select {
@@ -346,7 +375,7 @@ func PlayerStatsLoop(ctx context.Context, event *repository.Event) {
 				return
 			}
 			// todo: make this a goroutine once the pob server is stable enough to handle concurrent requests
-			updateStats(character, event, characterRepo, cache, &mu)
+			go updateStats(character, event, characterRepo, cache, &mu)
 		}
 	}
 }
