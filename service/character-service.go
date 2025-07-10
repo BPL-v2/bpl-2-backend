@@ -4,6 +4,7 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	"fmt"
+	"time"
 )
 
 type CharacterService struct {
@@ -75,4 +76,12 @@ func (c *CharacterService) GetTeamAtlasesForEvent(eventId int, userId int) ([]*r
 		return []*repository.Atlas{}, nil
 	}
 	return c.repository.GetTeamAtlasesForEvent(eventId, team.TeamId)
+}
+
+func (c *CharacterService) GetPobForIdBeforeTimestamp(characterId string, timestamp time.Time) (*repository.CharacterPob, error) {
+	pob, err := c.repository.GetPobByCharacterIdBeforeTimestamp(characterId, timestamp)
+	if err != nil {
+		return nil, err
+	}
+	return pob, nil
 }

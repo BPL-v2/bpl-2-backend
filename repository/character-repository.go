@@ -27,19 +27,20 @@ type Character struct {
 }
 
 type CharacterStat struct {
-	Time        time.Time `gorm:"not null;index"`
-	EventId     int       `gorm:"not null;index"`
-	CharacterId string    `gorm:"not null;index"`
-	DPS         int       `gorm:"not null"`
-	EHP         int       `gorm:"not null"`
-	PhysMaxHit  int       `gorm:"not null"`
-	EleMaxHit   int       `gorm:"not null"`
-	HP          int       `gorm:"not null"`
-	Mana        int       `gorm:"not null"`
-	ES          int       `gorm:"not null"`
-	Armour      int       `gorm:"not null"`
-	Evasion     int       `gorm:"not null"`
-	XP          int       `gorm:"not null"`
+	Time          time.Time `gorm:"not null;index"`
+	EventId       int       `gorm:"not null;index"`
+	CharacterId   string    `gorm:"not null;index"`
+	DPS           int       `gorm:"not null"`
+	EHP           int       `gorm:"not null"`
+	PhysMaxHit    int       `gorm:"not null"`
+	EleMaxHit     int       `gorm:"not null"`
+	HP            int       `gorm:"not null"`
+	Mana          int       `gorm:"not null"`
+	ES            int       `gorm:"not null"`
+	Armour        int       `gorm:"not null"`
+	Evasion       int       `gorm:"not null"`
+	XP            int       `gorm:"not null"`
+	MovementSpeed int       `gorm:"not null"`
 
 	Character *Character `gorm:"foreignKey:CharacterId"`
 	Event     *Event     `gorm:"foreignKey:EventId"`
@@ -55,7 +56,8 @@ func (c *CharacterStat) IsEqual(other *CharacterStat) bool {
 		c.ES == other.ES &&
 		c.Armour == other.Armour &&
 		c.Evasion == other.Evasion &&
-		c.XP == other.XP
+		c.XP == other.XP &&
+		c.MovementSpeed == other.MovementSpeed
 }
 
 type CharacterPob struct {
@@ -86,6 +88,16 @@ type CharacterRepository struct {
 
 func NewCharacterRepository() *CharacterRepository {
 	return &CharacterRepository{DB: config.DatabaseConnection()}
+}
+
+func (r *CharacterRepository) GetPobByCharacterIdBeforeTimestamp(characterId string, timestamp time.Time) (*CharacterPob, error) {
+	characterPob := &CharacterPob{}
+	err := r.DB.Where("character_id = ? AND timestamp < ?", characterId, timestamp).
+		Order("timestamp DESC").First(characterPob).Error
+	if err != nil {
+		return nil, err
+	}
+	return characterPob, nil
 }
 
 func (r *CharacterRepository) CreateCharacterStat(characterStat *CharacterStat) error {

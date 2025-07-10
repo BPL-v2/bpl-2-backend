@@ -688,6 +688,8 @@ definitions:
         type: integer
       mana:
         type: integer
+      movement_speed:
+        type: integer
       phys_max_hit:
         type: integer
       timestamp:
@@ -703,6 +705,7 @@ definitions:
     - evasion
     - hp
     - mana
+    - movement_speed
     - phys_max_hit
     - timestamp
     - xp
@@ -1076,6 +1079,25 @@ definitions:
     - objective_type
     - parent_id
     - required_number
+    type: object
+  PoB:
+    properties:
+      ascendancy:
+        type: string
+      export_string:
+        type: string
+      level:
+        type: integer
+      main_skill:
+        type: string
+      timestamp:
+        type: string
+    required:
+    - ascendancy
+    - export_string
+    - level
+    - main_skill
+    - timestamp
     type: object
   Score:
     properties:
@@ -2976,6 +2998,34 @@ paths:
             items:
               $ref: '#/definitions/CharacterStat'
             type: array
+      tags:
+      - characters
+  /users/{user_id}/characters/{character_id}/pob:
+    get:
+      description: Get the PoB export for a character at a specific timestamp
+      operationId: GetPoBExport
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Character ID
+        in: path
+        name: character_id
+        required: true
+        type: string
+      - description: Timestamp in RFC3339 format
+        in: query
+        name: timestamp
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/PoB'
       tags:
       - characters
   /users/remove-auth:

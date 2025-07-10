@@ -284,19 +284,20 @@ func updateStats(character *client.Character, event *repository.Event, character
 	}
 	stats := pob.Build.PlayerStats
 	newStats := &repository.CharacterStat{
-		Time:        time.Now(),
-		EventId:     event.Id,
-		CharacterId: character.Id,
-		DPS:         int(stats.CombinedDPS),
-		EHP:         int(stats.TotalEHP),
-		PhysMaxHit:  int(stats.PhysicalMaximumHitTaken),
-		EleMaxHit:   int(utils.Min(stats.FireMaximumHitTaken, stats.ColdMaximumHitTaken, stats.LightningMaximumHitTaken)),
-		HP:          int(stats.Life),
-		Mana:        int(stats.Mana),
-		ES:          int(stats.EnergyShield),
-		Armour:      int(stats.Armour),
-		Evasion:     int(stats.Evasion),
-		XP:          int(character.Experience),
+		Time:          time.Now(),
+		EventId:       event.Id,
+		CharacterId:   character.Id,
+		DPS:           int(stats.CombinedDPS),
+		EHP:           int(stats.TotalEHP),
+		PhysMaxHit:    int(stats.PhysicalMaximumHitTaken),
+		EleMaxHit:     int(utils.Min(stats.FireMaximumHitTaken, stats.ColdMaximumHitTaken, stats.LightningMaximumHitTaken)),
+		HP:            int(stats.Life),
+		Mana:          int(stats.Mana),
+		ES:            int(stats.EnergyShield),
+		Armour:        int(stats.Armour),
+		Evasion:       int(stats.Evasion),
+		XP:            int(character.Experience),
+		MovementSpeed: int(stats.EffectiveMovementSpeedMod * 100),
 	}
 	mu.Lock()
 	defer mu.Unlock()
