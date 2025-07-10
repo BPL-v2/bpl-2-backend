@@ -1991,6 +1991,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{user_id}/characters/{character_id}/pob": {
+            "get": {
+                "description": "Get the PoB export for a character at a specific timestamp",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "GetPoBExport",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Character ID",
+                        "name": "character_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Timestamp in RFC3339 format",
+                        "name": "timestamp",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/PoB"
+                        }
+                    }
+                }
+            }
+        },
         "/{eventId}/guild-stash": {
             "get": {
                 "security": [
@@ -3193,6 +3235,7 @@ const docTemplate = `{
                 "evasion",
                 "hp",
                 "mana",
+                "movement_speed",
                 "phys_max_hit",
                 "timestamp",
                 "xp"
@@ -3220,6 +3263,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "mana": {
+                    "type": "integer"
+                },
+                "movement_speed": {
                     "type": "integer"
                 },
                 "phys_max_hit": {
@@ -3755,6 +3801,33 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "valid_to": {
+                    "type": "string"
+                }
+            }
+        },
+        "PoB": {
+            "type": "object",
+            "required": [
+                "ascendancy",
+                "export_string",
+                "level",
+                "main_skill",
+                "timestamp"
+            ],
+            "properties": {
+                "ascendancy": {
+                    "type": "string"
+                },
+                "export_string": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "main_skill": {
+                    "type": "string"
+                },
+                "timestamp": {
                     "type": "string"
                 }
             }

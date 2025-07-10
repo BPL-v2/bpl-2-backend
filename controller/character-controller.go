@@ -5,8 +5,10 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type CharacterController struct {
@@ -25,7 +27,7 @@ func setupCharacterController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getUserCharactersHandler()},
 		{Method: "GET", Path: "/:character_id", HandlerFunc: e.getCharacterHistoryHandler()},
-		// {Method: "POST", Path: "/:user_id/pob/:character_name", HandlerFunc: e.getPoBExportHandler()},
+		{Method: "GET", Path: "/:character_id/pob", HandlerFunc: e.getPoBExportHandler()},
 		// {Method: "GET", Path: "/:user_id/:event_id/:character_name", HandlerFunc: e.getTimeSeries()},
 	}
 	for i, route := range routes {
@@ -79,47 +81,40 @@ func setupCharacterController() []RouteInfo {
 // 	}
 // }
 
-// func (e *CharacterController) getPoBExportHandler() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		fmt.Println("getPoBExportHandler")
-// 		userId, err := strconv.Atoi(c.Param("user_id"))
-// 		if err != nil {
-// 			c.JSON(400, gin.H{"error": err.Error()})
-// 			return
-// 		}
-// 		user, err := service.NewUserService().GetUserById(userId, "OauthAccounts")
-// 		if err != nil {
-// 			c.JSON(500, gin.H{"error": err.Error()})
-// 			return
-// 		}
-// 		characterName := c.Param("character_name")
-// 		poeClient := client.NewPoEClient(100, true, 100)
-// 		token := user.GetPoEToken()
-// 		if token == "" {
-// 			c.JSON(400, gin.H{"error": "User does not have a PoE token"})
-// 			return
-// 		}
-// 		character, httpError := poeClient.GetCharacter(token, characterName, nil)
-// 		if httpError != nil {
-// 			c.JSON(httpError.StatusCode, gin.H{"error": httpError.Error})
-// 			return
-// 		}
-// 		pob, export, err := client.GetPoBExport(character.Character)
-// 		armourGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Armour)
-// 		evasionGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Evasion)
-// 		energyShieldGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.EnergyShield)
-// 		ehpGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.TotalEHP)
-// 		hpGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Life)
-// 		manaGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.Mana)
-// 		physMaxHitGauge.WithLabelValues(character.Character.Name).Set(pob.Build.PlayerStats.PhysicalMaximumHitTaken)
-// 		eleMaxHitGauge.WithLabelValues(character.Character.Name).Set(utils.Max(pob.Build.PlayerStats.LightningMaximumHitTaken, pob.Build.PlayerStats.FireMaximumHitTaken, pob.Build.PlayerStats.ColdMaximumHitTaken))
-// 		if err != nil {
-// 			c.JSON(500, gin.H{"error": err.Error()})
-// 			return
-// 		}
-// 		c.JSON(200, gin.H{"pob": pob, "export": export})
-// 	}
-// }
+// @id GetPoBExport
+// @Description Get the PoB export for a character at a specific timestamp
+// @Tags characters
+// @Produce application/json
+// @Param user_id path int true "User ID"
+// @Param character_id path string true "Character ID"
+// @Param timestamp query string false "Timestamp in RFC3339 format"
+// @Success 200 {object} PoB
+// @Router /users/{user_id}/characters/{character_id}/pob [get]
+func (e *CharacterController) getPoBExportHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		timestamp := c.Query("timestamp")
+		t := time.Now()
+
+		if timestamp != "" {
+			var err error
+			t, err = time.Parse(time.RFC3339, timestamp)
+			if err != nil {
+				c.JSON(400, gin.H{"error": "timestamp is invalid"})
+				return
+			}
+		}
+		pob, err := e.characterService.GetPobForIdBeforeTimestamp(c.Param("character_id"), t)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.String(404, "PoB export not found for character")
+				return
+			}
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, toPoBResponse(pob))
+	}
+}
 
 // @id GetUserCharacters
 // @Description Fetches all event characters for a user
@@ -178,18 +173,40 @@ type Character struct {
 	Pantheon         bool   `json:"pantheon" binding:"required"`
 }
 
+type PoB struct {
+	ExportString string    `json:"export_string" binding:"required"`
+	Level        int       `json:"level" binding:"required"`
+	Ascendancy   string    `json:"ascendancy" binding:"required"`
+	Mainskill    string    `json:"main_skill" binding:"required"`
+	Timestamp    time.Time `json:"timestamp" binding:"required"`
+}
+
+func toPoBResponse(pob *repository.CharacterPob) *PoB {
+	if pob == nil {
+		return nil
+	}
+	return &PoB{
+		ExportString: pob.Export,
+		Level:        pob.Level,
+		Ascendancy:   pob.Ascendancy,
+		Mainskill:    pob.MainSkill,
+		Timestamp:    pob.Timestamp,
+	}
+}
+
 type CharacterStat struct {
-	TimeStamp  int `json:"timestamp" binding:"required"`
-	DPS        int `json:"dps" binding:"required"`
-	EHP        int `json:"ehp" binding:"required"`
-	PhysMaxHit int `json:"phys_max_hit" binding:"required"`
-	EleMaxHit  int `json:"ele_max_hit" binding:"required"`
-	HP         int `json:"hp" binding:"required"`
-	Mana       int `json:"mana" binding:"required"`
-	ES         int `json:"es" binding:"required"`
-	Armour     int `json:"armour" binding:"required"`
-	Evasion    int `json:"evasion" binding:"required"`
-	XP         int `json:"xp" binding:"required"`
+	TimeStamp     int `json:"timestamp" binding:"required"`
+	DPS           int `json:"dps" binding:"required"`
+	EHP           int `json:"ehp" binding:"required"`
+	PhysMaxHit    int `json:"phys_max_hit" binding:"required"`
+	EleMaxHit     int `json:"ele_max_hit" binding:"required"`
+	HP            int `json:"hp" binding:"required"`
+	Mana          int `json:"mana" binding:"required"`
+	ES            int `json:"es" binding:"required"`
+	Armour        int `json:"armour" binding:"required"`
+	Evasion       int `json:"evasion" binding:"required"`
+	XP            int `json:"xp" binding:"required"`
+	MovementSpeed int `json:"movement_speed" binding:"required"`
 }
 
 func toCharacterResponse(character *repository.Character) *Character {
@@ -215,16 +232,17 @@ func toCharacterStatResponse(characterStat *repository.CharacterStat) *Character
 		return nil
 	}
 	return &CharacterStat{
-		TimeStamp:  int(characterStat.Time.Unix()),
-		DPS:        characterStat.DPS,
-		EHP:        characterStat.EHP,
-		PhysMaxHit: characterStat.PhysMaxHit,
-		EleMaxHit:  characterStat.EleMaxHit,
-		HP:         characterStat.HP,
-		Mana:       characterStat.Mana,
-		ES:         characterStat.ES,
-		Armour:     characterStat.Armour,
-		Evasion:    characterStat.Evasion,
-		XP:         characterStat.XP,
+		TimeStamp:     int(characterStat.Time.Unix()),
+		DPS:           characterStat.DPS,
+		EHP:           characterStat.EHP,
+		PhysMaxHit:    characterStat.PhysMaxHit,
+		EleMaxHit:     characterStat.EleMaxHit,
+		HP:            characterStat.HP,
+		Mana:          characterStat.Mana,
+		ES:            characterStat.ES,
+		Armour:        characterStat.Armour,
+		Evasion:       characterStat.Evasion,
+		XP:            characterStat.XP,
+		MovementSpeed: characterStat.MovementSpeed,
 	}
 }
