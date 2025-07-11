@@ -214,7 +214,7 @@ func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdat
 			}{},
 		}
 	})
-	latestCharacters, err := service.characterService.GetLatestCharactersForEvent(service.event.Id)
+	latestCharacters, err := service.characterService.GetCharactersForEvent(service.event.Id)
 	if err != nil {
 		return nil, err
 	}
