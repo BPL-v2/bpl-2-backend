@@ -62,12 +62,15 @@ func (c *CharacterService) GetCharactersForUser(userId int) ([]*repository.Chara
 	return c.repository.GetCharactersForUser(userId)
 }
 
-func (c *CharacterService) GetLatestCharactersForEvent(eventId int) ([]*repository.Character, error) {
-	return c.repository.GetLatestCharactersForEvent(eventId)
+func (c *CharacterService) GetCharactersForEvent(eventId int) ([]*repository.Character, error) {
+	return c.repository.GetCharactersForEvent(eventId)
 }
 
 func (c *CharacterService) GetCharacterHistory(characterId string) ([]*repository.CharacterStat, error) {
 	return c.repository.GetCharacterHistory(characterId)
+}
+func (c *CharacterService) GetLatestCharacterStatsForEvent(eventId int) (map[string]*repository.CharacterStat, error) {
+	return c.repository.GetLatestCharacterStatsForEvent(eventId)
 }
 
 func (c *CharacterService) GetTeamAtlasesForEvent(eventId int, userId int) ([]*repository.Atlas, error) {

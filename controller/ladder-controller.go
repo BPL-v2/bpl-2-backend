@@ -29,7 +29,7 @@ func setupLadderController() []RouteInfo {
 	baseUrl := "events/:event_id"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/ladder", HandlerFunc: c.getLadderHandler()},
-		{Method: "GET", Path: "/characters", HandlerFunc: c.getLatestCharactersForEvent()},
+		{Method: "GET", Path: "/characters", HandlerFunc: c.GetCharactersForEvent()},
 		{Method: "GET", Path: "/atlas", HandlerFunc: c.getAtlasesForEvent(), Authenticated: true},
 	}
 	for i, route := range routes {
@@ -57,13 +57,18 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		characters, err := c.characterService.GetLatestCharactersForEvent(event.Id)
+		characters, err := c.characterService.GetCharactersForEvent(event.Id)
+		if err != nil {
+			ctx.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		characterStats, err := c.characterService.GetLatestCharacterStatsForEvent(event.Id)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 
-		ctx.JSON(200, toLadderResponse(ladder, characters))
+		ctx.JSON(200, toLadderResponse(ladder, characters, characterStats))
 	}
 }
 
@@ -75,13 +80,13 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 // @Param event_id path int true "Event ID"
 // @Success 200 {array} Character
 // @Router /events/{event_id}/characters [get]
-func (c *LadderController) getLatestCharactersForEvent() gin.HandlerFunc {
+func (c *LadderController) GetCharactersForEvent() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		event := getEvent(ctx)
 		if event == nil {
 			return
 		}
-		characters, err := c.characterService.GetLatestCharactersForEvent(event.Id)
+		characters, err := c.characterService.GetCharactersForEvent(event.Id)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -122,16 +127,17 @@ func (c *LadderController) getAtlasesForEvent() gin.HandlerFunc {
 }
 
 type LadderEntry struct {
-	UserId        *int       `json:"user_id"`
-	CharacterName string     `json:"character_name" binding:"required"`
-	AccountName   string     `json:"account_name" binding:"required"`
-	Level         int        `json:"level" binding:"required"`
-	Class         string     `json:"character_class" binding:"required"`
-	Experience    int        `json:"experience" binding:"required"`
-	Delve         int        `json:"delve" binding:"required"`
-	Rank          int        `json:"rank" binding:"required"`
-	Extra         *Character `json:"extra"`
-	TwitchAccount *string    `json:"twitch_account"`
+	UserId        *int           `json:"user_id"`
+	CharacterName string         `json:"character_name" binding:"required"`
+	AccountName   string         `json:"account_name" binding:"required"`
+	Level         int            `json:"level" binding:"required"`
+	Class         string         `json:"character_class" binding:"required"`
+	Experience    int            `json:"experience" binding:"required"`
+	Delve         int            `json:"delve" binding:"required"`
+	Rank          int            `json:"rank" binding:"required"`
+	Character     *Character     `json:"character"`
+	Stats         *CharacterStat `json:"stats"`
+	TwitchAccount *string        `json:"twitch_account"`
 }
 
 type Atlas struct {
@@ -157,11 +163,13 @@ func toAtlasResponse(atlas *repository.Atlas) *Atlas {
 	return response
 }
 
-func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character) []*LadderEntry {
+func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterStat) []*LadderEntry {
 	response := make([]*LadderEntry, 0, len(entries))
 	characterMap := make(map[string]*repository.Character)
+	statsMap := make(map[string]*repository.CharacterStat)
 	for _, character := range characters {
 		characterMap[character.Name] = character
+		statsMap[character.Name] = stats[character.Id]
 	}
 	for _, entry := range entries {
 		responseEntry := &LadderEntry{
@@ -174,7 +182,8 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 			Delve:         entry.Delve,
 			Rank:          entry.Rank,
 			TwitchAccount: entry.TwitchAccount,
-			Extra:         toCharacterResponse(characterMap[entry.Character]),
+			Character:     toCharacterResponse(characterMap[entry.Character]),
+			Stats:         toCharacterStatResponse(statsMap[entry.Character]),
 		}
 		response = append(response, responseEntry)
 	}

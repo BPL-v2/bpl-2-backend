@@ -3553,6 +3553,9 @@ const docTemplate = `{
                 "account_name": {
                     "type": "string"
                 },
+                "character": {
+                    "$ref": "#/definitions/Character"
+                },
                 "character_class": {
                     "type": "string"
                 },
@@ -3565,14 +3568,14 @@ const docTemplate = `{
                 "experience": {
                     "type": "integer"
                 },
-                "extra": {
-                    "$ref": "#/definitions/Character"
-                },
                 "level": {
                     "type": "integer"
                 },
                 "rank": {
                     "type": "integer"
+                },
+                "stats": {
+                    "$ref": "#/definitions/CharacterStat"
                 },
                 "twitch_account": {
                     "type": "string"

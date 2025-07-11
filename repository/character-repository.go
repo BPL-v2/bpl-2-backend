@@ -143,8 +143,8 @@ func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassi
 	return r.DB.Save(&atlas).Error
 }
 
-func (r *CharacterRepository) GetLatestCharactersForEvent(eventId int) ([]*Character, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharactersForEvent"))
+func (r *CharacterRepository) GetCharactersForEvent(eventId int) ([]*Character, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharactersForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
 	err := r.DB.Find(&charData, Character{EventId: eventId}).Error
@@ -175,6 +175,24 @@ func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*Charac
 	return charData, nil
 }
 
+func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[string]*CharacterStat, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharacterStatsForEvent"))
+	defer timer.ObserveDuration()
+	charData := []*CharacterStat{}
+	query := `SELECT DISTINCT ON (character_id) * FROM character_stats
+		WHERE event_id = ?
+		ORDER BY character_id, time DESC
+	`
+	err := r.DB.Raw(query, eventId).Scan(&charData).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting latest character stats for event %d: %w", eventId, err)
+	}
+	result := make(map[string]*CharacterStat, len(charData))
+	for _, stat := range charData {
+		result[stat.CharacterId] = stat
+	}
+	return result, nil
+}
 func (r *CharacterRepository) GetTeamAtlasesForEvent(eventId int, teamId int) (atlas []*Atlas, err error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamAtlasesForEvent"))
 	defer timer.ObserveDuration()
