@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"time"
@@ -31,11 +32,28 @@ func setupSignupController() []RouteInfo {
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/self", HandlerFunc: e.deleteSignupHandler(), Authenticated: true},
+		{Method: "GET", Path: "/discord", HandlerFunc: getDiscordMembersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
 	}
 	return routes
+}
+
+func getDiscordMembersHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		discordClient := client.NewLocalDiscordClient()
+		members, err := discordClient.GetServerMembers()
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to fetch discord members"})
+			return
+		}
+		c.JSON(200, members)
+	}
 }
 
 // @id GetPersonalSignup
