@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 type LocalDiscordClient struct {
@@ -28,7 +30,7 @@ func (c *LocalDiscordClient) AssignRoles() (*http.Response, error) {
 	return c.Client.Post(fmt.Sprintf("%s/%s/assign-roles", c.BaseURL, c.ServerId), "application/json", nil)
 }
 
-func (c *LocalDiscordClient) GetServerMemberIds() ([]string, error) {
+func (c *LocalDiscordClient) GetServerMembers() ([]*discordgo.Member, error) {
 	resp, err := c.Client.Get(fmt.Sprintf("%s/%s/members", c.BaseURL, c.ServerId))
 	if err != nil {
 		return nil, err
@@ -38,10 +40,10 @@ func (c *LocalDiscordClient) GetServerMemberIds() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	ids := make([]string, 0)
-	err = json.Unmarshal(respBody, &ids)
+	members := make([]*discordgo.Member, 0)
+	err = json.Unmarshal(respBody, &members)
 	if err != nil {
 		return nil, err
 	}
-	return ids, nil
+	return members, nil
 }

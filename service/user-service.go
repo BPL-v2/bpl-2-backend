@@ -2,7 +2,6 @@ package service
 
 import (
 	"bpl/auth"
-	"bpl/client"
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
@@ -127,17 +126,18 @@ func (s *UserService) RemoveProvider(user *repository.User, provider repository.
 }
 
 func (s *UserService) DiscordServerCheck(user *repository.User) error {
-	for _, oauth := range user.OauthAccounts {
-		if oauth.Provider == repository.ProviderDiscord {
-			memberIds, err := client.NewLocalDiscordClient().GetServerMemberIds()
-			if err != nil || utils.Contains(memberIds, oauth.AccountId) {
-				return nil
-			} else {
-				return fmt.Errorf("you have not joined the discord server")
-			}
-		}
-	}
-	return fmt.Errorf("you do not have a discord account linked")
+	return nil
+	// for _, oauth := range user.OauthAccounts {
+	// 	if oauth.Provider == repository.ProviderDiscord {
+	// 		memberIds, err := client.NewLocalDiscordClient().GetServerMemberIds()
+	// 		if err != nil || utils.Contains(memberIds, oauth.AccountId) {
+	// 			return nil
+	// 		} else {
+	// 			return fmt.Errorf("you have not joined the discord server")
+	// 		}
+	// 	}
+	// }
+	// return fmt.Errorf("you do not have a discord account linked")
 }
 
 func (s *UserService) AddUserFromStashchange(userName string, event *repository.Event) (*repository.User, error) {
