@@ -2068,21 +2068,23 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
+            }
+        },
+        "/{eventId}/guild-stash/update-access": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates the guild stash tabs for a user",
+                "description": "Parses all user access for guild stash tabs",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "guild-stash"
                 ],
-                "operationId": "UpdateGuildStash",
+                "operationId": "UpdateAccess",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2093,14 +2095,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/GuildStashTab"
-                            }
-                        }
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
