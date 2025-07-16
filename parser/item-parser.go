@@ -284,7 +284,22 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 			}
 			return 0
 		}, nil
-
+	case dbModel.MEMORY_STRANDS:
+		return func(item *clientModel.Item) int {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Memory Strands" {
+						strands, err := strconv.Atoi(property.Values[0].Name())
+						if err != nil {
+							log.Printf("Error parsing memory strands %s", property.Values[0].Name())
+							return 0
+						}
+						return strands
+					}
+				}
+			}
+			return 0
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid integer field", field)
 	}
