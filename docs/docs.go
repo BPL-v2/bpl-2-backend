@@ -4376,7 +4376,8 @@ const docTemplate = `{
                 "TEMPLE_ROOMS",
                 "RITUAL_VESSEL_BOSSES",
                 "RITUAL_VESSEL_MAP",
-                "FACETOR_LENS_EXP"
+                "FACETOR_LENS_EXP",
+                "MEMORY_STRANDS"
             ],
             "x-enum-comments": {
                 "SOCKETS": "as string like \"RGGB\""
@@ -4409,7 +4410,8 @@ const docTemplate = `{
                 "TEMPLE_ROOMS",
                 "RITUAL_BOSSES",
                 "RITUAL_MAP",
-                "FACETOR_LENS_EXP"
+                "FACETOR_LENS_EXP",
+                "MEMORY_STRANDS"
             ]
         },
         "JobType": {

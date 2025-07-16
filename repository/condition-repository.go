@@ -38,6 +38,7 @@ const (
 	RITUAL_BOSSES    ItemField = "RITUAL_VESSEL_BOSSES"
 	RITUAL_MAP       ItemField = "RITUAL_VESSEL_MAP"
 	FACETOR_LENS_EXP ItemField = "FACETOR_LENS_EXP"
+	MEMORY_STRANDS   ItemField = "MEMORY_STRANDS"
 )
 
 type FieldType string
@@ -78,6 +79,7 @@ var FieldToType = map[ItemField]FieldType{
 	TEMPLE_ROOMS:     StringArray,
 	RITUAL_BOSSES:    StringArray,
 	RITUAL_MAP:       StringArray,
+	MEMORY_STRANDS:   Int,
 }
 
 var OperatorsForTypes = map[FieldType][]Operator{
