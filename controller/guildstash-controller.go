@@ -35,7 +35,7 @@ func setupGuildStashController(PoEClient *client.PoEClient) []RouteInfo {
 	basePath := "/:event_id/guild-stash"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getGuildStashForUser(), Authenticated: true},
-		{Method: "POST", Path: "", HandlerFunc: e.updateGuildStash(), Authenticated: true},
+		{Method: "POST", Path: "/update-access", HandlerFunc: e.updateAccess(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/:stash_id", HandlerFunc: e.getGuildStashTab(), Authenticated: true},
 		{Method: "PATCH", Path: "/:stash_id", HandlerFunc: e.switchStashFetch(), Authenticated: true},
 		{Method: "POST", Path: "/:stash_id/update", HandlerFunc: e.updateStashTab(), Authenticated: true},
@@ -74,31 +74,27 @@ func (e *GuildStashController) getGuildStashForUser() gin.HandlerFunc {
 	}
 }
 
-// @id UpdateGuildStash
-// @Description Updates the guild stash tabs for a user
+// @id UpdateAccess
+// @Description Parses all user access for guild stash tabs
 // @Tags guild-stash
 // @Security BearerAuth
 // @Produce json
 // @Param eventId path int true "Event Id"
-// @Success 200 {array} GuildStashTab
-// @Router /{eventId}/guild-stash [post]
-func (e *GuildStashController) updateGuildStash() gin.HandlerFunc {
+// @Success 204
+// @Router /{eventId}/guild-stash/update-access [post]
+func (e *GuildStashController) updateAccess() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
 			return
 		}
-		teamUser, user, err := e.userService.GetTeamForUser(c, event)
-		if err != nil || !teamUser.IsTeamLead {
-			c.JSON(403, "unauthorized")
-			return
-		}
-		tabs, err := e.guildStashService.UpdateGuildStash(user, teamUser.TeamId, event)
+		ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
+		err := cron.NewFetchingService(ctx, event, e.poeClient).DetermineStashAccess()
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, utils.Map(tabs, toModel))
+		c.Status(204)
 	}
 }
 

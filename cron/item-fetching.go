@@ -541,7 +541,7 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	go fetchingService.FetchGuildStashes()
-	go fetchingService.AccessDeterminationLoop()
+	// go fetchingService.AccessDeterminationLoop()
 }
 
 func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
