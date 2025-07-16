@@ -404,6 +404,7 @@ func (f *FetchingService) FetchGuildStashes() {
 			if !stash.FetchEnabled || stash.ParentId != nil {
 				continue
 			}
+			fmt.Printf("Fetching guild stash %s for team %d\n", stash.Id, stash.TeamId)
 			wg.Add(1)
 			go func(stash repository.GuildStashTab) {
 				defer wg.Done()
