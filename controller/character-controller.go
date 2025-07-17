@@ -195,18 +195,18 @@ func toPoBResponse(pob *repository.CharacterPob) *PoB {
 }
 
 type CharacterStat struct {
-	TimeStamp     int `json:"timestamp" binding:"required"`
-	DPS           int `json:"dps" binding:"required"`
-	EHP           int `json:"ehp" binding:"required"`
-	PhysMaxHit    int `json:"phys_max_hit" binding:"required"`
-	EleMaxHit     int `json:"ele_max_hit" binding:"required"`
-	HP            int `json:"hp" binding:"required"`
-	Mana          int `json:"mana" binding:"required"`
-	ES            int `json:"es" binding:"required"`
-	Armour        int `json:"armour" binding:"required"`
-	Evasion       int `json:"evasion" binding:"required"`
-	XP            int `json:"xp" binding:"required"`
-	MovementSpeed int `json:"movement_speed" binding:"required"`
+	TimeStamp     int   `json:"timestamp" binding:"required"`
+	DPS           int64 `json:"dps" binding:"required"`
+	EHP           int32 `json:"ehp" binding:"required"`
+	PhysMaxHit    int32 `json:"phys_max_hit" binding:"required"`
+	EleMaxHit     int32 `json:"ele_max_hit" binding:"required"`
+	HP            int32 `json:"hp" binding:"required"`
+	Mana          int32 `json:"mana" binding:"required"`
+	ES            int32 `json:"es" binding:"required"`
+	Armour        int32 `json:"armour" binding:"required"`
+	Evasion       int32 `json:"evasion" binding:"required"`
+	XP            int64 `json:"xp" binding:"required"`
+	MovementSpeed int32 `json:"movement_speed" binding:"required"`
 }
 
 func toCharacterResponse(character *repository.Character) *Character {

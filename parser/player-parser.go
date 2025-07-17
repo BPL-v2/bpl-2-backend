@@ -20,6 +20,7 @@ type Player struct {
 	AscendancyPoints  int
 	AtlasPassiveTrees []client.AtlasPassiveTree
 	DelveDepth        int
+	EquipmentHash     [32]byte
 }
 
 type PlayerUpdate struct {
