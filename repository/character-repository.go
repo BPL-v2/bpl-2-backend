@@ -30,17 +30,17 @@ type CharacterStat struct {
 	Time          time.Time `gorm:"not null;index"`
 	EventId       int       `gorm:"not null;index"`
 	CharacterId   string    `gorm:"not null;index"`
-	DPS           int       `gorm:"not null"`
-	EHP           int       `gorm:"not null"`
-	PhysMaxHit    int       `gorm:"not null"`
-	EleMaxHit     int       `gorm:"not null"`
-	HP            int       `gorm:"not null"`
-	Mana          int       `gorm:"not null"`
-	ES            int       `gorm:"not null"`
-	Armour        int       `gorm:"not null"`
-	Evasion       int       `gorm:"not null"`
-	XP            int       `gorm:"not null"`
-	MovementSpeed int       `gorm:"not null"`
+	DPS           int64     `gorm:"not null"`
+	EHP           int32     `gorm:"not null"`
+	PhysMaxHit    int32     `gorm:"not null"`
+	EleMaxHit     int32     `gorm:"not null"`
+	HP            int32     `gorm:"not null"`
+	Mana          int32     `gorm:"not null"`
+	ES            int32     `gorm:"not null"`
+	Armour        int32     `gorm:"not null"`
+	Evasion       int32     `gorm:"not null"`
+	XP            int64     `gorm:"not null"`
+	MovementSpeed int32     `gorm:"not null"`
 
 	Character *Character `gorm:"foreignKey:CharacterId"`
 	Event     *Event     `gorm:"foreignKey:EventId"`
@@ -109,6 +109,9 @@ func (r *CharacterRepository) SavePoB(characterPoB *CharacterPob) error {
 }
 
 func (r *CharacterRepository) CreateCharacterCheckpoint(character *Character) error {
+	if character.Id == "" || character.Name == "" {
+		return fmt.Errorf("character ID and Name must be set")
+	}
 	fmt.Println("Creating character checkpoint for", character.Name, "with id", character.Id)
 	return r.DB.Save(&character).Error
 }

@@ -7,6 +7,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"math"
+	"strconv"
 	"strings"
 )
 
@@ -125,6 +127,28 @@ type PlayerStats struct {
 type playerStatXML struct {
 	Stat  string  `xml:"stat,attr"`
 	Value float64 `xml:"value,attr"`
+}
+
+// Custom XML unmarshal to handle "inf" values
+func (ps *playerStatXML) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var aux struct {
+		Stat  string `xml:"stat,attr"`
+		Value string `xml:"value,attr"`
+	}
+	if err := d.DecodeElement(&aux, &start); err != nil {
+		return err
+	}
+	ps.Stat = aux.Stat
+	if aux.Value == "inf" {
+		ps.Value = float64(math.MaxFloat64)
+	} else {
+		val, err := strconv.ParseFloat(aux.Value, 64)
+		if err != nil {
+			return err
+		}
+		ps.Value = val
+	}
+	return nil
 }
 
 func (ps *PlayerStats) SetStat(stat string, value float64) {

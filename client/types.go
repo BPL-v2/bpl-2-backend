@@ -1,5 +1,10 @@
 package client
 
+import (
+	"crypto/sha256"
+	"sort"
+)
+
 type Realm string
 
 const (
@@ -636,6 +641,19 @@ type Character struct {
 	Jewels     *[]Item  `json:"jewels"`
 	Passives   Passives `json:"passives"`
 	Metadata   Metadata `json:"metadata"`
+}
+
+func (c *Character) EquipmentHash() [32]byte {
+	equipCopy := make([]Item, len(*c.Equipment))
+	copy(equipCopy, *c.Equipment)
+	sort.Slice(equipCopy, func(i, j int) bool {
+		return equipCopy[i].Id < equipCopy[j].Id
+	})
+	idAggregate := ""
+	for _, item := range equipCopy {
+		idAggregate += item.Id
+	}
+	return sha256.Sum256([]byte(idAggregate))
 }
 
 type MinimalCharacter struct {
