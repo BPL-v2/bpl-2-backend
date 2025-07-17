@@ -33,6 +33,7 @@ const (
 	IS_CORRUPTED     ItemField = "IS_CORRUPTED"
 	IS_VAAL          ItemField = "IS_VAAL"
 	IS_SPLIT         ItemField = "IS_SPLIT"
+	IS_IDENTIFIED    ItemField = "IS_IDENTIFIED"
 	SANCTUM_MODS     ItemField = "SANCTUM_AFFLICTIONS"
 	TEMPLE_ROOMS     ItemField = "TEMPLE_ROOMS"
 	RITUAL_BOSSES    ItemField = "RITUAL_VESSEL_BOSSES"
@@ -75,6 +76,7 @@ var FieldToType = map[ItemField]FieldType{
 	IS_CORRUPTED:     Bool,
 	IS_VAAL:          Bool,
 	IS_SPLIT:         Bool,
+	IS_IDENTIFIED:    Bool,
 	SANCTUM_MODS:     StringArray,
 	TEMPLE_ROOMS:     StringArray,
 	RITUAL_BOSSES:    StringArray,
