@@ -169,17 +169,14 @@ func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Ite
 		}, nil
 	case dbModel.RITUAL_BOSSES:
 		return func(item *clientModel.Item) []string {
-			bosses := make([]string, 0)
 			if item.Properties != nil {
 				for _, property := range *item.Properties {
 					if property.Name == "Monsters:\n{0}" {
-						for _, value := range property.Values {
-							bosses = append(bosses, value.Name())
-						}
+						return strings.Split(property.Values[0].Name(), "\n")
 					}
 				}
 			}
-			return bosses
+			return make([]string, 0)
 		}, nil
 	case dbModel.INFLUENCES:
 		return func(item *clientModel.Item) []string {
