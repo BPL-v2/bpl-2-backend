@@ -2626,6 +2626,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "identified": {
+                    "type": "boolean"
+                },
                 "ilvl": {
                     "type": "integer"
                 },
@@ -4368,6 +4371,7 @@ const docTemplate = `{
                 "IS_CORRUPTED",
                 "IS_VAAL",
                 "IS_SPLIT",
+                "IS_IDENTIFIED",
                 "SANCTUM_AFFLICTIONS",
                 "TEMPLE_ROOMS",
                 "RITUAL_VESSEL_BOSSES",
@@ -4402,6 +4406,7 @@ const docTemplate = `{
                 "IS_CORRUPTED",
                 "IS_VAAL",
                 "IS_SPLIT",
+                "IS_IDENTIFIED",
                 "SANCTUM_MODS",
                 "TEMPLE_ROOMS",
                 "RITUAL_BOSSES",
