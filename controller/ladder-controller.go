@@ -190,26 +190,26 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 		response = append(response, responseEntry)
 	}
 
-	for name, character := range characterMap {
-		if !inLadder[name] {
-			stats := statsMap[name]
-			responseEntry := &LadderEntry{
-				CharacterName: name,
-				AccountName:   "",
-				Level:         character.Level,
-				Class:         character.Ascendancy,
-				Delve:         0,
-				Rank:          0,
-				TwitchAccount: nil,
-				Character:     toCharacterResponse(character),
-				Stats:         toCharacterStatResponse(stats),
-			}
-			if stats != nil {
-				responseEntry.Experience = int(stats.XP)
-			}
-			response = append(response, responseEntry)
-		}
-	}
+	// for name, character := range characterMap {
+	// 	if !inLadder[name] {
+	// 		stats := statsMap[name]
+	// 		responseEntry := &LadderEntry{
+	// 			CharacterName: name,
+	// 			AccountName:   "",
+	// 			Level:         character.Level,
+	// 			Class:         character.Ascendancy,
+	// 			Delve:         0,
+	// 			Rank:          0,
+	// 			TwitchAccount: nil,
+	// 			Character:     toCharacterResponse(character),
+	// 			Stats:         toCharacterStatResponse(stats),
+	// 		}
+	// 		if stats != nil {
+	// 			responseEntry.Experience = int(stats.XP)
+	// 		}
+	// 		response = append(response, responseEntry)
+	// 	}
+	// }
 
 	return response
 }
