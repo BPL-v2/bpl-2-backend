@@ -76,12 +76,15 @@ func NewFetchingService(ctx context.Context, event *repository.Event, poeClient 
 }
 
 func (f *FetchingService) FetchStashChanges() error {
+	fmt.Println("Starting stash change fetch loop")
 	token, err := f.oauthService.GetApplicationToken(repository.ProviderPoE)
 	if err != nil {
 		log.Printf("Failed to get PoE token: %v", err)
 		return fmt.Errorf("failed to get PoE token: %w", err)
 	}
+	fmt.Printf("Using token %s for event %d\n", token, f.event.Id)
 	initialStashChange, err := f.stashChangeService.GetInitialChangeId(f.event)
+	fmt.Printf("Initial stash change ID: %s\n", initialStashChange)
 	if err != nil {
 		log.Print(err)
 		return nil
@@ -95,6 +98,7 @@ func (f *FetchingService) FetchStashChanges() error {
 		case <-f.ctx.Done():
 			return nil
 		default:
+			fmt.Printf("Fetching stash changes for event %d, change ID: %s\n", f.event.Id, changeId)
 			response, err := f.poeClient.GetPublicStashes(token, "pc", changeId)
 			if err != nil {
 				consecutiveErrors++
@@ -207,6 +211,7 @@ func (f *FetchingService) FilterStashChanges() {
 		case <-f.ctx.Done():
 			return
 		default:
+			fmt.Println("filtering stash change", stashChange.ChangeId)
 			stashes := make([]client.PublicStashChange, 0)
 			for _, stash := range stashChange.Stashes {
 				stashCounterTotal.Inc()
@@ -221,6 +226,7 @@ func (f *FetchingService) FilterStashChanges() {
 				Stashes:      stashes,
 				Timestamp:    time.Now(),
 			}
+			fmt.Printf("Writing %d stashes message to kafka: %s\n", len(stashes), stashChange.ChangeId)
 			// make sure that stash changes are only saved if the messages are successfully written to kafka
 			f.stashChangeService.SaveStashChangesConditionally(message, f.event.Id,
 				func(data []byte) error {
@@ -390,6 +396,7 @@ func (f *FetchingService) FetchGuildStashes() {
 	defer kafkaWriter.Close()
 
 	for {
+		fmt.Printf("Fetching guild stashes for event %d\n", f.event.Id)
 		guildStashes, err := f.guildStashRepository.GetActiveByEvent(f.event.Id)
 		if err != nil {
 			fmt.Printf("failed to get guild stashes for event %d: %v\n", f.event.Id, err)
@@ -545,6 +552,7 @@ func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient
 }
 
 func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
+	fmt.Println("Starting item fetch loop")
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	go fetchingService.FetchStashChanges()
 	go fetchingService.FilterStashChanges()
