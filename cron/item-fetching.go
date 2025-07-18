@@ -530,11 +530,30 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 
 }
 
+var (
+	GuildStashHashMap      = make(map[string][32]byte)
+	GuildStashHashMapMutex = sync.Mutex{}
+)
+
 func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicStashChange) {
+	realChanges := make([]*client.PublicStashChange, 0)
+	for _, change := range changes {
+		hash := change.GetHash()
+		if GuildStashHashMap[change.Id] == hash {
+			fmt.Printf("Skipping stash %s, already processed\n", change.Id)
+			continue
+		}
+		GuildStashHashMapMutex.Lock()
+		GuildStashHashMap[change.Id] = hash
+		GuildStashHashMapMutex.Unlock()
+		realChanges = append(realChanges, change)
+		fmt.Printf("Adding stash %s to queue\n", change.Id)
+	}
+
 	message, err := json.Marshal(config.StashChangeMessage{
 		ChangeId:     "",
 		NextChangeId: "",
-		Stashes: utils.Map(changes, func(change *client.PublicStashChange) client.PublicStashChange {
+		Stashes: utils.Map(realChanges, func(change *client.PublicStashChange) client.PublicStashChange {
 			return *change
 		}),
 		Timestamp: time.Now(),
