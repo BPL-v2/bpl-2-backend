@@ -201,6 +201,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 }
 
 func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) error {
+	fmt.Println("Starting stash evaluation loop for event", event.Name)
 	m, err := NewMatchingService(ctx, poeClient, event)
 	if err != nil {
 		log.Fatal("Failed to create matching service:", err)
@@ -214,6 +215,7 @@ func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event
 	if err != nil {
 		return err
 	}
+	fmt.Println("Item checker initialized with", len(objectives), "objectives")
 	go m.ProcessStashChanges(itemChecker, objectives)
 	return nil
 }
