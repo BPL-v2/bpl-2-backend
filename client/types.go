@@ -2,6 +2,7 @@ package client
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"sort"
 )
 
@@ -154,6 +155,17 @@ type PublicStashChange struct {
 	StashType         string  `json:"stashType"`
 	League            *string `json:"league,omitempty"`
 	Items             []Item  `json:"items"`
+}
+
+func (p PublicStashChange) GetHash() [32]byte {
+	idAggregate := p.Id
+	for _, item := range p.Items {
+		idAggregate += item.Id
+		if item.StackSize != nil {
+			idAggregate += fmt.Sprint(*item.StackSize)
+		}
+	}
+	return sha256.Sum256([]byte(idAggregate))
 }
 
 type Ladder struct {
