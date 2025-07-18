@@ -324,6 +324,12 @@ func (f *FetchingService) DetermineStashAccess() error {
 			for _, stash := range *stashes {
 				stashToUsers[stash.Id] = append(stashToUsers[stash.Id], int32(user.UserId))
 				stashMap[stash.Id] = stash
+				if stash.Children != nil {
+					for _, stashChild := range *stash.Children {
+						stashToUsers[stashChild.Id] = append(stashToUsers[stashChild.Id], int32(user.UserId))
+						stashMap[stashChild.Id] = stashChild
+					}
+				}
 			}
 			mu.Unlock()
 		}(user)
@@ -354,6 +360,7 @@ func (f *FetchingService) DetermineStashAccess() error {
 				Type:         stash.Type,
 				Index:        stash.Index,
 				Color:        stash.Metadata.Colour,
+				ParentId:     stash.Parent,
 				FetchEnabled: false,
 				LastFetch:    time.Now(),
 				UserIds:      stashToUsers[stash.Id],
