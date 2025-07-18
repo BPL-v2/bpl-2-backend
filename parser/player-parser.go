@@ -76,7 +76,7 @@ func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
 	if p.New.CharacterLevel > 68 && !(p.New.AscendancyPoints >= 8) {
 		return time.Since(p.LastUpdateTimes.Character) > 1*time.Minute
 	}
-	return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
+	return time.Since(p.LastUpdateTimes.Character) > 2*time.Minute
 }
 
 func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
