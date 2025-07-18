@@ -30,15 +30,15 @@ func NewStashChangeRepository() *StashChangeRepository {
 }
 
 func (r *StashChangeRepository) CreateStashChangeIfNotExists(stashChange *StashChange) (*StashChange, error) {
-	existing := &StashChange{}
-	err := r.DB.First(existing, "stash_id = ? AND event_id = ?", stashChange.StashId, stashChange.EventId).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, err
-	}
-	if existing.Id != 0 {
-		return existing, nil
-	}
-	err = r.DB.Create(stashChange).Error
+	// existing := &StashChange{}
+	// err := r.DB.First(existing, "stash_id = ? AND event_id = ?", stashChange.StashId, stashChange.EventId).Error
+	// if err != nil && err != gorm.ErrRecordNotFound {
+	// 	return nil, err
+	// }
+	// if existing.Id != 0 {
+	// 	return existing, nil
+	// }
+	err := r.DB.Create(stashChange).Error
 	if err != nil {
 		return nil, err
 	}
