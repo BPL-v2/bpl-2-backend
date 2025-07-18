@@ -7,7 +7,6 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -120,7 +119,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	player.New.AscendancyPoints = characterResponse.Character.GetAscendancyPoints()
 	player.New.MainSkill = characterResponse.Character.GetMainSkill()
 	player.New.EquipmentHash = characterResponse.Character.EquipmentHash()
-	if player.New.EquipmentHash != player.Old.EquipmentHash && time.Since(player.LastUpdateTimes.PoB) > 5*time.Minute {
+	if player.New.EquipmentHash != player.Old.EquipmentHash && time.Since(player.LastUpdateTimes.PoB) > 3*time.Minute {
 		charQueue <- characterResponse.Character
 		player.LastUpdateTimes.PoB = time.Now()
 	}
@@ -311,24 +310,6 @@ func updateStats(character *client.Character, event *repository.Event, character
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
 		fmt.Printf("Error fetching PoB export for character %s: %v\n", character.Name, err)
-		// write local json with character data and filename character name
-		file, err := os.Create(fmt.Sprintf("debug_pob_%s.json", character.Name))
-		if err != nil {
-			log.Printf("Error creating debug file for character %s: %v", character.Name, err)
-			return
-		}
-		defer file.Close()
-		data, err := json.MarshalIndent(character, "", "  ")
-		if err != nil {
-			log.Printf("Error marshalling character data for %s: %v", character.Name, err)
-			return
-		}
-		_, err = file.Write(data)
-		if err != nil {
-			log.Printf("Error writing debug file for character %s: %v", character.Name, err)
-			return
-		}
-		log.Printf("Debug file created for character %s", character.Name)
 		return
 	}
 	stats := pob.Build.PlayerStats
@@ -356,7 +337,7 @@ func updateStats(character *client.Character, event *repository.Event, character
 		}
 	}
 	cacheItem := cache[character.Name]
-	if time.Since(cacheItem.LastPoBUpdate) > 30*time.Minute && export != cacheItem.OldPoBString {
+	if time.Since(cacheItem.LastPoBUpdate) > 10*time.Minute && export != cacheItem.OldPoBString {
 		cacheItem.OldPoBString = export
 		cacheItem.LastPoBUpdate = time.Now()
 		err := characterRepo.SavePoB(&repository.CharacterPob{
