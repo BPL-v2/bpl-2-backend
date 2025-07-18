@@ -58,9 +58,9 @@ func (p *PlayerUpdate) ShouldUpdateCharacterName() bool {
 		return false
 	}
 	if p.New.CharacterName == "" {
-		return time.Since(p.LastUpdateTimes.CharacterName) > 1*time.Minute
+		return time.Since(p.LastUpdateTimes.CharacterName) > 30*time.Minute
 	}
-	return time.Since(p.LastUpdateTimes.CharacterName) > 10*time.Minute
+	return time.Since(p.LastUpdateTimes.CharacterName) > 60*time.Minute
 }
 
 func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
@@ -76,7 +76,7 @@ func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
 	if p.New.CharacterLevel > 68 && !(p.New.AscendancyPoints >= 8) {
 		return time.Since(p.LastUpdateTimes.Character) > 1*time.Minute
 	}
-	return time.Since(p.LastUpdateTimes.Character) > 1*time.Minute
+	return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
 }
 
 func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
