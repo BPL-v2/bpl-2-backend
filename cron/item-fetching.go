@@ -294,7 +294,7 @@ func (f *FetchingService) AccessDeterminationLoop() {
 		select {
 		case <-f.ctx.Done():
 			return
-		case <-time.After(10 * time.Minute):
+		case <-time.After(30 * time.Minute):
 		}
 	}
 }
@@ -574,7 +574,7 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	go fetchingService.FetchGuildStashes()
-	// go fetchingService.AccessDeterminationLoop()
+	go fetchingService.AccessDeterminationLoop()
 }
 
 func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
