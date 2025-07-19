@@ -71,12 +71,12 @@ func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
 		return false
 	}
 	if p.New.CharacterLevel > 40 && !p.New.Pantheon {
-		return time.Since(p.LastUpdateTimes.Character) > 2*time.Minute
+		return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
 	}
 	if p.New.CharacterLevel > 68 && !(p.New.AscendancyPoints >= 8) {
-		return time.Since(p.LastUpdateTimes.Character) > 2*time.Minute
+		return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
 	}
-	return time.Since(p.LastUpdateTimes.Character) > 2*time.Minute
+	return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
 }
 
 func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
@@ -88,10 +88,10 @@ func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
 	}
 
 	if p.New.MaxAtlasTreeNodes() < 100 {
-		return time.Since(p.LastUpdateTimes.LeagueAccount) > 1*time.Minute
+		return time.Since(p.LastUpdateTimes.LeagueAccount) > 5*time.Minute
 	}
 
-	return time.Since(p.LastUpdateTimes.LeagueAccount) > 10*time.Minute
+	return time.Since(p.LastUpdateTimes.LeagueAccount) > 15*time.Minute
 }
 
 type TeamObjectiveChecker func(p []*Player) int
