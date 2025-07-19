@@ -215,16 +215,10 @@ func handleChildBonus(objective *repository.Objective, aggregations ObjectiveTea
 }
 
 func handleChildRanking(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
-	// if objective.Id != 4613 {
-	// 	return []*Score{}, nil
-	// }
 	teamCompletions := make(map[int]TeamCompletion)
 	childIds := map[int]bool{}
 	for _, child := range objective.Children {
-		// Only objective leaves are considered here
-		if len(child.Children) == 0 {
-			childIds[child.Id] = true
-		}
+		childIds[child.Id] = true
 	}
 	for _, score := range childScores {
 		if score.Finished && childIds[score.Id] {
