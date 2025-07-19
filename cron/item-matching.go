@@ -134,11 +134,11 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		teamMap[user.AccountName] = teamNames[user.TeamId]
 	}
 	desyncedObjectiveIds := make([]int, 0)
-	for _, objective := range objectives {
-		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ObjectiveTypeItem {
-			desyncedObjectiveIds = append(desyncedObjectiveIds, objective.Id)
-		}
-	}
+	// for _, objective := range objectives {
+	// 	if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ObjectiveTypeItem {
+	// 		desyncedObjectiveIds = append(desyncedObjectiveIds, objective.Id)
+	// 	}
+	// }
 	reader, err := m.GetReader(desyncedObjectiveIds)
 	if err != nil {
 		log.Fatal(err)
