@@ -50,7 +50,7 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 		}
 		err := c.repository.CreateCharacterCheckpoint(character)
 		if err != nil {
-			fmt.Println("Error saving character")
+			fmt.Printf("Error saving character checkpoint for user %d: %v\n", update.UserId, err)
 			return err
 		}
 
