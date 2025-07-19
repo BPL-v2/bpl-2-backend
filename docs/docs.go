@@ -4489,7 +4489,8 @@ const docTemplate = `{
                 "CONTAINS_MATCH",
                 "LENGTH_EQ",
                 "LENGTH_GT",
-                "LENGTH_LT"
+                "LENGTH_LT",
+                "DOES_NOT_MATCH"
             ],
             "x-enum-varnames": [
                 "EQ",
@@ -4504,7 +4505,8 @@ const docTemplate = `{
                 "CONTAINS_MATCH",
                 "LENGTH_EQ",
                 "LENGTH_GT",
-                "LENGTH_LT"
+                "LENGTH_LT",
+                "DOES_NOT_MATCH"
             ]
         },
         "Permission": {

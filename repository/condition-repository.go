@@ -85,10 +85,10 @@ var FieldToType = map[ItemField]FieldType{
 }
 
 var OperatorsForTypes = map[FieldType][]Operator{
-	String:      {EQ, NEQ, IN, NOT_IN, MATCHES, CONTAINS, LENGTH_EQ, LENGTH_GT, LENGTH_LT},
+	String:      {EQ, NEQ, IN, NOT_IN, MATCHES, CONTAINS, LENGTH_EQ, LENGTH_GT, LENGTH_LT, DOES_NOT_MATCH},
 	Int:         {EQ, NEQ, GT, LT, IN, NOT_IN},
 	Bool:        {EQ, NEQ},
-	StringArray: {CONTAINS, CONTAINS_ALL, CONTAINS_MATCH, LENGTH_EQ, LENGTH_GT, LENGTH_LT},
+	StringArray: {CONTAINS, CONTAINS_ALL, CONTAINS_MATCH, LENGTH_EQ, LENGTH_GT, LENGTH_LT, DOES_NOT_MATCH},
 }
 
 const (
@@ -105,6 +105,7 @@ const (
 	LENGTH_EQ      Operator = "LENGTH_EQ"
 	LENGTH_GT      Operator = "LENGTH_GT"
 	LENGTH_LT      Operator = "LENGTH_LT"
+	DOES_NOT_MATCH Operator = "DOES_NOT_MATCH"
 )
 
 type Condition struct {
