@@ -461,6 +461,11 @@ func StringComparator(condition *dbModel.Condition) (itemChecker, error) {
 		return func(item *clientModel.Item) bool {
 			return len(getter(item)) < length
 		}, nil
+	case dbModel.DOES_NOT_MATCH:
+		var expression = regexp.MustCompile(condition.Value)
+		return func(item *clientModel.Item) bool {
+			return !expression.MatchString(getter(item))
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for string field %s", condition.Operator, condition.Field)
 	}
@@ -533,6 +538,16 @@ func StringArrayComparator(condition *dbModel.Condition) (itemChecker, error) {
 		}
 		return func(item *clientModel.Item) bool {
 			return len(getter(item)) < length
+		}, nil
+	case dbModel.DOES_NOT_MATCH:
+		expression := regexp.MustCompile(condition.Value)
+		return func(item *clientModel.Item) bool {
+			for _, actualValue := range getter(item) {
+				if expression.MatchString(actualValue) {
+					return false
+				}
+			}
+			return true
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for string array field %s", condition.Operator, condition.Field)

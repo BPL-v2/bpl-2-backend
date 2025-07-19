@@ -1589,6 +1589,7 @@ definitions:
     - LENGTH_EQ
     - LENGTH_GT
     - LENGTH_LT
+    - DOES_NOT_MATCH
     type: string
     x-enum-varnames:
     - EQ
@@ -1604,6 +1605,7 @@ definitions:
     - LENGTH_EQ
     - LENGTH_GT
     - LENGTH_LT
+    - DOES_NOT_MATCH
   Permission:
     enum:
     - admin
