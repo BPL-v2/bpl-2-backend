@@ -317,7 +317,7 @@ func updateStats(character *client.Character, event *repository.Event, character
 		Time:          time.Now(),
 		EventId:       event.Id,
 		CharacterId:   character.Id,
-		DPS:           float2Int64(stats.CombinedDPS),
+		DPS:           float2Int64(utils.Max(stats.CombinedDPS, stats.CullingDPS, stats.FullDPS, stats.FullDotDPS, stats.PoisonDPS, stats.ReservationDPS, stats.TotalDPS, stats.TotalDotDPS, stats.WithBleedDPS, stats.WithIgniteDPS, stats.WithPoisonDPS)),
 		EHP:           float2Int32(stats.TotalEHP),
 		PhysMaxHit:    float2Int32(stats.PhysicalMaximumHitTaken),
 		EleMaxHit:     float2Int32(utils.Min(stats.FireMaximumHitTaken, stats.ColdMaximumHitTaken, stats.LightningMaximumHitTaken)),
