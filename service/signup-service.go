@@ -34,7 +34,7 @@ func (r *SignupService) ReportPlaytime(userId int, eventId int, actualPlaytime i
 	if err != nil {
 		return nil, err
 	}
-	signup.ActualPlaytime = actualPlaytime
+	signup.ActualPlayTime = actualPlaytime
 	return r.signupRepository.SaveSignup(signup)
 }
 
