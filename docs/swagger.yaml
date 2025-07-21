@@ -1103,6 +1103,13 @@ definitions:
     - main_skill
     - timestamp
     type: object
+  ReportPlaytimeRequest:
+    properties:
+      actual_playtime:
+        type: integer
+    required:
+    - actual_playtime
+    type: object
   Score:
     properties:
       finished:
@@ -2372,6 +2379,35 @@ paths:
       responses:
         "201":
           description: Created
+          schema:
+            $ref: '#/definitions/Signup'
+      security:
+      - BearerAuth: []
+      tags:
+      - signup
+  /events/{event_id}/signups/self/actual-playtime:
+    put:
+      consumes:
+      - application/json
+      description: Reports the actual playtime for the authenticated user
+      operationId: ReportPlaytime
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Actual Playtime
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ReportPlaytimeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             $ref: '#/definitions/Signup'
       security:

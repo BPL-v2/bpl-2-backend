@@ -32,6 +32,7 @@ func setupSignupController() []RouteInfo {
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/self", HandlerFunc: e.deleteSignupHandler(), Authenticated: true},
+		{Method: "PUT", Path: "/actual-playtime", HandlerFunc: e.reportPlaytime(), Authenticated: true},
 		{Method: "GET", Path: "/discord", HandlerFunc: getDiscordMembersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 	}
 	for i, route := range routes {
@@ -53,6 +54,46 @@ func getDiscordMembersHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, members)
+	}
+}
+
+type ReportPlaytimeRequest struct {
+	ActualPlaytime int `json:"actual_playtime" binding:"required"`
+}
+
+// @id ReportPlaytime
+// @Description Reports the actual playtime for the authenticated user
+// @Tags signup
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} Signup
+// @Param event_id path int true "Event Id"
+// @Param body body ReportPlaytimeRequest true "Actual Playtime"
+// @Router /events/{event_id}/signups/self/actual-playtime [put]
+func (e *SignupController) reportPlaytime() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		user, err := e.userService.GetUserFromAuthHeader(c)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Not authenticated"})
+			return
+		}
+		actualPlaytimeRequest := ReportPlaytimeRequest{}
+		if err := c.BindJSON(&actualPlaytimeRequest); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+
+		signup, err := e.signupService.ReportPlaytime(user.Id, event.Id, actualPlaytimeRequest.ActualPlaytime)
+		if err != nil {
+			c.JSON(404, gin.H{"error": "Not signed up"})
+			return
+		}
+		c.JSON(200, toSignupResponse(signup))
 	}
 }
 

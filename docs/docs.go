@@ -915,6 +915,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/signups/self/actual-playtime": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Reports the actual playtime for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signup"
+                ],
+                "operationId": "ReportPlaytime",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Actual Playtime",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ReportPlaytimeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Signup"
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/status": {
             "get": {
                 "security": [
@@ -3831,6 +3877,17 @@ const docTemplate = `{
                 },
                 "timestamp": {
                     "type": "string"
+                }
+            }
+        },
+        "ReportPlaytimeRequest": {
+            "type": "object",
+            "required": [
+                "actual_playtime"
+            ],
+            "properties": {
+                "actual_playtime": {
+                    "type": "integer"
                 }
             }
         },
