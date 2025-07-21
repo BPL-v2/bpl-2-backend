@@ -32,7 +32,7 @@ func setupSignupController() []RouteInfo {
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/self", HandlerFunc: e.deleteSignupHandler(), Authenticated: true},
-		{Method: "PUT", Path: "/actual-playtime", HandlerFunc: e.reportPlaytime(), Authenticated: true},
+		{Method: "PUT", Path: "/self/actual-playtime", HandlerFunc: e.reportPlaytime(), Authenticated: true},
 		{Method: "GET", Path: "/discord", HandlerFunc: getDiscordMembersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 	}
 	for i, route := range routes {
