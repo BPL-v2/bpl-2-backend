@@ -1,0 +1,2 @@
+ALTER TABLE signups
+ADD COLUMN "actual_play_time" INTEGER NOT NULL DEFAULT '0';

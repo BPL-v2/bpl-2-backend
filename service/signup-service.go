@@ -29,6 +29,15 @@ func (r *SignupService) GetSignupForUser(userId int, eventId int) (*repository.S
 	return r.signupRepository.GetSignupForUser(userId, eventId)
 }
 
+func (r *SignupService) ReportPlaytime(userId int, eventId int, actualPlaytime int) (*repository.Signup, error) {
+	signup, err := r.signupRepository.GetSignupForUser(userId, eventId)
+	if err != nil {
+		return nil, err
+	}
+	signup.ActualPlaytime = actualPlaytime
+	return r.signupRepository.SaveSignup(signup)
+}
+
 type SignupWithUser struct {
 	Signup   repository.Signup
 	TeamUser *repository.TeamUser
