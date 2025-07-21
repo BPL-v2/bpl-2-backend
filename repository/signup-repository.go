@@ -18,7 +18,7 @@ type Signup struct {
 	ExpectedPlayTime int       `gorm:"not null"`
 	NeedsHelp        bool      `gorm:"not null"`
 	WantsToHelp      bool      `gorm:"not null"`
-	ActualPlaytime   int       `gorm:"not null;default:0"`
+	ActualPlayTime   int       `gorm:"not null;default:0"`
 }
 
 type SignupRepository struct {
