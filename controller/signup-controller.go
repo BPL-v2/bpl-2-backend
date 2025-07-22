@@ -285,6 +285,7 @@ type Signup struct {
 	PartnerId        *int              `json:"partner_id"`
 	Timestamp        time.Time         `json:"timestamp" binding:"required"`
 	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
+	ActualPlaytime   int               `json:"actual_playtime" binding:"required"`
 	TeamId           *int              `json:"team_id"`
 	IsTeamLead       bool              `json:"team_lead" binding:"required"`
 	NeedsHelp        bool              `json:"needs_help"`
@@ -309,6 +310,7 @@ func toSignupResponse(signup *repository.Signup) *Signup {
 		PartnerId:        signup.PartnerId,
 		Timestamp:        signup.Timestamp,
 		ExpectedPlaytime: signup.ExpectedPlayTime,
+		ActualPlaytime:   signup.ActualPlayTime,
 		NeedsHelp:        signup.NeedsHelp,
 		WantsToHelp:      signup.WantsToHelp,
 	}
