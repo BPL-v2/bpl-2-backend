@@ -267,6 +267,7 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 				ExpectedPlaytime: signup.ExpectedPlayTime,
 				NeedsHelp:        signup.NeedsHelp,
 				WantsToHelp:      signup.WantsToHelp,
+				ActualPlaytime:   signup.ActualPlayTime,
 			}
 			if teamUser, ok := teamUsersMap[signup.UserId]; ok {
 				resp.TeamId = &teamUser.TeamId
