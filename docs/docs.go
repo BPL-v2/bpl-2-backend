@@ -4027,12 +4027,16 @@ const docTemplate = `{
         "Signup": {
             "type": "object",
             "required": [
+                "actual_playtime",
                 "expected_playtime",
                 "team_lead",
                 "timestamp",
                 "user"
             ],
             "properties": {
+                "actual_playtime": {
+                    "type": "integer"
+                },
                 "expected_playtime": {
                     "type": "integer"
                 },
