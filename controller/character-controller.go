@@ -27,7 +27,7 @@ func setupCharacterController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getUserCharactersHandler()},
 		{Method: "GET", Path: "/:character_id", HandlerFunc: e.getCharacterHistoryHandler()},
-		{Method: "GET", Path: "/:character_id/pob", HandlerFunc: e.getPoBExportHandler()},
+		{Method: "GET", Path: "/:character_id/pobs", HandlerFunc: e.getPoBExportHandler()},
 		// {Method: "GET", Path: "/:user_id/:event_id/:character_name", HandlerFunc: e.getTimeSeries()},
 	}
 	for i, route := range routes {
@@ -81,29 +81,17 @@ func setupCharacterController() []RouteInfo {
 // 	}
 // }
 
-// @id GetPoBExport
-// @Description Get the PoB export for a character at a specific timestamp
+// @id GetPoBs
+// @Description Get all PoB exports for a character
 // @Tags characters
 // @Produce application/json
 // @Param user_id path int true "User ID"
 // @Param character_id path string true "Character ID"
-// @Param timestamp query string false "Timestamp in RFC3339 format"
-// @Success 200 {object} PoB
-// @Router /users/{user_id}/characters/{character_id}/pob [get]
+// @Success 200 {array} PoB
+// @Router /users/{user_id}/characters/{character_id}/pobs [get]
 func (e *CharacterController) getPoBExportHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		timestamp := c.Query("timestamp")
-		t := time.Now()
-
-		if timestamp != "" {
-			var err error
-			t, err = time.Parse(time.RFC3339, timestamp)
-			if err != nil {
-				c.JSON(400, gin.H{"error": "timestamp is invalid"})
-				return
-			}
-		}
-		pob, err := e.characterService.GetPobForIdBeforeTimestamp(c.Param("character_id"), t)
+		pobs, err := e.characterService.GetPobs(c.Param("character_id"))
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.String(404, "PoB export not found for character")
@@ -112,7 +100,7 @@ func (e *CharacterController) getPoBExportHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, toPoBResponse(pob))
+		c.JSON(200, utils.Map(pobs, toPoBResponse))
 	}
 }
 
