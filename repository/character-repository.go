@@ -100,6 +100,15 @@ func (r *CharacterRepository) GetPobByCharacterIdBeforeTimestamp(characterId str
 	return characterPob, nil
 }
 
+func (r *CharacterRepository) GetPobs(characterId string) ([]*CharacterPob, error) {
+	pobs := []*CharacterPob{}
+	err := r.DB.Where("character_id = ?", characterId).Order("timestamp ASC").Find(&pobs).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting PoBs for character %s: %w", characterId, err)
+	}
+	return pobs, nil
+}
+
 func (r *CharacterRepository) CreateCharacterStat(characterStat *CharacterStat) error {
 	return r.DB.Create(&characterStat).Error
 }

@@ -88,3 +88,10 @@ func (c *CharacterService) GetPobForIdBeforeTimestamp(characterId string, timest
 	}
 	return pob, nil
 }
+func (c *CharacterService) GetPobs(characterId string) ([]*repository.CharacterPob, error) {
+	pob, err := c.repository.GetPobs(characterId)
+	if err != nil {
+		return nil, err
+	}
+	return pob, nil
+}

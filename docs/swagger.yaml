@@ -3046,10 +3046,10 @@ paths:
             type: array
       tags:
       - characters
-  /users/{user_id}/characters/{character_id}/pob:
+  /users/{user_id}/characters/{character_id}/pobs:
     get:
-      description: Get the PoB export for a character at a specific timestamp
-      operationId: GetPoBExport
+      description: Get all PoB exports for a character
+      operationId: GetPoBs
       parameters:
       - description: User ID
         in: path
@@ -3061,17 +3061,15 @@ paths:
         name: character_id
         required: true
         type: string
-      - description: Timestamp in RFC3339 format
-        in: query
-        name: timestamp
-        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/PoB'
+            items:
+              $ref: '#/definitions/PoB'
+            type: array
       tags:
       - characters
   /users/remove-auth:
