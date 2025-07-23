@@ -2037,16 +2037,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/{user_id}/characters/{character_id}/pob": {
+        "/users/{user_id}/characters/{character_id}/pobs": {
             "get": {
-                "description": "Get the PoB export for a character at a specific timestamp",
+                "description": "Get all PoB exports for a character",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "characters"
                 ],
-                "operationId": "GetPoBExport",
+                "operationId": "GetPoBs",
                 "parameters": [
                     {
                         "type": "integer",
@@ -2061,19 +2061,16 @@ const docTemplate = `{
                         "name": "character_id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Timestamp in RFC3339 format",
-                        "name": "timestamp",
-                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/PoB"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/PoB"
+                            }
                         }
                     }
                 }
