@@ -52,11 +52,8 @@ var scoreAggregationDuration = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Help: "Duration of Aggregation step during scoring",
 }, []string{"aggregation-step"})
 
-// timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetAuthenticatedUsersForEvent"))
-// defer timer.ObserveDuration()
-
 func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) (ObjectiveTeamMatches, error) {
-	t := time.Now()
+	totalTime := time.Now()
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {
 		return team.Id
@@ -77,7 +74,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		repository.AggregationTypeDifferenceBetween,
 	} {
 		if handler, ok := aggregationMap[aggregation]; ok {
-			tt := time.Now()
+			t := time.Now()
 			matches, err := handler(db, objectivesByAggregation[aggregation], teamIds, event.Id)
 			if err != nil {
 				log.Print(err)
@@ -90,10 +87,10 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 				}
 				aggregations[match.ObjectiveId][match.TeamId] = match
 			}
-			fmt.Printf("Aggregation %s took %s\n", aggregation, time.Since(tt))
+			scoreAggregationDuration.WithLabelValues(string(aggregation)).Set(time.Since(t).Seconds())
 		}
 	}
-	log.Printf("Aggregated %d matches for %d objectives in %s", len(aggregations), len(objectives), time.Since(t))
+	scoreAggregationDuration.WithLabelValues("total").Set(time.Since(totalTime).Seconds())
 	return aggregations, nil
 }
 
@@ -104,7 +101,6 @@ func getObjectiveIds(objectives []*repository.Objective) []int {
 }
 
 func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	t := time.Now()
 	query := `
 	WITH ranked_matches AS (
 		SELECT 
@@ -145,12 +141,10 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 	if err != nil {
 		return nil, err
 	}
-	scoreAggregationDuration.WithLabelValues("handleEarliest").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
 func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	t := time.Now()
 	freshMatches, err := getFreshMatches(db, objectives, teamIds, eventId)
 	if err != nil {
 		return nil, err
@@ -165,17 +159,17 @@ func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, te
 			matches = append(matches, match)
 		}
 	}
-	scoreAggregationDuration.WithLabelValues("handleEarliestFreshItem").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
 func getExtremeQuery(aggregationType repository.AggregationType) (string, error) {
 	var operator string
-	if aggregationType == repository.AggregationTypeMaximum {
+	switch aggregationType {
+	case repository.AggregationTypeMaximum:
 		operator = "MAX"
-	} else if aggregationType == repository.AggregationTypeMinimum {
+	case repository.AggregationTypeMinimum:
 		operator = "MIN"
-	} else {
+	default:
 		return "", fmt.Errorf("invalid aggregation type")
 	}
 	return fmt.Sprintf(`
@@ -230,7 +224,6 @@ func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 }
 
 func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	t := time.Now()
 	query, err := getExtremeQuery(repository.AggregationTypeMinimum)
 	if err != nil {
 		return nil, err
@@ -241,12 +234,10 @@ func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 	if err != nil {
 		return nil, err
 	}
-	scoreAggregationDuration.WithLabelValues("handleMinimum").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
 func handleLatestSum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	t := time.Now()
 	query := `
 	WITH latest AS (
 		SELECT
@@ -282,7 +273,6 @@ func handleLatestSum(db *gorm.DB, objectives []*repository.Objective, teamIds []
 	if err != nil {
 		return nil, err
 	}
-	scoreAggregationDuration.WithLabelValues("handleLatestSum").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
@@ -322,7 +312,6 @@ func getFreshMatches(db *gorm.DB, objectives []*repository.Objective, teamIds []
 }
 
 func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	t := time.Now()
 	query := `
 	SELECT
 		match.objective_id,
@@ -357,7 +346,6 @@ func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, te
 
 		matches = append(matches, getDifferencesBetweenTimestamps(objective, preMatches, teamIds)...)
 	}
-	scoreAggregationDuration.WithLabelValues("handleDifferenceBetween").Set(time.Since(t).Seconds())
 	return matches, nil
 
 }
