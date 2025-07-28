@@ -47,7 +47,7 @@ var aggregationMap = map[repository.AggregationType]AggregationHandler{
 	repository.AggregationTypeMinimum:           handleMinimum,
 	repository.AggregationTypeDifferenceBetween: handleDifferenceBetween,
 }
-var scoreAggregationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+var scoreAggregationDuration = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Name: "score_aggregation_duration_s",
 	Help: "Duration of Aggregation step during scoring",
 }, []string{"aggregation-step"})
@@ -56,6 +56,7 @@ var scoreAggregationDuration = promauto.NewHistogramVec(prometheus.HistogramOpts
 // defer timer.ObserveDuration()
 
 func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) (ObjectiveTeamMatches, error) {
+	t := time.Now()
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {
 		return team.Id
@@ -76,6 +77,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		repository.AggregationTypeDifferenceBetween,
 	} {
 		if handler, ok := aggregationMap[aggregation]; ok {
+			tt := time.Now()
 			matches, err := handler(db, objectivesByAggregation[aggregation], teamIds, event.Id)
 			if err != nil {
 				log.Print(err)
@@ -88,8 +90,10 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 				}
 				aggregations[match.ObjectiveId][match.TeamId] = match
 			}
+			fmt.Printf("Aggregation %s took %s\n", aggregation, time.Since(tt))
 		}
 	}
+	log.Printf("Aggregated %d matches for %d objectives in %s", len(aggregations), len(objectives), time.Since(t))
 	return aggregations, nil
 }
 
@@ -100,8 +104,7 @@ func getObjectiveIds(objectives []*repository.Objective) []int {
 }
 
 func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleEarliest"))
-	defer timer.ObserveDuration()
+	t := time.Now()
 	query := `
 	WITH ranked_matches AS (
 		SELECT 
@@ -142,34 +145,19 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 	if err != nil {
 		return nil, err
 	}
+	scoreAggregationDuration.WithLabelValues("handleEarliest").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
 func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	// var wg sync.WaitGroup
-	var freshMatches FreshMatches
-	var firstMatches []*Match
-	var err1, err2 error
-
-	// wg.Add(2)
-
-	// go func() {
-	// 	defer wg.Done()
-	freshMatches, err1 = getFreshMatches(db, objectives, teamIds, eventId)
-	// }()
-
-	// go func() {
-	// 	defer wg.Done()
-	firstMatches, err2 = handleEarliest(db, objectives, teamIds, eventId)
-	// }()
-
-	// wg.Wait()
-
-	if err1 != nil {
-		return nil, err1
+	t := time.Now()
+	freshMatches, err := getFreshMatches(db, objectives, teamIds, eventId)
+	if err != nil {
+		return nil, err
 	}
-	if err2 != nil {
-		return nil, err2
+	firstMatches, err := handleEarliest(db, objectives, teamIds, eventId)
+	if err != nil {
+		return nil, err
 	}
 	matches := make([]*Match, 0)
 	for _, match := range firstMatches {
@@ -177,6 +165,7 @@ func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, te
 			matches = append(matches, match)
 		}
 	}
+	scoreAggregationDuration.WithLabelValues("handleEarliestFreshItem").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
@@ -226,8 +215,7 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 }
 
 func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMaximum"))
-	defer timer.ObserveDuration()
+	t := time.Now()
 	query, err := getExtremeQuery(repository.AggregationTypeMaximum)
 	if err != nil {
 		return nil, err
@@ -237,12 +225,12 @@ func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 	if err != nil {
 		return nil, err
 	}
+	scoreAggregationDuration.WithLabelValues("handleMaximum").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
 func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleMinimum"))
-	defer timer.ObserveDuration()
+	t := time.Now()
 	query, err := getExtremeQuery(repository.AggregationTypeMinimum)
 	if err != nil {
 		return nil, err
@@ -253,12 +241,12 @@ func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 	if err != nil {
 		return nil, err
 	}
+	scoreAggregationDuration.WithLabelValues("handleMinimum").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
 func handleLatestSum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleLatestSum"))
-	defer timer.ObserveDuration()
+	t := time.Now()
 	query := `
 	WITH latest AS (
 		SELECT
@@ -294,13 +282,13 @@ func handleLatestSum(db *gorm.DB, objectives []*repository.Objective, teamIds []
 	if err != nil {
 		return nil, err
 	}
+	scoreAggregationDuration.WithLabelValues("handleLatestSum").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
 func getFreshMatches(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) (FreshMatches, error) {
 	// todo: might want to also check if the match finishes the objective
-	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("getFreshMatches"))
-	defer timer.ObserveDuration()
+	t := time.Now()
 	query := `
     WITH latest AS (
         SELECT 
@@ -329,13 +317,12 @@ func getFreshMatches(db *gorm.DB, objectives []*repository.Objective, teamIds []
 	for _, id := range matchList {
 		freshMatches[id] = true
 	}
-
+	scoreAggregationDuration.WithLabelValues("getFreshMatches").Set(time.Since(t).Seconds())
 	return freshMatches, nil
 }
 
 func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	timer := prometheus.NewTimer(scoreAggregationDuration.WithLabelValues("handleDifferenceBetween"))
-	defer timer.ObserveDuration()
+	t := time.Now()
 	query := `
 	SELECT
 		match.objective_id,
@@ -370,6 +357,7 @@ func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, te
 
 		matches = append(matches, getDifferencesBetweenTimestamps(objective, preMatches, teamIds)...)
 	}
+	scoreAggregationDuration.WithLabelValues("handleDifferenceBetween").Set(time.Since(t).Seconds())
 	return matches, nil
 
 }
