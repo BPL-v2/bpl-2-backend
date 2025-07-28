@@ -24,6 +24,9 @@ func (f FreshMatches) contains(match *Match) bool {
 	return f[ObjectiveIdTeamId{ObjectiveId: match.ObjectiveId, TeamId: match.TeamId}]
 }
 
+var earliestMatchesCache = make(map[int][]*Match)
+var nextCacheInvalidation = time.Now().Add(10 * time.Minute)
+
 type Match struct {
 	ObjectiveId int
 	Number      int
@@ -101,6 +104,20 @@ func getObjectiveIds(objectives []*repository.Objective) []int {
 }
 
 func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
+	if nextCacheInvalidation.Before(time.Now()) {
+		earliestMatchesCache = make(map[int][]*Match)
+		nextCacheInvalidation = time.Now().Add(10 * time.Minute)
+	}
+	unfinishedObjectiveIds := make([]int, 0)
+	existingMatches := make([]*Match, 0)
+	for _, objective := range objectives {
+		existing, ok := earliestMatchesCache[objective.Id]
+		if ok {
+			existingMatches = append(existingMatches, existing...)
+		} else {
+			unfinishedObjectiveIds = append(unfinishedObjectiveIds, objective.Id)
+		}
+	}
 	query := `
 	WITH ranked_matches AS (
 		SELECT 
@@ -137,9 +154,21 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 	`
 
 	matches := make([]*Match, 0)
-	err := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
+	err := db.Raw(query, map[string]interface{}{"objectiveIds": unfinishedObjectiveIds, "teamIds": teamIds, "eventId": eventId}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
+	}
+	matches = append(matches, existingMatches...)
+	newCache := make(map[int][]*Match)
+	for _, match := range matches {
+		if match.Finished {
+			newCache[match.ObjectiveId] = append(newCache[match.ObjectiveId], match)
+		}
+	}
+	for id, objectives := range newCache {
+		if len(objectives) == len(teamIds) {
+			earliestMatchesCache[id] = objectives
+		}
 	}
 	return matches, nil
 }
