@@ -188,7 +188,7 @@ func (r *CharacterRepository) GetCharactersForUser(user *User) ([]*Character, er
 	if user.GetAccountName(ProviderPoE) != nil {
 		accountName = strings.Split(*user.GetAccountName(ProviderPoE), "#")[0]
 	}
-	err := r.DB.Find(&charData).Where("user_id = ? or old_account_name = ?", user.Id, accountName).Error
+	err := r.DB.Where("user_id = ? or old_account_name = ?", user.Id, accountName).Find(&charData).Error
 	if err != nil {
 		return nil, err
 	}
