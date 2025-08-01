@@ -13,11 +13,13 @@ import (
 
 type CharacterController struct {
 	characterService *service.CharacterService
+	userService      *service.UserService
 }
 
 func NewCharacterController() *CharacterController {
 	return &CharacterController{
 		characterService: service.NewCharacterService(),
+		userService:      service.NewUserService(),
 	}
 }
 
@@ -118,7 +120,16 @@ func (e *CharacterController) getUserCharactersHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		characters, err := e.characterService.GetCharactersForUser(userId)
+		user, err := e.userService.GetUserById(userId, "OauthAccounts")
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.String(404, "User not found")
+				return
+			}
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		characters, err := e.characterService.GetCharactersForUser(user)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -150,7 +161,7 @@ func (c *CharacterController) getCharacterHistoryHandler() gin.HandlerFunc {
 
 type Character struct {
 	Id               string `json:"id" binding:"required"`
-	UserId           int    `json:"user_id" binding:"required"`
+	UserId           *int   `json:"user_id"`
 	EventId          int    `json:"event_id" binding:"required"`
 	Name             string `json:"name" binding:"required"`
 	Level            int    `json:"level" binding:"required"`

@@ -3230,8 +3230,7 @@ const docTemplate = `{
                 "level",
                 "main_skill",
                 "name",
-                "pantheon",
-                "user_id"
+                "pantheon"
             ],
             "properties": {
                 "ascendancy": {

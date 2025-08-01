@@ -38,7 +38,7 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 
 		character := &repository.Character{
 			Id:               update.New.CharacterId,
-			UserId:           update.UserId,
+			UserId:           &update.UserId,
 			EventId:          eventId,
 			Name:             update.New.CharacterName,
 			Level:            update.New.CharacterLevel,
@@ -58,8 +58,8 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 	return nil
 }
 
-func (c *CharacterService) GetCharactersForUser(userId int) ([]*repository.Character, error) {
-	return c.repository.GetCharactersForUser(userId)
+func (c *CharacterService) GetCharactersForUser(user *repository.User) ([]*repository.Character, error) {
+	return c.repository.GetCharactersForUser(user)
 }
 
 func (c *CharacterService) GetCharactersForEvent(eventId int) ([]*repository.Character, error) {
