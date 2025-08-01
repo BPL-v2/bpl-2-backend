@@ -14,16 +14,17 @@ import (
 )
 
 type Character struct {
-	Id               string `gorm:"not null;primaryKey"`
-	UserId           int    `gorm:"not null;index"`
-	EventId          int    `gorm:"not null;index"`
-	Name             string `gorm:"not null"`
-	Level            int    `gorm:"not null"`
-	MainSkill        string `gorm:"not null"`
-	Ascendancy       string `gorm:"not null"`
-	AscendancyPoints int    `gorm:"not null"`
-	Pantheon         bool   `gorm:"not null"`
-	AtlasPoints      int    `gorm:"not null"`
+	Id               string  `gorm:"not null;primaryKey"`
+	UserId           *int    `gorm:"null;index"`
+	EventId          int     `gorm:"not null;index"`
+	Name             string  `gorm:"not null"`
+	Level            int     `gorm:"not null"`
+	MainSkill        string  `gorm:"not null"`
+	Ascendancy       string  `gorm:"not null"`
+	AscendancyPoints int     `gorm:"not null"`
+	Pantheon         bool    `gorm:"not null"`
+	AtlasPoints      int     `gorm:"not null"`
+	OldAccountName   *string `gorm:"null;index"`
 }
 
 type CharacterStat struct {
@@ -109,6 +110,20 @@ func (r *CharacterRepository) GetPobs(characterId string) ([]*CharacterPob, erro
 	return pobs, nil
 }
 
+func (r *CharacterRepository) SaveCharacters(characters []*Character) error {
+	if len(characters) == 0 {
+		return nil
+	}
+	return r.DB.CreateInBatches(characters, 500).Error
+}
+
+func (r *CharacterRepository) SaveCharacterStats(characterStats []*CharacterStat) error {
+	if len(characterStats) == 0 {
+		return nil
+	}
+	return r.DB.CreateInBatches(characterStats, 500).Error
+}
+
 func (r *CharacterRepository) CreateCharacterStat(characterStat *CharacterStat) error {
 	return r.DB.Create(&characterStat).Error
 }
@@ -165,11 +180,15 @@ func (r *CharacterRepository) GetCharactersForEvent(eventId int) ([]*Character, 
 	}
 	return charData, nil
 }
-func (r *CharacterRepository) GetCharactersForUser(userId int) ([]*Character, error) {
+func (r *CharacterRepository) GetCharactersForUser(user *User) ([]*Character, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharactersForUser"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
-	err := r.DB.Find(&charData, Character{UserId: userId}).Error
+	accountName := ""
+	if user.GetAccountName(ProviderPoE) != nil {
+		accountName = strings.Split(*user.GetAccountName(ProviderPoE), "#")[0]
+	}
+	err := r.DB.Find(&charData).Where("user_id = ? or old_account_name = ?", user.Id, accountName).Error
 	if err != nil {
 		return nil, err
 	}

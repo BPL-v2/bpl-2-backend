@@ -670,7 +670,6 @@ definitions:
     - main_skill
     - name
     - pantheon
-    - user_id
     type: object
   CharacterStat:
     properties:
