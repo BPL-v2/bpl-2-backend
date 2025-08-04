@@ -60,14 +60,14 @@ func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange conf
 	return stashChange, nil
 }
 
-func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, userMap map[string]int, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
+func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, userMap map[string]*repository.TeamUserWithPoEToken, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
 	fmt.Println("Checking for item matches in stash change", stashChange.ChangeId)
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 	for _, stash := range stashChange.Stashes {
 		fmt.Println("Processing stash", stash.Id, "for stash change", stashChange.ChangeId)
-		if stash.League != nil && *stash.League == m.event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
-			userId := userMap[*stash.AccountName]
+		if stash.League != nil && *stash.League == m.event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != nil {
+			user := userMap[*stash.AccountName]
 			completions := make(map[int]int)
 			for _, item := range stash.Items {
 
@@ -84,9 +84,9 @@ func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, 
 				EventId:   m.event.Id,
 				Timestamp: stashChange.Timestamp,
 			}
-			fmt.Println("Creating stash change for stash", stash.Id, "and user", userId)
-			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, userId, stashChange)...)
-			fmt.Println("Created", len(matches), "matches for stash", stash.Id, "and user", userId)
+			fmt.Println("Creating stash change for stash", stash.Id, "and user", user.AccountName)
+			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, user, stashChange)...)
+			fmt.Println("Created", len(matches), "matches for stash", stash.Id, "and user", user)
 		}
 	}
 	return matches
@@ -122,7 +122,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		log.Fatal(err)
 		return
 	}
-	userMap := make(map[string]int)
+	userMap := make(map[string]*repository.TeamUserWithPoEToken)
 	teamMap := make(map[string]string)
 	teamNames := make(map[int]string)
 	for _, team := range m.event.Teams {
@@ -130,7 +130,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	}
 
 	for _, user := range users {
-		userMap[user.AccountName] = user.UserId
+		userMap[user.AccountName] = user
 		teamMap[user.AccountName] = teamNames[user.TeamId]
 	}
 	desyncedObjectiveIds := make([]int, 0)
