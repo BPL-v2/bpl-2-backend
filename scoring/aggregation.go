@@ -135,7 +135,9 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 						WHEN match.number >= objectives.required_amount THEN 1000000
 						ELSE match.number
 					END DESC,
-					match.timestamp ASC
+					match.timestamp ASC,
+					match.number DESC,
+					match.user_id ASC
 			) AS rank
 		FROM 
 			objective_matches as match
