@@ -13,9 +13,10 @@ type StashChangeRepository struct {
 }
 
 type ChangeId struct {
-	CurrentChangeId string `gorm:"not null"`
-	NextChangeId    string `gorm:"not null"`
-	EventId         int    `gorm:"primaryKey;references events(id)"`
+	CurrentChangeId string    `gorm:"not null"`
+	NextChangeId    string    `gorm:"not null"`
+	EventId         int       `gorm:"primaryKey;references events(id)"`
+	Timestamp       time.Time `gorm:"not null;default:CURRENT_TIMESTAMP"`
 }
 
 type StashChange struct {
@@ -29,16 +30,28 @@ func NewStashChangeRepository() *StashChangeRepository {
 	return &StashChangeRepository{DB: config.DatabaseConnection()}
 }
 
+func (r *StashChangeRepository) GetLatestTimestamp(eventId int) (time.Time, error) {
+	var latest StashChange
+	err := r.DB.Order("timestamp DESC").First(&latest, "event_id = ?", eventId).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return time.Time{}, nil // No records found
+		}
+		return time.Time{}, err // Other error
+	}
+	return latest.Timestamp, nil
+}
+
 func (r *StashChangeRepository) CreateStashChangeIfNotExists(stashChange *StashChange) (*StashChange, error) {
-	// existing := &StashChange{}
-	// err := r.DB.First(existing, "stash_id = ? AND event_id = ?", stashChange.StashId, stashChange.EventId).Error
-	// if err != nil && err != gorm.ErrRecordNotFound {
-	// 	return nil, err
-	// }
-	// if existing.Id != 0 {
-	// 	return existing, nil
-	// }
-	err := r.DB.Create(stashChange).Error
+	existing := &StashChange{}
+	err := r.DB.First(existing, "stash_id = ? AND event_id = ? AND timestamp = ?", stashChange.StashId, stashChange.EventId, stashChange.Timestamp).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+	if existing.Id != 0 {
+		return existing, nil
+	}
+	err = r.DB.Create(stashChange).Error
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +68,7 @@ func (r *StashChangeRepository) SaveStashChangesConditionally(message config.Sta
 			CurrentChangeId: message.ChangeId,
 			NextChangeId:    message.NextChangeId,
 			EventId:         eventId,
+			Timestamp:       message.Timestamp,
 		}
 		err := tx.Save(currentId).Error
 		if err != nil {
@@ -68,7 +82,7 @@ func (r *StashChangeRepository) SaveStashChangesConditionally(message config.Sta
 	})
 }
 
-func (r *StashChangeRepository) GetChangeIdForEvet(event *Event) (ChangeId, error) {
+func (r *StashChangeRepository) GetChangeIdForEvent(event *Event) (ChangeId, error) {
 	var changeId ChangeId
 	err := r.DB.First(&changeId, "event_id = ?", event.Id).Error
 	if err != nil {

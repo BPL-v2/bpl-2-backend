@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -22,7 +23,7 @@ type MatchingService struct {
 	objectiveMatchService *service.ObjectiveMatchService
 	objectiveService      *service.ObjectiveService
 	userService           *service.UserService
-	lastChangeId          *string
+	lastTimestamp         *time.Time
 	event                 *repository.Event
 }
 
@@ -42,9 +43,9 @@ func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event 
 		event:                 event,
 		ctx:                   ctx,
 	}
-	changeId, err := service.NewStashChangeService().GetCurrentChangeIdForEvent(event)
+	timestamp, err := service.NewStashChangeService().GetLatestTimestamp(event.Id)
 	if err == nil {
-		matchingService.lastChangeId = &changeId
+		matchingService.lastTimestamp = &timestamp
 	}
 	return matchingService, nil
 }
@@ -70,7 +71,6 @@ func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, 
 			user := userMap[*stash.AccountName]
 			completions := make(map[int]int)
 			for _, item := range stash.Items {
-
 				for _, result := range itemChecker.CheckForCompletions(&item) {
 					// while syncing we only update the completions for objectives that are desynced
 					if syncFinished || utils.Contains(desyncedObjectiveIds, result.ObjectiveId) {
@@ -134,11 +134,11 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		teamMap[user.AccountName] = teamNames[user.TeamId]
 	}
 	desyncedObjectiveIds := make([]int, 0)
-	// for _, objective := range objectives {
-	// 	if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ObjectiveTypeItem {
-	// 		desyncedObjectiveIds = append(desyncedObjectiveIds, objective.Id)
-	// 	}
-	// }
+	for _, objective := range objectives {
+		if (objective.SyncStatus == repository.SyncStatusDesynced || objective.SyncStatus == repository.SyncStatusSyncing) && objective.ObjectiveType == repository.ObjectiveTypeItem {
+			desyncedObjectiveIds = append(desyncedObjectiveIds, objective.Id)
+		}
+	}
 	reader, err := m.GetReader(desyncedObjectiveIds)
 	if err != nil {
 		log.Fatal(err)
@@ -152,7 +152,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		m.objectiveService.StartSync(desyncedObjectiveIds)
 		log.Printf("Catching up on desynced objectives: %v", desyncedObjectiveIds)
 	}
-	if m.lastChangeId == nil {
+	if m.lastTimestamp == nil {
 		log.Println("No last change id found")
 		// this means we dont have any earlier changes, so we assume there are no desynced objectives
 		m.objectiveService.SetSynced(desyncedObjectiveIds)
@@ -169,7 +169,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				return
 			}
 			fmt.Println("Processing stash change", stashChange.ChangeId)
-			if m.lastChangeId != nil && stashChange.ChangeId == *m.lastChangeId {
+			if m.lastTimestamp != nil && stashChange.Timestamp.Truncate(time.Millisecond).Equal(m.lastTimestamp.Truncate(time.Millisecond)) {
 				log.Println("Sync finished")
 				// once we reach the starting change id the sync is finished
 				m.objectiveService.SetSynced(desyncedObjectiveIds)

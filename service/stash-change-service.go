@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type NinjaResponse struct {
@@ -35,23 +36,27 @@ func NewStashChangeService() *StashChangeService {
 	}
 }
 
+func (s *StashChangeService) GetLatestTimestamp(eventId int) (time.Time, error) {
+	return s.stashChangeRepository.GetLatestTimestamp(eventId)
+}
+
 func (s *StashChangeService) SaveStashChangesConditionally(message config.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
 	return s.stashChangeRepository.SaveStashChangesConditionally(message, eventId, sendFunc)
 }
 
 func (s *StashChangeService) GetNextChangeIdForEvent(event *repository.Event) (string, error) {
-	changeId, err := s.stashChangeRepository.GetChangeIdForEvet(event)
+	changeId, err := s.stashChangeRepository.GetChangeIdForEvent(event)
 	if err != nil {
 		return "", fmt.Errorf("failed to get next change id for event %d: %s", event.Id, err)
 	}
 	return changeId.NextChangeId, nil
 }
-func (s *StashChangeService) GetCurrentChangeIdForEvent(event *repository.Event) (string, error) {
-	changeId, err := s.stashChangeRepository.GetChangeIdForEvet(event)
+func (s *StashChangeService) GetCurrentChangeIdForEvent(event *repository.Event) (*repository.ChangeId, error) {
+	changeId, err := s.stashChangeRepository.GetChangeIdForEvent(event)
 	if err != nil {
-		return "", fmt.Errorf("failed to get current change id for event %d: %s", event.Id, err)
+		return nil, fmt.Errorf("failed to get current change id for event %d: %s", event.Id, err)
 	}
-	return changeId.CurrentChangeId, nil
+	return &changeId, nil
 }
 
 func (s *StashChangeService) GetNinjaChangeId() (string, error) {
