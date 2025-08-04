@@ -129,26 +129,28 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 // @Router /events/{event_id}/submissions [put]
 func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		var submissionCreate SubmissionCreate
 		if err := c.BindJSON(&submissionCreate); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 		submission := submissionCreate.toModel()
-		submission.EventId, _ = strconv.Atoi(c.Param("event_id"))
 		user, err := e.userService.GetUserFromAuthHeader(c)
 		if err != nil {
 			c.JSON(401, gin.H{"error": "Not authenticated"})
 			return
 		}
-		_, err = e.teamService.GetTeamForUser(submission.EventId, user.Id)
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		team, err := e.teamService.GetTeamForUser(event.Id, user.Id)
 		if err != nil {
 			c.JSON(403, gin.H{"error": "User does not participate in event"})
 			return
 		}
+		submission.TeamId = team.TeamId
 		submission, err = e.submissionService.SaveSubmission(submission, user)
-
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
@@ -230,8 +232,6 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 			return
 		}
 		model := submissionReview.toModel()
-		model.EventId = event.Id
-
 		submission, err := e.submissionService.ReviewSubmission(submissionId, model, user)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -285,7 +285,7 @@ func (s *TeamSubmissionCreate) toModels(eventId int, reviewerId int, teamLeads m
 			UserId:         teamLeads[teamId][0].UserId,
 			ApprovalStatus: repository.PENDING,
 			ReviewerId:     &reviewerId,
-			EventId:        eventId,
+			TeamId:         teamId,
 		})
 	}
 	return submissions

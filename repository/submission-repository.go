@@ -27,7 +27,7 @@ type Submission struct {
 	ApprovalStatus ApprovalStatus `gorm:"not null"`
 	ReviewComment  *string        `gorm:"null"`
 	ReviewerId     *int           `gorm:"null;references:users(id)"`
-	EventId        int            `gorm:"not null;references:events(id)"`
+	TeamId         int            `gorm:"not null;references:teams(id)"`
 
 	Objective *Objective `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE;"`
 	User      *User      `gorm:"foreignKey:UserId;constraint:OnDelete:CASCADE;"`
@@ -40,7 +40,7 @@ func (s *Submission) ToObjectiveMatch() *ObjectiveMatch {
 		Timestamp:   s.Timestamp,
 		Number:      s.Number,
 		UserId:      s.UserId,
-		EventId:     s.EventId,
+		TeamId:      s.TeamId,
 	}
 }
 
@@ -95,7 +95,7 @@ func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission)
 		ObjectiveMatch{
 			ObjectiveId: submission.ObjectiveId,
 			UserId:      submission.UserId,
-			EventId:     submission.EventId,
+			TeamId:      submission.TeamId,
 			Number:      submission.Number,
 		}).Error
 }

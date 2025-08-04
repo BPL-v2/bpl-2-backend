@@ -216,7 +216,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 			Timestamp:     now,
 			Number:        1,
 			UserId:        event.Teams[0].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[0].Id,
 		},
 		// objective match is found in the second stash in the first change
@@ -225,7 +225,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 			Timestamp:     now,
 			Number:        1,
 			UserId:        event.Teams[1].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[1].Id,
 		},
 		{
@@ -233,7 +233,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 			Timestamp:     now.Add(time.Hour),
 			Number:        1,
 			UserId:        event.Teams[1].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[2].Id,
 		},
 	}
@@ -296,7 +296,7 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 			Timestamp:     now,
 			Number:        1,
 			UserId:        event.Teams[0].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[0].Id,
 		},
 		// objective match is found later only in stash of user2 of team 1
@@ -305,7 +305,7 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 			Timestamp:     now.Add(time.Hour),
 			Number:        1,
 			UserId:        event.Teams[0].Users[1].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[2].Id,
 		},
 	}
@@ -370,7 +370,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 			Timestamp:     now,
 			Number:        20,
 			UserId:        event.Teams[0].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[0].Id,
 		},
 		// finished the objective in the second stash change
@@ -379,7 +379,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 			Timestamp:     now.Add(time.Hour),
 			Number:        101,
 			UserId:        event.Teams[0].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[1].Id,
 		},
 		{
@@ -387,7 +387,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 			Timestamp:     now.Add(2 * time.Hour),
 			Number:        200,
 			UserId:        event.Teams[0].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[2].Id,
 		},
 	}
@@ -446,7 +446,7 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 			Timestamp:     t,
 			Number:        num,
 			UserId:        event.Teams[0].Users[0].Id,
-			EventId:       event.Id,
+			TeamId:        event.Teams[0].Id,
 			StashChangeId: &stashChanges[0].Id,
 		}
 	}

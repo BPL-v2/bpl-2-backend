@@ -522,7 +522,7 @@ func (m *PlayerFetchingService) GetPlayerMatches(player *parser.PlayerUpdate, pl
 			UserId:      player.UserId,
 			Number:      result.Number,
 			Timestamp:   time.Now(),
-			EventId:     m.event.Id,
+			TeamId:      player.TeamId,
 		}
 	})
 }
@@ -538,7 +538,7 @@ func (m *PlayerFetchingService) GetTeamMatches(players []*parser.PlayerUpdate, t
 			UserId:      players[0].UserId,
 			Number:      result.Number,
 			Timestamp:   now,
-			EventId:     m.event.Id,
+			TeamId:      players[0].TeamId,
 		}
 	})
 }

@@ -16,7 +16,7 @@ func NewObjectiveMatchService() *ObjectiveMatchService {
 	}
 }
 
-func (e *ObjectiveMatchService) CreateItemMatches(matches map[int]int, userId int, stashChange *repository.StashChange) []*repository.ObjectiveMatch {
+func (e *ObjectiveMatchService) CreateItemMatches(matches map[int]int, user *repository.TeamUserWithPoEToken, stashChange *repository.StashChange) []*repository.ObjectiveMatch {
 	stashChange, err := e.stashchangeRepository.CreateStashChangeIfNotExists(stashChange)
 	if err != nil {
 		return nil
@@ -27,8 +27,8 @@ func (e *ObjectiveMatchService) CreateItemMatches(matches map[int]int, userId in
 			ObjectiveId:   objectiveId,
 			Timestamp:     stashChange.Timestamp,
 			Number:        number,
-			UserId:        userId,
-			EventId:       stashChange.EventId,
+			UserId:        user.UserId,
+			TeamId:        user.TeamId,
 			StashChangeId: &stashChange.Id,
 		}
 		objectiveMatches = append(objectiveMatches, objectiveMatch)
