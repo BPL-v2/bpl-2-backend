@@ -13,7 +13,7 @@ type ObjectiveMatch struct {
 	Timestamp     time.Time `gorm:"not null"`
 	Number        int       `gorm:"not null"`
 	UserId        int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
-	EventId       int       `gorm:"index:obj_match_event;not null;references:events(id)"`
+	TeamId        int       `gorm:"not null;references:teams(id)"`
 	StashChangeId *int      `gorm:"index:obj_match_stash_change;references:stash_change(id)"`
 }
 

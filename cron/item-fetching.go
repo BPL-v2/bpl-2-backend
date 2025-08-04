@@ -539,10 +539,10 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 	realChanges := make([]*client.PublicStashChange, 0)
 	for _, change := range changes {
 		hash := change.GetHash()
-		// if GuildStashHashMap[change.Id] == hash {
-		// 	fmt.Printf("Skipping stash %s, already processed\n", change.Id)
-		// 	continue
-		// }
+		if GuildStashHashMap[change.Id] == hash {
+			fmt.Printf("Skipping stash %s, already processed\n", change.Id)
+			continue
+		}
 		GuildStashHashMapMutex.Lock()
 		GuildStashHashMap[change.Id] = hash
 		GuildStashHashMapMutex.Unlock()
