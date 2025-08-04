@@ -257,6 +257,11 @@ func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, f
 		return
 	}
 	fetchers = InitFetchers(users, stashes)
+	err = config.CreateTopic(f.event.Id)
+	if err != nil {
+		log.Print(err)
+		return
+	}
 	kafkaWriter, err = config.GetWriter(f.event.Id)
 	if err != nil {
 		log.Print(err)
@@ -443,7 +448,7 @@ func (f *FetchingService) FetchGuildStashes() {
 		case <-f.ctx.Done():
 			fmt.Println("Stopping guild stash fetch loop")
 			return
-		case <-time.After(1 * time.Minute):
+		case <-time.After(10 * time.Second):
 		}
 	}
 }
@@ -548,6 +553,9 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 		GuildStashHashMapMutex.Unlock()
 		realChanges = append(realChanges, change)
 		fmt.Printf("Adding stash %s to queue\n", change.Id)
+	}
+	if len(realChanges) == 0 {
+		return
 	}
 
 	message, err := json.Marshal(config.StashChangeMessage{
