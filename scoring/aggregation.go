@@ -163,11 +163,11 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 			newCache[match.ObjectiveId] = append(newCache[match.ObjectiveId], match)
 		}
 	}
-	for id, objectives := range newCache {
-		if len(objectives) == len(teamIds) {
-			earliestMatchesCache[id] = objectives
-		}
-	}
+	// for id, objectives := range newCache {
+	// 	if len(objectives) == len(teamIds) {
+	// 		earliestMatchesCache[id] = objectives
+	// 	}
+	// }
 	return matches, nil
 }
 
