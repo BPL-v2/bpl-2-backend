@@ -61,6 +61,8 @@ to migrate to the latest version
 
 ## Run application
 
+Make sure you've migrated the database to the latest version, added the .env file and run
+
 ```sh
 go run main.go
 ```
