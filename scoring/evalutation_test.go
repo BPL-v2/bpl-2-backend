@@ -48,7 +48,8 @@ func TestHandlePointsFromValue(t *testing.T) {
 	objective := &repository.Objective{
 		Id: 1,
 		ScoringPreset: &repository.ScoringPreset{
-			Points: repository.ExtendingNumberSlice{value},
+			Points:   repository.ExtendingNumberSlice{value},
+			PointCap: 500,
 		},
 	}
 	aggregations := make(ObjectiveTeamMatches)
@@ -68,14 +69,23 @@ func TestHandlePointsFromValue(t *testing.T) {
 		Finished:  true,
 		Timestamp: now.Add(-24 * time.Hour),
 	}
+	match3 := Match{
+		TeamId:    3,
+		Number:    100,
+		UserId:    3,
+		Finished:  true,
+		Timestamp: now.Add(-24 * time.Hour),
+	}
 
 	aggregations[objective.Id][1] = &match1
 	aggregations[objective.Id][2] = &match2
+	aggregations[objective.Id][3] = &match3
 
 	scores, err := handlePointsFromValue(objective, aggregations, []*Score{})
 	assert.NoError(t, err)
 	assert.Equal(t, int(value*float64(match1.Number)), scores[0].Points)
 	assert.Equal(t, int(value*float64(match2.Number)), scores[1].Points)
+	assert.Equal(t, objective.ScoringPreset.PointCap, scores[2].Points)
 }
 
 func TestHandleRankedTime(t *testing.T) {
@@ -101,6 +111,76 @@ func TestHandleRankedTime(t *testing.T) {
 	aggregations[objective.Id][5] = &match5
 
 	scores, err := handleRankedTime(objective, aggregations, []*Score{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, scores[0].Rank)
+	assert.Equal(t, 10, scores[0].Points)
+	assert.Equal(t, 1, scores[1].Rank)
+	assert.Equal(t, 10, scores[1].Points)
+	assert.Equal(t, 2, scores[2].Rank)
+	assert.Equal(t, 5, scores[2].Points)
+	assert.Equal(t, 3, scores[3].Rank)
+	assert.Equal(t, 5, scores[3].Points)
+	assert.Equal(t, 0, scores[4].Rank)
+	assert.Equal(t, 0, scores[4].Points)
+}
+func TestHandleRankedValue(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 1,
+		ScoringPreset: &repository.ScoringPreset{
+			Points: repository.ExtendingNumberSlice{10, 5},
+		},
+	}
+	aggregations := make(ObjectiveTeamMatches)
+	aggregations[objective.Id] = make(TeamMatches)
+	now := time.Now()
+	match1 := Match{TeamId: 1, UserId: 1, Number: 4, Finished: true, Timestamp: now.Add(-24 * time.Hour)}
+	match2 := Match{TeamId: 2, UserId: 2, Number: 4, Finished: true, Timestamp: now.Add(-24 * time.Hour)}
+	match3 := Match{TeamId: 3, UserId: 3, Number: 3, Finished: true, Timestamp: now.Add(-23 * time.Hour)}
+	match4 := Match{TeamId: 4, UserId: 4, Number: 2, Finished: true, Timestamp: now.Add(-22 * time.Hour)}
+	match5 := Match{TeamId: 5, UserId: 5, Number: 1, Finished: false, Timestamp: now.Add(-21 * time.Hour)}
+
+	aggregations[objective.Id][1] = &match1
+	aggregations[objective.Id][2] = &match2
+	aggregations[objective.Id][3] = &match3
+	aggregations[objective.Id][4] = &match4
+	aggregations[objective.Id][5] = &match5
+
+	scores, err := handleRankedValue(objective, aggregations, []*Score{})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, scores[0].Rank)
+	assert.Equal(t, 10, scores[0].Points)
+	assert.Equal(t, 1, scores[1].Rank)
+	assert.Equal(t, 10, scores[1].Points)
+	assert.Equal(t, 2, scores[2].Rank)
+	assert.Equal(t, 5, scores[2].Points)
+	assert.Equal(t, 3, scores[3].Rank)
+	assert.Equal(t, 5, scores[3].Points)
+	assert.Equal(t, 0, scores[4].Rank)
+	assert.Equal(t, 0, scores[4].Points)
+}
+func TestHandleRankedReverse(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 1,
+		ScoringPreset: &repository.ScoringPreset{
+			Points: repository.ExtendingNumberSlice{10, 5},
+		},
+	}
+	aggregations := make(ObjectiveTeamMatches)
+	aggregations[objective.Id] = make(TeamMatches)
+	now := time.Now()
+	match1 := Match{TeamId: 1, UserId: 1, Number: 1, Finished: true, Timestamp: now.Add(-24 * time.Hour)}
+	match2 := Match{TeamId: 2, UserId: 2, Number: 1, Finished: true, Timestamp: now.Add(-24 * time.Hour)}
+	match3 := Match{TeamId: 3, UserId: 3, Number: 2, Finished: true, Timestamp: now.Add(-23 * time.Hour)}
+	match4 := Match{TeamId: 4, UserId: 4, Number: 3, Finished: true, Timestamp: now.Add(-22 * time.Hour)}
+	match5 := Match{TeamId: 5, UserId: 5, Number: 4, Finished: false, Timestamp: now.Add(-21 * time.Hour)}
+
+	aggregations[objective.Id][1] = &match1
+	aggregations[objective.Id][2] = &match2
+	aggregations[objective.Id][3] = &match3
+	aggregations[objective.Id][4] = &match4
+	aggregations[objective.Id][5] = &match5
+
+	scores, err := handleRankedReverse(objective, aggregations, []*Score{})
 	assert.NoError(t, err)
 	assert.Equal(t, 1, scores[0].Rank)
 	assert.Equal(t, 10, scores[0].Points)
