@@ -393,7 +393,7 @@ func (f *FetchingService) GetAvailableStashes(user *repository.TeamUserWithPoETo
 	}
 	response, err := f.poeClient.ListGuildStashes(user.Token, f.event.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list guild stashes for user %d: %w", user.UserId, err)
+		return nil, fmt.Errorf("failed to list guild stashes for user %d: %v", user.UserId, err)
 	}
 	return &response.Stashes, nil
 }
