@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -22,10 +21,6 @@ type Score struct {
 	Timestamp time.Time
 	Number    int
 	Finished  bool
-}
-
-func (s *Score) Identifier() string {
-	return strconv.Itoa(s.Id) + "-" + strconv.Itoa(s.TeamId)
 }
 
 var scoreEvaluationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
