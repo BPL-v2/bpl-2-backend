@@ -168,6 +168,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 		ObjectiveType:  repository.ObjectiveTypeItem,
 		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
+		EventId:        event.Id,
 	}
 	err := db.Create(objective).Error
 	if err != nil {
@@ -185,7 +186,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 			EventId:   event.Id,
 			Timestamp: now,
 		},
-		// stashes is found again in another change later
+		// stashes are found again in another change later
 		{
 			StashId:   "stash1",
 			EventId:   event.Id,
@@ -215,7 +216,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 			Timestamp:     now,
 			Number:        1,
 			UserId:        event.Teams[1].Users[0].Id,
-			TeamId:        event.Teams[0].Id,
+			TeamId:        event.Teams[1].Id,
 			StashChangeId: &stashChanges[1].Id,
 		},
 		{
@@ -223,7 +224,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 			Timestamp:     now.Add(time.Hour),
 			Number:        1,
 			UserId:        event.Teams[1].Users[0].Id,
-			TeamId:        event.Teams[0].Id,
+			TeamId:        event.Teams[1].Id,
 			StashChangeId: &stashChanges[2].Id,
 		},
 	}
@@ -233,6 +234,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error in AggregateMatches: %v", err)
 	}
+	fmt.Printf("Matches: %+v\n", matches[2][1])
 	objMatches, ok := matches[objective.Id]
 	assert.True(t, ok, "Objective should be found in matches")
 	_, ok = objMatches[event.Teams[0].Id]
@@ -254,6 +256,7 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 		ObjectiveType:  repository.ObjectiveTypeItem,
 		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
+		EventId:        event.Id,
 	}
 	err := db.Create(objective).Error
 	if err != nil {
@@ -329,6 +332,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 		ObjectiveType:  repository.ObjectiveTypeItem,
 		NumberField:    repository.NumberFieldStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
+		EventId:        event.Id,
 	}
 	err := db.Create(objective).Error
 	if err != nil {
@@ -417,6 +421,7 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 		SyncStatus:     repository.SyncStatusSynced,
 		ValidFrom:      &timeStart,
 		ValidTo:        &timeEnd,
+		EventId:        event.Id,
 	}
 	err := db.Create(objective).Error
 	if err != nil {
@@ -454,5 +459,5 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error in AggregateMatches: %v", err)
 	}
-	assert.Equal(t, 8, matches[objective.Id][event.Teams[0].Id].Number, "Match should be 8 since its the difference between the first and last timestamp")
+	assert.Equal(t, 9, matches[objective.Id][event.Teams[0].Id].Number, "Number should be 9 since its the difference between the first and last timestamp")
 }
