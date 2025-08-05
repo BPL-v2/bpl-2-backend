@@ -113,6 +113,7 @@ func Diff(scoreMap ScoreMap, scores []*scoring.Score) (ScoreMap, ScoreMap) {
 func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
 	newScores, err := s.calcScores(eventId)
 	if err != nil {
+		fmt.Println("Error calculating scores:", err)
 		return nil, err
 	}
 	oldScore := s.LatestScores[eventId]
