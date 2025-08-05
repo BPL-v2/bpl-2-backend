@@ -4590,7 +4590,8 @@ const docTemplate = `{
                 "RANKED_VALUE",
                 "RANKED_REVERSE",
                 "RANKED_COMPLETION_TIME",
-                "BONUS_PER_COMPLETION"
+                "BONUS_PER_COMPLETION",
+                "BINGO_3"
             ],
             "x-enum-varnames": [
                 "PRESENCE",
@@ -4599,7 +4600,8 @@ const docTemplate = `{
                 "RANKED_VALUE",
                 "RANKED_REVERSE",
                 "RANKED_COMPLETION",
-                "BONUS_PER_COMPLETION"
+                "BONUS_PER_COMPLETION",
+                "BINGO_3"
             ]
         },
         "ScoringPresetType": {

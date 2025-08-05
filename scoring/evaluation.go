@@ -75,6 +75,7 @@ var scoringFunctions = map[repository.ScoringMethod]func(objective *repository.O
 	repository.POINTS_FROM_VALUE:    handlePointsFromValue,
 	repository.RANKED_COMPLETION:    handleChildRanking,
 	repository.BONUS_PER_COMPLETION: handleChildBonus,
+	repository.BINGO_3:              handleBingoN(3),
 }
 
 func handlePointsFromValue(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
@@ -115,6 +116,60 @@ func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamM
 	}
 
 	return scores, nil
+}
+
+func handleBingoN(n int) func(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
+	// Handles a category of collection goals where a team must finish n goals to score, but does not get more points for finishing more than n.
+	return func(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
+		sc := make(map[int][]*Score, 0)
+
+		for _, score := range childScores {
+			if score.Points > 0 {
+				sc[score.TeamId] = append(sc[score.TeamId], score)
+			}
+		}
+		timeToFinish := make(map[int]time.Time, 0)
+		for teamId, scores := range sc {
+			if len(scores) < n {
+				continue
+			}
+			sort.Slice(scores, func(i, j int) bool {
+				return scores[i].Timestamp.Before(scores[j].Timestamp)
+			})
+			timeToFinish[teamId] = scores[n-1].Timestamp
+			for i := n; i < len(scores); i++ {
+				scores[i].Points = 0
+			}
+		}
+		finishes := make([]TeamCompletion, 0, len(timeToFinish))
+		for teamId, ts := range timeToFinish {
+			finishes = append(finishes, TeamCompletion{TeamId: teamId, LatestTimestamp: ts})
+		}
+		sort.Slice(finishes, func(i, j int) bool {
+			return finishes[i].LatestTimestamp.Before(finishes[j].LatestTimestamp)
+		})
+
+		placements := make(map[int]int, len(finishes))
+		scores := make([]*Score, 0)
+		rank := 1
+		for i, f := range finishes {
+			if i > 0 && f.LatestTimestamp.After(finishes[i-1].LatestTimestamp) {
+				rank = i + 1
+			}
+			placements[f.TeamId] = rank
+			scores = append(scores, &Score{
+				Id:        objective.Id,
+				TeamId:    f.TeamId,
+				Timestamp: f.LatestTimestamp,
+				Number:    n,
+				Finished:  true,
+				Points:    int(objective.ScoringPreset.Points.Get(rank - 1)),
+				Rank:      rank,
+			})
+		}
+		return scores, nil
+	}
+
 }
 
 func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
@@ -195,22 +250,28 @@ func handleChildBonus(objective *repository.Objective, aggregations ObjectiveTea
 		}
 		teamIds[score.TeamId] = true
 	}
-	for teamId, _ := range teamIds {
-		points := 0
-		for i := range finishCounts[teamId] {
-			points += int(objective.ScoringPreset.Points.Get(i))
+	childIds := utils.Map(objective.Children, func(o *repository.Objective) int { return o.Id })
+	for teamId := range teamIds {
+		teamChildScores := utils.Filter(childScores, func(s *Score) bool {
+			return s.TeamId == teamId && utils.Contains(childIds, s.Id) && s.Finished
+		})
+		sort.Slice(teamChildScores, func(i, j int) bool {
+			return teamChildScores[i].Timestamp.Before(teamChildScores[j].Timestamp)
+		})
+
+		for i, score := range teamChildScores {
+			score.Points += int(objective.ScoringPreset.Points.Get(i))
 		}
 		score := &Score{
 			Id:        objective.Id,
 			TeamId:    teamId,
-			Points:    points,
+			Points:    0,
 			Timestamp: time.Now(),
 			Number:    finishCounts[teamId],
 			Finished:  finishCounts[teamId] == len(objective.Children),
 		}
 		scores = append(scores, score)
 	}
-
 	return scores, nil
 }
 
