@@ -3,6 +3,7 @@ package repository
 import (
 	"bpl/config"
 	"bpl/utils"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -155,7 +156,7 @@ func (r *ObjectiveRepository) FinishSync(objectiveIds []int) error {
 func (r *ObjectiveRepository) GetObjectivesByEventId(eventId int, preloads ...string) (*Objective, error) {
 	objectives, err := r.GetObjectivesByEventIdFlat(eventId, preloads...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get objectives for event %d: %w", eventId, err)
 	}
 	idMap := make(map[int]*Objective)
 	for _, objective := range objectives {
@@ -173,7 +174,7 @@ func (r *ObjectiveRepository) GetObjectivesByEventId(eventId int, preloads ...st
 		return o.ParentId == nil
 	})
 	if !found {
-		return nil, gorm.ErrRecordNotFound
+		return nil, fmt.Errorf("no root objective found for event %d", eventId)
 	}
 	return rootObjective, nil
 }
