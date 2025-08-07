@@ -56,7 +56,7 @@ var scoreAggregationDuration = promauto.NewGaugeVec(prometheus.GaugeOpts{
 	Help: "Duration of Aggregation step during scoring",
 }, []string{"aggregation-step"})
 
-func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) (ObjectiveTeamMatches, error) {
+func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) ObjectiveTeamMatches {
 	totalTime := time.Now()
 	aggregations := make(ObjectiveTeamMatches)
 	teamIds := utils.Map(event.Teams, func(team *repository.Team) int {
@@ -95,7 +95,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		}
 	}
 	scoreAggregationDuration.WithLabelValues("total").Set(time.Since(totalTime).Seconds())
-	return aggregations, nil
+	return aggregations
 }
 
 func getObjectiveIds(objectives []*repository.Objective) []int {

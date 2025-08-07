@@ -230,10 +230,7 @@ func TestAggregateMatchesEarliestFresh(t *testing.T) {
 	}
 	db.Create(objectiveMatches)
 
-	matches, err := AggregateMatches(db, event, []*repository.Objective{objective})
-	if err != nil {
-		t.Errorf("Error in AggregateMatches: %v", err)
-	}
+	matches := AggregateMatches(db, event, []*repository.Objective{objective})
 	fmt.Printf("Matches: %+v\n", matches[2][1])
 	objMatches, ok := matches[objective.Id]
 	assert.True(t, ok, "Objective should be found in matches")
@@ -304,10 +301,7 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 	}
 	db.Create(objectiveMatches)
 
-	matches, err := AggregateMatches(db, event, []*repository.Objective{objective})
-	if err != nil {
-		t.Errorf("Error in AggregateMatches: %v", err)
-	}
+	matches := AggregateMatches(db, event, []*repository.Objective{objective})
 	objMatches, ok := matches[objective.Id]
 	assert.True(t, ok, "Objective should be found in matches")
 	match, ok := objMatches[event.Teams[0].Id]
@@ -387,10 +381,7 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 	}
 	db.Create(objectiveMatches)
 
-	matches, err := AggregateMatches(db, event, []*repository.Objective{objective})
-	if err != nil {
-		t.Errorf("Error in AggregateMatches: %v", err)
-	}
+	matches := AggregateMatches(db, event, []*repository.Objective{objective})
 	objMatches, ok := matches[objective.Id]
 	assert.True(t, ok, "Objective should be found in matches")
 	match, ok := objMatches[event.Teams[0].Id]
@@ -455,9 +446,6 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 	}
 	db.Create(objectiveMatches)
 
-	matches, err := AggregateMatches(db, event, []*repository.Objective{objective})
-	if err != nil {
-		t.Errorf("Error in AggregateMatches: %v", err)
-	}
+	matches := AggregateMatches(db, event, []*repository.Objective{objective})
 	assert.Equal(t, 9, matches[objective.Id][event.Teams[0].Id].Number, "Number should be 9 since its the difference between the first and last timestamp")
 }

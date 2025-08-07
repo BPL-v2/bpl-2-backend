@@ -137,10 +137,7 @@ func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err erro
 		return nil, err
 	}
 
-	matches, err := scoring.AggregateMatches(s.db, event, rootObjective.FlatMap())
-	if err != nil {
-		return nil, err
-	}
+	matches := scoring.AggregateMatches(s.db, event, rootObjective.FlatMap())
 	scores, err := scoring.EvaluateAggregations(rootObjective, matches)
 	if err != nil {
 		return nil, err
