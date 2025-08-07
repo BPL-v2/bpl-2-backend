@@ -39,8 +39,13 @@ func TestHandlePresence(t *testing.T) {
 
 	scores, err := handlePresence(objective, aggregations, []*Score{})
 	assert.NoError(t, err)
-	assert.Equal(t, 0, scores[0].Points)
-	assert.Equal(t, 10, scores[1].Points)
+	teamScores := make(map[int]*Score)
+	for _, score := range scores {
+		teamScores[score.TeamId] = score
+	}
+
+	assert.Equal(t, 0, teamScores[1].Points)
+	assert.Equal(t, 10, teamScores[2].Points)
 }
 
 func TestHandlePointsFromValue(t *testing.T) {
@@ -82,10 +87,14 @@ func TestHandlePointsFromValue(t *testing.T) {
 	aggregations[objective.Id][3] = &match3
 
 	scores, err := handlePointsFromValue(objective, aggregations, []*Score{})
+	teamScores := make(map[int]*Score)
+	for _, score := range scores {
+		teamScores[score.TeamId] = score
+	}
 	assert.NoError(t, err)
-	assert.Equal(t, int(value*float64(match1.Number)), scores[0].Points)
-	assert.Equal(t, int(value*float64(match2.Number)), scores[1].Points)
-	assert.Equal(t, objective.ScoringPreset.PointCap, scores[2].Points)
+	assert.Equal(t, int(value*float64(match1.Number)), teamScores[1].Points)
+	assert.Equal(t, int(value*float64(match2.Number)), teamScores[2].Points)
+	assert.Equal(t, objective.ScoringPreset.PointCap, teamScores[3].Points)
 }
 
 func TestHandleRankedTime(t *testing.T) {
@@ -112,16 +121,20 @@ func TestHandleRankedTime(t *testing.T) {
 
 	scores, err := handleRankedTime(objective, aggregations, []*Score{})
 	assert.NoError(t, err)
-	assert.Equal(t, 1, scores[0].Rank)
-	assert.Equal(t, 10, scores[0].Points)
-	assert.Equal(t, 1, scores[1].Rank)
-	assert.Equal(t, 10, scores[1].Points)
-	assert.Equal(t, 2, scores[2].Rank)
-	assert.Equal(t, 5, scores[2].Points)
-	assert.Equal(t, 3, scores[3].Rank)
-	assert.Equal(t, 5, scores[3].Points)
-	assert.Equal(t, 0, scores[4].Rank)
-	assert.Equal(t, 0, scores[4].Points)
+	teamScores := make(map[int]*Score)
+	for _, score := range scores {
+		teamScores[score.TeamId] = score
+	}
+	assert.Equal(t, 1, teamScores[1].Rank)
+	assert.Equal(t, 10, teamScores[1].Points)
+	assert.Equal(t, 1, teamScores[2].Rank)
+	assert.Equal(t, 10, teamScores[2].Points)
+	assert.Equal(t, 2, teamScores[3].Rank)
+	assert.Equal(t, 5, teamScores[3].Points)
+	assert.Equal(t, 3, teamScores[4].Rank)
+	assert.Equal(t, 5, teamScores[4].Points)
+	assert.Equal(t, 0, teamScores[5].Rank)
+	assert.Equal(t, 0, teamScores[5].Points)
 }
 func TestHandleRankedValue(t *testing.T) {
 	objective := &repository.Objective{
@@ -147,16 +160,20 @@ func TestHandleRankedValue(t *testing.T) {
 
 	scores, err := handleRankedValue(objective, aggregations, []*Score{})
 	assert.NoError(t, err)
-	assert.Equal(t, 1, scores[0].Rank)
-	assert.Equal(t, 10, scores[0].Points)
-	assert.Equal(t, 1, scores[1].Rank)
-	assert.Equal(t, 10, scores[1].Points)
-	assert.Equal(t, 2, scores[2].Rank)
-	assert.Equal(t, 5, scores[2].Points)
-	assert.Equal(t, 3, scores[3].Rank)
-	assert.Equal(t, 5, scores[3].Points)
-	assert.Equal(t, 0, scores[4].Rank)
-	assert.Equal(t, 0, scores[4].Points)
+	teamScores := make(map[int]*Score)
+	for _, score := range scores {
+		teamScores[score.TeamId] = score
+	}
+	assert.Equal(t, 1, teamScores[1].Rank)
+	assert.Equal(t, 10, teamScores[1].Points)
+	assert.Equal(t, 1, teamScores[2].Rank)
+	assert.Equal(t, 10, teamScores[2].Points)
+	assert.Equal(t, 2, teamScores[3].Rank)
+	assert.Equal(t, 5, teamScores[3].Points)
+	assert.Equal(t, 3, teamScores[4].Rank)
+	assert.Equal(t, 5, teamScores[4].Points)
+	assert.Equal(t, 0, teamScores[5].Rank)
+	assert.Equal(t, 0, teamScores[5].Points)
 }
 func TestHandleRankedReverse(t *testing.T) {
 	objective := &repository.Objective{
@@ -182,16 +199,20 @@ func TestHandleRankedReverse(t *testing.T) {
 
 	scores, err := handleRankedReverse(objective, aggregations, []*Score{})
 	assert.NoError(t, err)
-	assert.Equal(t, 1, scores[0].Rank)
-	assert.Equal(t, 10, scores[0].Points)
-	assert.Equal(t, 1, scores[1].Rank)
-	assert.Equal(t, 10, scores[1].Points)
-	assert.Equal(t, 2, scores[2].Rank)
-	assert.Equal(t, 5, scores[2].Points)
-	assert.Equal(t, 3, scores[3].Rank)
-	assert.Equal(t, 5, scores[3].Points)
-	assert.Equal(t, 0, scores[4].Rank)
-	assert.Equal(t, 0, scores[4].Points)
+	teamScores := make(map[int]*Score)
+	for _, score := range scores {
+		teamScores[score.TeamId] = score
+	}
+	assert.Equal(t, 1, teamScores[1].Rank)
+	assert.Equal(t, 10, teamScores[1].Points)
+	assert.Equal(t, 1, teamScores[2].Rank)
+	assert.Equal(t, 10, teamScores[2].Points)
+	assert.Equal(t, 2, teamScores[3].Rank)
+	assert.Equal(t, 5, teamScores[3].Points)
+	assert.Equal(t, 3, teamScores[4].Rank)
+	assert.Equal(t, 5, teamScores[4].Points)
+	assert.Equal(t, 0, teamScores[5].Rank)
+	assert.Equal(t, 0, teamScores[5].Points)
 }
 
 func TestHandleChildBonus(t *testing.T) {
