@@ -53,6 +53,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		if event == nil {
 			return
 		}
+
 		rootObjective, err := e.service.GetObjectiveTreeForEvent(event.Id, "Conditions")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -66,13 +67,12 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 			c.JSON(404, gin.H{"error": "Objectives not found"})
 			return
 		}
-		if !getEvent(c).Public {
-			c.JSON(200, toObjectiveResponse(rootObjective))
-			return
+		roles := getUserRoles(c)
+		public := true
+		if utils.Contains(roles, repository.PermissionAdmin) || utils.Contains(roles, repository.PermissionObjectiveDesigner) {
+			public = false
 		}
-		// if the event is public, we return a public version of the objective
-		c.JSON(200, toPublicObjectiveResponse(rootObjective))
-
+		c.JSON(200, toObjectiveResponse(rootObjective, public))
 	}
 }
 
@@ -112,7 +112,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(201, toObjectiveResponse(objective))
+		c.JSON(201, toObjectiveResponse(objective, false))
 	}
 }
 
@@ -179,7 +179,7 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(200, toObjectiveResponse(objective))
+		c.JSON(200, toObjectiveResponse(objective, true))
 	}
 }
 
@@ -253,6 +253,7 @@ type Objective struct {
 	NumberField     repository.NumberField     `json:"number_field" binding:"required"`
 	Aggregation     repository.AggregationType `json:"aggregation" binding:"required"`
 	Children        []*Objective               `json:"children" binding:"required"`
+	HideProgress    bool                       `json:"hide_progress" binding:"required"`
 }
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {
@@ -273,10 +274,25 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 	}
 }
 
-func toObjectiveResponse(objective *repository.Objective) *Objective {
+func toObjectiveResponse(objective *repository.Objective, public bool) *Objective {
 	if objective == nil {
 		return nil
 	}
+	if public && objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
+		return &Objective{
+			Name:            fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
+			ParentId:        objective.ParentId,
+			ValidFrom:       objective.ValidFrom,
+			ValidTo:         objective.ValidTo,
+			ScoringPresetId: objective.ScoringId,
+			ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
+			HideProgress:    objective.HideProgress,
+			Children:        make([]*Objective, 0),
+			Conditions:      make([]*Condition, 0),
+			NumberField:     objective.NumberField,
+		}
+	}
+
 	return &Objective{
 		Id:              objective.Id,
 		Name:            objective.Name,
@@ -291,24 +307,7 @@ func toObjectiveResponse(objective *repository.Objective) *Objective {
 		Aggregation:     objective.Aggregation,
 		ScoringPresetId: objective.ScoringId,
 		ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
-		Children:        utils.Map(objective.Children, toObjectiveResponse),
+		Children:        utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public) }),
+		HideProgress:    objective.HideProgress,
 	}
-}
-
-func toPublicObjectiveResponse(objective *repository.Objective) *Objective {
-	if objective == nil {
-		return nil
-	}
-
-	if objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
-		return &Objective{
-			Name:            fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
-			ParentId:        objective.ParentId,
-			ValidFrom:       objective.ValidFrom,
-			ValidTo:         objective.ValidTo,
-			ScoringPresetId: objective.ScoringId,
-			ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
-		}
-	}
-	return toObjectiveResponse(objective)
 }
