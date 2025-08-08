@@ -235,6 +235,7 @@ type ObjectiveCreate struct {
 	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
 	ScoringId      *int                       `json:"scoring_preset_id"`
+	HideProgress   bool                       `json:"hide_progress"`
 }
 
 type Objective struct {
@@ -268,6 +269,7 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 		ValidTo:        e.ValidTo,
 		ParentId:       &e.ParentId,
 		ScoringId:      e.ScoringId,
+		HideProgress:   e.HideProgress,
 	}
 }
 

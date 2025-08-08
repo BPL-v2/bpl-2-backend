@@ -75,10 +75,12 @@ func addLogger(r *gin.Engine) {
 func addMetrics(r *gin.Engine) {
 	p := ginprometheus.NewPrometheus("gin")
 	re := regexp.MustCompile(`\d+`)
+	charRe := regexp.MustCompile(`characters/[^/]+(/|$)`)
 	p.ReqCntURLLabelMappingFn = func(c *gin.Context) string {
 		url := strings.Split(c.Request.URL.String(), "?")[0]
 		url = strings.ReplaceAll(url, "current", "?")
 		url = re.ReplaceAllString(url, "?")
+		url = charRe.ReplaceAllString(url, "characters/?$1")
 		return strings.TrimPrefix(url, "/api")
 	}
 	p.MetricsPath = "/api/metrics"
