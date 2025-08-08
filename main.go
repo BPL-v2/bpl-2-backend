@@ -68,6 +68,9 @@ func main() {
 func addLogger(r *gin.Engine) {
 	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
 		SkipPaths: []string{"/api/metrics"},
+		Skip: func(c *gin.Context) bool {
+			return c.Request.URL.Query().Get("token") != ""
+		},
 	}))
 
 }
