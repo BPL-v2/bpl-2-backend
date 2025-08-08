@@ -13,14 +13,19 @@ import (
 type ScoreType string
 
 type Score struct {
-	Id        int
-	Points    int
-	TeamId    int
-	UserId    int
-	Rank      int
-	Timestamp time.Time
-	Number    int
-	Finished  bool
+	Id           int
+	Points       int
+	TeamId       int
+	UserId       int
+	Rank         int
+	Timestamp    time.Time
+	Number       int
+	Finished     bool
+	HideProgress bool
+}
+
+func (s *Score) CanShowTo(teamId int) bool {
+	return (s.TeamId == teamId) || s.Finished || !s.HideProgress
 }
 
 var scoreEvaluationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
@@ -48,6 +53,9 @@ func EvaluateAggregations(objective *repository.Objective, aggregations Objectiv
 			categoryScores, err := fun(objective, aggregations, scores)
 			if err != nil {
 				return nil, err
+			}
+			for _, score := range categoryScores {
+				score.HideProgress = objective.HideProgress
 			}
 			scores = append(scores, categoryScores...)
 		}

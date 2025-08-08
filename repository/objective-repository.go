@@ -78,6 +78,7 @@ type Objective struct {
 	ValidFrom      *time.Time      `gorm:"null"`
 	ValidTo        *time.Time      `gorm:"null"`
 	ScoringId      *int            `gorm:"null;references:scoring_presets(id)"`
+	HideProgress   bool            `gorm:"not null;default:false"`
 	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:Id"`
 	SyncStatus     SyncStatus      `gorm:"not null;default:DESYNCED"`
 	Children       []*Objective    `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`

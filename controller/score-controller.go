@@ -17,9 +17,10 @@ import (
 type ScoreController struct {
 	eventService      *service.EventService
 	scoreService      *service.ScoreService
+	userService       *service.UserService
 	mu                sync.Mutex
-	connections       map[int]map[*websocket.Conn]bool
-	simpleConnections map[int]map[*websocket.Conn]bool
+	connections       map[int]map[*websocket.Conn]int
+	simpleConnections map[int]map[*websocket.Conn]int
 }
 
 func NewScoreController() *ScoreController {
@@ -27,8 +28,9 @@ func NewScoreController() *ScoreController {
 	controller := &ScoreController{
 		eventService:      eventService,
 		scoreService:      service.NewScoreService(),
-		connections:       make(map[int]map[*websocket.Conn]bool),
-		simpleConnections: make(map[int]map[*websocket.Conn]bool),
+		userService:       service.NewUserService(),
+		connections:       make(map[int]map[*websocket.Conn]int),
+		simpleConnections: make(map[int]map[*websocket.Conn]int),
 	}
 	controller.StartScoreUpdater()
 	return controller
@@ -65,6 +67,7 @@ var upgrader = websocket.Upgrader{
 // @name Authorization
 // @Success 200 {object} ScoreDiff
 func (e *ScoreController) WebSocketHandler(c *gin.Context) {
+	c.Request.Header.Set("Authorization", "Bearer "+c.Request.URL.Query().Get("token"))
 	event := getEvent(c)
 	if event == nil {
 		return
@@ -76,11 +79,18 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 	}
 	defer conn.Close()
 
+	teamId := 0
+	teamUser, _, err := e.userService.GetTeamForUser(c, event)
+	if err == nil {
+		teamId = teamUser.TeamId
+	}
+
 	if _, ok := e.scoreService.LatestScores[event.Id]; !ok {
 		e.scoreService.LatestScores[event.Id] = make(service.ScoreMap)
 	}
+
 	// Send the latest score to the new subscriber
-	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[event.Id]))
+	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[event.Id], teamId))
 	if err != nil {
 		return
 	}
@@ -91,9 +101,9 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 
 	e.mu.Lock()
 	if _, ok := e.connections[event.Id]; !ok {
-		e.connections[event.Id] = make(map[*websocket.Conn]bool)
+		e.connections[event.Id] = make(map[*websocket.Conn]int)
 	}
-	e.connections[event.Id][conn] = true
+	e.connections[event.Id][conn] = teamId
 	e.mu.Unlock()
 
 	for {
@@ -123,6 +133,12 @@ func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 	if event == nil {
 		return
 	}
+	teamId := 0
+	teamUser, _, err := e.userService.GetTeamForUser(c, event)
+	if err == nil {
+		teamId = teamUser.TeamId
+	}
+
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		http.NotFound(c.Writer, c.Request)
@@ -141,9 +157,9 @@ func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 
 	e.mu.Lock()
 	if _, ok := e.simpleConnections[event.Id]; !ok {
-		e.simpleConnections[event.Id] = make(map[*websocket.Conn]bool)
+		e.simpleConnections[event.Id] = make(map[*websocket.Conn]int)
 	}
-	e.simpleConnections[event.Id][conn] = true
+	e.simpleConnections[event.Id][conn] = teamId
 	e.mu.Unlock()
 
 	for {
@@ -169,14 +185,8 @@ func (e *ScoreController) StartScoreUpdater() {
 			eventIds = utils.Uniques(append(eventIds, utils.Keys(e.simpleConnections)...))
 			e.mu.Unlock()
 			for _, eventId := range eventIds {
-				// fmt.Println("Calculating scores for event", eventId)
 				diff, err := e.scoreService.GetNewDiff(eventId)
 				if err != nil {
-					continue
-				}
-				serializedDiff, err := json.Marshal(toScoreMapResponse(diff))
-				if err != nil {
-					log.Fatal(err)
 					continue
 				}
 				simpleScore, err := json.Marshal(e.scoreService.LatestScores[eventId].GetSimpleScore())
@@ -186,7 +196,12 @@ func (e *ScoreController) StartScoreUpdater() {
 				}
 
 				e.mu.Lock()
-				for conn := range e.connections[eventId] {
+				for conn, teamId := range e.connections[eventId] {
+					serializedDiff, err := json.Marshal(toScoreMapResponse(diff, teamId))
+					if err != nil {
+						log.Fatal(err)
+						continue
+					}
 					if err := conn.WriteMessage(websocket.TextMessage, serializedDiff); err != nil {
 						conn.Close()
 						delete(e.connections[eventId], conn)
@@ -254,11 +269,13 @@ func toScoreDiffResponse(scoreDiff *service.ScoreDifference) *ScoreDiff {
 	}
 }
 
-func toScoreMapResponse(scoreMap service.ScoreMap) []*ScoreDiff {
+func toScoreMapResponse(scoreMap service.ScoreMap, teamId int) []*ScoreDiff {
 	response := make([]*ScoreDiff, 0)
 	for _, teamScores := range scoreMap {
 		for _, scoreDiff := range teamScores {
-			response = append(response, toScoreDiffResponse(scoreDiff))
+			if scoreDiff.Score.CanShowTo(teamId) {
+				response = append(response, toScoreDiffResponse(scoreDiff))
+			}
 		}
 	}
 	return response

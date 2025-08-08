@@ -3820,6 +3820,9 @@ const docTemplate = `{
                 "extra": {
                     "type": "string"
                 },
+                "hide_progress": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "integer"
                 },
