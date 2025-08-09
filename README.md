@@ -26,17 +26,13 @@ To make sure that all api routes are properly documented, we use swag annotation
 ### Installing swag
 
 ```
-wget https://github.com/swaggo/swag/releases/download/v1.16.4/swag_1.16.4_Linux_x86_64.tar.gz -P tmp
-tar -xzf tmp/swag_1.16.4_Linux_x86_64.tar.gz -C tmp
-sudo mv tmp/swag /usr/local/bin/
-rm -rf tmp
+go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
 ### Running it
 
 ```
-swag init
-./cleanup-swagger.sh
+./generate-spec.sh
 ```
 
 This will generate the files in the /docs directory which will be served under the route /api/swagger/doc.json

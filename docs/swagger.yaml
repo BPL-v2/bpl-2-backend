@@ -969,6 +969,8 @@ definitions:
         type: array
       extra:
         type: string
+      hide_progress:
+        type: boolean
       id:
         type: integer
       name:
@@ -994,6 +996,7 @@ definitions:
     - children
     - conditions
     - extra
+    - hide_progress
     - id
     - name
     - number_field
@@ -1503,7 +1506,38 @@ definitions:
     - MEMORY_STRANDS
     type: string
     x-enum-comments:
-      SOCKETS: as string like "RGGB"
+      SOCKETS: as string like "RGBW"
+    x-enum-descriptions:
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - as string like "RGBW"
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
+    - ""
     x-enum-varnames:
     - BASE_TYPE
     - NAME
