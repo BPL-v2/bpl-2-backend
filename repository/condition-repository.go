@@ -28,7 +28,7 @@ const (
 	FRACTURED_MODS   ItemField = "FRACTURED_MODS"
 	INFLUENCES       ItemField = "INFLUENCES"
 	MAX_LINKS        ItemField = "MAX_LINKS"
-	SOCKETS          ItemField = "SOCKETS" // as string like "RGGB"
+	SOCKETS          ItemField = "SOCKETS" // as string like "RGBW"
 	INCUBATOR_KILLS  ItemField = "INCUBATOR_KILLS"
 	IS_CORRUPTED     ItemField = "IS_CORRUPTED"
 	IS_VAAL          ItemField = "IS_VAAL"

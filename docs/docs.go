@@ -3678,6 +3678,7 @@ const docTemplate = `{
                 "children",
                 "conditions",
                 "extra",
+                "hide_progress",
                 "id",
                 "name",
                 "number_field",
@@ -3703,6 +3704,9 @@ const docTemplate = `{
                 },
                 "extra": {
                     "type": "string"
+                },
+                "hide_progress": {
+                    "type": "boolean"
                 },
                 "id": {
                     "type": "integer"
@@ -4440,8 +4444,40 @@ const docTemplate = `{
                 "MEMORY_STRANDS"
             ],
             "x-enum-comments": {
-                "SOCKETS": "as string like \"RGGB\""
+                "SOCKETS": "as string like \"RGBW\""
             },
+            "x-enum-descriptions": [
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "as string like \"RGBW\"",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                ""
+            ],
             "x-enum-varnames": [
                 "BASE_TYPE",
                 "NAME",
