@@ -261,15 +261,18 @@ func handleChildBonus(objective *repository.Objective, aggregations ObjectiveTea
 		sort.Slice(teamChildScores, func(i, j int) bool {
 			return teamChildScores[i].Timestamp.Before(teamChildScores[j].Timestamp)
 		})
-
+		latestTimestamp := time.Time{}
 		for i, score := range teamChildScores {
 			score.Points += int(objective.ScoringPreset.Points.Get(i))
+			if score.Timestamp.After(latestTimestamp) {
+				latestTimestamp = score.Timestamp
+			}
 		}
 		score := &Score{
 			Id:        objective.Id,
 			TeamId:    teamId,
 			Points:    0,
-			Timestamp: time.Now(),
+			Timestamp: latestTimestamp,
 			Number:    finishCounts[teamId],
 			Finished:  finishCounts[teamId] == len(objective.Children),
 		}
