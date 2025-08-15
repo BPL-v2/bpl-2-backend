@@ -317,5 +317,6 @@ func toSignupResponse(signup *repository.Signup) *Signup {
 		ActualPlaytime:   signup.ActualPlayTime,
 		NeedsHelp:        signup.NeedsHelp,
 		WantsToHelp:      signup.WantsToHelp,
+		Extra:            signup.Extra,
 	}
 }
