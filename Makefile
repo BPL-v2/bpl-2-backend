@@ -54,6 +54,9 @@ help:
 	@echo "Documentation:"
 	@echo "  swagger       - Generate swagger documentation"
 	@echo ""
+	@echo "Authentication:"
+	@echo "  create-token  - Create JWT token (usage: make create-token ID=1 PERMISSIONS=admin,manager)"
+	@echo ""
 	@echo "Docker:"
 	@echo "  docker-build  - Build Docker image"
 	@echo "  docker-run    - Run Docker container"
@@ -227,3 +230,16 @@ security:
 	@which govulncheck > /dev/null || $(GOCMD) install golang.org/x/vuln/cmd/govulncheck@latest
 	govulncheck ./...
 	@echo "All security checks completed!"
+
+# Authentication targets
+.PHONY: create-token
+create-token:
+	@if [ -z "$(ID)" ]; then \
+		echo "Error: ID parameter is required. Usage: make create-token ID=1 [PERMISSIONS=admin,manager]"; \
+		exit 1; \
+	fi
+	@if [ -n "$(PERMISSIONS)" ]; then \
+		./create-test-token.sh -id=$(ID) -permissions=$(PERMISSIONS); \
+	else \
+		./create-test-token.sh -id=$(ID); \
+	fi
