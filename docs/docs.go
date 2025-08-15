@@ -4043,6 +4043,9 @@ const docTemplate = `{
                 "expected_playtime": {
                     "type": "integer"
                 },
+                "extra": {
+                    "type": "string"
+                },
                 "needs_help": {
                     "type": "boolean"
                 },
@@ -4077,6 +4080,9 @@ const docTemplate = `{
             "properties": {
                 "expected_playtime": {
                     "type": "integer"
+                },
+                "extra": {
+                    "type": "string"
                 },
                 "needs_help": {
                     "type": "boolean"
