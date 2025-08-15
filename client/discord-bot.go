@@ -1,11 +1,11 @@
 package client
 
 import (
+	"bpl/config"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,12 +17,10 @@ type LocalDiscordClient struct {
 }
 
 func NewLocalDiscordClient() *LocalDiscordClient {
-	url := os.Getenv("DISCORD_BOT_URL")
-	serverId := os.Getenv("DISCORD_GUILD_ID")
 	return &LocalDiscordClient{
 		Client:   &http.Client{},
-		BaseURL:  url,
-		ServerId: serverId,
+		BaseURL:  config.Env().DiscordBotURL,
+		ServerId: config.Env().DiscordGuildID,
 	}
 }
 

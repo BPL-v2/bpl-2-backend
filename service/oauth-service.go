@@ -2,6 +2,7 @@ package service
 
 import (
 	"bpl/client"
+	"bpl/config"
 	"bpl/repository"
 	"bpl/utils"
 	"context"
@@ -9,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -84,8 +84,8 @@ func NewOauthService() *OauthService {
 	return &OauthService{
 		Config: map[repository.Provider]*oauth2.Config{
 			repository.ProviderDiscord: {
-				ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
-				ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
+				ClientID:     config.Env().DiscordClientID,
+				ClientSecret: config.Env().DiscordClientSecret,
 				Scopes:       []string{"identify"},
 				Endpoint: oauth2.Endpoint{
 					AuthURL:  "https://discord.com/oauth2/authorize",
@@ -93,8 +93,8 @@ func NewOauthService() *OauthService {
 				},
 			},
 			repository.ProviderTwitch: {
-				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
-				ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
+				ClientID:     config.Env().TwitchClientID,
+				ClientSecret: config.Env().TwitchClientSecret,
 				Scopes:       []string{},
 				Endpoint: oauth2.Endpoint{
 					AuthURL:  "https://id.twitch.tv/oauth2/authorize",
@@ -102,8 +102,8 @@ func NewOauthService() *OauthService {
 				},
 			},
 			repository.ProviderPoE: {
-				ClientID:     os.Getenv("POE_CLIENT_ID"),
-				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
+				ClientID:     config.Env().POEClientID,
+				ClientSecret: config.Env().POEClientSecret,
 				Scopes:       []string{"account:profile", "account:characters", "account:league_accounts", "account:guild:stashes"},
 				Endpoint: oauth2.Endpoint{
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
@@ -113,13 +113,13 @@ func NewOauthService() *OauthService {
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
 			repository.ProviderTwitch: {
-				ClientID:     os.Getenv("TWITCH_CLIENT_ID"),
-				ClientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
+				ClientID:     config.Env().TwitchClientID,
+				ClientSecret: config.Env().TwitchClientSecret,
 				TokenURL:     "https://id.twitch.tv/oauth2/token",
 			},
 			repository.ProviderPoE: {
-				ClientID:     os.Getenv("POE_CLIENT_ID"),
-				ClientSecret: os.Getenv("POE_CLIENT_SECRET"),
+				ClientID:     config.Env().POEClientID,
+				ClientSecret: config.Env().POEClientSecret,
 				TokenURL:     "https://www.pathofexile.com/oauth/token",
 				Scopes:       []string{"service:psapi"},
 			},
@@ -259,7 +259,7 @@ func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth
 		},
 		Header: http.Header{
 			"Authorization": {"Bearer " + token.AccessToken},
-			"Client-Id":     {os.Getenv("TWITCH_CLIENT_ID")},
+			"Client-Id":     {config.Env().TwitchClientID},
 		},
 	}
 	client := &http.Client{}
@@ -321,7 +321,7 @@ func (e *OauthService) GetApplicationToken(provider repository.Provider) (string
 func (e *OauthService) GetToken(provider repository.Provider) (token string, expiry *time.Time, err error) {
 	if provider == repository.ProviderPoE {
 		poeClient := client.NewPoEClient(1, false, 10)
-		tokenResponse, hhtpErr := poeClient.GetClientCredentials(os.Getenv("POE_CLIENT_ID"), os.Getenv("POE_CLIENT_SECRET"))
+		tokenResponse, hhtpErr := poeClient.GetClientCredentials(config.Env().POEClientID, config.Env().POEClientSecret)
 		if hhtpErr != nil {
 			return "", nil, fmt.Errorf("failed to get PoE token: %s", hhtpErr.Description)
 		}

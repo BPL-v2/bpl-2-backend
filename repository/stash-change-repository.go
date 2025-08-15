@@ -1,12 +1,20 @@
 package repository
 
 import (
+	"bpl/client"
 	"bpl/config"
 	"encoding/json"
 	"time"
 
 	"gorm.io/gorm"
 )
+
+type StashChangeMessage struct {
+	Stashes      []client.PublicStashChange
+	ChangeId     string
+	NextChangeId string
+	Timestamp    time.Time
+}
 
 type StashChangeRepository struct {
 	DB *gorm.DB
@@ -62,7 +70,7 @@ func (r *StashChangeRepository) CreateStashChangeIfNotExists(stashChange *StashC
 func (r *StashChangeRepository) Save(stashChange *StashChange) error {
 	return r.DB.Save(&stashChange).Error
 }
-func (r *StashChangeRepository) SaveStashChangesConditionally(message config.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
+func (r *StashChangeRepository) SaveStashChangesConditionally(message StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		currentId := &ChangeId{
 			CurrentChangeId: message.ChangeId,

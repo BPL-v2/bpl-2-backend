@@ -1,26 +1,15 @@
 package config
 
 import (
-	"bpl/client"
 	"fmt"
 	"net"
-	"os"
 	"strconv"
-	"time"
 
 	"github.com/segmentio/kafka-go"
 )
 
-// message object
-type StashChangeMessage struct {
-	Stashes      []client.PublicStashChange
-	ChangeId     string
-	NextChangeId string
-	Timestamp    time.Time
-}
-
 func CreateTopic(eventId int) error {
-	broker := os.Getenv("KAFKA_BROKER")
+	broker := Env().KafkaBroker
 	if broker == "" {
 		return fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
@@ -71,7 +60,7 @@ func CreateTopic(eventId int) error {
 }
 
 func GetWriter(eventId int) (*kafka.Writer, error) {
-	broker := os.Getenv("KAFKA_BROKER")
+	broker := Env().KafkaBroker
 	if broker == "" {
 		return nil, fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}
@@ -85,7 +74,7 @@ func GetWriter(eventId int) (*kafka.Writer, error) {
 }
 
 func GetReader(eventId int, consumerId int) (*kafka.Reader, error) {
-	broker := os.Getenv("KAFKA_BROKER")
+	broker := Env().KafkaBroker
 	if broker == "" {
 		return nil, fmt.Errorf("KAFKA_BROKER environment variable not set")
 	}

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bpl/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"math"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -38,7 +38,7 @@ type ErrorResponse struct {
 func NewPoEClient(maxRequestsPerSecond float64, raiseForStatus bool, timeOutSeconds int) *PoEClient {
 	baseURL := &url.URL{Scheme: "https", Host: "api.pathofexile.com"}
 	return &PoEClient{
-		Client:         NewAsyncHttpClient(baseURL, os.Getenv("POE_CLIENT_AGENT"), maxRequestsPerSecond),
+		Client:         NewAsyncHttpClient(baseURL, config.Env().POEClientAgent, maxRequestsPerSecond),
 		TimeOutSeconds: timeOutSeconds,
 	}
 }

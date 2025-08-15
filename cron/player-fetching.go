@@ -2,6 +2,7 @@ package cron
 
 import (
 	"bpl/client"
+	"bpl/config"
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
@@ -9,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"sync"
 	"time"
 
@@ -158,9 +158,7 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 		// todo: get the ladder for the correct event
 		resp, clientError = s.client.GetPoE2Ladder(s.event.Name)
 	} else {
-		// todo: once we have a token that allows us to request the ladder api
-		token := os.Getenv("OLD_POE_CLIENT_TOKEN")
-		resp, clientError = s.client.GetFullLadder(token, s.event.Name)
+		resp, clientError = s.client.GetFullLadder(config.Env().OldPOEToken, s.event.Name)
 	}
 	if clientError != nil {
 		log.Printf("Error fetching ladder: %v", clientError)

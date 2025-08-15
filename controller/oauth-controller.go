@@ -2,9 +2,9 @@ package controller
 
 import (
 	"bpl/auth"
+	"bpl/config"
 	"bpl/repository"
 	"bpl/service"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -56,7 +56,7 @@ func (e *OauthController) loginDiscordBotHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body DiscordBotLoginBody
 		c.BindJSON(&body)
-		if body.Token != os.Getenv("DISCORD_BOT_TOKEN") {
+		if body.Token != config.Env().DiscordBotToken {
 			c.JSON(401, gin.H{"error": "Invalid token"})
 			return
 		}

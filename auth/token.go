@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"os"
 	"time"
 
+	"bpl/config"
 	"bpl/repository"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -42,7 +42,7 @@ func CreateToken(user *repository.User) (string, error) {
 			"exp":         time.Now().Add(time.Hour * 24 * 21).Unix(),
 		})
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	tokenString, err := token.SignedString([]byte(config.Env().JWTSecret))
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func CreateToken(user *repository.User) (string, error) {
 
 func ParseToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_SECRET")), nil
+		return []byte(config.Env().JWTSecret), nil
 	})
 
 	if err != nil {
