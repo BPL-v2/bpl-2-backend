@@ -192,24 +192,23 @@ func InitFetchers(users []*repository.TeamUserWithPoEToken, stashes []*repositor
 	}
 }
 
-func (f *FetchingService) FilterStashChanges() {
+func (f *FetchingService) FilterStashChanges() error {
 	err := config.CreateTopic(f.event.Id)
 	if err != nil {
-		log.Print(err)
-		return
+		return fmt.Errorf("failed to create kafka topic: %w", err)
 	}
 
 	writer, err := config.GetWriter(f.event.Id)
 	if err != nil {
-		log.Print(err)
-		return
+		return fmt.Errorf("failed to get kafka writer: %w", err)
+
 	}
 	defer writer.Close()
 
 	for stashChange := range f.stashChannel {
 		select {
 		case <-f.ctx.Done():
-			return
+			return fmt.Errorf("context canceled")
 		default:
 			fmt.Println("filtering stash change", stashChange.ChangeId)
 			stashes := make([]client.PublicStashChange, 0)
@@ -226,9 +225,9 @@ func (f *FetchingService) FilterStashChanges() {
 				Stashes:      stashes,
 				Timestamp:    time.Now(),
 			}
-			fmt.Printf("Writing %d stashes message to kafka: %s\n", len(stashes), stashChange.ChangeId)
+			log.Printf("Writing %d stashes message to kafka: %s\n", len(stashes), stashChange.ChangeId)
 			// make sure that stash changes are only saved if the messages are successfully written to kafka
-			f.stashChangeService.SaveStashChangesConditionally(message, f.event.Id,
+			err = f.stashChangeService.SaveStashChangesConditionally(message, f.event.Id,
 				func(data []byte) error {
 					return writer.WriteMessages(context.Background(),
 						kafka.Message{
@@ -236,8 +235,12 @@ func (f *FetchingService) FilterStashChanges() {
 						},
 					)
 				})
+			if err != nil {
+				log.Printf("Failed to save stash changes conditionally: %v", err)
+			}
 		}
 	}
+	return nil
 }
 
 func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, fetchers *GuildStashFetchers, userNameMap map[int]*string, err error) {
@@ -398,11 +401,10 @@ func (f *FetchingService) GetAvailableStashes(user *repository.TeamUserWithPoETo
 	return &response.Stashes, nil
 }
 
-func (f *FetchingService) FetchGuildStashes() {
+func (f *FetchingService) FetchGuildStashes() error {
 	kafkaWriter, fetchers, userNameMap, err := f.InitGuildStashFetching()
 	if err != nil {
-		fmt.Printf("Failed to initialize guild stash fetching: %v\n", err)
-		return
+		return fmt.Errorf("failed to initialize guild stash fetching: %w", err)
 	}
 
 	defer kafkaWriter.Close()
@@ -411,8 +413,7 @@ func (f *FetchingService) FetchGuildStashes() {
 		fmt.Printf("Fetching guild stashes for event %d\n", f.event.Id)
 		guildStashes, err := f.guildStashRepository.GetActiveByEvent(f.event.Id)
 		if err != nil {
-			fmt.Printf("failed to get guild stashes for event %d: %v\n", f.event.Id, err)
-			return
+			return fmt.Errorf("failed to get guild stashes for event %d: %w", f.event.Id, err)
 		}
 		stashChanges := []*client.PublicStashChange{}
 		persistedStashes := make([]*repository.GuildStashTab, 0)
@@ -446,8 +447,7 @@ func (f *FetchingService) FetchGuildStashes() {
 		}
 		select {
 		case <-f.ctx.Done():
-			fmt.Println("Stopping guild stash fetch loop")
-			return
+			return fmt.Errorf("context canceled")
 		case <-time.After(10 * time.Second):
 		}
 	}
@@ -581,13 +581,29 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 
 func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fetchingService := NewFetchingService(ctx, event, poeClient)
-	go fetchingService.FetchGuildStashes()
+	go func() {
+		err := fetchingService.FetchStashChanges()
+		if err != nil {
+			fmt.Printf("Failed to fetch stash changes: %v\n", err)
+		}
+	}()
 	go fetchingService.AccessDeterminationLoop()
 }
 
 func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fmt.Println("Starting item fetch loop")
 	fetchingService := NewFetchingService(ctx, event, poeClient)
-	go fetchingService.FetchStashChanges()
-	go fetchingService.FilterStashChanges()
+	go func() {
+		err := fetchingService.FetchStashChanges()
+		if err != nil {
+			fmt.Printf("Failed to fetch stash changes: %v\n", err)
+		}
+	}()
+	go func() {
+		err := fetchingService.FilterStashChanges()
+		if err != nil {
+			fmt.Printf("Failed to filter stash changes: %v\n", err)
+		}
+	}()
+
 }

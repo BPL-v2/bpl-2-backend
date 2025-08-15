@@ -164,8 +164,7 @@ func (s *UserService) AddUserFromStashchange(userName string, event *repository.
 	}
 	u.OauthAccounts = append(u.OauthAccounts, oauth)
 	team := event.Teams[rand.IntN(len(event.Teams))]
-	s.teamService.AddUsersToTeams([]*repository.TeamUser{{TeamId: team.Id, UserId: u.Id}}, event)
-	return u, nil
+	return u, s.teamService.AddUsersToTeams([]*repository.TeamUser{{TeamId: team.Id, UserId: u.Id}}, event)
 }
 
 func (s *UserService) GetUsersForEvent(eventId int) ([]*repository.TeamUserWithPoEToken, error) {

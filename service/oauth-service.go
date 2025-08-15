@@ -201,8 +201,11 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 			Expiry:       token.Expiry,
 		},
 	)
-	e.oauthRepository.DeleteOauthsByUserId(authState.User.Id)
-	_, err := e.userService.SaveUser(authState.User)
+	err := e.oauthRepository.DeleteOauthsByUserId(authState.User.Id)
+	if err != nil {
+		return nil, err
+	}
+	_, err = e.userService.SaveUser(authState.User)
 	return authState, err
 }
 func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
@@ -232,7 +235,10 @@ func (e *OauthService) VerifyDiscord(state string, code string, oauthConfig oaut
 	}
 	defer response.Body.Close()
 	discordUser := &DiscordUserResponse{}
-	json.NewDecoder(response.Body).Decode(discordUser)
+	err = json.NewDecoder(response.Body).Decode(discordUser)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode discord user response: %v", err)
+	}
 	return e.addAccountToUser(authState, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
 }
 
@@ -246,8 +252,11 @@ func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth
 		return nil, err
 	}
 	twitchUser := &TwitchUserResponse{}
-	json.NewDecoder(response.Body).Decode(twitchUser)
+	err = json.NewDecoder(response.Body).Decode(twitchUser)
 	response.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode twitch user response: %v", err)
+	}
 	twitchId := twitchUser.Sub
 
 	req := &http.Request{
@@ -268,8 +277,11 @@ func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth
 		return nil, err
 	}
 	twitchExtendedUser := &TwitchExtendedUserResponse{}
-	json.NewDecoder(response.Body).Decode(twitchExtendedUser)
+	err = json.NewDecoder(response.Body).Decode(twitchExtendedUser)
 	response.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode twitch extended user response: %v", err)
+	}
 	return e.addAccountToUser(authState, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
 }
 

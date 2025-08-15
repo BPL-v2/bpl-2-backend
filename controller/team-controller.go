@@ -5,6 +5,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -194,7 +195,12 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		go client.NewLocalDiscordClient().AssignRoles()
+		func() {
+			_, err := client.NewLocalDiscordClient().AssignRoles()
+			if err != nil {
+				log.Printf("Failed to assign roles in Discord: %v", err)
+			}
+		}()
 		c.Status(204)
 	}
 }

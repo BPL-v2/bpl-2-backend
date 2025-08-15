@@ -26,7 +26,10 @@ type Permissions []Permission
 
 func (p *Permissions) Scan(src interface{}) error {
 	x := make(pq.StringArray, 0)
-	x.Scan(src)
+	err := x.Scan(src)
+	if err != nil {
+		return err
+	}
 	permissions := make(Permissions, len(x))
 	for i, perm := range x {
 		permissions[i] = Permission(perm)

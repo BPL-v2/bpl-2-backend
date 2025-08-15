@@ -88,8 +88,11 @@ func (e *ObjectiveService) DuplicateObjectives(oldEventId, newEventId int, prese
 				newObjective.ScoringId = &newId
 			}
 		}
-		e.objectiveRepository.SaveObjective(&newObjective)
-		newObjectiveMap[oldId] = &newObjective
+		obj, err := e.objectiveRepository.SaveObjective(&newObjective)
+		if err != nil {
+			return err
+		}
+		newObjectiveMap[oldId] = obj
 	}
 	for _, objective := range objectives {
 		if objective.ParentId != nil {

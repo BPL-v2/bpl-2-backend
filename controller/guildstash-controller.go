@@ -88,7 +88,8 @@ func (e *GuildStashController) updateAccess() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		ctx, _ := context.WithTimeout(context.Background(), 10*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		defer cancel()
 		err := cron.NewFetchingService(ctx, event, e.poeClient).DetermineStashAccess()
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -128,7 +129,8 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 			c.JSON(403, gin.H{"error": "unauthorized to update stash tab"})
 			return
 		}
-		ctx, _ := context.WithTimeout(context.Background(), 1*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		defer cancel()
 		err = cron.NewFetchingService(ctx, event, e.poeClient).FetchGuildStashTab(tab)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
