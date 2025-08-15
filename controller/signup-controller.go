@@ -183,6 +183,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 		signup.ExpectedPlayTime = signupCreate.ExpectedPlaytime
 		signup.NeedsHelp = signupCreate.NeedsHelp
 		signup.WantsToHelp = signupCreate.WantsToHelp
+		signup.Extra = signupCreate.Extra
 		if signupCreate.PartnerAccountName != "" {
 			partner, err := e.userService.GetUserByOauthProviderAndAccountName(repository.ProviderPoE, signupCreate.PartnerAccountName)
 			if err != nil {
@@ -291,13 +292,15 @@ type Signup struct {
 	IsTeamLead       bool              `json:"team_lead" binding:"required"`
 	NeedsHelp        bool              `json:"needs_help"`
 	WantsToHelp      bool              `json:"wants_to_help"`
+	Extra            *string           `json:"extra"`
 }
 
 type SignupCreate struct {
-	ExpectedPlaytime   int    `json:"expected_playtime" binding:"required"`
-	NeedsHelp          bool   `json:"needs_help"`
-	WantsToHelp        bool   `json:"wants_to_help"`
-	PartnerAccountName string `json:"partner_account_name"`
+	ExpectedPlaytime   int     `json:"expected_playtime" binding:"required"`
+	NeedsHelp          bool    `json:"needs_help"`
+	WantsToHelp        bool    `json:"wants_to_help"`
+	PartnerAccountName string  `json:"partner_account_name"`
+	Extra              *string `json:"extra"`
 }
 
 func toSignupResponse(signup *repository.Signup) *Signup {
