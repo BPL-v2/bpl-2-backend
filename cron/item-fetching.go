@@ -47,7 +47,7 @@ type FetchingService struct {
 	event                *repository.Event
 	poeClient            *client.PoEClient
 	stashChangeService   *service.StashChangeService
-	stashChannel         chan config.StashChangeMessage
+	stashChannel         chan repository.StashChangeMessage
 	oauthService         *service.OauthService
 	userRepository       *repository.UserRepository
 	guildStashRepository *repository.GuildStashRepository
@@ -67,7 +67,7 @@ func NewFetchingService(ctx context.Context, event *repository.Event, poeClient 
 			poeClient:            poeClient,
 			stashChangeService:   stashChangeService,
 			oauthService:         service.NewOauthService(),
-			stashChannel:         make(chan config.StashChangeMessage),
+			stashChannel:         make(chan repository.StashChangeMessage),
 			userRepository:       repository.NewUserRepository(),
 			guildStashRepository: repository.NewGuildStashRepository(),
 		}
@@ -120,7 +120,7 @@ func (f *FetchingService) FetchStashChanges() error {
 				continue
 			}
 			consecutiveErrors = 0
-			f.stashChannel <- config.StashChangeMessage{ChangeId: changeId, NextChangeId: response.NextChangeId, Stashes: response.Stashes}
+			f.stashChannel <- repository.StashChangeMessage{ChangeId: changeId, NextChangeId: response.NextChangeId, Stashes: response.Stashes}
 			changeId = response.NextChangeId
 			changeIdGauge.Set(float64(service.ChangeIdToInt(changeId)))
 			if count%20 == 0 {
@@ -220,7 +220,7 @@ func (f *FetchingService) FilterStashChanges() {
 					stashCounterFiltered.Inc()
 				}
 			}
-			message := config.StashChangeMessage{
+			message := repository.StashChangeMessage{
 				ChangeId:     stashChange.ChangeId,
 				NextChangeId: stashChange.NextChangeId,
 				Stashes:      stashes,
@@ -558,7 +558,7 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 		return
 	}
 
-	message, err := json.Marshal(config.StashChangeMessage{
+	message, err := json.Marshal(repository.StashChangeMessage{
 		ChangeId:     "",
 		NextChangeId: "",
 		Stashes: utils.Map(realChanges, func(change *client.PublicStashChange) client.PublicStashChange {

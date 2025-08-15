@@ -1,11 +1,11 @@
 package client
 
 import (
+	"bpl/config"
 	"bpl/utils"
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"os"
 	"sync"
 	"time"
 )
@@ -49,8 +49,8 @@ type StreamResponse struct {
 
 func NewTwitchClient(token string) *TwitchClient {
 	return &TwitchClient{
-		clientId:     os.Getenv("TWITCH_CLIENT_ID"),
-		clientSecret: os.Getenv("TWITCH_CLIENT_SECRET"),
+		clientId:     config.Env().TwitchClientID,
+		clientSecret: config.Env().TwitchClientSecret,
 		Token:        token,
 		client:       &http.Client{},
 		baseURL:      "https://api.twitch.tv/helix",

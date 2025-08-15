@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bpl/config"
 	"bpl/repository"
 	"encoding/json"
 	"fmt"
@@ -40,7 +39,7 @@ func (s *StashChangeService) GetLatestTimestamp(eventId int) (time.Time, error) 
 	return s.stashChangeRepository.GetLatestTimestamp(eventId)
 }
 
-func (s *StashChangeService) SaveStashChangesConditionally(message config.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
+func (s *StashChangeService) SaveStashChangesConditionally(message repository.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
 	return s.stashChangeRepository.SaveStashChangesConditionally(message, eventId, sendFunc)
 }
 

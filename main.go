@@ -7,7 +7,6 @@ import (
 	"bpl/repository"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -15,7 +14,6 @@ import (
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -35,19 +33,18 @@ import (
 // @name Authorization
 func main() {
 	t := time.Now()
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+
+	// Load and validate configuration
+	cfg := config.Env()
 	db, err := config.InitDB(
-		os.Getenv("DATABASE_HOST"),
-		os.Getenv("DATABASE_PORT"),
-		os.Getenv("POSTGRES_USER"),
-		os.Getenv("POSTGRES_PASSWORD"),
-		os.Getenv("DATABASE_NAME"),
+		cfg.DatabaseHost,
+		cfg.DatabasePort,
+		cfg.PostgresUser,
+		cfg.PostgresPassword,
+		cfg.DatabaseName,
 	)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	_ = db
 	// autoMigrate(db)

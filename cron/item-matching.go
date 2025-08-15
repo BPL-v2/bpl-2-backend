@@ -50,7 +50,7 @@ func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event 
 	return matchingService, nil
 }
 
-func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange config.StashChangeMessage, err error) {
+func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange repository.StashChangeMessage, err error) {
 	msg, err := reader.ReadMessage(context.Background())
 	if err != nil {
 		return stashChange, err
@@ -61,7 +61,7 @@ func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange conf
 	return stashChange, nil
 }
 
-func (m *MatchingService) getItemMatches(stashChange config.StashChangeMessage, userMap map[string]*repository.TeamUserWithPoEToken, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
+func (m *MatchingService) getItemMatches(stashChange repository.StashChangeMessage, userMap map[string]*repository.TeamUserWithPoEToken, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
 	fmt.Println("Checking for item matches in stash change", stashChange.ChangeId)
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
