@@ -19,6 +19,7 @@ type Signup struct {
 	NeedsHelp        bool      `gorm:"not null"`
 	WantsToHelp      bool      `gorm:"not null"`
 	ActualPlayTime   int       `gorm:"not null;default:0"`
+	Extra            *string   `gorm:"null"`
 }
 
 type SignupRepository struct {
