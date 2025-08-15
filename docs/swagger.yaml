@@ -1213,6 +1213,8 @@ definitions:
         type: integer
       expected_playtime:
         type: integer
+      extra:
+        type: string
       needs_help:
         type: boolean
       partner:
@@ -1240,6 +1242,8 @@ definitions:
     properties:
       expected_playtime:
         type: integer
+      extra:
+        type: string
       needs_help:
         type: boolean
       partner_account_name:

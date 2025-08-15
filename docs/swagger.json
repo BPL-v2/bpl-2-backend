@@ -4035,6 +4035,9 @@
                 "expected_playtime": {
                     "type": "integer"
                 },
+                "extra": {
+                    "type": "string"
+                },
                 "needs_help": {
                     "type": "boolean"
                 },
@@ -4069,6 +4072,9 @@
             "properties": {
                 "expected_playtime": {
                     "type": "integer"
+                },
+                "extra": {
+                    "type": "string"
                 },
                 "needs_help": {
                     "type": "boolean"
