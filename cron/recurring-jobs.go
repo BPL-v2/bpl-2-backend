@@ -83,12 +83,15 @@ func (s *RecurringJobService) StartJob(job *RecurringJob) error {
 			existingJob.Cancel()
 		}
 	}
-	s.jobRepository.CreateRecurringJob(&repository.RecurringJob{
+	err := s.jobRepository.CreateRecurringJob(&repository.RecurringJob{
 		JobType:                  job.JobType,
 		SleepAfterEachRunSeconds: job.SleepAfterEachRunSeconds,
 		EndDate:                  job.EndDate,
 		EventId:                  job.EventId,
 	})
+	if err != nil {
+		return err
+	}
 	s.Jobs[job.JobType] = job
 
 	switch job.JobType {

@@ -55,7 +55,11 @@ type DiscordBotLoginBody struct {
 func (e *OauthController) loginDiscordBotHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body DiscordBotLoginBody
-		c.BindJSON(&body)
+		err := c.BindJSON(&body)
+		if err != nil {
+			c.JSON(400, gin.H{"error": "Invalid request body"})
+			return
+		}
 		if body.Token != config.Env().DiscordBotToken {
 			c.JSON(401, gin.H{"error": "Invalid token"})
 			return

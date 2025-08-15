@@ -149,13 +149,19 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	syncing := len(desyncedObjectiveIds) > 0
 	matches := make([]*repository.ObjectiveMatch, 0)
 	if syncing {
-		m.objectiveService.StartSync(desyncedObjectiveIds)
-		log.Printf("Catching up on desynced objectives: %v", desyncedObjectiveIds)
+		err = m.objectiveService.StartSync(desyncedObjectiveIds)
+		if err != nil {
+			log.Printf("Failed to start sync for desynced objectives: %v", err)
+			return
+		}
 	}
 	if m.lastTimestamp == nil {
 		log.Println("No last change id found")
 		// this means we dont have any earlier changes, so we assume there are no desynced objectives
-		m.objectiveService.SetSynced(desyncedObjectiveIds)
+		err = m.objectiveService.SetSynced(desyncedObjectiveIds)
+		if err != nil {
+			log.Printf("Failed to set synced for desynced objectives: %v", err)
+		}
 		desyncedObjectiveIds = make([]int, 0)
 	}
 	for {
@@ -172,7 +178,10 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 			if m.lastTimestamp != nil && stashChange.Timestamp.Truncate(time.Millisecond).Equal(m.lastTimestamp.Truncate(time.Millisecond)) {
 				log.Println("Sync finished")
 				// once we reach the starting change id the sync is finished
-				m.objectiveService.SetSynced(desyncedObjectiveIds)
+				err = m.objectiveService.SetSynced(desyncedObjectiveIds)
+				if err != nil {
+					log.Print(err)
+				}
 				syncing = false
 			}
 

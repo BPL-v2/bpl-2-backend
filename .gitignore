@@ -1,2 +1,5 @@
 .env
 debug
+tmp
+coverage.out
+bin

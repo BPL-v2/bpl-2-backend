@@ -4,7 +4,6 @@ import (
 	"bpl/config"
 	"bpl/controller"
 	"bpl/docs"
-	"bpl/repository"
 	"fmt"
 	"log"
 	"regexp"
@@ -18,7 +17,6 @@ import (
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
-	"gorm.io/gorm"
 )
 
 // @title           BPL Backend API
@@ -51,7 +49,11 @@ func main() {
 
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.SetTrustedProxies(nil)
+	err = r.SetTrustedProxies(nil)
+	if err != nil {
+		fmt.Println("Failed to set trusted proxies:", err)
+		return
+	}
 	addLogger(r)
 	addMetrics(r)
 	addDocs(r)
@@ -59,7 +61,10 @@ func main() {
 	cacheStore := persistence.NewInMemoryStore(60 * time.Second)
 	controller.SetRoutes(r, cacheStore)
 	fmt.Println("Server started in", time.Since(t))
-	r.Run(":8000")
+	err = r.Run(":8000")
+	if err != nil {
+		fmt.Println("Failed to start server:", err)
+	}
 }
 
 func addLogger(r *gin.Engine) {
@@ -135,27 +140,27 @@ func setCors(r *gin.Engine) {
 	})
 }
 
-func autoMigrate(db *gorm.DB) {
-	err := db.AutoMigrate(
-		&repository.Objective{},
-		&repository.Condition{},
-		&repository.Event{},
-		&repository.Team{},
-		&repository.User{},
-		&repository.TeamUser{},
-		&repository.StashChange{},
-		&repository.ObjectiveMatch{},
-		&repository.Submission{},
-		&repository.ClientCredentials{},
-		&repository.Signup{},
-		&repository.Oauth{},
-		&repository.KafkaConsumer{},
-		&repository.RecurringJob{},
-		&repository.LadderEntry{},
-		&repository.ChangeId{},
-		&repository.GuildStashTab{},
-	)
-	if err != nil {
-		panic(err)
-	}
-}
+// func autoMigrate(db *gorm.DB) {
+// 	err := db.AutoMigrate(
+// 		&repository.Objective{},
+// 		&repository.Condition{},
+// 		&repository.Event{},
+// 		&repository.Team{},
+// 		&repository.User{},
+// 		&repository.TeamUser{},
+// 		&repository.StashChange{},
+// 		&repository.ObjectiveMatch{},
+// 		&repository.Submission{},
+// 		&repository.ClientCredentials{},
+// 		&repository.Signup{},
+// 		&repository.Oauth{},
+// 		&repository.KafkaConsumer{},
+// 		&repository.RecurringJob{},
+// 		&repository.LadderEntry{},
+// 		&repository.ChangeId{},
+// 		&repository.GuildStashTab{},
+// 	)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }

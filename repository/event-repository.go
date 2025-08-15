@@ -66,7 +66,10 @@ func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
 		return nil, fmt.Errorf("no current event found: %v", result.Error)
 	}
 	if len(preloads) > 0 && utils.Contains(preloads, "Teams.Users") {
-		LoadUsersIntoEvent(r.DB, event)
+		err := LoadUsersIntoEvent(r.DB, event)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load users into event: %v", err)
+		}
 	}
 
 	return event, nil
@@ -88,7 +91,10 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 		return nil, fmt.Errorf("failed to find event: %v", result.Error)
 	}
 	if len(preloads) > 0 && utils.Contains(preloads, "Teams.Users") {
-		LoadUsersIntoEvent(r.DB, event)
+		err := LoadUsersIntoEvent(r.DB, event)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load users into event: %v", err)
+		}
 	}
 	return event, nil
 }

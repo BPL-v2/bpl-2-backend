@@ -34,7 +34,10 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
-	resource.Expire(600) // Tell docker to hard kill the container in 10 minutes
+	err = resource.Expire(600) // Tell docker to hard kill the container in 10 minutes
+	if err != nil {
+		log.Fatalf("Could not set resource expiration: %s", err)
+	}
 	sqlInfo := fmt.Sprintf(
 		"host=localhost port=%s user=postgres password=postgres dbname=postgres sslmode=disable search_path=bpl2",
 		resource.GetPort("5432/tcp"))

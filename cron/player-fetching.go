@@ -502,7 +502,10 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				teamMatches := service.GetTeamMatches(teamPlayers, teamChecker)
 				matches = append(matches, teamMatches...)
 			}
-			service.objectiveMatchService.SaveMatches(matches, []int{})
+			err = service.objectiveMatchService.SaveMatches(matches, []int{})
+			if err != nil {
+				log.Print(err)
+			}
 			for _, player := range players {
 				player.Old = player.New
 			}
