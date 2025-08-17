@@ -2658,6 +2658,9 @@
                 "hybrid": {
                     "$ref": "#/definitions/ItemHybrid"
                 },
+                "icon": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -4413,6 +4416,7 @@
                 "BASE_TYPE",
                 "NAME",
                 "ITEM_CLASS",
+                "ICON_NAME",
                 "TYPE_LINE",
                 "QUALITY",
                 "LEVEL",
@@ -4463,6 +4467,7 @@
                 "",
                 "",
                 "",
+                "",
                 "as string like \"RGBW\"",
                 "",
                 "",
@@ -4480,6 +4485,7 @@
                 "BASE_TYPE",
                 "NAME",
                 "ITEM_CLASS",
+                "ICON_NAME",
                 "TYPE_LINE",
                 "QUALITY",
                 "LEVEL",
