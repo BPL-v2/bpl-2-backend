@@ -347,7 +347,6 @@ type DisplayItem struct {
 	SocketedItems *[]DisplayItem `json:"socketedItems,omitempty"`
 	W             int            `json:"w"`
 	H             int            `json:"h"`
-	Icon          string         `json:"icon"`
 	// field added by our backend
 	ObjectiveId int `json:"objectiveId,omitempty"`
 }
@@ -413,6 +412,7 @@ type Item struct {
 	InventoryId            *string             `json:"inventoryId,omitempty"`
 	Id                     string              `json:"id"`
 	Identified             bool                `json:"identified"`
+	Icon                   string              `json:"icon"`
 
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only

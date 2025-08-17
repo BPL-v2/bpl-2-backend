@@ -96,6 +96,14 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 			}
 			return ""
 		}, nil
+	case dbModel.ICON_NAME:
+		return func(item *clientModel.Item) string {
+			parts := strings.Split(item.Icon, "/")
+			if len(parts) > 0 {
+				return strings.Split(parts[len(parts)-1], ".")[0]
+			}
+			return ""
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid string field", field)
 	}

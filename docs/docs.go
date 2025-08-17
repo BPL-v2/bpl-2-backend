@@ -2666,6 +2666,9 @@ const docTemplate = `{
                 "hybrid": {
                     "$ref": "#/definitions/ItemHybrid"
                 },
+                "icon": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -4421,6 +4424,7 @@ const docTemplate = `{
                 "BASE_TYPE",
                 "NAME",
                 "ITEM_CLASS",
+                "ICON_NAME",
                 "TYPE_LINE",
                 "QUALITY",
                 "LEVEL",
@@ -4471,6 +4475,7 @@ const docTemplate = `{
                 "",
                 "",
                 "",
+                "",
                 "as string like \"RGBW\"",
                 "",
                 "",
@@ -4488,6 +4493,7 @@ const docTemplate = `{
                 "BASE_TYPE",
                 "NAME",
                 "ITEM_CLASS",
+                "ICON_NAME",
                 "TYPE_LINE",
                 "QUALITY",
                 "LEVEL",

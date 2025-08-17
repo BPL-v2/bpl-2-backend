@@ -13,6 +13,7 @@ const (
 	BASE_TYPE        ItemField = "BASE_TYPE"
 	NAME             ItemField = "NAME"
 	ITEM_CLASS       ItemField = "ITEM_CLASS"
+	ICON_NAME        ItemField = "ICON_NAME"
 	TYPE_LINE        ItemField = "TYPE_LINE"
 	QUALITY          ItemField = "QUALITY"
 	LEVEL            ItemField = "LEVEL"
@@ -54,6 +55,7 @@ const (
 var FieldToType = map[ItemField]FieldType{
 	BASE_TYPE:        String,
 	NAME:             String,
+	ICON_NAME:        String,
 	ITEM_CLASS:       String,
 	TYPE_LINE:        String,
 	QUALITY:          Int,
