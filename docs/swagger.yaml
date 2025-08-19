@@ -851,6 +851,37 @@ definitions:
     - name
     - waitlist_size
     type: object
+  GuildStashChangeResponse:
+    properties:
+      entries:
+        items:
+          properties:
+            account:
+              properties:
+                name:
+                  type: string
+              type: object
+            action:
+              type: string
+            id:
+              type: string
+            item:
+              type: string
+            league:
+              type: string
+            stash:
+              type: string
+            time:
+              type: integer
+            x:
+              type: integer
+            "y":
+              type: integer
+          type: object
+        type: array
+      truncated:
+        type: boolean
+    type: object
   GuildStashTab:
     properties:
       color:
@@ -1843,6 +1874,52 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guild-stash/history:
+    post:
+      description: Adds a new entry to the guild stash history
+      operationId: AddGuildstashHistory
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: guildStashChanges
+        required: true
+        schema:
+          $ref: '#/definitions/GuildStashChangeResponse'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guild-stash/history/latest_timestamp:
+    get:
+      description: Fetches the latest timestamp for a user's guild stash history
+      operationId: GetLatestTimestampForUser
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Latest timestamp in seconds since epoch
+          schema:
+            type: integer
       security:
       - BearerAuth: []
       tags:
