@@ -2113,6 +2113,80 @@ const docTemplate = `{
                 }
             }
         },
+        "/{eventId}/guild-stash/history": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds a new entry to the guild stash history",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "AddGuildstashHistory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "guildStashChanges",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/GuildStashChangeResponse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/{eventId}/guild-stash/history/latest_timestamp": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the latest timestamp for a user's guild stash history",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "GetLatestTimestampForUser",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Latest timestamp in seconds since epoch",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
         "/{eventId}/guild-stash/update-access": {
             "post": {
                 "security": [
@@ -3516,6 +3590,54 @@ const docTemplate = `{
                 },
                 "waitlist_size": {
                     "type": "integer"
+                }
+            }
+        },
+        "GuildStashChangeResponse": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "account": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "action": {
+                                "type": "string"
+                            },
+                            "id": {
+                                "type": "string"
+                            },
+                            "item": {
+                                "type": "string"
+                            },
+                            "league": {
+                                "type": "string"
+                            },
+                            "stash": {
+                                "type": "string"
+                            },
+                            "time": {
+                                "type": "integer"
+                            },
+                            "x": {
+                                "type": "integer"
+                            },
+                            "y": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                },
+                "truncated": {
+                    "type": "boolean"
                 }
             }
         },

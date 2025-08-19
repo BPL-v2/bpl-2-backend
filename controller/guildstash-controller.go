@@ -39,11 +39,78 @@ func setupGuildStashController(PoEClient *client.PoEClient) []RouteInfo {
 		{Method: "GET", Path: "/:stash_id", HandlerFunc: e.getGuildStashTab(), Authenticated: true},
 		{Method: "PATCH", Path: "/:stash_id", HandlerFunc: e.switchStashFetch(), Authenticated: true},
 		{Method: "POST", Path: "/:stash_id/update", HandlerFunc: e.updateStashTab(), Authenticated: true},
+		{Method: "GET", Path: "/history/latest_timestamp", HandlerFunc: e.getLatestTimestampForUser(), Authenticated: true},
+		{Method: "POST", Path: "/history", HandlerFunc: e.addHistory(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
 	}
 	return routes
+}
+
+// @id GetLatestTimestampForUser
+// @Description Fetches the latest timestamp for a user's guild stash history
+// @Tags guild-stash
+// @Produce json
+// @Security BearerAuth
+// @Param eventId path int true "Event Id"
+// @Success 200 {integer} integer "Latest timestamp in seconds since epoch"
+// @Router /{eventId}/guild-stash/history/latest_timestamp [get]
+func (e *GuildStashController) getLatestTimestampForUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		// user, err := e.userService.GetUserFromAuthHeader(c)
+		// if err != nil {
+		// 	c.JSON(401, gin.H{"error": "unauthorized"})
+		// 	return
+		// }
+		timestamp := time.Now().Add(-1 * time.Hour).Unix()
+		c.JSON(200, timestamp)
+	}
+}
+
+type GuildStashChangeResponse struct {
+	Entries []struct {
+		Id      string `json:"id"`
+		Time    int64  `json:"time"`
+		League  string `json:"league"`
+		Stash   string `json:"stash"`
+		Item    string `json:"item"`
+		Action  string `json:"action"`
+		Account struct {
+			Name string `json:"name"`
+		} `json:"account"`
+		X int `json:"x"`
+		Y int `json:"y"`
+	} `json:"entries"`
+	Truncated bool `json:"truncated"`
+}
+
+// @id AddGuildstashHistory
+// @Description Adds a new entry to the guild stash history
+// @Tags guild-stash
+// @Security BearerAuth
+// @Produce json
+// @Param eventId path int true "Event Id"
+// @Param guildStashChanges body GuildStashChangeResponse true "Request body"
+// @Success 204
+// @Router /{eventId}/guild-stash/history [post]
+func (e *GuildStashController) addHistory() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		var body GuildStashChangeResponse
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, gin.H{"error": "invalid request"})
+			return
+		}
+		c.Status(204)
+	}
 }
 
 // @id GetGuildStashForUser
