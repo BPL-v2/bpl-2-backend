@@ -2113,80 +2113,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/{eventId}/guild-stash/history": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Adds a new entry to the guild stash history",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "guild-stash"
-                ],
-                "operationId": "AddGuildstashHistory",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "eventId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Request body",
-                        "name": "guildStashChanges",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/GuildStashChangeResponse"
-                        }
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
-            }
-        },
-        "/{eventId}/guild-stash/history/latest_timestamp": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Fetches the latest timestamp for a user's guild stash history",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "guild-stash"
-                ],
-                "operationId": "GetLatestTimestampForUser",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "eventId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Latest timestamp in seconds since epoch",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                }
-            }
-        },
         "/{eventId}/guild-stash/update-access": {
             "post": {
                 "security": [
@@ -2332,6 +2258,206 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            }
+        },
+        "/{eventId}/guilds": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all guilds for current event with their respective team ids",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "GetGuilds",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TeamGuild"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/{eventId}/guilds/{guildId}/stash-history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches log entries for a guild in an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "GetLogEntriesForGuild",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Guild Id",
+                        "name": "guildId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name of the user doing the action (Make sure to replace the pound sign with a minus)",
+                        "name": "username",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name of the item (Can be partial)",
+                        "name": "itemname",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name of the stash tab",
+                        "name": "stashname",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/GuildStashChangelog"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Adds a new entry to the guild stash history",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "AddGuildstashHistory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Guild Id",
+                        "name": "guildId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "guildStashChanges",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/GuildStashChangeResponse"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/AddGuildStashHistoryResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/{eventId}/guilds/{guildId}/stash-history/latest_timestamp": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the latest timestamp for a user's guild stash history",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "GetLatestTimestampForUser",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Guild Id",
+                        "name": "guildId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/GuildStashLogTimestampResponse"
+                        }
                     }
                 }
             }
@@ -3229,6 +3355,30 @@ const docTemplate = `{
                 }
             }
         },
+        "Action": {
+            "type": "string",
+            "enum": [
+                "added",
+                "modified",
+                "removed"
+            ],
+            "x-enum-varnames": [
+                "ActionAdded",
+                "ActionModified",
+                "ActionRemoved"
+            ]
+        },
+        "AddGuildStashHistoryResponse": {
+            "type": "object",
+            "required": [
+                "number_of_added_entries"
+            ],
+            "properties": {
+                "number_of_added_entries": {
+                    "type": "integer"
+                }
+            }
+        },
         "Atlas": {
             "type": "object",
             "required": [
@@ -3638,6 +3788,57 @@ const docTemplate = `{
                 },
                 "truncated": {
                     "type": "boolean"
+                }
+            }
+        },
+        "GuildStashChangelog": {
+            "type": "object",
+            "required": [
+                "account_name",
+                "action",
+                "item_name",
+                "number",
+                "timestamp"
+            ],
+            "properties": {
+                "account_name": {
+                    "type": "string"
+                },
+                "action": {
+                    "$ref": "#/definitions/Action"
+                },
+                "item_name": {
+                    "type": "string"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "stash_name": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "integer"
+                }
+            }
+        },
+        "GuildStashLogTimestampResponse": {
+            "type": "object",
+            "required": [
+                "league_end",
+                "league_start"
+            ],
+            "properties": {
+                "earliest": {
+                    "type": "integer"
+                },
+                "latest": {
+                    "type": "integer"
+                },
+                "league_end": {
+                    "type": "integer"
+                },
+                "league_start": {
+                    "type": "integer"
                 }
             }
         },
@@ -4368,6 +4569,21 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "TeamGuild": {
+            "type": "object",
+            "required": [
+                "guild_id",
+                "team_id"
+            ],
+            "properties": {
+                "guild_id": {
+                    "type": "integer"
+                },
+                "team_id": {
+                    "type": "integer"
                 }
             }
         },
