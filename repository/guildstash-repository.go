@@ -2,7 +2,7 @@ package repository
 
 import (
 	"bpl/config"
-	"fmt"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -32,6 +32,46 @@ type GuildStashTab struct {
 	Children []*GuildStashTab `gorm:"foreignKey:ParentId,ParentEventId;references:Id,EventId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
+type GuildStashChangelog struct {
+	Id          int       `gorm:"primaryKey"`
+	Timestamp   time.Time `gorm:"not null"`
+	GuildId     int       `gorm:"not null"`
+	EventId     int       `gorm:"not null"`
+	StashName   *string   `gorm:"null"`
+	AccountName string    `gorm:"not null"`
+	Action      Action    `gorm:"not null"`
+	Number      int       `gorm:"not null"`
+	ItemName    string    `gorm:"not null"`
+	X           int       `gorm:"not null"`
+	Y           int       `gorm:"not null"`
+}
+
+type TeamGuild struct {
+	TeamId  int `gorm:"primaryKey"`
+	GuildId int `gorm:"primaryKey"`
+}
+
+type Action int
+
+const (
+	ActionAdded    Action = 1
+	ActionModified Action = 0
+	ActionRemoved  Action = -1
+)
+
+func ActionFromString(action string) Action {
+	switch action {
+	case "added":
+		return ActionAdded
+	case "modified":
+		return ActionModified
+	case "removed":
+		return ActionRemoved
+	default:
+		return ActionModified
+	}
+}
+
 type GuildStashRepository struct {
 	db *gorm.DB
 }
@@ -50,7 +90,6 @@ func (r *GuildStashRepository) DeleteAll(tabs []*GuildStashTab) error {
 }
 
 func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
-	fmt.Println("Saving guild stash tabs:", len(tabs))
 	if len(tabs) == 0 {
 		return nil
 	}
@@ -138,4 +177,72 @@ func (r *GuildStashRepository) SwitchStashFetch(stashId string, eventId int) (*G
 		return nil, err
 	}
 	return &tab, nil
+}
+
+func (r *GuildStashRepository) SaveGuildstashLogs(logs []*GuildStashChangelog) error {
+	if len(logs) == 0 {
+		return nil
+	}
+	return r.db.Save(logs).Error
+}
+
+func (r *GuildStashRepository) GetLatestLogEntryTimestampForGuild(event *Event, guildId int) (*int64, *int64) {
+	var result struct {
+		EarliestTimestamp *time.Time
+		LatestTimestamp   *time.Time
+	}
+	err := r.db.Model(&GuildStashChangelog{}).
+		Select("MIN(timestamp) as earliest_timestamp, MAX(timestamp) as latest_timestamp").
+		Where("event_id = ? AND guild_id = ?", event.Id, guildId).
+		Scan(&result).Error
+
+	if err != nil || result.EarliestTimestamp == nil || result.LatestTimestamp == nil {
+		return nil, nil
+	}
+	earliestTimestamp := result.EarliestTimestamp.Unix() - 1
+	latestTimestamp := result.LatestTimestamp.Unix() + 1
+	return &earliestTimestamp, &latestTimestamp
+}
+
+func (r *GuildStashRepository) GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*GuildStashChangelog, error) {
+	var logs []*GuildStashChangelog
+	query := r.db.Model(&GuildStashChangelog{})
+	query = query.Where("event_id = ? AND guild_id = ?", eventId, guildId)
+	if userName != nil {
+		query = query.Where("account_name = ?", strings.ReplaceAll(*userName, "-", "#"))
+	}
+	if stashName != nil {
+		query = query.Where("stash_name = ?", *stashName)
+	}
+	if itemName != nil {
+		query = query.Where("item_name ILIKE ?", "%"+*itemName+"%")
+	}
+	if limit != nil {
+		query = query.Limit(*limit)
+	}
+	if offset != nil {
+		query = query.Offset(*offset)
+	}
+	err := query.Find(&logs).Error
+	if err != nil {
+		return nil, err
+	}
+	return logs, nil
+}
+
+func (r *GuildStashRepository) SaveTeamGuild(teamId, guildId int) error {
+	teamGuild := &TeamGuild{
+		TeamId:  teamId,
+		GuildId: guildId,
+	}
+	return r.db.Save(teamGuild).Error
+}
+
+func (r *GuildStashRepository) GetGuildsForTeams(teamIds []int) ([]*TeamGuild, error) {
+	var guilds []*TeamGuild
+	err := r.db.Where("team_id IN ?", teamIds).Find(&guilds).Error
+	if err != nil {
+		return nil, err
+	}
+	return guilds, nil
 }

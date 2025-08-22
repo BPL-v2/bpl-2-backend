@@ -10,12 +10,14 @@ import (
 
 type GuildStashService struct {
 	GuildStashRepository *repository.GuildStashRepository
+	TeamRepository       *repository.TeamRepository
 	PoEClient            *client.PoEClient
 }
 
 func NewGuildStashService(PoEClient *client.PoEClient) *GuildStashService {
 	return &GuildStashService{
 		GuildStashRepository: repository.NewGuildStashRepository(),
+		TeamRepository:       repository.NewTeamRepository(),
 		PoEClient:            PoEClient,
 	}
 }
@@ -95,4 +97,30 @@ func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, 
 
 func (s *GuildStashService) SwitchStashFetch(stashId string, eventId int) (*repository.GuildStashTab, error) {
 	return s.GuildStashRepository.SwitchStashFetch(stashId, eventId)
+}
+
+func (s *GuildStashService) SaveGuildstashLogs(stashLogs []*repository.GuildStashChangelog) error {
+	return s.GuildStashRepository.SaveGuildstashLogs(stashLogs)
+}
+
+func (s *GuildStashService) GetLatestLogEntryTimestampForGuild(event *repository.Event, guildId int) (*int64, *int64) {
+	return s.GuildStashRepository.GetLatestLogEntryTimestampForGuild(event, guildId)
+}
+
+func (s *GuildStashService) GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*repository.GuildStashChangelog, error) {
+	return s.GuildStashRepository.GetLogs(eventId, guildId, limit, offset, userName, stashName, itemName)
+}
+
+func (s *GuildStashService) SaveTeamGuild(teamId, guildId int) error {
+	return s.GuildStashRepository.SaveTeamGuild(teamId, guildId)
+}
+
+func (s *GuildStashService) GetGuildsForEvent(event *repository.Event) ([]*repository.TeamGuild, error) {
+	teams, err := s.TeamRepository.GetTeamsForEvent(event.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get teams for event: %w", err)
+	}
+	return s.GuildStashRepository.GetGuildsForTeams(utils.Map(teams, func(team *repository.Team) int {
+		return team.Id
+	}))
 }

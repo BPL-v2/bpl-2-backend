@@ -594,6 +594,23 @@ definitions:
       viewer_count:
         type: integer
     type: object
+  Action:
+    enum:
+    - added
+    - modified
+    - removed
+    type: string
+    x-enum-varnames:
+    - ActionAdded
+    - ActionModified
+    - ActionRemoved
+  AddGuildStashHistoryResponse:
+    properties:
+      number_of_added_entries:
+        type: integer
+    required:
+    - number_of_added_entries
+    type: object
   Atlas:
     properties:
       event_id:
@@ -881,6 +898,41 @@ definitions:
         type: array
       truncated:
         type: boolean
+    type: object
+  GuildStashChangelog:
+    properties:
+      account_name:
+        type: string
+      action:
+        $ref: '#/definitions/Action'
+      item_name:
+        type: string
+      number:
+        type: integer
+      stash_name:
+        type: string
+      timestamp:
+        type: integer
+    required:
+    - account_name
+    - action
+    - item_name
+    - number
+    - timestamp
+    type: object
+  GuildStashLogTimestampResponse:
+    properties:
+      earliest:
+        type: integer
+      latest:
+        type: integer
+      league_end:
+        type: integer
+      league_start:
+        type: integer
+    required:
+    - league_end
+    - league_start
     type: object
   GuildStashTab:
     properties:
@@ -1388,6 +1440,16 @@ definitions:
     - allowed_classes
     - name
     type: object
+  TeamGuild:
+    properties:
+      guild_id:
+        type: integer
+      team_id:
+        type: integer
+    required:
+    - guild_id
+    - team_id
+    type: object
   TeamSubmissionCreate:
     properties:
       objective_id:
@@ -1878,52 +1940,6 @@ paths:
       - BearerAuth: []
       tags:
       - guild-stash
-  /{eventId}/guild-stash/history:
-    post:
-      description: Adds a new entry to the guild stash history
-      operationId: AddGuildstashHistory
-      parameters:
-      - description: Event Id
-        in: path
-        name: eventId
-        required: true
-        type: integer
-      - description: Request body
-        in: body
-        name: guildStashChanges
-        required: true
-        schema:
-          $ref: '#/definitions/GuildStashChangeResponse'
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      security:
-      - BearerAuth: []
-      tags:
-      - guild-stash
-  /{eventId}/guild-stash/history/latest_timestamp:
-    get:
-      description: Fetches the latest timestamp for a user's guild stash history
-      operationId: GetLatestTimestampForUser
-      parameters:
-      - description: Event Id
-        in: path
-        name: eventId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Latest timestamp in seconds since epoch
-          schema:
-            type: integer
-      security:
-      - BearerAuth: []
-      tags:
-      - guild-stash
   /{eventId}/guild-stash/update-access:
     post:
       description: Parses all user access for guild stash tabs
@@ -1939,6 +1955,135 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guilds:
+    get:
+      description: Get all guilds for current event with their respective team ids
+      operationId: GetGuilds
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/TeamGuild'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guilds/{guildId}/stash-history:
+    get:
+      description: Fetches log entries for a guild in an event
+      operationId: GetLogEntriesForGuild
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Guild Id
+        in: path
+        name: guildId
+        required: true
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      - description: Offset
+        in: query
+        name: offset
+        type: integer
+      - description: Name of the user doing the action (Make sure to replace the pound
+          sign with a minus)
+        in: query
+        name: username
+        type: string
+      - description: Name of the item (Can be partial)
+        in: query
+        name: itemname
+        type: string
+      - description: Name of the stash tab
+        in: query
+        name: stashname
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/GuildStashChangelog'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+    post:
+      description: Adds a new entry to the guild stash history
+      operationId: AddGuildstashHistory
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Guild Id
+        in: path
+        name: guildId
+        required: true
+        type: integer
+      - description: Request body
+        in: body
+        name: guildStashChanges
+        required: true
+        schema:
+          $ref: '#/definitions/GuildStashChangeResponse'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/AddGuildStashHistoryResponse'
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guilds/{guildId}/stash-history/latest_timestamp:
+    get:
+      description: Fetches the latest timestamp for a user's guild stash history
+      operationId: GetLatestTimestampForUser
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Guild Id
+        in: path
+        name: guildId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GuildStashLogTimestampResponse'
       security:
       - BearerAuth: []
       tags:
