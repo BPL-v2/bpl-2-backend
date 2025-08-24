@@ -868,6 +868,21 @@ definitions:
     - name
     - waitlist_size
     type: object
+  Guild:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      tag:
+        type: string
+      team_id:
+        type: integer
+    required:
+    - id
+    - name
+    - tag
+    type: object
   GuildStashChangeResponse:
     properties:
       entries:
@@ -1440,16 +1455,6 @@ definitions:
     - allowed_classes
     - name
     type: object
-  TeamGuild:
-    properties:
-      guild_id:
-        type: integer
-      team_id:
-        type: integer
-    required:
-    - guild_id
-    - team_id
-    type: object
   TeamSubmissionCreate:
     properties:
       objective_id:
@@ -1976,8 +1981,40 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/TeamGuild'
+              $ref: '#/definitions/Guild'
             type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - guild-stash
+  /{eventId}/guilds/{guildId}:
+    put:
+      description: Saves a guild for the current event
+      operationId: SaveGuild
+      parameters:
+      - description: Event Id
+        in: path
+        name: eventId
+        required: true
+        type: integer
+      - description: Guild Id
+        in: path
+        name: guildId
+        required: true
+        type: integer
+      - description: Guild
+        in: body
+        name: guild
+        required: true
+        schema:
+          $ref: '#/definitions/Guild'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Guild'
       security:
       - BearerAuth: []
       tags:

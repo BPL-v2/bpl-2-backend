@@ -46,9 +46,11 @@ type GuildStashChangelog struct {
 	Y           int       `gorm:"not null"`
 }
 
-type TeamGuild struct {
-	TeamId  int `gorm:"primaryKey"`
-	GuildId int `gorm:"primaryKey"`
+type Guild struct {
+	Id     int `gorm:"primaryKey"`
+	TeamId int `gorm:"primaryKey"`
+	Name   string
+	Tag    string
 }
 
 type Action int
@@ -230,16 +232,12 @@ func (r *GuildStashRepository) GetLogs(eventId, guildId int, limit, offset *int,
 	return logs, nil
 }
 
-func (r *GuildStashRepository) SaveTeamGuild(teamId, guildId int) error {
-	teamGuild := &TeamGuild{
-		TeamId:  teamId,
-		GuildId: guildId,
-	}
-	return r.db.Save(teamGuild).Error
+func (r *GuildStashRepository) SaveGuild(guild *Guild) error {
+	return r.db.Save(guild).Error
 }
 
-func (r *GuildStashRepository) GetGuildsForTeams(teamIds []int) ([]*TeamGuild, error) {
-	var guilds []*TeamGuild
+func (r *GuildStashRepository) GetGuildsForTeams(teamIds []int) ([]*Guild, error) {
+	var guilds []*Guild
 	err := r.db.Where("team_id IN ?", teamIds).Find(&guilds).Error
 	if err != nil {
 		return nil, err

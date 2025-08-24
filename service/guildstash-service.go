@@ -111,11 +111,11 @@ func (s *GuildStashService) GetLogs(eventId, guildId int, limit, offset *int, us
 	return s.GuildStashRepository.GetLogs(eventId, guildId, limit, offset, userName, stashName, itemName)
 }
 
-func (s *GuildStashService) SaveTeamGuild(teamId, guildId int) error {
-	return s.GuildStashRepository.SaveTeamGuild(teamId, guildId)
+func (s *GuildStashService) SaveGuild(guild *repository.Guild) error {
+	return s.GuildStashRepository.SaveGuild(guild)
 }
 
-func (s *GuildStashService) GetGuildsForEvent(event *repository.Event) ([]*repository.TeamGuild, error) {
+func (s *GuildStashService) GetGuildsForEvent(event *repository.Event) ([]*repository.Guild, error) {
 	teams, err := s.TeamRepository.GetTeamsForEvent(event.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get teams for event: %w", err)
