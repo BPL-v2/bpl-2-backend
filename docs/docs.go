@@ -2292,8 +2292,58 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/TeamGuild"
+                                "$ref": "#/definitions/Guild"
                             }
+                        }
+                    }
+                }
+            }
+        },
+        "/{eventId}/guilds/{guildId}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Saves a guild for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guild-stash"
+                ],
+                "operationId": "SaveGuild",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "eventId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Guild Id",
+                        "name": "guildId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Guild",
+                        "name": "guild",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Guild"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Guild"
                         }
                     }
                 }
@@ -3743,6 +3793,28 @@ const docTemplate = `{
                 }
             }
         },
+        "Guild": {
+            "type": "object",
+            "required": [
+                "id",
+                "name",
+                "tag"
+            ],
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tag": {
+                    "type": "string"
+                },
+                "team_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "GuildStashChangeResponse": {
             "type": "object",
             "properties": {
@@ -4569,21 +4641,6 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
-                }
-            }
-        },
-        "TeamGuild": {
-            "type": "object",
-            "required": [
-                "guild_id",
-                "team_id"
-            ],
-            "properties": {
-                "guild_id": {
-                    "type": "integer"
-                },
-                "team_id": {
-                    "type": "integer"
                 }
             }
         },

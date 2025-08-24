@@ -46,6 +46,7 @@ func setupGuildStashController(PoEClient *client.PoEClient) []RouteInfo {
 		{Method: "POST", Path: "/:event_id/guild-stash/:stash_id/update", HandlerFunc: e.updateStashTab(), Authenticated: true},
 
 		{Method: "GET", Path: "/:event_id/guilds", HandlerFunc: e.getGuilds()},
+		{Method: "PUT", Path: "/:event_id/guilds/:guildId", HandlerFunc: e.saveGuild(), Authenticated: true},
 		{Method: "GET", Path: "/:event_id/guilds/:guildId/stash-history", HandlerFunc: e.getLogEntriesForGuild(), Authenticated: true},
 		{Method: "POST", Path: "/:event_id/guilds/:guildId/stash-history", HandlerFunc: e.addHistory(), Authenticated: true},
 		{Method: "GET", Path: "/:event_id/guilds/:guildId/stash-history/latest_timestamp", HandlerFunc: e.getLatestTimestampForUser(), Authenticated: true},
@@ -62,7 +63,7 @@ func setupGuildStashController(PoEClient *client.PoEClient) []RouteInfo {
 // @Produce json
 // @Security BearerAuth
 // @Param eventId path int true "Event Id"
-// @Success 200 {array} TeamGuild
+// @Success 200 {array} Guild
 // @Router  /{eventId}/guilds [get]
 func (e *GuildStashController) getGuilds() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -75,7 +76,50 @@ func (e *GuildStashController) getGuilds() gin.HandlerFunc {
 			c.JSON(404, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, utils.Map(guilds, toTeamGuild))
+		c.JSON(200, utils.Map(guilds, toGuild))
+	}
+}
+
+// @id SaveGuild
+// @Description Saves a guild for the current event
+// @Tags guild-stash
+// @Security BearerAuth
+// @Produce json
+// @Param eventId path int true "Event Id"
+// @Param guildId path int true "Guild Id"
+// @Param guild body Guild true "Guild"
+// @Success 200 {object} Guild
+// @Router  /{eventId}/guilds/{guildId} [put]
+func (e *GuildStashController) saveGuild() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		guildId, err := strconv.Atoi(c.Param("guildId"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid guild id"})
+			return
+		}
+		teamUser, _, err := e.userService.GetTeamForUser(c, event)
+		if err != nil || !teamUser.IsTeamLead {
+			c.JSON(403, gin.H{"message": "Team lead access required"})
+			return
+		}
+
+		var guild Guild
+		if err := c.ShouldBindJSON(&guild); err != nil {
+			c.JSON(400, gin.H{"error": "invalid request"})
+			return
+		}
+		guild.Id = guildId
+		guild.TeamId = teamUser.TeamId
+		model := guild.toModel()
+		if err := e.guildStashService.SaveGuild(model); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, toGuild(model))
 	}
 }
 
@@ -147,11 +191,6 @@ func (e *GuildStashController) addHistory() gin.HandlerFunc {
 			return
 		}
 		logEntries := body.toLogEntries(events, guildId)
-		err = e.guildStashService.SaveTeamGuild(teamUser.TeamId, guildId)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
 		err = e.guildStashService.SaveGuildstashLogs(logEntries)
 		if err != nil {
 			fmt.Println("Error saving guild stash logs:", err)
@@ -538,18 +577,34 @@ type GuildStashChangelog struct {
 	Action      Action  `json:"action" binding:"required"`
 }
 
-type TeamGuild struct {
-	TeamId  int `json:"team_id" binding:"required"`
-	GuildId int `json:"guild_id" binding:"required"`
+type Guild struct {
+	Id     int    `json:"id" binding:"required"`
+	TeamId int    `json:"team_id"`
+	Name   string `json:"name" binding:"required"`
+	Tag    string `json:"tag" binding:"required"`
 }
 
-func toTeamGuild(model *repository.TeamGuild) *TeamGuild {
+func (t *Guild) toModel() *repository.Guild {
+	if t == nil {
+		return nil
+	}
+	return &repository.Guild{
+		TeamId: t.TeamId,
+		Id:     t.Id,
+		Name:   t.Name,
+		Tag:    t.Tag,
+	}
+}
+
+func toGuild(model *repository.Guild) *Guild {
 	if model == nil {
 		return nil
 	}
-	return &TeamGuild{
-		TeamId:  model.TeamId,
-		GuildId: model.GuildId,
+	return &Guild{
+		Id:     model.Id,
+		TeamId: model.TeamId,
+		Name:   model.Name,
+		Tag:    model.Tag,
 	}
 }
 
