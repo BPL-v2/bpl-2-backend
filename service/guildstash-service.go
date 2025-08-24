@@ -11,6 +11,7 @@ import (
 type GuildStashService struct {
 	GuildStashRepository *repository.GuildStashRepository
 	TeamRepository       *repository.TeamRepository
+	ObjectiveService     *ObjectiveService
 	PoEClient            *client.PoEClient
 }
 
@@ -18,6 +19,7 @@ func NewGuildStashService(PoEClient *client.PoEClient) *GuildStashService {
 	return &GuildStashService{
 		GuildStashRepository: repository.NewGuildStashRepository(),
 		TeamRepository:       repository.NewTeamRepository(),
+		ObjectiveService:     NewObjectiveService(),
 		PoEClient:            PoEClient,
 	}
 }
@@ -123,4 +125,8 @@ func (s *GuildStashService) GetGuildsForEvent(event *repository.Event) ([]*repos
 	return s.GuildStashRepository.GetGuildsForTeams(utils.Map(teams, func(team *repository.Team) int {
 		return team.Id
 	}))
+}
+
+func (s *GuildStashService) GetEarliestDeposits(event *repository.Event) ([]*repository.PlayerCompletion, error) {
+	return s.GuildStashRepository.GetEarliestDeposits(event)
 }

@@ -244,3 +244,39 @@ func (r *GuildStashRepository) GetGuildsForTeams(teamIds []int) ([]*Guild, error
 	}
 	return guilds, nil
 }
+
+type PlayerCompletion struct {
+	Timestamp time.Time
+	UserId    int    `gorm:"column:user_id"`
+	ItemName  string `gorm:"column:item_name"`
+	TeamId    int    `gorm:"column:team_id"`
+}
+
+func (r *GuildStashRepository) GetEarliestDeposits(event *Event) ([]*PlayerCompletion, error) {
+	var results []*PlayerCompletion
+	query := `
+	SELECT timestamp, user_id, item_name, team_id 
+		FROM (
+			SELECT 
+				gsc.timestamp, 
+				o.user_id, 
+				gsc.item_name, 
+				g.team_id,
+				ROW_NUMBER() OVER (
+					PARTITION BY gsc.item_name, g.team_id 
+					ORDER BY gsc.timestamp ASC
+				) as rn
+			FROM guild_stash_changelogs gsc 
+			JOIN guilds g ON g.id = gsc.guild_id 
+			JOIN oauths o ON o."name" = gsc.account_name
+			WHERE gsc.action = 1 AND gsc.number = 1 and g.team_id in ?
+		) ranked
+		WHERE rn = 1
+		ORDER BY timestamp;
+		`
+	err := r.db.Raw(query, event.TeamIds()).Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
