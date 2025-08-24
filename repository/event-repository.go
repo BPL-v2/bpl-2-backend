@@ -42,6 +42,10 @@ func (e *Event) GetRealm() *client.Realm {
 	return nil
 }
 
+func (e *Event) TeamIds() []int {
+	return utils.Map(e.Teams, func(t *Team) int { return t.Id })
+}
+
 type EventRepository struct {
 	DB *gorm.DB
 }

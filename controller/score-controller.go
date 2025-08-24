@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/scoring"
 	"bpl/service"
 	"bpl/utils"
@@ -23,11 +24,11 @@ type ScoreController struct {
 	simpleConnections map[int]map[*websocket.Conn]int
 }
 
-func NewScoreController() *ScoreController {
+func NewScoreController(PoEClient *client.PoEClient) *ScoreController {
 	eventService := service.NewEventService()
 	controller := &ScoreController{
 		eventService:      eventService,
-		scoreService:      service.NewScoreService(),
+		scoreService:      service.NewScoreService(PoEClient),
 		userService:       service.NewUserService(),
 		connections:       make(map[int]map[*websocket.Conn]int),
 		simpleConnections: make(map[int]map[*websocket.Conn]int),
@@ -36,8 +37,8 @@ func NewScoreController() *ScoreController {
 	return controller
 }
 
-func setupScoreController() []RouteInfo {
-	e := NewScoreController()
+func setupScoreController(PoEClient *client.PoEClient) []RouteInfo {
+	e := NewScoreController(PoEClient)
 	baseUrl := "events/:event_id/scores"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/latest", HandlerFunc: e.getLatestScoresForEventHandler()},

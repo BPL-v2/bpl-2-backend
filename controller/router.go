@@ -34,7 +34,7 @@ func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
 	routes = append(routes, setupScoringPresetController()...)
 	routes = append(routes, setupSignupController()...)
 	routes = append(routes, setupSubmissionController()...)
-	routes = append(routes, setupScoreController()...)
+	routes = append(routes, setupScoreController(poeClient)...)
 	routes = append(routes, setupLadderController()...)
 	routes = append(routes, setupTeamSuggestionController()...)
 	routes = append(routes, setupCharacterController()...)
