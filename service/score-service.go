@@ -116,6 +116,9 @@ func GetScoreDifference(prevDiff *ScoreDifference, scoreA *scoring.Score) *Score
 	if scoreB.Points != scoreA.Points {
 		fieldDiff = append(fieldDiff, "Points")
 	}
+	if scoreB.UserId != scoreA.UserId {
+		fieldDiff = append(fieldDiff, "UserId")
+	}
 	if scoreB.Rank != scoreA.Rank {
 		fieldDiff = append(fieldDiff, "Rank")
 	}
