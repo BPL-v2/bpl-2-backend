@@ -17,25 +17,19 @@ For oauth / requests against poe api you'll need to also set some secret values
 
 You can set up your own discord server/bot for testing by following the instructions over at https://github.com/BPL-v2/bpl-2-discord-bot
 
+## Running additional go tools
+Install tools
+```
+make install-tools
+```
+make sure, the location where go install moves tools to is part of your path (on linux its ~/go/bin)
+
 ## Generating the openapi spec
 
 ### Annotating routes
 
 To make sure that all api routes are properly documented, we use swag annotations as comments on all routes
-
-### Installing swag
-
-```
-go install github.com/swaggo/swag/cmd/swag@latest
-```
-
-### Running it
-
-```
-./generate-spec.sh
-```
-
-This will generate the files in the /docs directory which will be served under the route /api/swagger/doc.json
+Running `make swagger` will generate the files in the /docs directory which will be served under the route /api/swagger/doc.json
 
 ## DB migration
 
@@ -44,13 +38,13 @@ We use a custom migration tool to execute sql files for db migrations that uses 
 To run this, run
 
 ```
-./migrate [up|down] n
+make migrate-up
 ```
 
-in the root directory to migrate up/down n versions or
+in the root directory to migrate up n versions or
 
 ```
-./migrate up head
+make migrate-up head
 ```
 
 to migrate to the latest version
@@ -60,5 +54,5 @@ to migrate to the latest version
 Make sure you've migrated the database to the latest version, added the .env file and run
 
 ```sh
-go run main.go
+make dev
 ```
