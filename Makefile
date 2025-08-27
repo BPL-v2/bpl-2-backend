@@ -18,9 +18,9 @@ GOLINT=golangci-lint
 
 # Database related
 DB_CONTAINER=db-local
-MIGRATE_UP=./migrate up head
-MIGRATE_DOWN=./migrate down
-MIGRATE_VERSION=./migrate up
+MIGRATE_UP=go run migrations/migrations.go up head
+MIGRATE_DOWN=go run migrations/migrations.go down
+MIGRATE_VERSION=go run migrations/migrations.go up
 
 # Default target
 .PHONY: all

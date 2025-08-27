@@ -115,6 +115,7 @@ func migrateDown(db *sql.DB, version int) error {
 }
 
 func getMigrationVersion(db *sql.DB) (version int, err error) {
+	db.Exec("CREATE SCHEMA IF NOT EXISTS bpl2;")
 	err = db.QueryRow("SELECT version FROM migrations").Scan(&version)
 	if err != nil {
 		err := generateMigrationTable(db)
