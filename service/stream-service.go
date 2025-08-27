@@ -27,7 +27,7 @@ func NewStreamService() *StreamService {
 	}
 	token, err := oauthService.GetApplicationToken(repository.ProviderTwitch)
 	if err != nil {
-		log.Fatalf("Failed to get twitch token: %v", err)
+		log.Printf("Failed to get twitch token: %v", err)
 		return s
 	}
 	s.twitchClient = client.NewTwitchClient(token)
