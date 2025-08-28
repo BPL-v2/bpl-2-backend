@@ -349,6 +349,9 @@ func (e *OauthService) GetToken(provider repository.Provider) (token string, exp
 	if !ok {
 		return "", nil, fmt.Errorf("provider not found")
 	}
+	if config.ClientID == "" || config.ClientSecret == "" {
+		return "", nil, fmt.Errorf("client ID or secret not set")
+	}
 	oauthToken, err := config.Token(context.Background())
 	if err != nil {
 		return "", nil, err

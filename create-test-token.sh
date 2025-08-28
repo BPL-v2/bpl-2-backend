@@ -63,6 +63,8 @@ load_env() {
             fi
             # Remove leading/trailing whitespace
             key=$(echo "$key" | xargs)
+            # Remove inline comments from value
+            value=$(echo "$value" | sed 's/ *#.*$//')
             value=$(echo "$value" | xargs)
             # Export the variable
             if [[ -n $key && -n $value ]]; then
@@ -86,7 +88,7 @@ fi
 
 # Base64url encode function (removes padding and replaces characters)
 base64url_encode() {
-    echo -n "$1" | base64 | tr '+/' '-_' | tr -d '='
+    echo -n "$1" | base64 -w 0 | tr '+/' '-_' | tr -d '='
 }
 
 # Calculate expiration time (1 year from now)
@@ -122,8 +124,7 @@ encoded_payload=$(base64url_encode "$payload")
 signature_input="${encoded_header}.${encoded_payload}"
 
 # Create HMAC-SHA256 signature
-signature=$(echo -n "$signature_input" | openssl dgst -sha256 -hmac "$JWT_SECRET" -binary | base64 | tr '+/' '-_' | tr -d '=')
-
+signature=$(echo -n "$signature_input" | openssl dgst -sha256 -hmac "$JWT_SECRET" -binary | base64 -w 0 | tr '+/' '-_' | tr -d '=')
 # Construct the final JWT
 jwt="${signature_input}.${signature}"
 
