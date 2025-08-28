@@ -88,10 +88,6 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 		teamId = teamUser.TeamId
 	}
 
-	if _, ok := e.scoreService.LatestScores[event.Id]; !ok {
-		e.scoreService.LatestScores[event.Id] = make(service.ScoreMap)
-	}
-
 	e.mu.Lock()
 	if _, ok := e.connections[event.Id]; !ok {
 		e.connections[event.Id] = make(map[*websocket.Conn]int)
