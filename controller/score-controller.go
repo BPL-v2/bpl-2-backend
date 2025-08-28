@@ -2,10 +2,12 @@ package controller
 
 import (
 	"bpl/client"
+	"bpl/repository"
 	"bpl/scoring"
 	"bpl/service"
 	"bpl/utils"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -90,16 +92,6 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 		e.scoreService.LatestScores[event.Id] = make(service.ScoreMap)
 	}
 
-	// Send the latest score to the new subscriber
-	serialized, err := json.Marshal(toScoreMapResponse(e.scoreService.LatestScores[event.Id], teamId))
-	if err != nil {
-		return
-	}
-
-	if err := conn.WriteMessage(websocket.TextMessage, serialized); err != nil {
-		return
-	}
-
 	e.mu.Lock()
 	if _, ok := e.connections[event.Id]; !ok {
 		e.connections[event.Id] = make(map[*websocket.Conn]int)
@@ -179,6 +171,16 @@ func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 
 func (e *ScoreController) StartScoreUpdater() {
 	go func() {
+		events, err := e.eventService.GetAllEvents()
+		if err != nil {
+			fmt.Println("Error fetching events for score updater:", err)
+			return
+		}
+		eventMap := make(map[int]*repository.Event)
+		for _, event := range events {
+			eventMap[event.Id] = event
+		}
+
 		for {
 			e.mu.Lock()
 			// calculate scores for events with active websocket connections
@@ -186,6 +188,12 @@ func (e *ScoreController) StartScoreUpdater() {
 			eventIds = utils.Uniques(append(eventIds, utils.Keys(e.simpleConnections)...))
 			e.mu.Unlock()
 			for _, eventId := range eventIds {
+				event, ok := eventMap[eventId]
+				// dont update event if its over and its already cached
+				if !ok || (event.EventEndTime.Before(time.Now()) && e.scoreService.LatestScores[eventId] != nil) {
+					continue
+				}
+
 				diff, err := e.scoreService.GetNewDiff(eventId)
 				if err != nil {
 					continue
@@ -225,6 +233,7 @@ func (e *ScoreController) StartScoreUpdater() {
 // @Description Fetches the latest scores for the current event
 // @Tags scores
 // @Produce json
+// @Security BearerAuth
 // @Success 200 {array} ScoreDiff
 // @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/scores/latest [get]
@@ -234,29 +243,34 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		scores := e.scoreService.LatestScores[event.Id]
-		if scores == nil {
+		teamId := 0
+		teamUser, _, err := e.userService.GetTeamForUser(c, event)
+		if err == nil {
+			teamId = teamUser.TeamId
+		}
+		scores, err := e.scoreService.GetCurrentScore(event.Id)
+		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "No scores found for event"})
 			return
 		}
-		c.JSON(http.StatusOK, scores)
+		c.JSON(http.StatusOK, toScoreMapResponse(scores, teamId))
 	}
 }
 
 type Score struct {
-	Points    int       `json:"points" binding:"required"`
-	UserId    int       `json:"user_id" binding:"required"`
-	Rank      int       `json:"rank" binding:"required"`
-	Timestamp time.Time `json:"timestamp" binding:"required"`
-	Number    int       `json:"number" binding:"required"`
-	Finished  bool      `json:"finished" binding:"required"`
+	Points    int   `json:"points" binding:"required"`
+	UserId    *int  `json:"user_id,omitempty"`
+	Rank      int   `json:"rank" binding:"required"`
+	Timestamp int64 `json:"timestamp" binding:"required"`
+	Number    int   `json:"number" binding:"required"`
+	Finished  bool  `json:"finished" binding:"required"`
 }
 
 type ScoreDiff struct {
 	ObjectiveId int              `json:"objective_id" binding:"required"`
 	TeamId      int              `json:"team_id" binding:"required"`
 	Score       *Score           `json:"score" binding:"required"`
-	FieldDiff   []string         `json:"field_diff" binding:"required"`
+	FieldDiff   []string         `json:"field_diff,omitempty" binding:"required"`
 	DiffType    service.Difftype `json:"diff_type" binding:"required"`
 }
 
@@ -283,12 +297,15 @@ func toScoreMapResponse(scoreMap service.ScoreMap, teamId int) []*ScoreDiff {
 }
 
 func toScoreResponse(score *scoring.Score) *Score {
-	return &Score{
-		Points:    score.Points,
-		UserId:    score.UserId,
-		Rank:      score.Rank,
-		Timestamp: score.Timestamp,
-		Number:    score.Number,
+	resp := &Score{
 		Finished:  score.Finished,
+		Timestamp: score.Timestamp.Unix(),
+		Number:    score.Number,
+		Points:    score.Points,
+		Rank:      score.Rank,
 	}
+	if score.UserId != 0 {
+		resp.UserId = &score.UserId
+	}
+	return resp
 }

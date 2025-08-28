@@ -562,6 +562,11 @@ const docTemplate = `{
         },
         "/events/{event_id}/scores/latest": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Fetches the latest scores for the current event",
                 "produces": [
                     "application/json"
@@ -4299,8 +4304,7 @@ const docTemplate = `{
                 "number",
                 "points",
                 "rank",
-                "timestamp",
-                "user_id"
+                "timestamp"
             ],
             "properties": {
                 "finished": {
@@ -4316,7 +4320,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "user_id": {
                     "type": "integer"
