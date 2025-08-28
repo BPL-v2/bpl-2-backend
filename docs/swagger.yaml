@@ -1225,7 +1225,7 @@ definitions:
       rank:
         type: integer
       timestamp:
-        type: string
+        type: integer
       user_id:
         type: integer
     required:
@@ -1234,7 +1234,6 @@ definitions:
     - points
     - rank
     - timestamp
-    - user_id
     type: object
   ScoreDiff:
     properties:
@@ -2487,6 +2486,8 @@ paths:
             items:
               $ref: '#/definitions/ScoreDiff'
             type: array
+      security:
+      - BearerAuth: []
       tags:
       - scores
   /events/{event_id}/scores/simple/ws:

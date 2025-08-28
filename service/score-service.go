@@ -5,7 +5,9 @@ import (
 	"bpl/config"
 	"bpl/repository"
 	"bpl/scoring"
+	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"gorm.io/gorm"
@@ -90,8 +92,12 @@ type ScoreService struct {
 	eventService      *EventService
 	objectiveService  *ObjectiveService
 	guildStashService *GuildStashService
+	cachedDataService *CachedDataService
 	userService       *UserService
 	db                *gorm.DB
+	// Mutex to protect concurrent access to calculation state
+	calculationMutex sync.Mutex
+	calculating      map[int]chan ScoreMap // Track which events are currently being calculated with result channels
 }
 
 func NewScoreService(PoEClient *client.PoEClient) *ScoreService {
@@ -102,8 +108,10 @@ func NewScoreService(PoEClient *client.PoEClient) *ScoreService {
 		eventService:      eventService,
 		objectiveService:  objectiveService,
 		guildStashService: NewGuildStashService(PoEClient),
+		cachedDataService: NewCachedDataService(),
 		userService:       NewUserService(),
 		LatestScores:      make(map[int]ScoreMap),
+		calculating:       make(map[int]chan ScoreMap),
 	}
 }
 
@@ -158,16 +166,56 @@ func Diff(scoreMap ScoreMap, scores []*scoring.Score) (ScoreMap, ScoreMap) {
 }
 
 func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
+	// Check if calculation is already in progress for this event
+	s.calculationMutex.Lock()
+	if resultChan, exists := s.calculating[eventId]; exists {
+		// Calculation is in progress, wait for the result
+		s.calculationMutex.Unlock()
+		result := <-resultChan
+		return result, nil
+	}
+
+	// Create a channel to communicate the result to other waiting goroutines
+	resultChan := make(chan ScoreMap, 1)
+	s.calculating[eventId] = resultChan
+	s.calculationMutex.Unlock()
+
+	// Ensure we clean up the calculation flag when done
+	defer func() {
+		s.calculationMutex.Lock()
+		delete(s.calculating, eventId)
+		s.calculationMutex.Unlock()
+	}()
+
 	newScores, err := s.calcScores(eventId)
 	if err != nil {
+		// Send empty result to notify waiting goroutines of the error
+		close(resultChan)
 		return nil, err
 	}
+
 	oldScore := s.LatestScores[eventId]
 	newScoreMap, diff := Diff(oldScore, newScores)
 	s.LatestScores[eventId] = newScoreMap
+
 	if len(diff) == 0 {
+		// Send empty result to notify waiting goroutines
+		close(resultChan)
 		return nil, fmt.Errorf("no changes in scores")
 	}
+
+	byteData, err := json.Marshal(newScoreMap)
+	if err != nil {
+		close(resultChan)
+		return nil, err
+	}
+
+	s.cachedDataService.SaveScore(eventId, byteData)
+
+	// Send the result to all waiting goroutines
+	resultChan <- diff
+	close(resultChan)
+
 	return diff, nil
 }
 
@@ -196,6 +244,29 @@ func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err erro
 	}
 
 	return scores, nil
+}
+
+func (s *ScoreService) GetCurrentScore(eventId int) (ScoreMap, error) {
+	if s.LatestScores[eventId] != nil {
+		return s.LatestScores[eventId], nil
+	}
+	cached, err := s.cachedDataService.GetLatestScore(eventId)
+	if err == nil {
+		score := make(ScoreMap)
+		if err := json.Unmarshal(cached, &score); err == nil {
+			s.LatestScores[eventId] = score
+			return score, nil
+		}
+	}
+	return s.GetNewDiff(eventId)
+}
+
+// IsCalculating returns true if a score calculation is currently in progress for the given event
+func (s *ScoreService) IsCalculating(eventId int) bool {
+	s.calculationMutex.Lock()
+	defer s.calculationMutex.Unlock()
+	_, exists := s.calculating[eventId]
+	return exists
 }
 
 type PlayerOverwrite struct {
