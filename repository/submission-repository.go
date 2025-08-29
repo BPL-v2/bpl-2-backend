@@ -52,9 +52,9 @@ func NewSubmissionRepository() *SubmissionRepository {
 	return &SubmissionRepository{DB: config.DatabaseConnection()}
 }
 
-func (r *SubmissionRepository) GetSubmissionsForEvent(eventId int) ([]*Submission, error) {
+func (r *SubmissionRepository) GetSubmissionsForEvent(event *Event) ([]*Submission, error) {
 	var submissions []*Submission
-	result := r.DB.Find(&submissions, "event_id = ?", eventId)
+	result := r.DB.Find(&submissions, "team_id in ?", event.TeamIds())
 	if result.Error != nil {
 		return nil, result.Error
 	}

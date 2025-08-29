@@ -74,14 +74,14 @@ func (e *SubmissionController) setBulkSubmissionForAdmin() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		submissions, err := e.submissionService.SaveBulkSubmissions(submissionCreate.toModels(event.Id, user.Id, teamLeads))
+		submissions, err := e.submissionService.SaveBulkSubmissions(submissionCreate.toModels(user.Id, teamLeads))
 		if err != nil {
 			fmt.Println(err)
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(201, utils.Map(submissions, func(submission *repository.Submission) *Submission {
-			return toSubmissionResponse(submission, nil)
+			return toSubmissionResponse(submission)
 		},
 		))
 
@@ -106,13 +106,8 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		teamUsers, err := e.teamService.GetTeamUserMapForEvent(event)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
 		c.JSON(200, utils.Map(submissions, func(submission *repository.Submission) *Submission {
-			return toSubmissionResponse(submission, teamUsers)
+			return toSubmissionResponse(submission)
 		}))
 	}
 }
@@ -155,7 +150,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(201, toSubmissionResponse(submission, nil))
+		c.JSON(201, toSubmissionResponse(submission))
 	}
 }
 
@@ -237,7 +232,7 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, toSubmissionResponse(submission, nil))
+		c.JSON(200, toSubmissionResponse(submission))
 	}
 }
 
@@ -274,7 +269,7 @@ func (s *SubmissionCreate) toModel() *repository.Submission {
 	return submission
 }
 
-func (s *TeamSubmissionCreate) toModels(eventId int, reviewerId int, teamLeads map[int][]*repository.TeamUser) []*repository.Submission {
+func (s *TeamSubmissionCreate) toModels(reviewerId int, teamLeads map[int][]*repository.TeamUser) []*repository.Submission {
 	now := time.Now()
 	submissions := make([]*repository.Submission, 0)
 	for place, teamId := range s.TeamIds {
@@ -305,15 +300,15 @@ type Submission struct {
 	Timestamp      time.Time                 `json:"timestamp" binding:"required"`
 	ApprovalStatus repository.ApprovalStatus `json:"approval_status" binding:"required"`
 	Comment        string                    `json:"comment" binding:"required"`
-	TeamId         *int                      `json:"team_id"`
+	TeamId         int                       `json:"team_id" binding:"required"`
 	ReviewComment  *string                   `json:"review_comment"`
 	ReviewerId     *int                      `json:"reviewer_id"`
 	ObjectiveId    int                       `json:"objective_id" binding:"required"`
 	UserId         int                       `json:"user_id" binding:"required"`
 }
 
-func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]int) *Submission {
-	response := &Submission{
+func toSubmissionResponse(submission *repository.Submission) *Submission {
+	return &Submission{
 		Id:             submission.Id,
 		Number:         submission.Number,
 		Proof:          submission.Proof,
@@ -324,12 +319,6 @@ func toSubmissionResponse(submission *repository.Submission, teamUsers *map[int]
 		ReviewerId:     submission.ReviewerId,
 		ObjectiveId:    submission.ObjectiveId,
 		UserId:         submission.UserId,
+		TeamId:         submission.TeamId,
 	}
-	if teamUsers != nil {
-		teamId, ok := (*teamUsers)[submission.UserId]
-		if ok {
-			response.TeamId = &teamId
-		}
-	}
-	return response
 }

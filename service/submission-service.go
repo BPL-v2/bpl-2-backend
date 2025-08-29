@@ -7,16 +7,22 @@ import (
 
 type SubmissionService struct {
 	submissionRepository *repository.SubmissionRepository
+	eventRepository      *repository.EventRepository
 }
 
 func NewSubmissionService() *SubmissionService {
 	return &SubmissionService{
 		submissionRepository: repository.NewSubmissionRepository(),
+		eventRepository:      repository.NewEventRepository(),
 	}
 }
 
 func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submission, error) {
-	return e.submissionRepository.GetSubmissionsForEvent(eventId)
+	event, err := e.eventRepository.GetEventById(eventId, "Teams")
+	if err != nil {
+		return nil, err
+	}
+	return e.submissionRepository.GetSubmissionsForEvent(event)
 }
 
 func (e *SubmissionService) SaveBulkSubmissions(submissions []*repository.Submission) ([]*repository.Submission, error) {
