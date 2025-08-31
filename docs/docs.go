@@ -1249,7 +1249,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "integer"
+                                "$ref": "#/definitions/TeamSuggestion"
                             }
                         }
                     }
