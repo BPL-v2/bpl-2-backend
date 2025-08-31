@@ -1,0 +1,1 @@
+ALTER TABLE team_suggestions ADD COLUMN extra TEXT NOT NULL DEFAULT '';

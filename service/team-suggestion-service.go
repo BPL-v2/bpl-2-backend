@@ -16,10 +16,11 @@ func (t *TeamSuggestionService) GetSuggestionsForTeam(teamId int) ([]*repository
 	return t.teamSuggestionRepository.GetSuggestionsForTeam(teamId)
 }
 
-func (t *TeamSuggestionService) SaveSuggestion(id int, teamId int) error {
+func (t *TeamSuggestionService) SaveSuggestion(id int, teamId int, extra string) error {
 	suggestion := &repository.TeamSuggestion{
 		Id:     id,
 		TeamId: teamId,
+		Extra:  extra,
 	}
 	return t.teamSuggestionRepository.SaveSuggestion(suggestion)
 }
