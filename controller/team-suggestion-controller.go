@@ -60,7 +60,7 @@ func (e *TeamSuggestionController) GetTeamUser(c *gin.Context, requiresTeamLead 
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Success 200 {array} int
+// @Success 200 {array} TeamSuggestion
 // @Router /events/{event_id}/suggestions [get]
 func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

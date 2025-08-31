@@ -2909,7 +2909,7 @@ paths:
           description: OK
           schema:
             items:
-              type: integer
+              $ref: '#/definitions/TeamSuggestion'
             type: array
       security:
       - BearerAuth: []
