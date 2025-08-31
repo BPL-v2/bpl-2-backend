@@ -7,8 +7,9 @@ import (
 )
 
 type TeamSuggestion struct {
-	Id     int `gorm:"not null;primaryKey"`
-	TeamId int `gorm:"not null;primaryKey"`
+	Id     int    `gorm:"not null;primaryKey"`
+	TeamId int    `gorm:"not null;primaryKey"`
+	Extra  string `gorm:"not null"`
 }
 
 type TeamSuggestionRepository struct {

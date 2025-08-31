@@ -28,13 +28,30 @@ func setupTeamSuggestionController() []RouteInfo {
 	basePath := "events/:event_id/suggestions"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamSuggestionsHandler(), Authenticated: true},
-		{Method: "POST", Path: "/:objective_id", HandlerFunc: e.createTeamSuggestionHandler(), Authenticated: true},
+		{Method: "PUT", Path: "/:objective_id", HandlerFunc: e.createTeamSuggestionHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteTeamSuggestionHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
 	}
 	return routes
+}
+
+func (e *TeamSuggestionController) GetTeamUser(c *gin.Context, requiresTeamLead bool) *repository.TeamUser {
+	event := getEvent(c)
+	if event == nil {
+		return nil
+	}
+	teamUser, _, err := e.userService.GetTeamForUser(c, event)
+	if err != nil {
+		c.JSON(403, gin.H{"error": err.Error()})
+		return nil
+	}
+	if requiresTeamLead && !teamUser.IsTeamLead {
+		c.JSON(403, gin.H{"error": "You are not a team lead"})
+		return nil
+	}
+	return teamUser
 }
 
 // @id GetTeamSuggestions
@@ -47,13 +64,8 @@ func setupTeamSuggestionController() []RouteInfo {
 // @Router /events/{event_id}/suggestions [get]
 func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err != nil {
-			c.JSON(403, gin.H{"error": err.Error()})
+		teamUser := e.GetTeamUser(c, false)
+		if teamUser == nil {
 			return
 		}
 		suggestions, err := e.teamSuggestionService.GetSuggestionsForTeam(teamUser.TeamId)
@@ -73,21 +85,13 @@ func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Param objective_id path int true "Objective Id"
+// @Param body body TeamSuggestion true "Suggestion data"
 // @Success 201
-// @Router /events/{event_id}/suggestions/{objective_id} [POST]
+// @Router /events/{event_id}/suggestions/{objective_id} [PUT]
 func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err != nil {
-			c.JSON(403, gin.H{"error": err.Error()})
-			return
-		}
-		if !teamUser.IsTeamLead {
-			c.JSON(403, gin.H{"error": "You are not a team lead"})
+		teamUser := e.GetTeamUser(c, true)
+		if teamUser == nil {
 			return
 		}
 		objectiveId, err := strconv.Atoi(c.Param("objective_id"))
@@ -95,7 +99,12 @@ func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.teamSuggestionService.SaveSuggestion(objectiveId, teamUser.TeamId)
+		var suggestion TeamSuggestion
+		if err := c.ShouldBindJSON(&suggestion); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		err = e.teamSuggestionService.SaveSuggestion(objectiveId, teamUser.TeamId, suggestion.Extra)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -115,17 +124,8 @@ func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc
 // @Router /events/{event_id}/suggestions/{objective_id} [delete]
 func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err != nil {
-			c.JSON(403, gin.H{"error": err.Error()})
-			return
-		}
-		if !teamUser.IsTeamLead {
-			c.JSON(403, gin.H{"error": "You are not a team lead"})
+		teamUser := e.GetTeamUser(c, true)
+		if teamUser == nil {
 			return
 		}
 		objectiveId, err := strconv.Atoi(c.Param("objective_id"))
@@ -142,8 +142,16 @@ func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc
 	}
 }
 
-func toSuggestionResponse(suggestions []*repository.TeamSuggestion) []int {
-	return utils.Map(suggestions, func(s *repository.TeamSuggestion) int {
-		return s.Id
+func toSuggestionResponse(suggestions []*repository.TeamSuggestion) []*TeamSuggestion {
+	return utils.Map(suggestions, func(s *repository.TeamSuggestion) *TeamSuggestion {
+		return &TeamSuggestion{
+			ObjectiveId: s.Id,
+			Extra:       s.Extra,
+		}
 	})
+}
+
+type TeamSuggestion struct {
+	ObjectiveId int    `json:"objective_id"`
+	Extra       string `json:"extra"`
 }

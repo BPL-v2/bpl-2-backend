@@ -1383,6 +1383,7 @@ definitions:
     - number
     - objective_id
     - proof
+    - team_id
     - timestamp
     - user_id
     type: object
@@ -1465,6 +1466,13 @@ definitions:
     required:
     - objective_id
     - team_ids
+    type: object
+  TeamSuggestion:
+    properties:
+      extra:
+        type: string
+      objective_id:
+        type: integer
     type: object
   TeamUserCreate:
     properties:
@@ -2931,7 +2939,7 @@ paths:
       - BearerAuth: []
       tags:
       - team
-    post:
+    put:
       consumes:
       - application/json
       description: Creates a suggestion for an objective for your team for an event
@@ -2947,6 +2955,12 @@ paths:
         name: objective_id
         required: true
         type: integer
+      - description: Suggestion data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TeamSuggestion'
       produces:
       - application/json
       responses:

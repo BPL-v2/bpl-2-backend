@@ -1257,7 +1257,7 @@ const docTemplate = `{
             }
         },
         "/events/{event_id}/suggestions/{objective_id}": {
-            "post": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -1288,6 +1288,15 @@ const docTemplate = `{
                         "name": "objective_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Suggestion data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TeamSuggestion"
+                        }
                     }
                 ],
                 "responses": {
@@ -4506,6 +4515,7 @@ const docTemplate = `{
                 "number",
                 "objective_id",
                 "proof",
+                "team_id",
                 "timestamp",
                 "user_id"
             ],
@@ -4663,6 +4673,17 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "TeamSuggestion": {
+            "type": "object",
+            "properties": {
+                "extra": {
+                    "type": "string"
+                },
+                "objective_id": {
+                    "type": "integer"
                 }
             }
         },
