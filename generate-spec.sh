@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 
 # script to remove package names from generated Swagger doc
 swag init
@@ -6,10 +6,14 @@ docs_dir="docs"
 package_names=$(find . -name "*.go" -exec grep -h "^package " {} \; | awk '{print $2}' | sort | uniq)
 
 for file in "$docs_dir"/*; do
-    # Convert package_names to array for proper iteration in zsh
-    package_array=(${=package_names})
-    for package in $package_array; do
-        # Use backup suffix for macOS compatibility
-        sed -i.bak "s/${package}\.//g" "$file" && rm "${file}.bak"
+    for package in $package_names; do
+        # Use portable sed for Linux and macOS
+        if sed --version >/dev/null 2>&1; then
+            # GNU sed (Linux)
+            sed -i "s/${package}\.//g" "$file"
+        else
+            # BSD sed (macOS)
+            sed -i '' "s/${package}\.//g" "$file"
+        fi
     done
 done
