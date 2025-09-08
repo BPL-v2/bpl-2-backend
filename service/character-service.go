@@ -8,14 +8,16 @@ import (
 )
 
 type CharacterService struct {
-	repository     *repository.CharacterRepository
-	teamRepository *repository.TeamRepository
+	repository         *repository.CharacterRepository
+	teamRepository     *repository.TeamRepository
+	activityRepository *repository.ActivityRepository
 }
 
 func NewCharacterService() *CharacterService {
 	return &CharacterService{
-		repository:     repository.NewCharacterRepository(),
-		teamRepository: repository.NewTeamRepository(),
+		repository:         repository.NewCharacterRepository(),
+		teamRepository:     repository.NewTeamRepository(),
+		activityRepository: repository.NewActivityRepository(),
 	}
 }
 
@@ -27,6 +29,16 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 			return err
 		}
 	}
+	if update.New.CharacterXP != update.Old.CharacterXP {
+		err := c.activityRepository.SaveActivity(&repository.Activity{
+			Time:    time.Now(),
+			UserId:  update.UserId,
+			EventId: eventId,
+		})
+		if err != nil {
+			fmt.Println("Error saving activity")
+		}
+	}
 
 	if update.New.CharacterName != update.Old.CharacterName ||
 		update.New.CharacterLevel != update.Old.CharacterLevel ||
@@ -35,7 +47,6 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 		update.New.AscendancyPoints != update.Old.AscendancyPoints ||
 		update.New.Ascendancy != update.Old.Ascendancy ||
 		update.New.MaxAtlasTreeNodes() != update.Old.MaxAtlasTreeNodes() {
-
 		character := &repository.Character{
 			Id:               update.New.CharacterId,
 			UserId:           &update.UserId,
@@ -48,7 +59,7 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 			Pantheon:         update.New.Pantheon,
 			AtlasPoints:      update.New.MaxAtlasTreeNodes(),
 		}
-		err := c.repository.CreateCharacterCheckpoint(character)
+		err := c.repository.Save(character)
 		if err != nil {
 			fmt.Printf("Error saving character checkpoint for user %d: %v\n", update.UserId, err)
 			return err
