@@ -51,6 +51,7 @@ type FetchingService struct {
 	oauthService         *service.OauthService
 	userRepository       *repository.UserRepository
 	guildStashRepository *repository.GuildStashRepository
+	activityRepository   *repository.ActivityRepository
 }
 
 var (
@@ -70,6 +71,7 @@ func NewFetchingService(ctx context.Context, event *repository.Event, poeClient 
 			stashChannel:         make(chan repository.StashChangeMessage),
 			userRepository:       repository.NewUserRepository(),
 			guildStashRepository: repository.NewGuildStashRepository(),
+			activityRepository:   repository.NewActivityRepository(),
 		}
 	})
 	return fetchingService
@@ -197,6 +199,14 @@ func (f *FetchingService) FilterStashChanges() error {
 	if err != nil {
 		return fmt.Errorf("failed to create kafka topic: %w", err)
 	}
+	users, err := f.userRepository.GetUsersForEvent(f.event.Id)
+	if err != nil {
+		return fmt.Errorf("failed to get users for event %d: %w", f.event.Id, err)
+	}
+	userMap := make(map[string]int)
+	for _, user := range users {
+		userMap[user.AccountName] = user.UserId
+	}
 
 	writer, err := config.GetWriter(f.event.Id)
 	if err != nil {
@@ -212,18 +222,29 @@ func (f *FetchingService) FilterStashChanges() error {
 		default:
 			fmt.Println("filtering stash change", stashChange.ChangeId)
 			stashes := make([]client.PublicStashChange, 0)
+			now := time.Now()
 			for _, stash := range stashChange.Stashes {
 				stashCounterTotal.Inc()
 				if stash.League != nil && *stash.League == f.event.Name {
 					stashes = append(stashes, stash)
 					stashCounterFiltered.Inc()
+					if stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
+						err = f.activityRepository.SaveActivity(&repository.Activity{
+							Time:    now.Add(-5 * time.Minute),
+							UserId:  userMap[*stash.AccountName],
+							EventId: f.event.Id,
+						})
+						if err != nil {
+							log.Printf("Failed to save activity for user %s: %v", *stash.AccountName, err)
+						}
+					}
 				}
 			}
 			message := repository.StashChangeMessage{
 				ChangeId:     stashChange.ChangeId,
 				NextChangeId: stashChange.NextChangeId,
 				Stashes:      stashes,
-				Timestamp:    time.Now(),
+				Timestamp:    now,
 			}
 			log.Printf("Writing %d stashes message to kafka: %s\n", len(stashes), stashChange.ChangeId)
 			// make sure that stash changes are only saved if the messages are successfully written to kafka

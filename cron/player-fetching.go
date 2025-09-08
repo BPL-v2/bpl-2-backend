@@ -183,6 +183,9 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 			if entry.Character.Depth != nil && entry.Character.Depth.Default != nil {
 				player.New.DelveDepth = *entry.Character.Depth.Default
 			}
+			if entry.Character.Experience != nil {
+				player.New.CharacterXP = *entry.Character.Experience
+			}
 			player.Mu.Unlock()
 		}
 	}
@@ -448,7 +451,6 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			return
 		default:
 			wg := sync.WaitGroup{}
-			// handle character name updates first
 			for _, player := range players {
 				if player.ShouldUpdateCharacterName() {
 					wg.Add(1)
@@ -457,10 +459,6 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 						service.UpdateCharacterName(player, event)
 					}(player)
 				}
-			}
-			wg.Wait()
-			wg = sync.WaitGroup{}
-			for _, player := range players {
 				if player.ShouldUpdateCharacter() {
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {

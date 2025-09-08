@@ -132,7 +132,7 @@ func (r *CharacterRepository) SavePoB(characterPoB *CharacterPob) error {
 	return r.DB.Save(&characterPoB).Error
 }
 
-func (r *CharacterRepository) CreateCharacterCheckpoint(character *Character) error {
+func (r *CharacterRepository) Save(character *Character) error {
 	if character.Id == "" || character.Name == "" {
 		return fmt.Errorf("character ID and Name must be set")
 	}
