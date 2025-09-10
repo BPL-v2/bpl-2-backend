@@ -104,6 +104,28 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 			}
 			return ""
 		}, nil
+	case dbModel.HEIST_TARGET:
+		return func(item *clientModel.Item) string {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Heist Target: {0} ({1})" {
+						return property.Values[0].Name() + " (" + property.Values[1].Name() + ")"
+					}
+				}
+			}
+			return ""
+		}, nil
+	case dbModel.HEIST_ROGUE_REQUIREMENT:
+		return func(item *clientModel.Item) string {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Requires {1} (Level {0})" {
+						return property.Values[0].Name() + " (Level " + property.Values[1].Name() + ")"
+					}
+				}
+			}
+			return ""
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid string field", field)
 	}
