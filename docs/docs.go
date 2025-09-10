@@ -4856,6 +4856,8 @@ const docTemplate = `{
                 "MAP_QUANT",
                 "MAP_RARITY",
                 "MAP_PACK_SIZE",
+                "HEIST_TARGET",
+                "HEIST_ROGUE_REQUIREMENT",
                 "ENCHANT_MODS",
                 "EXPLICIT_MODS",
                 "IMPLICIT_MODS",
@@ -4880,6 +4882,8 @@ const docTemplate = `{
                 "SOCKETS": "as string like \"RGBW\""
             },
             "x-enum-descriptions": [
+                "",
+                "",
                 "",
                 "",
                 "",
@@ -4931,6 +4935,8 @@ const docTemplate = `{
                 "MAP_QUANT",
                 "MAP_RARITY",
                 "MAP_PACK_SIZE",
+                "HEIST_TARGET",
+                "HEIST_ROGUE_REQUIREMENT",
                 "ENCHANTS",
                 "EXPLICITS",
                 "IMPLICITS",
