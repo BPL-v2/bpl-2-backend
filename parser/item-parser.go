@@ -237,6 +237,54 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 			}
 			return 0
 		}, nil
+	case dbModel.MAP_QUANT:
+		return func(item *clientModel.Item) int {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Item Quantity" {
+						quantity, err := strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(property.Values[0].Name(), "%", ""), "+", ""))
+						if err != nil {
+							log.Printf("Error parsing map quantity %s", property.Values[0].Name())
+							return 0
+						}
+						return quantity
+					}
+				}
+			}
+			return 0
+		}, nil
+	case dbModel.MAP_RARITY:
+		return func(item *clientModel.Item) int {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Map Rarity" {
+						rarity, err := strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(property.Values[0].Name(), "%", ""), "+", ""))
+						if err != nil {
+							log.Printf("Error parsing map rarity %s", property.Values[0].Name())
+							return 0
+						}
+						return rarity
+					}
+				}
+			}
+			return 0
+		}, nil
+	case dbModel.MAP_PACK_SIZE:
+		return func(item *clientModel.Item) int {
+			if item.Properties != nil {
+				for _, property := range *item.Properties {
+					if property.Name == "Monster Pack Size" {
+						size, err := strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(property.Values[0].Name(), "%", ""), "+", ""))
+						if err != nil {
+							log.Printf("Error parsing monster pack size %s", property.Values[0].Name())
+							return 0
+						}
+						return size
+					}
+				}
+			}
+			return 0
+		}, nil
 	case dbModel.INCUBATOR_KILLS:
 		return func(item *clientModel.Item) int {
 			if item.IncubatedItem != nil {
