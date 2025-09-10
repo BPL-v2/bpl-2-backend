@@ -22,6 +22,9 @@ const (
 	FRAME_TYPE       ItemField = "FRAME_TYPE"
 	TALISMAN_TIER    ItemField = "TALISMAN_TIER"
 	MAP_TIER         ItemField = "MAP_TIER"
+	MAP_QUANT        ItemField = "MAP_QUANT"
+	MAP_RARITY       ItemField = "MAP_RARITY"
+	MAP_PACK_SIZE    ItemField = "MAP_PACK_SIZE"
 	ENCHANTS         ItemField = "ENCHANT_MODS"
 	EXPLICITS        ItemField = "EXPLICIT_MODS"
 	IMPLICITS        ItemField = "IMPLICIT_MODS"
@@ -65,6 +68,9 @@ var FieldToType = map[ItemField]FieldType{
 	FRAME_TYPE:       String,
 	TALISMAN_TIER:    Int,
 	MAP_TIER:         Int,
+	MAP_QUANT:        Int,
+	MAP_RARITY:       Int,
+	MAP_PACK_SIZE:    Int,
 	ENCHANTS:         StringArray,
 	EXPLICITS:        StringArray,
 	IMPLICITS:        StringArray,
