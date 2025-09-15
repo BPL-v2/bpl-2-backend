@@ -180,6 +180,7 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 	if err == nil {
 		authState.User = user
 	} else if authState.User == nil {
+		fmt.Printf("Creating new user for %s account %s\n", provider, accountName)
 		authState.User = &repository.User{
 			Permissions:   []repository.Permission{},
 			DisplayName:   accountName,
@@ -202,6 +203,9 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 	)
 	e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
 	_, err = e.userService.SaveUser(authState.User)
+	if err != nil {
+		fmt.Printf("Failed to save user: %v\n", err)
+	}
 	return authState, err
 }
 func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
@@ -227,12 +231,14 @@ func (e *OauthService) VerifyDiscord(state string, code string, oauthConfig oaut
 	client := oauthConfig.Client(context.Background(), token)
 	response, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
+		fmt.Printf("Failed to get discord user: %v\n", err)
 		return nil, err
 	}
 	defer response.Body.Close()
 	discordUser := &DiscordUserResponse{}
 	err = json.NewDecoder(response.Body).Decode(discordUser)
 	if err != nil {
+		fmt.Printf("Failed to decode discord user response: %v\n", err)
 		return nil, fmt.Errorf("failed to decode discord user response: %v", err)
 	}
 	return e.addAccountToUser(authState, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
@@ -289,6 +295,7 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 	}
 	resp, clientError := client.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, authState.RedirectUrl)
 	if clientError != nil {
+		fmt.Printf("Failed to get access token: %v\n", clientError)
 		return nil, fmt.Errorf("failed to get access token: %v", clientError)
 	}
 	token := &oauth2.Token{
@@ -299,6 +306,7 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 	}
 	profile, clientError := client.GetAccountProfile(token.AccessToken)
 	if clientError != nil {
+		fmt.Printf("Failed to get profile: %v\n", clientError)
 		return nil, fmt.Errorf("failed to get profile: %v", clientError)
 	}
 	return e.addAccountToUser(&authState, profile.UUId, profile.Name, token, repository.ProviderPoE)
