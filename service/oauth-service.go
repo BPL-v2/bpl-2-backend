@@ -201,11 +201,11 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 			Expiry:       token.Expiry,
 		},
 	)
-	/* 		err := e.oauthRepository.DeleteOauthsByUserId(authState.User.Id)
+	err := e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
 	if err != nil {
 		return nil, err
-	} */
-	_, err := e.userService.SaveUser(authState.User)
+	}
+	_, err = e.userService.SaveUser(authState.User)
 	return authState, err
 }
 func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
