@@ -176,17 +176,16 @@ func (e *OauthService) Verify(state string, code string, provider repository.Pro
 }
 
 func (e *OauthService) addAccountToUser(authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
-	if authState.User == nil {
-		user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
-		if err != nil {
-			user = &repository.User{
-				Permissions:   []repository.Permission{},
-				DisplayName:   accountName,
-				OauthAccounts: []*repository.Oauth{},
-			}
+	user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
+	if err != nil {
+		fmt.Printf("could not find user by oauth account: %v\n", err)
+		user = &repository.User{
+			Permissions:   []repository.Permission{},
+			DisplayName:   accountName,
+			OauthAccounts: []*repository.Oauth{},
 		}
-		authState.User = user
 	}
+	authState.User = user
 	authState.User.OauthAccounts = append(
 		utils.Filter(authState.User.OauthAccounts, func(oauthAccount *repository.Oauth) bool {
 			return oauthAccount.Provider != provider
@@ -201,10 +200,6 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 			Expiry:       token.Expiry,
 		},
 	)
-	err := e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
-	if err != nil {
-		return nil, err
-	}
 	_, err = e.userService.SaveUser(authState.User)
 	return authState, err
 }
