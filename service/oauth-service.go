@@ -164,6 +164,7 @@ func (e *OauthService) Verify(state string, code string, provider repository.Pro
 func (e *OauthService) addAccountToUser(authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
 	if err == nil {
+		fmt.Printf("Updating %s account %s for user %s\n", provider, accountName, user.DisplayName)
 		authState.User = user
 	} else if authState.User == nil {
 		fmt.Printf("Creating new user for %s account %s\n", provider, accountName)
@@ -172,6 +173,8 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 			DisplayName:   accountName,
 			OauthAccounts: []*repository.Oauth{},
 		}
+	} else {
+		fmt.Printf("Adding %s account %s to user %s\n", provider, accountName, authState.User.DisplayName)
 	}
 	authState.User.OauthAccounts = append(
 		utils.Filter(authState.User.OauthAccounts, func(oauthAccount *repository.Oauth) bool {
