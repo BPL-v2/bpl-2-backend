@@ -5,6 +5,7 @@ import (
 	"bpl/config"
 	"bpl/repository"
 	"bpl/service"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -122,8 +123,10 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 		}
 		config := *e.oauthService.Config[provider]
 		config.RedirectURL = body.RedirectUrl
+		fmt.Printf("Callback - Provider %s\n", provider)
 		verifier, err := e.oauthService.Verify(body.State, body.Code, provider, config)
 		if err != nil {
+			fmt.Printf("Failed to verify oauth: %v\n", err)
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
