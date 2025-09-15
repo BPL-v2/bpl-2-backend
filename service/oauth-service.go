@@ -179,13 +179,14 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 	user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
 	if err != nil {
 		fmt.Printf("could not find user by oauth account: %v\n", err)
-		user = &repository.User{
+		authState.User = user
+	} else if authState.User == nil {
+		authState.User = &repository.User{
 			Permissions:   []repository.Permission{},
 			DisplayName:   accountName,
 			OauthAccounts: []*repository.Oauth{},
 		}
 	}
-	authState.User = user
 	authState.User.OauthAccounts = append(
 		utils.Filter(authState.User.OauthAccounts, func(oauthAccount *repository.Oauth) bool {
 			return oauthAccount.Provider != provider
