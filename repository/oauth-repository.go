@@ -63,7 +63,8 @@ func (r *OauthRepository) GetAllOauths() ([]*Oauth, error) {
 }
 
 func (r *OauthRepository) DeleteOauthsByUserIdAndProvider(userId int, provider Provider) error {
-	result := r.DB.Delete(&Oauth{}, Oauth{UserId: userId, Provider: provider})
+	query := r.DB.Where("user_id = ? AND provider = ?", userId, provider)
+	result := query.Delete(&Oauth{})
 	if result.Error != nil {
 		return result.Error
 	}

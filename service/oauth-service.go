@@ -200,6 +200,7 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 			Expiry:       token.Expiry,
 		},
 	)
+	e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
 	_, err = e.userService.SaveUser(authState.User)
 	return authState, err
 }
