@@ -129,7 +129,7 @@ func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string, red
 	verifier := oauth2.GenerateVerifier()
 	e.stateMap[state] = OauthState{
 		Verifier:    verifier,
-		Timeout:     time.Now().Add(1 * time.Minute).Unix(),
+		Timeout:     time.Now().Add(30 * time.Minute).Unix(),
 		User:        user,
 		LastUrl:     lastUrl,
 		RedirectUrl: redirectUrl,
