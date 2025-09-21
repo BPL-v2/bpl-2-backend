@@ -1003,6 +1003,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/streams": {
+            "get": {
+                "description": "Fetches all twitch streams for the current event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "streams"
+                ],
+                "operationId": "GetStreams",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TwitchStream"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/submissions": {
             "get": {
                 "description": "Fetches all submissions for an event",
@@ -1749,29 +1781,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/streams": {
-            "get": {
-                "description": "Fetches all twitch streams for the current event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "streams"
-                ],
-                "operationId": "GetStreams",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/TwitchStream"
-                            }
                         }
                     }
                 }

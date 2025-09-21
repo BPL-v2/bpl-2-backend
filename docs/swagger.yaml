@@ -2769,6 +2769,27 @@ paths:
       - BearerAuth: []
       tags:
       - event
+  /events/{event_id}/streams:
+    get:
+      description: Fetches all twitch streams for the current event
+      operationId: GetStreams
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/TwitchStream'
+            type: array
+      tags:
+      - streams
   /events/{event_id}/submissions:
     get:
       description: Fetches all submissions for an event
@@ -3251,21 +3272,6 @@ paths:
             type: string
       tags:
       - oauth
-  /streams:
-    get:
-      description: Fetches all twitch streams for the current event
-      operationId: GetStreams
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/TwitchStream'
-            type: array
-      tags:
-      - streams
   /users:
     get:
       description: Fetches all users

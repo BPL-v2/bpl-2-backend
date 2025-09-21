@@ -115,7 +115,7 @@ type Streamer struct {
 	TwitchId string
 }
 
-func (r *UserRepository) GetStreamersForCurrentEvent() (streamers []*Streamer, err error) {
+func (r *UserRepository) GetStreamersForEvent(eventId int) (streamers []*Streamer, err error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetStreamersForCurrentEvent"))
 	defer timer.ObserveDuration()
 	query := `
@@ -126,14 +126,12 @@ func (r *UserRepository) GetStreamersForCurrentEvent() (streamers []*Streamer, e
 		JOIN oauths ON oauths.user_id = users.id
 		JOIN team_users ON team_users.user_id = users.id
 		JOIN teams ON teams.id = team_users.team_id
-		JOIN events ON events.id = teams.event_id
-		WHERE events.is_current = true AND oauths.provider = 'twitch'
+		WHERE teams.event_id = ? AND oauths.provider = 'twitch'
 	`
-	result := r.DB.Raw(query).Scan(&streamers)
+	result := r.DB.Raw(query, eventId).Scan(&streamers)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get streamers for current event: %v", result.Error)
 	}
-
 	return streamers, nil
 
 }
