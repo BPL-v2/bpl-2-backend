@@ -54,6 +54,15 @@ type User struct {
 	OauthAccounts []*Oauth `gorm:"foreignKey:UserId"`
 }
 
+func (u *User) HasOneOfPermissions(perms ...Permission) bool {
+	for _, perm := range perms {
+		if utils.Contains(u.Permissions, perm) {
+			return true
+		}
+	}
+	return false
+}
+
 func (u *User) GetPoEToken() string {
 	for _, oauth := range u.OauthAccounts {
 		if oauth.Provider == "poe" {

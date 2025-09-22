@@ -32,7 +32,6 @@ func setupSignupController() []RouteInfo {
 		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
-		{Method: "DELETE", Path: "/self", HandlerFunc: e.deleteOwnSignupHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/:user_id", HandlerFunc: e.deleteSignupHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "PUT", Path: "/self/actual-playtime", HandlerFunc: e.reportPlaytime(), Authenticated: true},
 		{Method: "GET", Path: "/discord", HandlerFunc: getDiscordMembersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
@@ -204,36 +203,8 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	}
 }
 
-// @id DeleteOwnSignup
-// @Description Deletes the authenticated user's signup for the event
-// @Tags signup
-// @Produce json
-// @Security BearerAuth
-// @Success 204
-// @Param event_id path int true "Event Id"
-// @Router /events/{event_id}/signups/self [delete]
-func (e *SignupController) deleteOwnSignupHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
-		user, err := e.userService.GetUserFromAuthHeader(c)
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Not authenticated"})
-			return
-		}
-		err = e.signupService.RemoveSignupForUser(user.Id, event.Id)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, gin.H{})
-	}
-}
-
 // @id DeleteSignup
-// @Description Deletes another user's signup for the event
+// @Description Deletes a user's signup for the event
 // @Tags signup
 // @Produce json
 // @Security BearerAuth
@@ -250,6 +221,15 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 		userId, err := strconv.Atoi(c.Param("user_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": "Invalid user id"})
+			return
+		}
+		user, err := e.userService.GetUserFromAuthHeader(c)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "Not authenticated"})
+			return
+		}
+		if (user.Id != userId) && !user.HasOneOfPermissions(repository.PermissionAdmin, repository.PermissionManager) {
+			c.JSON(403, gin.H{"error": "Not authorized"})
 			return
 		}
 		err = e.signupService.RemoveSignupForUser(userId, event.Id)

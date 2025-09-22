@@ -2652,7 +2652,7 @@ paths:
       - signup
   /events/{event_id}/signups/{user_id}:
     delete:
-      description: Deletes another user's signup for the event
+      description: Deletes a user's signup for the event
       operationId: DeleteSignup
       parameters:
       - description: Event Id
@@ -2675,24 +2675,6 @@ paths:
       tags:
       - signup
   /events/{event_id}/signups/self:
-    delete:
-      description: Deletes the authenticated user's signup for the event
-      operationId: DeleteOwnSignup
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      security:
-      - BearerAuth: []
-      tags:
-      - signup
     get:
       description: Fetches an authenticated user's signup for the event
       operationId: GetPersonalSignup

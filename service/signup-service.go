@@ -2,8 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-
-	"gorm.io/gorm"
 )
 
 type SignupService struct {
@@ -25,15 +23,11 @@ func (r *SignupService) SaveSignup(signup *repository.Signup) (*repository.Signu
 }
 
 func (r *SignupService) RemoveSignupForUser(userId int, eventId int) error {
-	return r.teamRepository.DB.Transaction(func(tx *gorm.DB) error {
-		r.teamRepository.DB = tx
-		r.signupRepository.DB = tx
-		err := r.teamRepository.RemoveUserForEvent(userId, eventId)
-		if err != nil {
-			return err
-		}
-		return r.signupRepository.RemoveSignupForUser(userId, eventId)
-	})
+	err := r.teamRepository.RemoveUserForEvent(userId, eventId)
+	if err != nil {
+		return err
+	}
+	return r.signupRepository.RemoveSignupForUser(userId, eventId)
 }
 
 func (r *SignupService) GetSignupForUser(userId int, eventId int) (*repository.Signup, error) {

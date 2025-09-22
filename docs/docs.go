@@ -889,35 +889,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes the authenticated user's signup for the event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "signup"
-                ],
-                "operationId": "DeleteOwnSignup",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    }
-                }
             }
         },
         "/events/{event_id}/signups/self/actual-playtime": {
@@ -973,7 +944,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes another user's signup for the event",
+                "description": "Deletes a user's signup for the event",
                 "produces": [
                     "application/json"
                 ],
