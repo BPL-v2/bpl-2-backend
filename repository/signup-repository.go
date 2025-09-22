@@ -38,10 +38,11 @@ func (r *SignupRepository) SaveSignup(signup *Signup) (*Signup, error) {
 	return signup, nil
 }
 
-func (r *SignupRepository) RemoveSignup(userId int, eventId int) error {
+func (r *SignupRepository) RemoveSignupForUser(userId int, eventId int) error {
 	result := r.DB.Delete(&Signup{}, &Signup{UserId: userId, EventId: eventId})
 	return result.Error
 }
+
 func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, error) {
 	signup := Signup{}
 	result := r.DB.First(&signup, &Signup{UserId: userId, EventId: eventId})
