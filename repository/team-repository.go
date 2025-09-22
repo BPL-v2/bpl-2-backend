@@ -119,6 +119,20 @@ func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *E
 	return result.Error
 }
 
+func (r *TeamRepository) RemoveUserForEvent(userId int, eventId int) error {
+	query := `
+		DELETE FROM team_users
+		WHERE team_id IN (
+			SELECT id
+			FROM teams
+			WHERE event_id = ?
+		)
+		AND user_id = ?
+	`
+	result := r.DB.Exec(query, eventId, userId)
+	return result.Error
+}
+
 func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
 	validTeamUsers := utils.Filter(teamUsers, func(teamUser *TeamUser) bool {
 		return teamUser.TeamId != 0

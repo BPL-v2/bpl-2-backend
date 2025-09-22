@@ -903,7 +903,7 @@ const docTemplate = `{
                 "tags": [
                     "signup"
                 ],
-                "operationId": "DeleteSignup",
+                "operationId": "DeleteOwnSignup",
                 "parameters": [
                     {
                         "type": "integer",
@@ -962,6 +962,44 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/Signup"
                         }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/signups/{user_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes another user's signup for the event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "signup"
+                ],
+                "operationId": "DeleteSignup",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User Id",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
