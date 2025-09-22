@@ -768,6 +768,8 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 					&ItemObjectiveChecker{
 						ObjectiveId: objective.Id,
 						Function:    fn,
+						ValidFrom:   objective.ValidFrom,
+						ValidTo:     objective.ValidTo,
 					})
 			} else {
 				return nil, fmt.Errorf("invalid discriminator field")
