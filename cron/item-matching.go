@@ -224,7 +224,7 @@ func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event
 	if err != nil {
 		return err
 	}
-	itemChecker, err := parser.NewItemChecker(objectives)
+	itemChecker, err := parser.NewItemChecker(objectives, false)
 	if err != nil {
 		return err
 	}

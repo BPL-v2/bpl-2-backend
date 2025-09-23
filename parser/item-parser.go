@@ -739,7 +739,7 @@ type ItemChecker struct {
 	Funcmap map[dbModel.ItemField]map[string][]*ItemObjectiveChecker
 }
 
-func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
+func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChecker, error) {
 	funcMap := map[dbModel.ItemField]map[string][]*ItemObjectiveChecker{
 		dbModel.BASE_TYPE:  make(map[string][]*ItemObjectiveChecker),
 		dbModel.NAME:       make(map[string][]*ItemObjectiveChecker),
@@ -763,14 +763,15 @@ func NewItemChecker(objectives []*dbModel.Objective) (*ItemChecker, error) {
 		}
 		for _, discriminator := range discriminators {
 			if valueToChecker, ok := funcMap[discriminator.field]; ok {
-				valueToChecker[discriminator.value] = append(
-					valueToChecker[discriminator.value],
-					&ItemObjectiveChecker{
-						ObjectiveId: objective.Id,
-						Function:    fn,
-						ValidFrom:   objective.ValidFrom,
-						ValidTo:     objective.ValidTo,
-					})
+				checker := &ItemObjectiveChecker{
+					ObjectiveId: objective.Id,
+					Function:    fn,
+				}
+				if !ignoreTime {
+					checker.ValidFrom = objective.ValidFrom
+					checker.ValidTo = objective.ValidTo
+				}
+				valueToChecker[discriminator.value] = append(valueToChecker[discriminator.value], checker)
 			} else {
 				return nil, fmt.Errorf("invalid discriminator field")
 			}
