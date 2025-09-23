@@ -2321,6 +2321,27 @@ paths:
       - BearerAuth: []
       tags:
       - condition
+  /events/{event_id}/conditions/test:
+    post:
+      description: Test an item for completion
+      operationId: TestConditions
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Item'
+      security:
+      - BearerAuth: []
+      tags:
+      - condition
   /events/{event_id}/conditions/valid-mappings:
     get:
       description: Get valid mappings for conditions

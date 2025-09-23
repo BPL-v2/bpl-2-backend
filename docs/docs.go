@@ -264,6 +264,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/conditions/test": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Test an item for completion",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "condition"
+                ],
+                "operationId": "TestConditions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Item"
+                        }
+                    }
+                }
+            }
+        },
         "/events/{event_id}/conditions/valid-mappings": {
             "get": {
                 "security": [
