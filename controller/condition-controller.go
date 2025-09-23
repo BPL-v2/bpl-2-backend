@@ -148,7 +148,7 @@ func (e *ConditionController) testConditionHandler() gin.HandlerFunc {
 			Conditions:    conditions,
 			ObjectiveType: repository.ObjectiveTypeItem,
 		})
-		checker, _ := parser.NewItemChecker(objectives)
+		checker, _ := parser.NewItemChecker(objectives, true)
 		checker.CheckForCompletions(&conditionTest.Item)
 		c.JSON(200, checker.CheckForCompletions(&conditionTest.Item))
 	}

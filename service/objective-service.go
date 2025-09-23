@@ -50,7 +50,7 @@ func (e *ObjectiveService) GetParser(eventId int) (*parser.ItemChecker, error) {
 		return nil, err
 	}
 
-	return parser.NewItemChecker(objectives)
+	return parser.NewItemChecker(objectives, false)
 }
 
 func (e *ObjectiveService) StartSync(objectiveIds []int) error {
