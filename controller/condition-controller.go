@@ -128,29 +128,33 @@ func (e *ConditionController) getValidMappingsHandler() gin.HandlerFunc {
 	}
 }
 
+// @id TestConditions
+// @Description Test an item for completion
+// @Security BearerAuth
+// @Tags condition
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Success 200 {object} client.Item
+// @Router /events/{event_id}/conditions/test [post]
 func (e *ConditionController) testConditionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var conditionTest ConditionTest
-		if err := c.BindJSON(&conditionTest); err != nil {
+		var item = &client.Item{}
+		if err := c.BindJSON(&item); err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		conditions := make([]*repository.Condition, 0, len(conditionTest.Conditions))
-		for _, condition := range conditionTest.Conditions {
-			conditions = append(conditions, &repository.Condition{
-				Operator: repository.Operator(condition.Operator),
-				Field:    repository.ItemField(condition.ItemField),
-				Value:    condition.FieldValue,
-			})
+		event := getEvent(c)
+		if event == nil {
+			return
 		}
-		objectives := make([]*repository.Objective, 0, len(conditionTest.Conditions))
-		objectives = append(objectives, &repository.Objective{
-			Conditions:    conditions,
-			ObjectiveType: repository.ObjectiveTypeItem,
-		})
+
+		objectives, err := e.objectiveService.GetObjectivesForEvent(event.Id, "Conditions")
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 		checker, _ := parser.NewItemChecker(objectives, true)
-		checker.CheckForCompletions(&conditionTest.Item)
-		c.JSON(200, checker.CheckForCompletions(&conditionTest.Item))
+		c.JSON(200, checker.CheckForCompletions(item))
 	}
 }
 
