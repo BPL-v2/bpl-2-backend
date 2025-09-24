@@ -17,11 +17,12 @@ const (
 )
 
 type EventStatus struct {
-	TeamId            *int              `json:"team_id"`
-	IsTeamLead        bool              `json:"is_team_lead" binding:"required"`
-	ApplicationStatus ApplicationStatus `json:"application_status" binding:"required"`
-	NumberOfSignups   int               `json:"number_of_signups" binding:"required"`
-	Partner           *string           `json:"partner"`
+	TeamId                *int              `json:"team_id"`
+	IsTeamLead            bool              `json:"is_team_lead" binding:"required"`
+	ApplicationStatus     ApplicationStatus `json:"application_status" binding:"required"`
+	NumberOfSignups       int               `json:"number_of_signups" binding:"required"`
+	NumberOfSignupsBefore int               `json:"number_of_signups_before" binding:"required"`
+	Partner               *string           `json:"partner"`
 }
 
 type EventService struct {
@@ -136,6 +137,7 @@ func (e *EventService) GetEventStatus(event *repository.Event, user *repository.
 			} else {
 				eventStatus.ApplicationStatus = ApplicationStatusApplied
 			}
+			eventStatus.NumberOfSignupsBefore = count - 1
 		}
 	}
 	for _, signup := range signups {
