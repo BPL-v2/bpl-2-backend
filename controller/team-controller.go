@@ -28,6 +28,7 @@ func toTeamResponse(team *repository.Team) *Team {
 	return &Team{
 		Id:             team.Id,
 		Name:           team.Name,
+		Abbreviation:   team.Abbreviation,
 		AllowedClasses: team.AllowedClasses,
 		EventId:        team.EventId,
 		Color:          team.Color,
