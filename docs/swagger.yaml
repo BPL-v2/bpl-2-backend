@@ -1421,6 +1421,8 @@ definitions:
     type: object
   Team:
     properties:
+      abbreviation:
+        type: string
       allowed_classes:
         items:
           type: string
@@ -1441,6 +1443,8 @@ definitions:
     type: object
   TeamCreate:
     properties:
+      abbreviation:
+        type: string
       allowed_classes:
         items:
           type: string

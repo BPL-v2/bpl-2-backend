@@ -4666,6 +4666,9 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
                 "allowed_classes": {
                     "type": "array",
                     "items": {
@@ -4693,6 +4696,9 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
                 "allowed_classes": {
                     "type": "array",
                     "items": {

@@ -4658,6 +4658,9 @@
                 "name"
             ],
             "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
                 "allowed_classes": {
                     "type": "array",
                     "items": {
@@ -4685,6 +4688,9 @@
                 "name"
             ],
             "properties": {
+                "abbreviation": {
+                    "type": "string"
+                },
                 "allowed_classes": {
                     "type": "array",
                     "items": {

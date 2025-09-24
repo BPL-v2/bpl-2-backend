@@ -216,11 +216,13 @@ type TeamCreate struct {
 	Name           string   `json:"name" binding:"required"`
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 	Color          string   `json:"color"`
+	Abbreviation   string   `json:"abbreviation"`
 }
 
 type Team struct {
 	Id             int      `json:"id" binding:"required"`
 	Name           string   `json:"name" binding:"required"`
+	Abbreviation   string   `json:"abbreviation"`
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 	EventId        int      `json:"event_id" binding:"required"`
 	Color          string   `json:"color"`
@@ -239,6 +241,7 @@ func (e *TeamCreate) toModel() *repository.Team {
 		Name:           e.Name,
 		AllowedClasses: e.AllowedClasses,
 		Color:          e.Color,
+		Abbreviation:   e.Abbreviation,
 	}
 	if e.Id != nil {
 		team.Id = *e.Id
