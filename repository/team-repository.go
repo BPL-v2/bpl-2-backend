@@ -12,6 +12,7 @@ import (
 type Team struct {
 	Id             int            `gorm:"primaryKey"`
 	Name           string         `gorm:"not null"`
+	Abbreviation   string         `gorm:"not null"`
 	AllowedClasses pq.StringArray `gorm:"not null;type:text[]"`
 	EventId        int            `gorm:"not null;references events(id)"`
 	Color          string         `gorm:"not null"`
