@@ -469,7 +469,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 		select {
 		case <-f.ctx.Done():
 			return fmt.Errorf("context canceled")
-		case <-time.After(5 * time.Minute):
+		case <-time.After(1 * time.Minute):
 		}
 	}
 }
