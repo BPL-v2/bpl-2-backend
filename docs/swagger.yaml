@@ -1856,6 +1856,8 @@ definitions:
         type: boolean
       number_of_signups:
         type: integer
+      number_of_signups_before:
+        type: integer
       partner:
         type: string
       team_id:
@@ -1864,6 +1866,7 @@ definitions:
     - application_status
     - is_team_lead
     - number_of_signups
+    - number_of_signups_before
     type: object
 info:
   contact:

@@ -469,7 +469,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 		select {
 		case <-f.ctx.Done():
 			return fmt.Errorf("context canceled")
-		case <-time.After(10 * time.Second):
+		case <-time.After(5 * time.Minute):
 		}
 	}
 }
@@ -603,9 +603,9 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	go func() {
-		err := fetchingService.FetchStashChanges()
+		err := fetchingService.FetchGuildStashes()
 		if err != nil {
-			fmt.Printf("Failed to fetch stash changes: %v\n", err)
+			fmt.Printf("Failed to fetch guild stashes: %v\n", err)
 		}
 	}()
 	go fetchingService.AccessDeterminationLoop()

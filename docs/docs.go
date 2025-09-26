@@ -5194,7 +5194,8 @@ const docTemplate = `{
             "required": [
                 "application_status",
                 "is_team_lead",
-                "number_of_signups"
+                "number_of_signups",
+                "number_of_signups_before"
             ],
             "properties": {
                 "application_status": {
@@ -5204,6 +5205,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "number_of_signups": {
+                    "type": "integer"
+                },
+                "number_of_signups_before": {
                     "type": "integer"
                 },
                 "partner": {
