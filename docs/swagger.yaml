@@ -2287,7 +2287,7 @@ paths:
         "200":
           description: OK
           schema:
-            type: string
+            type: integer
       security:
       - BearerAuth: []
       tags:
