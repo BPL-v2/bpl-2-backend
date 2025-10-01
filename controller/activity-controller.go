@@ -72,7 +72,7 @@ func (e *ActivityController) getEventActivitiesHandler() gin.HandlerFunc {
 // @Param event_id path int true "Event ID"
 // @Param user_id path int true "User ID"
 // @Param threshold_seconds query int false "Threshold in seconds to consider a user active before and after an activity (default: 300)"
-// @Success 200 {object} time.Time
+// @Success 200 {object} int
 // @Router /events/{event_id}/activity/{user_id} [get]
 func (e *ActivityController) getEventActivitiesForUserHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -101,11 +101,11 @@ func (e *ActivityController) getEventActivitiesForUserHandler() gin.HandlerFunc 
 			return
 		}
 
-		activities, err := e.activityService.CalculateActiveTime(userId, event, time.Duration(thresholdSeconds)*time.Second)
+		activity, err := e.activityService.CalculateActiveTime(userId, event, time.Duration(thresholdSeconds)*time.Second)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, activities)
+		c.JSON(200, activity.Milliseconds())
 	}
 }
