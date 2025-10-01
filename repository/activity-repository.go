@@ -41,3 +41,33 @@ func (r *ActivityRepository) GetActivity(userId int, eventId int) ([]*Activity, 
 	}
 	return activities, nil
 }
+
+func (r *ActivityRepository) GetAllActivitiesForEvent(eventId int) ([]*Activity, error) {
+	activities := []*Activity{}
+	err := r.DB.Where("event_id = ?", eventId).Order("time ASC").Find(&activities).Error
+	if err != nil {
+		return nil, fmt.Errorf("error fetching activities event %d: %w", eventId, err)
+	}
+	return activities, nil
+}
+
+func (r *ActivityRepository) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {
+	type Result struct {
+		UserId int
+		Time   time.Time
+	}
+	results := []Result{}
+	err := r.DB.Model(&Activity{}).
+		Select("user_id, MAX(time) as time").
+		Where("event_id = ?", eventId).
+		Group("user_id").
+		Scan(&results).Error
+	if err != nil {
+		return nil, fmt.Errorf("error fetching latest active timestamps for event %d: %w", eventId, err)
+	}
+	resultMap := make(map[int]time.Time)
+	for _, r := range results {
+		resultMap[r.UserId] = r.Time
+	}
+	return resultMap, nil
+}

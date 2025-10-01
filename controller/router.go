@@ -41,6 +41,7 @@ func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
 	routes = append(routes, setupStreamController(cache)...)
 	routes = append(routes, setupRecurringJobsController(poeClient)...)
 	routes = append(routes, setupGuildStashController(poeClient)...)
+	routes = append(routes, setupActivityController()...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
 		handlerfuncs = append(handlerfuncs, AuthenticationMiddleware())
