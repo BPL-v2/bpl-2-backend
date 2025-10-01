@@ -25,7 +25,7 @@ func setupActivityController() []RouteInfo {
 	e := NewActivityController()
 	baseUrl := "/events/:event_id/activity"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "/", HandlerFunc: e.getEventActivitiesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "", HandlerFunc: e.getEventActivitiesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/:user_id", HandlerFunc: e.getEventActivitiesForUserHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
