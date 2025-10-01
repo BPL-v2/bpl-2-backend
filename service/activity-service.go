@@ -57,6 +57,50 @@ func (s *ActivityService) CalculateActiveTime(userId int, event *repository.Even
 	return totalDuration, nil
 }
 
+func (s *ActivityService) CalculateActiveTimesForEvent(event *repository.Event, threshold time.Duration) (map[int]int, error) {
+	activities, err := s.activityRepository.GetAllActivitiesForEvent(event.Id)
+	if err != nil {
+		return nil, err
+	}
+	userActivities := make(map[int][]*repository.Activity)
+	for _, activity := range activities {
+		userActivities[activity.UserId] = append(userActivities[activity.UserId], activity)
+	}
+
+	activeTimes := make(map[int]int)
+	for userId, acts := range userActivities {
+		var totalDuration time.Duration
+		sessionStart := acts[0].Time.Add(-threshold)
+		if sessionStart.Before(event.EventStartTime) {
+			sessionStart = event.EventStartTime
+		}
+		lastActivityTime := acts[0].Time
+
+		for _, activity := range acts[1:] {
+			if activity.Time.Sub(lastActivityTime) > threshold {
+				sessionEnd := lastActivityTime.Add(threshold)
+				if sessionEnd.After(event.EventEndTime) {
+					sessionEnd = event.EventEndTime
+				}
+				totalDuration += sessionEnd.Sub(sessionStart)
+				sessionStart = activity.Time.Add(-threshold)
+				if sessionStart.Before(event.EventStartTime) {
+					sessionStart = event.EventStartTime
+				}
+			}
+			lastActivityTime = activity.Time
+		}
+
+		sessionEnd := lastActivityTime.Add(threshold)
+		if sessionEnd.After(event.EventEndTime) {
+			sessionEnd = event.EventEndTime
+		}
+		totalDuration += sessionEnd.Sub(sessionStart)
+		activeTimes[userId] = int(totalDuration.Milliseconds())
+	}
+	return activeTimes, nil
+}
+
 func (s *ActivityService) CalculateInactiveTime(userId int, event *repository.Event, minInactivityWindow time.Duration) (time.Duration, error) {
 	activities, err := s.activityRepository.GetActivity(userId, event.Id)
 	if err != nil || len(activities) == 0 {
@@ -99,4 +143,8 @@ func (s *ActivityService) RecordActivity(userId int, eventId int, timestamp time
 		EventId: eventId,
 	}
 	return s.activityRepository.SaveActivity(activity)
+}
+
+func (s *ActivityService) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {
+	return s.activityRepository.GetLatestActiveTimestampsForEvent(eventId)
 }

@@ -498,6 +498,7 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 			Public:      true,
 			AccountName: userNameMap[stash.OwnerId],
 			League:      &f.event.Name,
+			TeamId:      stash.TeamId,
 			Items: utils.Map(
 				*response.Stash.Items,
 				func(item client.DisplayItem) client.Item { return *item.Item }),

@@ -406,11 +406,7 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 		}
 		stashId := c.Param("stash_id")
 		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id, "Children")
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		if tab.Raw == "" || tab.Raw == "{}" {
+		if err != nil || tab.Raw == "" || tab.Raw == "{}" {
 			c.JSON(404, gin.H{"error": "stash tab not found"})
 			return
 		}

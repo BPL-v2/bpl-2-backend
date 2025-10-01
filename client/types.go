@@ -150,6 +150,7 @@ type PublicStashChange struct {
 	Id                string  `json:"id"`
 	Public            bool    `json:"public"`
 	AccountName       *string `json:"accountName,omitempty"`
+	TeamId            int     `json:"teamId,omitempty"`
 	Stash             *string `json:"stash,omitempty"`
 	LastCharacterName *string `json:"lastCharacterName,omitempty"`
 	StashType         string  `json:"stashType"`

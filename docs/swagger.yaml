@@ -1006,6 +1006,8 @@ definitions:
         type: integer
       experience:
         type: integer
+      last_active:
+        type: integer
       level:
         type: integer
       rank:
@@ -2231,6 +2233,65 @@ paths:
       - BearerAuth: []
       tags:
       - event
+  /events/{event_id}/activity:
+    get:
+      description: Get calculated active times for all users in an event
+      operationId: GetEventActivities
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: 'Threshold in seconds to consider a user active before and after
+          an activity (default: 300)'
+        in: query
+        name: threshold_seconds
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      security:
+      - BearerAuth: []
+      tags:
+      - activity
+  /events/{event_id}/activity/{user_id}:
+    get:
+      description: Get calculated active times for a user in an event
+      operationId: GetEventActivitiesForUser
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: 'Threshold in seconds to consider a user active before and after
+          an activity (default: 300)'
+        in: query
+        name: threshold_seconds
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      tags:
+      - activity
   /events/{event_id}/atlas:
     get:
       consumes:

@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +14,7 @@ type LadderController struct {
 	characterService *service.CharacterService
 	userService      *service.UserService
 	signupService    *service.SignupService
+	activityService  *service.ActivityService
 }
 
 func NewLadderController() *LadderController {
@@ -21,6 +23,7 @@ func NewLadderController() *LadderController {
 		characterService: service.NewCharacterService(),
 		userService:      service.NewUserService(),
 		signupService:    service.NewSignupService(),
+		activityService:  service.NewActivityService(),
 	}
 }
 
@@ -67,8 +70,12 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-
-		ctx.JSON(200, toLadderResponse(ladder, characters, characterStats))
+		lastActivities, err := c.activityService.GetLatestActiveTimestampsForEvent(event.Id)
+		if err != nil {
+			ctx.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(200, toLadderResponse(ladder, characters, characterStats, lastActivities))
 	}
 }
 
@@ -138,6 +145,7 @@ type LadderEntry struct {
 	Character     *Character     `json:"character"`
 	Stats         *CharacterStat `json:"stats"`
 	TwitchAccount *string        `json:"twitch_account"`
+	LastActive    *int64         `json:"last_active"`
 }
 
 type Atlas struct {
@@ -163,7 +171,7 @@ func toAtlasResponse(atlas *repository.Atlas) *Atlas {
 	return response
 }
 
-func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterStat) []*LadderEntry {
+func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterStat, lastActivities map[int]time.Time) []*LadderEntry {
 	response := make([]*LadderEntry, 0, len(entries))
 	characterMap := make(map[string]*repository.Character)
 	statsMap := make(map[string]*repository.CharacterStat)
@@ -186,6 +194,10 @@ func toLadderResponse(entries []*repository.LadderEntry, characters []*repositor
 			TwitchAccount: entry.TwitchAccount,
 			Character:     toCharacterResponse(characterMap[entry.Character]),
 			Stats:         toCharacterStatResponse(statsMap[entry.Character]),
+		}
+		if entry.UserId != nil && lastActivities[*entry.UserId] != (time.Time{}) {
+			timestamp := lastActivities[*entry.UserId].Unix()
+			responseEntry.LastActive = &timestamp
 		}
 		response = append(response, responseEntry)
 	}
