@@ -186,7 +186,6 @@ func (e *ScoreController) StartScoreUpdater() {
 			for _, eventId := range eventIds {
 				event, ok := eventMap[eventId]
 				// dont update event if its over and its already cached
-				fmt.Println("e.scoreService.LatestScores[eventId]", e.scoreService.LatestScores[eventId])
 				if !ok || (event.EventEndTime.Before(time.Now()) && e.scoreService.LatestScores[eventId] != nil) {
 					continue
 				}

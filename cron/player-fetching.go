@@ -282,9 +282,10 @@ func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.Playe
 }
 
 type PlayerStatsCache struct {
-	OldStats      *repository.CharacterStat
-	OldPoBString  string
-	LastPoBUpdate time.Time
+	OldStats       *repository.CharacterStat
+	OldPoBString   string
+	LastPoBUpdate  time.Time
+	NumFilledSlots int
 }
 
 func float2Int64(f float64) int64 {
@@ -336,8 +337,15 @@ func updateStats(character *client.Character, event *repository.Event, character
 		cache[character.Name] = &PlayerStatsCache{
 			OldStats: &repository.CharacterStat{},
 		}
+		if character.Equipment != nil {
+			cache[character.Name].NumFilledSlots = len(*character.Equipment)
+		}
 	}
+	// trying to filter out saving stats for characters that are missing equipment pieces if their DPS went down
 	cacheItem := cache[character.Name]
+	if newStats.DPS < cacheItem.OldStats.DPS && character.Equipment != nil && cacheItem.NumFilledSlots > len(*character.Equipment) {
+		return
+	}
 	if time.Since(cacheItem.LastPoBUpdate) > 10*time.Minute && export != cacheItem.OldPoBString {
 		cacheItem.OldPoBString = export
 		cacheItem.LastPoBUpdate = time.Now()
