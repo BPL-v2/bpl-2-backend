@@ -301,10 +301,12 @@ func (f *FetchingService) FetchGuildStashTab(tab *repository.GuildStashTab) erro
 		fmt.Printf("Failed to fetch stash %s for team %d: %v\n", tab.Id, tab.TeamId, err)
 		return err
 	}
-	addGuildStashesToQueue(kafkaWriter, stashChanges)
+	err = addGuildStashesToQueue(kafkaWriter, stashChanges)
+	if err != nil {
+		return err
+	}
 	err = f.guildStashRepository.SaveAll(persistedStashes)
 	if err != nil {
-		fmt.Printf("Failed to save guild stashes: %v\n", err)
 		return err
 	}
 	return nil
@@ -432,7 +434,6 @@ func (f *FetchingService) FetchGuildStashes() error {
 		if err != nil {
 			return fmt.Errorf("failed to get guild stashes for event %d: %w", f.event.Id, err)
 		}
-		stashChanges := []*client.PublicStashChange{}
 		persistedStashes := make([]*repository.GuildStashTab, 0)
 		mu := sync.Mutex{}
 		wg := sync.WaitGroup{}
@@ -450,14 +451,16 @@ func (f *FetchingService) FetchGuildStashes() error {
 					fmt.Printf("Failed to fetch stash %s for team %d: %v\n", stash.Id, stash.TeamId, err)
 					return
 				}
+				err = addGuildStashesToQueue(kafkaWriter, changes)
+				if err != nil {
+					fmt.Printf("Failed to add stash changes to queue for stash %s: %v\n", stash.Id, err)
+				}
 				mu.Lock()
 				defer mu.Unlock()
-				stashChanges = append(stashChanges, changes...)
 				persistedStashes = append(persistedStashes, updatedStashes...)
 			}(*stash)
 		}
 		wg.Wait()
-		addGuildStashesToQueue(kafkaWriter, stashChanges)
 		err = f.guildStashRepository.SaveAll(persistedStashes)
 		if err != nil {
 			fmt.Printf("Failed to save guild stashes: %v\n", err)
@@ -557,7 +560,7 @@ var (
 	GuildStashHashMapMutex = sync.Mutex{}
 )
 
-func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicStashChange) {
+func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicStashChange) error {
 	realChanges := make([]*client.PublicStashChange, 0)
 	for _, change := range changes {
 		hash := change.GetHash()
@@ -572,7 +575,7 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 		fmt.Printf("Adding stash %s to queue\n", change.Id)
 	}
 	if len(realChanges) == 0 {
-		return
+		return nil
 	}
 
 	message, err := json.Marshal(repository.StashChangeMessage{
@@ -584,16 +587,12 @@ func addGuildStashesToQueue(kafkaWriter *kafka.Writer, changes []*client.PublicS
 		Timestamp: time.Now(),
 	})
 	if err != nil {
-		fmt.Printf("Failed to marshal stash change message: %v\n", err)
-		return
+		return err
 	}
-	err = kafkaWriter.WriteMessages(
+	return kafkaWriter.WriteMessages(
 		context.Background(),
 		kafka.Message{Value: message},
 	)
-	if err != nil {
-		fmt.Printf("Failed to write stash change message to kafka: %v\n", err)
-	}
 }
 
 func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
