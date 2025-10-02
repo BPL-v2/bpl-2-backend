@@ -62,13 +62,16 @@ func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange repo
 }
 
 func (m *MatchingService) getItemMatches(stashChange repository.StashChangeMessage, userMap map[string]*repository.TeamUserWithPoEToken, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
-	fmt.Println("Checking for item matches in stash change", stashChange.ChangeId)
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 	for _, stash := range stashChange.Stashes {
-		fmt.Println("Processing stash", stash.Id, "for stash change", stashChange.ChangeId)
-		if stash.League != nil && *stash.League == m.event.Name && stash.AccountName != nil && userMap[*stash.AccountName] != nil {
-			user := userMap[*stash.AccountName]
+		userId := new(int)
+		teamId := stash.TeamId
+		if stash.AccountName != nil && userMap[*stash.AccountName] != nil {
+			userId = &userMap[*stash.AccountName].UserId
+			teamId = userMap[*stash.AccountName].TeamId
+		}
+		if stash.League != nil && *stash.League == m.event.Name && teamId != 0 {
 			completions := make(map[int]int)
 			for _, item := range stash.Items {
 				for _, result := range itemChecker.CheckForCompletions(&item) {
@@ -84,9 +87,7 @@ func (m *MatchingService) getItemMatches(stashChange repository.StashChangeMessa
 				EventId:   m.event.Id,
 				Timestamp: stashChange.Timestamp,
 			}
-			fmt.Println("Creating stash change for stash", stash.Id, "and user", user.AccountName)
-			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, user, stashChange)...)
-			fmt.Println("Created", len(matches), "matches for stash", stash.Id, "and user", user)
+			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, userId, teamId, stashChange)...)
 		}
 	}
 	return matches

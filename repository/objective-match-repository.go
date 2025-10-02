@@ -12,8 +12,8 @@ type ObjectiveMatch struct {
 	ObjectiveId   int       `gorm:"index:obj_match_obj;index:obj_match_obj_user;not null;references:objectives(id)"`
 	Timestamp     time.Time `gorm:"not null"`
 	Number        int       `gorm:"not null"`
-	UserId        int       `gorm:"index:obj_match_user;index:obj_match_obj_user;not null;references:users(id)"`
 	TeamId        int       `gorm:"not null;references:teams(id)"`
+	UserId        *int      `gorm:"index:obj_match_user;index:obj_match_obj_user;references:users(id)"`
 	StashChangeId *int      `gorm:"index:obj_match_stash_change;references:stash_change(id)"`
 }
 

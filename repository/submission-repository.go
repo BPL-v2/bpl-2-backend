@@ -39,7 +39,7 @@ func (s *Submission) ToObjectiveMatch() *ObjectiveMatch {
 		ObjectiveId: s.ObjectiveId,
 		Timestamp:   s.Timestamp,
 		Number:      s.Number,
-		UserId:      s.UserId,
+		UserId:      &s.UserId,
 		TeamId:      s.TeamId,
 	}
 }
@@ -94,7 +94,7 @@ func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission)
 	return r.DB.Delete(ObjectiveMatch{},
 		ObjectiveMatch{
 			ObjectiveId: submission.ObjectiveId,
-			UserId:      submission.UserId,
+			UserId:      &submission.UserId,
 			TeamId:      submission.TeamId,
 			Number:      submission.Number,
 		}).Error

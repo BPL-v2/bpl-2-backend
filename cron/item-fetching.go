@@ -264,15 +264,11 @@ func (f *FetchingService) FilterStashChanges() error {
 	return nil
 }
 
-func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, fetchers *GuildStashFetchers, userNameMap map[int]*string, err error) {
+func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, fetchers *GuildStashFetchers, err error) {
 	users, err := f.userRepository.GetUsersForEvent(f.event.Id)
 	if err != nil {
 		log.Printf("Failed to get users for event %d: %v", f.event.Id, err)
 		return
-	}
-	userNameMap = make(map[int]*string)
-	for _, user := range users {
-		userNameMap[user.UserId] = &user.AccountName
 	}
 	// todo: move this redundant db call
 	stashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
@@ -289,18 +285,18 @@ func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, f
 	kafkaWriter, err = config.GetWriter(f.event.Id)
 	if err != nil {
 		log.Print(err)
-		return nil, nil, nil, fmt.Errorf("failed to get kafka writer: %w", err)
+		return nil, nil, fmt.Errorf("failed to get kafka writer: %w", err)
 	}
-	return kafkaWriter, fetchers, userNameMap, nil
+	return kafkaWriter, fetchers, nil
 }
 
 func (f *FetchingService) FetchGuildStashTab(tab *repository.GuildStashTab) error {
-	kafkaWriter, fetchers, userNameMap, err := f.InitGuildStashFetching()
+	kafkaWriter, fetchers, err := f.InitGuildStashFetching()
 	if err != nil {
 		fmt.Printf("Failed to initialize guild stash fetching: %v\n", err)
 		return err
 	}
-	stashChanges, persistedStashes, err := f.fetchStash(*tab, fetchers, userNameMap)
+	stashChanges, persistedStashes, err := f.fetchGuildStash(*tab, fetchers)
 	if err != nil {
 		fmt.Printf("Failed to fetch stash %s for team %d: %v\n", tab.Id, tab.TeamId, err)
 		return err
@@ -423,7 +419,7 @@ func (f *FetchingService) GetAvailableStashes(user *repository.TeamUserWithPoETo
 }
 
 func (f *FetchingService) FetchGuildStashes() error {
-	kafkaWriter, fetchers, userNameMap, err := f.InitGuildStashFetching()
+	kafkaWriter, fetchers, err := f.InitGuildStashFetching()
 	if err != nil {
 		return fmt.Errorf("failed to initialize guild stash fetching: %w", err)
 	}
@@ -449,7 +445,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 			wg.Add(1)
 			go func(stash repository.GuildStashTab) {
 				defer wg.Done()
-				changes, updatedStashes, err := f.fetchStash(stash, fetchers, userNameMap)
+				changes, updatedStashes, err := f.fetchGuildStash(stash, fetchers)
 				if err != nil {
 					fmt.Printf("Failed to fetch stash %s for team %d: %v\n", stash.Id, stash.TeamId, err)
 					return
@@ -474,7 +470,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 	}
 }
 
-func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *GuildStashFetchers, userNameMap map[int]*string) ([]*client.PublicStashChange, []*repository.GuildStashTab, error) {
+func (f *FetchingService) fetchGuildStash(stash repository.GuildStashTab, fetchers *GuildStashFetchers) ([]*client.PublicStashChange, []*repository.GuildStashTab, error) {
 	updatedStashes := make([]*repository.GuildStashTab, 0)
 	stashChanges := make([]*client.PublicStashChange, 0)
 	token, err := fetchers.GetToken(&stash)
@@ -494,11 +490,10 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 	stash.Color = response.Stash.Metadata.Colour
 	if response.Stash.Items != nil {
 		stashChanges = append(stashChanges, &client.PublicStashChange{
-			Id:          stash.Id,
-			Public:      true,
-			AccountName: userNameMap[stash.OwnerId],
-			League:      &f.event.Name,
-			TeamId:      stash.TeamId,
+			Id:     stash.Id,
+			Public: true,
+			League: &f.event.Name,
+			TeamId: stash.TeamId,
 			Items: utils.Map(
 				*response.Stash.Items,
 				func(item client.DisplayItem) client.Item { return *item.Item }),
@@ -524,7 +519,7 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 			wg.Add(1)
 			go func(child client.GuildStashTabGGG) {
 				defer wg.Done()
-				childChanges, childStashes, err := f.fetchStash(repository.GuildStashTab{
+				childChanges, childStashes, err := f.fetchGuildStash(repository.GuildStashTab{
 					Id:            child.Id,
 					EventId:       f.event.Id,
 					TeamId:        stash.TeamId,
@@ -539,7 +534,7 @@ func (f *FetchingService) fetchStash(stash repository.GuildStashTab, fetchers *G
 					Raw:           "",
 					FetchEnabled:  stash.FetchEnabled,
 					UserIds:       stash.UserIds,
-				}, fetchers, userNameMap)
+				}, fetchers)
 				if err != nil {
 					fmt.Printf("Failed to fetch child stash %s for team %d: %v\n", child.Id, stash.TeamId, err)
 					return
