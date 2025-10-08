@@ -113,10 +113,8 @@ func (c *AsyncHttpClient) SendRequest(
 	requestArgs RequestArgs,
 ) (*http.Response, error) {
 	err := error(nil)
-	var headers map[string]string
-	if requestArgs.Headers == nil {
-		headers = map[string]string{}
-	} else {
+	headers := map[string]string{}
+	if requestArgs.Headers != nil {
 		headers = requestArgs.Headers
 	}
 
@@ -159,12 +157,7 @@ func (c *AsyncHttpClient) SendRequest(
 	}
 	// fmt.Printf("requesting %s with token %s\n", requestUrl.String(), requestArgs.Token)
 
-	req := &http.Request{}
-	if requestArgs.Body != nil {
-		req, err = http.NewRequestWithContext(ctx, method, requestUrl.String(), requestArgs.Body)
-	} else {
-		req, err = http.NewRequestWithContext(ctx, method, requestUrl.String(), nil)
-	}
+	req, err := http.NewRequestWithContext(ctx, method, requestUrl.String(), requestArgs.Body)
 
 	if err != nil {
 		return nil, err

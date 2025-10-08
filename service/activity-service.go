@@ -2,7 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-	"fmt"
 	"time"
 )
 
@@ -16,45 +15,37 @@ func NewActivityService() *ActivityService {
 	}
 }
 
+type ActivitySession struct {
+	Start time.Time
+	End   time.Time
+}
+
 func (s *ActivityService) CalculateActiveTime(userId int, event *repository.Event, threshold time.Duration) (time.Duration, error) {
-
-	// inactiveTime, err := s.CalculateInactiveTime(userId, event, threshold)
-	// seconds := event.EventEndTime.Unix() - event.EventStartTime.Unix() - int64(inactiveTime.Seconds())
-	// return time.Duration(seconds) * time.Second, err
-
 	activities, err := s.activityRepository.GetActivity(userId, event.Id)
 	if err != nil || len(activities) == 0 {
-		fmt.Println("Error fetching activities or no activities found:", err)
 		return 0, nil
 	}
+	return determineActiveTime(activities, threshold), nil
+}
+
+func determineActiveTime(activities []*repository.Activity, threshold time.Duration) time.Duration {
 	var totalDuration time.Duration
-	sessionStart := activities[0].Time.Add(-threshold)
-	if sessionStart.Before(event.EventStartTime) {
-		sessionStart = event.EventStartTime
-	}
-	lastActivityTime := activities[0].Time
-
+	var sessions []ActivitySession
+	sessionStart := activities[0].Time
+	sessionEnd := activities[0].Time
 	for _, activity := range activities[1:] {
-		if activity.Time.Sub(lastActivityTime) > threshold {
-			sessionEnd := lastActivityTime.Add(threshold)
-			if sessionEnd.After(event.EventEndTime) {
-				sessionEnd = event.EventEndTime
-			}
-			totalDuration += sessionEnd.Sub(sessionStart)
-			sessionStart = activity.Time.Add(-threshold)
-			if sessionStart.Before(event.EventStartTime) {
-				sessionStart = event.EventStartTime
-			}
+		if activity.Time.Sub(sessionEnd) > threshold {
+			sessions = append(sessions, ActivitySession{Start: sessionStart, End: sessionEnd})
+			sessionStart = activity.Time
 		}
-		lastActivityTime = activity.Time
-	}
+		sessionEnd = activity.Time
 
-	sessionEnd := lastActivityTime.Add(threshold)
-	if sessionEnd.After(event.EventEndTime) {
-		sessionEnd = event.EventEndTime
 	}
-	totalDuration += sessionEnd.Sub(sessionStart)
-	return totalDuration, nil
+	sessions = append(sessions, ActivitySession{Start: sessionStart, End: sessionEnd})
+	for _, session := range sessions {
+		totalDuration += session.End.Sub(session.Start)
+	}
+	return totalDuration
 }
 
 func (s *ActivityService) CalculateActiveTimesForEvent(event *repository.Event, threshold time.Duration) (map[int]int, error) {
@@ -66,74 +57,11 @@ func (s *ActivityService) CalculateActiveTimesForEvent(event *repository.Event, 
 	for _, activity := range activities {
 		userActivities[activity.UserId] = append(userActivities[activity.UserId], activity)
 	}
-
 	activeTimes := make(map[int]int)
-	for userId, acts := range userActivities {
-		var totalDuration time.Duration
-		sessionStart := acts[0].Time.Add(-threshold)
-		if sessionStart.Before(event.EventStartTime) {
-			sessionStart = event.EventStartTime
-		}
-		lastActivityTime := acts[0].Time
-
-		for _, activity := range acts[1:] {
-			if activity.Time.Sub(lastActivityTime) > threshold {
-				sessionEnd := lastActivityTime.Add(threshold)
-				if sessionEnd.After(event.EventEndTime) {
-					sessionEnd = event.EventEndTime
-				}
-				totalDuration += sessionEnd.Sub(sessionStart)
-				sessionStart = activity.Time.Add(-threshold)
-				if sessionStart.Before(event.EventStartTime) {
-					sessionStart = event.EventStartTime
-				}
-			}
-			lastActivityTime = activity.Time
-		}
-
-		sessionEnd := lastActivityTime.Add(threshold)
-		if sessionEnd.After(event.EventEndTime) {
-			sessionEnd = event.EventEndTime
-		}
-		totalDuration += sessionEnd.Sub(sessionStart)
-		activeTimes[userId] = int(totalDuration.Milliseconds())
+	for userId, activities := range userActivities {
+		activeTimes[userId] = int(determineActiveTime(activities, threshold).Milliseconds())
 	}
 	return activeTimes, nil
-}
-
-func (s *ActivityService) CalculateInactiveTime(userId int, event *repository.Event, minInactivityWindow time.Duration) (time.Duration, error) {
-	activities, err := s.activityRepository.GetActivity(userId, event.Id)
-	if err != nil || len(activities) == 0 {
-		fmt.Println("Error fetching activities or no activities found:", err)
-		// If no activities, the entire event duration is inactive time
-		if err == nil {
-			return event.EventEndTime.Sub(event.EventStartTime), nil
-		}
-		return 0, err
-	}
-
-	var totalInactiveTime time.Duration
-
-	// Check for inactivity before the first activity
-	if activities[0].Time.Sub(event.EventStartTime) >= minInactivityWindow {
-		totalInactiveTime += activities[0].Time.Sub(event.EventStartTime)
-	}
-
-	// Check for inactivity between activities
-	for i := 1; i < len(activities); i++ {
-		inactivityPeriod := activities[i].Time.Sub(activities[i-1].Time)
-		if inactivityPeriod >= minInactivityWindow {
-			totalInactiveTime += inactivityPeriod
-		}
-	}
-
-	// Check for inactivity after the last activity
-	lastActivity := activities[len(activities)-1]
-	if event.EventEndTime.Sub(lastActivity.Time) >= minInactivityWindow {
-		totalInactiveTime += event.EventEndTime.Sub(lastActivity.Time)
-	}
-
-	return totalInactiveTime, nil
 }
 
 func (s *ActivityService) RecordActivity(userId int, eventId int, timestamp time.Time) error {

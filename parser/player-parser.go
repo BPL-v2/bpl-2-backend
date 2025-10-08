@@ -31,6 +31,7 @@ type PlayerUpdate struct {
 	TokenExpiry      time.Time
 	Mu               sync.Mutex
 	SuccessiveErrors int
+	LastActive       time.Time
 
 	New Player
 	Old Player
@@ -70,13 +71,16 @@ func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
 	if p.New.CharacterName == "" {
 		return false
 	}
+	if p.LastActive.After(time.Now().Add(-20 * time.Minute)) {
+		return time.Since(p.LastUpdateTimes.Character) > 2*time.Minute
+	}
 	if p.New.CharacterLevel > 40 && !p.New.Pantheon {
 		return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
 	}
 	if p.New.CharacterLevel > 68 && !(p.New.AscendancyPoints >= 8) {
 		return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
 	}
-	return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
+	return time.Since(p.LastUpdateTimes.Character) > 10*time.Minute
 }
 
 func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {

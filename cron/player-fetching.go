@@ -119,7 +119,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	player.New.AscendancyPoints = characterResponse.Character.GetAscendancyPoints()
 	player.New.MainSkill = characterResponse.Character.GetMainSkill()
 	player.New.EquipmentHash = characterResponse.Character.EquipmentHash()
-	if player.New.EquipmentHash != player.Old.EquipmentHash && time.Since(player.LastUpdateTimes.PoB) > 3*time.Minute {
+	if player.New.EquipmentHash != player.Old.EquipmentHash || time.Since(player.LastUpdateTimes.PoB) > 15*time.Minute {
 		charQueue <- characterResponse.Character
 		player.LastUpdateTimes.PoB = time.Now()
 	}
@@ -492,6 +492,9 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			wg.Wait()
 
 			for _, player := range players {
+				if player.New.CharacterXP != player.Old.CharacterXP {
+					player.LastActive = time.Now()
+				}
 				err := service.characterService.SavePlayerUpdate(event.Id, player)
 				if err != nil {
 					log.Print(err)

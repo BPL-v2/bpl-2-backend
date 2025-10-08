@@ -49,7 +49,7 @@ func (e *ActivityController) getEventActivitiesHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		thresholdStr := c.DefaultQuery("threshold_seconds", "300")
+		thresholdStr := c.DefaultQuery("threshold_seconds", "1800")
 		thresholdSeconds, err := strconv.Atoi(thresholdStr)
 		if err != nil || thresholdSeconds <= 0 {
 			c.JSON(400, gin.H{"error": "Invalid threshold_seconds"})
@@ -94,7 +94,7 @@ func (e *ActivityController) getEventActivitiesForUserHandler() gin.HandlerFunc 
 			c.JSON(403, gin.H{"error": "You are not allowed to view activities of other users"})
 			return
 		}
-		thresholdStr := c.DefaultQuery("threshold_seconds", "300")
+		thresholdStr := c.DefaultQuery("threshold_seconds", "1800")
 		thresholdSeconds, err := strconv.Atoi(thresholdStr)
 		if err != nil || thresholdSeconds <= 0 {
 			c.JSON(400, gin.H{"error": "Invalid threshold_seconds"})
