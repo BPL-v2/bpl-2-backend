@@ -33,6 +33,12 @@ var pobsCalculatedCounter = promauto.NewCounter(
 		Help: "Number of PoBs calculated",
 	},
 )
+var pobsSavedCounter = promauto.NewCounter(
+	prometheus.CounterOpts{
+		Name: "bpl_pobs_saved",
+		Help: "Number of PoBs saved to the database",
+	},
+)
 
 type PlayerFetchingService struct {
 	userRepository        *repository.UserRepository
@@ -346,7 +352,7 @@ func updateStats(character *client.Character, event *repository.Event, character
 	if newStats.DPS < cacheItem.OldStats.DPS && character.Equipment != nil && cacheItem.NumFilledSlots > len(*character.Equipment) {
 		return
 	}
-	if time.Since(cacheItem.LastPoBUpdate) > 10*time.Minute && export != cacheItem.OldPoBString {
+	if time.Since(cacheItem.LastPoBUpdate) > 5*time.Minute && export != cacheItem.OldPoBString {
 		cacheItem.OldPoBString = export
 		cacheItem.LastPoBUpdate = time.Now()
 		err := characterRepo.SavePoB(&repository.CharacterPob{
@@ -357,6 +363,7 @@ func updateStats(character *client.Character, event *repository.Event, character
 			Export:      export,
 			Timestamp:   time.Now(),
 		})
+		pobsSavedCounter.Inc()
 		if err != nil {
 			log.Printf("Error saving PoB for character %s: %v", character.Name, err)
 		}
