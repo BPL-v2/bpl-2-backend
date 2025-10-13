@@ -4,6 +4,7 @@ import (
 	"bpl/utils"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -101,7 +102,7 @@ type RequestArgs struct {
 	Method        string
 	PathParams    []string
 	QueryParams   map[string]string
-	Body          *strings.Reader
+	Body          io.Reader
 	BodyRaw       any
 	Headers       map[string]string
 	IgnoreBaseURL bool
@@ -155,16 +156,6 @@ func (c *AsyncHttpClient) SendRequest(
 		}
 		requestUrl.RawQuery = query.Encode()
 	}
-	fmt.Printf("request: \n")
-	fmt.Printf("method: %s, ", method)
-	fmt.Printf("url ptr: %s, ", requestUrl)
-	fmt.Printf("path: %s, ", requestArgs.Path)
-	fmt.Printf("path params: %v, ", requestArgs.PathParams)
-	fmt.Printf("query params: %v, ", requestArgs.QueryParams)
-	fmt.Printf("body: %v, ", requestArgs.BodyRaw)
-	fmt.Printf("headers: %v, ", headers)
-	fmt.Printf("token: %s, ", requestArgs.Token)
-	fmt.Printf("url: %s\n, ", requestUrl.String())
 
 	req, err := http.NewRequestWithContext(ctx, method, requestUrl.String(), requestArgs.Body)
 
