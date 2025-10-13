@@ -155,7 +155,16 @@ func (c *AsyncHttpClient) SendRequest(
 		}
 		requestUrl.RawQuery = query.Encode()
 	}
-	// fmt.Printf("requesting %s with token %s\n", requestUrl.String(), requestArgs.Token)
+	fmt.Printf("request: \n")
+	fmt.Printf("method: %s, ", method)
+	fmt.Printf("url ptr: %s, ", requestUrl)
+	fmt.Printf("path: %s, ", requestArgs.Path)
+	fmt.Printf("path params: %v, ", requestArgs.PathParams)
+	fmt.Printf("query params: %v, ", requestArgs.QueryParams)
+	fmt.Printf("body: %v, ", requestArgs.BodyRaw)
+	fmt.Printf("headers: %v, ", headers)
+	fmt.Printf("token: %s, ", requestArgs.Token)
+	fmt.Printf("url: %s\n, ", requestUrl.String())
 
 	req, err := http.NewRequestWithContext(ctx, method, requestUrl.String(), requestArgs.Body)
 
