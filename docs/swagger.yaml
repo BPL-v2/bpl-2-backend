@@ -618,11 +618,11 @@ definitions:
       index:
         type: integer
       trees:
-        items:
+        additionalProperties:
           items:
             type: integer
           type: array
-        type: array
+        type: object
       user_id:
         type: integer
     required:
@@ -630,6 +630,17 @@ definitions:
     - index
     - trees
     - user_id
+    type: object
+  AtlasProgression:
+    properties:
+      index:
+        type: integer
+      nodes:
+        items:
+          type: integer
+        type: array
+      timestamp:
+        type: integer
     type: object
   CallbackBody:
     properties:
@@ -3248,6 +3259,32 @@ paths:
                 $ref: '#/definitions/MinimalUser'
               type: array
             type: object
+      tags:
+      - user
+  /events/{event_id}/users/{user_id}/atlas:
+    get:
+      description: Fetches the atlas progression for a user in an event
+      operationId: GetAtlasProgression
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: User Id
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/AtlasProgression'
+            type: array
       tags:
       - user
   /jobs:

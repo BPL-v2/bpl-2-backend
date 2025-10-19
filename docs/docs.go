@@ -1737,6 +1737,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/users/{user_id}/atlas": {
+            "get": {
+                "description": "Fetches the atlas progression for a user in an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "operationId": "GetAtlasProgression",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User Id",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/AtlasProgression"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/jobs": {
             "get": {
                 "security": [
@@ -3601,8 +3640,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "trees": {
-                    "type": "array",
-                    "items": {
+                    "type": "object",
+                    "additionalProperties": {
                         "type": "array",
                         "items": {
                             "type": "integer"
@@ -3610,6 +3649,23 @@ const docTemplate = `{
                     }
                 },
                 "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "AtlasProgression": {
+            "type": "object",
+            "properties": {
+                "index": {
+                    "type": "integer"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "timestamp": {
                     "type": "integer"
                 }
             }

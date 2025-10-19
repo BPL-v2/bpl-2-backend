@@ -1,14 +1,11 @@
 package repository
 
 import (
-	"bpl/client"
 	"bpl/config"
-	"bpl/utils"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 )
@@ -71,18 +68,6 @@ type CharacterPob struct {
 	Timestamp   time.Time `gorm:"not null;index"`
 }
 
-type Atlas struct {
-	UserID  int           `gorm:"not null;primaryKey"`
-	EventID int           `gorm:"not null;index;primaryKey"`
-	Index   int           `gorm:"not null"`
-	Tree1   pq.Int32Array `gorm:"not null;type:integer[]"`
-	Tree2   pq.Int32Array `gorm:"not null;type:integer[]"`
-	Tree3   pq.Int32Array `gorm:"not null;type:integer[]"`
-
-	User  *User  `gorm:"foreignKey:UserID"`
-	Event *Event `gorm:"foreignKey:EventID"`
-}
-
 type CharacterRepository struct {
 	DB *gorm.DB
 }
@@ -140,36 +125,6 @@ func (r *CharacterRepository) Save(character *Character) error {
 	return r.DB.Save(&character).Error
 }
 
-func (r *CharacterRepository) SaveAtlasTrees(userId int, eventId int, atlasPassiveTrees []client.AtlasPassiveTree) error {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("SaveAtlasTrees"))
-	defer timer.ObserveDuration()
-	atlas := Atlas{}
-	r.DB.Where(Atlas{UserID: userId, EventID: eventId}).First(&atlas)
-	if atlas.UserID == 0 {
-		atlas.UserID = userId
-		atlas.EventID = eventId
-		atlas.Tree1 = pq.Int32Array{}
-		atlas.Tree2 = pq.Int32Array{}
-		atlas.Tree3 = pq.Int32Array{}
-	}
-	atlas.Index = -1
-	for i, v := range atlasPassiveTrees {
-		switch i {
-		case 0:
-			atlas.Tree1 = utils.ConvertIntSlice(v.Hashes)
-		case 1:
-			atlas.Tree2 = utils.ConvertIntSlice(v.Hashes)
-		case 2:
-			atlas.Tree3 = utils.ConvertIntSlice(v.Hashes)
-		}
-		if strings.HasPrefix(v.Name, "x") {
-			atlas.Index = i
-		}
-	}
-
-	return r.DB.Save(&atlas).Error
-}
-
 func (r *CharacterRepository) GetCharactersForEvent(eventId int) ([]*Character, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharactersForEvent"))
 	defer timer.ObserveDuration()
@@ -223,20 +178,6 @@ func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[
 		result[stat.CharacterId] = stat
 	}
 	return result, nil
-}
-func (r *CharacterRepository) GetTeamAtlasesForEvent(eventId int, teamId int) (atlas []*Atlas, err error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamAtlasesForEvent"))
-	defer timer.ObserveDuration()
-	query := `
-		SELECT a.* FROM atlas a
-		JOIN team_users tu ON a.user_id = tu.user_id
-		WHERE tu.team_id = ? AND a.event_id = ?
-	`
-	err = r.DB.Raw(query, teamId, eventId).Scan(&atlas).Error
-	if err != nil {
-		return nil, err
-	}
-	return atlas, nil
 }
 
 func (r *CharacterRepository) GetLatestStatsForEvent(eventId int) ([]*CharacterStat, error) {

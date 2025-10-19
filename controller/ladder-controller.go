@@ -129,7 +129,7 @@ func (c *LadderController) getAtlasesForEvent() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(200, utils.Map(atlases, toAtlasResponse))
+		ctx.JSON(200, toAtlasResponses(atlases))
 	}
 }
 
@@ -149,26 +149,29 @@ type LadderEntry struct {
 }
 
 type Atlas struct {
-	UserId  int     `json:"user_id" binding:"required"`
-	EventId int     `json:"event_id" binding:"required"`
-	Index   int     `json:"index" binding:"required"`
-	Trees   [][]int `json:"trees" binding:"required"`
+	UserId  int           `json:"user_id" binding:"required"`
+	EventId int           `json:"event_id" binding:"required"`
+	Index   int           `json:"index" binding:"required"`
+	Trees   map[int][]int `json:"trees" binding:"required"`
 }
 
-func toAtlasResponse(atlas *repository.Atlas) *Atlas {
-	if atlas == nil {
+func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
+	if atlases == nil {
 		return nil
 	}
-	response := &Atlas{
-		UserId:  atlas.UserID,
-		EventId: atlas.EventID,
-		Index:   atlas.Index,
-		Trees:   [][]int{},
+	userAtlases := make(map[int]*Atlas)
+	for _, atlas := range atlases {
+		if userAtlases[atlas.UserID] == nil {
+			userAtlases[atlas.UserID] = &Atlas{
+				UserId:  atlas.UserID,
+				EventId: atlas.EventID,
+				Index:   -1,
+				Trees:   map[int][]int{},
+			}
+		}
+		userAtlases[atlas.UserID].Trees[atlas.Index] = atlas.Nodes
 	}
-	response.Trees = append(response.Trees, utils.Map(atlas.Tree1, func(hash int32) int { return int(hash) }))
-	response.Trees = append(response.Trees, utils.Map(atlas.Tree2, func(hash int32) int { return int(hash) }))
-	response.Trees = append(response.Trees, utils.Map(atlas.Tree3, func(hash int32) int { return int(hash) }))
-	return response
+	return utils.Values(userAtlases)
 }
 
 func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterStat, lastActivities map[int]time.Time) []*LadderEntry {

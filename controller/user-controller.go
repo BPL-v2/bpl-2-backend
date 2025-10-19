@@ -15,6 +15,7 @@ type UserController struct {
 	userService      *service.UserService
 	eventService     *service.EventService
 	characterService *service.CharacterService
+	atlasService     *service.AtlasService
 }
 
 func NewUserController() *UserController {
@@ -22,6 +23,7 @@ func NewUserController() *UserController {
 		userService:      service.NewUserService(),
 		eventService:     service.NewEventService(),
 		characterService: service.NewCharacterService(),
+		atlasService:     service.NewAtlasService(),
 	}
 }
 
@@ -30,6 +32,7 @@ func setupUserController() []RouteInfo {
 	basePath := ""
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/users", HandlerFunc: e.getUsersForEventHandler()},
+		{Method: "GET", Path: "/events/:event_id/users/:user_id/atlas", HandlerFunc: e.getAtlasProgressionHandler()},
 		{Method: "GET", Path: "/users", HandlerFunc: e.getAllUsersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/users/:user_id", HandlerFunc: e.getUserByIdHandler()},
 		{Method: "GET", Path: "/users/self", HandlerFunc: e.getUserHandler(), Authenticated: true},
@@ -231,6 +234,34 @@ func (e *UserController) updateUserHandler() gin.HandlerFunc {
 	}
 }
 
+// @id GetAtlasProgression
+// @Description Fetches the atlas progression for a user in an event
+// @Tags user
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Param user_id path int true "User Id"
+// @Success 200 {object} []AtlasProgression
+// @Router /events/{event_id}/users/{user_id}/atlas [get]
+func (e *UserController) getAtlasProgressionHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		userId, err := strconv.Atoi(c.Param("user_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		atlasProgression, err := e.atlasService.GetAtlasesForEventAndUser(userId, event.Id)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, utils.Map(atlasProgression, toAtlasProgression))
+	}
+}
+
 type UserUpdate struct {
 	DisplayName string `json:"display_name" binding:"required"`
 }
@@ -310,5 +341,19 @@ func toMinimalUserResponse(user *repository.User) *MinimalUser {
 	return &MinimalUser{
 		Id:          user.Id,
 		DisplayName: user.DisplayName,
+	}
+}
+
+type AtlasProgression struct {
+	Timestamp int64 `json:"timestamp"`
+	Index     int   `json:"index"`
+	Nodes     []int `json:"nodes"`
+}
+
+func toAtlasProgression(atlas *repository.AtlasTree) *AtlasProgression {
+	return &AtlasProgression{
+		Timestamp: atlas.Timestamp.Unix(),
+		Index:     atlas.Index,
+		Nodes:     atlas.Nodes,
 	}
 }
