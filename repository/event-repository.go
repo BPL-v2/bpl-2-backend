@@ -22,6 +22,7 @@ type Event struct {
 	Name                 string       `gorm:"not null"`
 	IsCurrent            bool         `gorm:"not null"`
 	GameVersion          GameVersion  `gorm:"not null"`
+	Patch                *string      `gorm:"null"`
 	MaxSize              int          `gorm:"not null"`
 	WaitlistSize         int          `gorm:"not null"`
 	ApplicationStartTime time.Time    `gorm:"not null"`
@@ -104,7 +105,7 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 }
 
 func (r *EventRepository) InvalidateCurrentEvent() error {
-	result := r.DB.Model(&Event{}).Where(Event{IsCurrent: true}).Update("is_current", false)
+	result := r.DB.Model(&Event{}).Update("is_current", false)
 	if result.Error != nil {
 		return fmt.Errorf("failed to invalidate current event: %v", result.Error)
 	}

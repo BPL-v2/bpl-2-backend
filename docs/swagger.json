@@ -3935,6 +3935,9 @@
                 "name": {
                     "type": "string"
                 },
+                "patch": {
+                    "type": "string"
+                },
                 "teams": {
                     "type": "array",
                     "items": {
@@ -3990,6 +3993,9 @@
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "patch": {
                     "type": "string"
                 },
                 "waitlist_size": {

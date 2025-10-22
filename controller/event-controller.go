@@ -232,6 +232,7 @@ type EventCreate struct {
 	Name                 string                 `json:"name" binding:"required"`
 	IsCurrent            bool                   `json:"is_current"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
+	Patch                *string                `json:"patch"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
 	WaitlistSize         int                    `json:"waitlist_size" binding:"required"`
 	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
@@ -247,6 +248,7 @@ type Event struct {
 	Name                 string                 `json:"name" binding:"required"`
 	IsCurrent            bool                   `json:"is_current" binding:"required"`
 	GameVersion          repository.GameVersion `json:"game_version" binding:"required"`
+	Patch                *string                `json:"patch"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
 	WaitlistSize         int                    `json:"waitlist_size" binding:"required"`
 	Teams                []*Team                `json:"teams" binding:"required"`
@@ -263,6 +265,7 @@ func (e *EventCreate) toModel() *repository.Event {
 		Name:                 e.Name,
 		IsCurrent:            e.IsCurrent,
 		GameVersion:          e.GameVersion,
+		Patch:                e.Patch,
 		MaxSize:              e.MaxSize,
 		WaitlistSize:         e.WaitlistSize,
 		EventStartTime:       e.EventStartTime,
@@ -286,6 +289,7 @@ func toEventResponse(event *repository.Event) *Event {
 		Id:                   event.Id,
 		Name:                 event.Name,
 		GameVersion:          event.GameVersion,
+		Patch:                event.Patch,
 		IsCurrent:            event.IsCurrent,
 		MaxSize:              event.MaxSize,
 		WaitlistSize:         event.WaitlistSize,

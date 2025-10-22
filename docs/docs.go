@@ -3943,6 +3943,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "patch": {
+                    "type": "string"
+                },
                 "teams": {
                     "type": "array",
                     "items": {
@@ -3998,6 +4001,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "patch": {
                     "type": "string"
                 },
                 "waitlist_size": {
