@@ -15,10 +15,50 @@ import (
 type PathOfBuilding struct {
 	Build  Build  `xml:"Build"`
 	Skills Skills `xml:"Skills"`
+	Tree   Tree   `xml:"Tree"`
+}
+
+func (p *PathOfBuilding) GetPassives() []int {
+	nodes := strings.Split(p.Tree.Spec.Nodes, ",")
+	passives := make([]int, 0, len(nodes))
+	for _, n := range nodes {
+		id, err := strconv.Atoi(n)
+		if err != nil {
+			continue
+		}
+		passives = append(passives, id)
+	}
+	masteryEffects := strings.Split(p.Tree.Spec.MasteryEffects[1:len(p.Tree.Spec.MasteryEffects)-1], "},{")
+	for _, me := range masteryEffects {
+		parts := strings.Split(me, ",")
+		if len(parts) != 2 {
+			continue
+		}
+		id, err := strconv.Atoi(parts[1])
+		if err != nil {
+			continue
+		}
+		passives = append(passives, id)
+	}
+	return passives
+}
+
+type Tree struct {
+	Spec Spec `xml:"Spec"`
 }
 
 type Build struct {
 	PlayerStats PlayerStats
+}
+
+// <Spec secondaryAscendClassId="nil" masteryEffects="{25535,30612},{53188,64875},{2828,11521},{34927,55308},{53517,45653},{32241,34242},{38921,4500},{47197,28638},{64406,7137}" nodes="4184,40291,54447,15167,26725,34423,50340,57197,64426,19595,20832,49254,2828,44967,19919,2550,33287,48118,24383,37569,50422,55743,47197,14057,53517,36542,6712,33435,40653,1031,11924,57264,24362,4397,6043,25989,53188,58218,9052,18715,34661,32241,62017,44429,53793,34506,24872,4367,27166,60501,5743,3533,30302,41472,25970,6764,31931,5935,8135,32932,48822,21958,19501,11420,12536,61471,61198,15631,5152,4917,14040,48929,32738,62214,30380,13559,24324,58402,11088,55649,44184,14021,36949,16023,61259,59928,53118,33755,54279,31080,44799,15064,9386,31462,49412,2219,14936,25535,29781,54396,65108,64210,21974,60031,34927,885,6446,38921,37114,40366,10221,25831,10031,64406,56461,55332,6052,6967,1203,17735,7938,42760,26866,10893,62363,7374,38119,11128,22285,61804" treeVersion="3_26" ascendClassId="2" classId="3">
+
+type Spec struct {
+	MasteryEffects string `xml:"masteryEffects,attr"`
+	Nodes          string `xml:"nodes,attr"`
+	// TreeVersion    string `xml:"treeVersion,attr"`
+	// AscendClassId  string `xml:"ascendClassId,attr"`
+	// ClassId        string `xml:"classId,attr"`
 }
 
 type PlayerStats struct {

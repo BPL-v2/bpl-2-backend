@@ -7,6 +7,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"strconv"
+	"time"
 
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,8 @@ type RouteInfo struct {
 	RequiredRoles []repository.Permission
 }
 
-func SetRoutes(r *gin.Engine, cache *persistence.InMemoryStore) {
+func SetRoutes(r *gin.Engine) {
+	cache := persistence.NewInMemoryStore(60 * time.Second)
 	poeClient := client.NewPoEClient(10, false, 600)
 
 	routes := make([]RouteInfo, 0)

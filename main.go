@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -30,7 +29,6 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	t := time.Now()
 
 	// Load and validate configuration
 	cfg := config.Env()
@@ -45,22 +43,27 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	_ = db
-	// autoMigrate(db)
-
+	// // autoMigrate(db)
+	// repo := repository.NewCharacterRepository()
+	// pob, err := repo.GetPobs("7fbbfe1cd33c56b07b3b3ef1a4e1a0bc21b8f0a431aec94185c71e8c697f22f6")
+	// if err != nil {
+	// 	fmt.Println("Error getting pobs:", err)
+	// 	return
+	// }
+	// x, err := client.DecodePoBExport(pob[10].Export)
+	// if err != nil {
+	// 	fmt.Println("Error decoding pob:", err)
+	// 	return
+	// }
+	// fmt.Println("GetPassives:", x.GetPassives())
 	r := gin.New()
 	r.Use(gin.Recovery())
-	err = r.SetTrustedProxies(nil)
-	if err != nil {
-		fmt.Println("Failed to set trusted proxies:", err)
-		return
-	}
+	r.SetTrustedProxies(nil)
 	addLogger(r)
 	addMetrics(r)
 	addDocs(r)
 	setCors(r)
-	cacheStore := persistence.NewInMemoryStore(60 * time.Second)
-	controller.SetRoutes(r, cacheStore)
-	fmt.Println("Server started in", time.Since(t))
+	controller.SetRoutes(r)
 	err = r.Run(":8000")
 	if err != nil {
 		fmt.Println("Failed to start server:", err)
