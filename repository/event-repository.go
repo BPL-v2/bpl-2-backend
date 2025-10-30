@@ -105,7 +105,7 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 }
 
 func (r *EventRepository) InvalidateCurrentEvent() error {
-	result := r.DB.Model(&Event{}).Update("is_current", false)
+	result := r.DB.Exec("UPDATE events SET is_current = false WHERE is_current = true")
 	if result.Error != nil {
 		return fmt.Errorf("failed to invalidate current event: %v", result.Error)
 	}
