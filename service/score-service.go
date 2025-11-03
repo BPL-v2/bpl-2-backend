@@ -220,7 +220,7 @@ func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
 }
 
 func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err error) {
-	event, err := s.eventService.GetEventById(eventId, "Teams", "Teams.Users")
+	event, err := s.eventService.GetEventById(eventId, "Teams.Users")
 	if err != nil {
 		return nil, err
 	}

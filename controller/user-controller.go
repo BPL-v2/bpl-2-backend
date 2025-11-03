@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -156,7 +157,7 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 			return
 		}
 		// loading event again to have preloads
-		event, err := e.eventService.GetEventById(event.Id, "Teams", "Teams.Users", "Teams.Users.OauthAccounts")
+		event, err := e.eventService.GetEventById(event.Id, "Teams.Users.OauthAccounts")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Event not found"})
@@ -168,6 +169,7 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 		teamUsers := make(map[int][]*MinimalUser)
 		for _, team := range event.Teams {
 			teamUsers[team.Id] = make([]*MinimalUser, 0)
+			fmt.Println("Processing team:", utils.Map(team.Users, func(u *repository.User) string { return u.DisplayName }))
 			for _, user := range team.Users {
 				teamUsers[team.Id] = append(teamUsers[team.Id], toMinimalUserResponse(user))
 			}
