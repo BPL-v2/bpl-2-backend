@@ -126,7 +126,7 @@ func (f *FetchingService) FetchStashChanges() error {
 			changeId = response.NextChangeId
 			changeIdGauge.Set(float64(service.ChangeIdToInt(changeId)))
 			if count%20 == 0 {
-				ninjaId, err := f.stashChangeService.GetNinjaChangeId()
+				ninjaId, err := service.GetNinjaChangeId()
 				if err == nil {
 					ninjaChangeIdGauge.Set(float64(service.ChangeIdToInt(ninjaId)))
 				}

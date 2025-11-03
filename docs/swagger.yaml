@@ -1211,6 +1211,15 @@ definitions:
     - parent_id
     - required_number
     type: object
+  ObjectiveValidation:
+    properties:
+      item:
+        $ref: '#/definitions/Item'
+      objective_id:
+        type: integer
+      timestamp:
+        type: string
+    type: object
   PoB:
     properties:
       ascendancy:
@@ -2598,6 +2607,46 @@ paths:
             $ref: '#/definitions/Objective'
       security:
       - BearerAuth: []
+      tags:
+      - objective
+  /events/{event_id}/objectives/validations:
+    get:
+      description: Gets objective validations for an event
+      operationId: GetObjectiveValidations
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ObjectiveValidation'
+            type: array
+      tags:
+      - objective
+    post:
+      consumes:
+      - application/json
+      description: Validates item objectives for an event seeing if there are completions
+        on trade
+      operationId: ValidateObjectives
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
       tags:
       - objective
   /events/{event_id}/scores/latest:

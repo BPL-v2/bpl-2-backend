@@ -2,9 +2,11 @@ package controller
 
 import (
 	"bpl/client"
+	"bpl/cron"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"strconv"
@@ -15,16 +17,23 @@ import (
 )
 
 type ObjectiveController struct {
-	service      *service.ObjectiveService
-	eventService *service.EventService
+	objectiveService      *service.ObjectiveService
+	objectiveMatchService *service.ObjectiveMatchService
+	eventService          *service.EventService
+	poeClient             *client.PoEClient
 }
 
 func NewObjectiveController() *ObjectiveController {
-	return &ObjectiveController{service: service.NewObjectiveService(), eventService: service.NewEventService()}
+	return &ObjectiveController{
+		objectiveService:      service.NewObjectiveService(),
+		eventService:          service.NewEventService(),
+		objectiveMatchService: service.NewObjectiveMatchService(),
+	}
 }
 
-func setupObjectiveController() []RouteInfo {
+func setupObjectiveController(poeClient *client.PoEClient) []RouteInfo {
 	e := NewObjectiveController()
+	e.poeClient = poeClient
 	baseUrl := "/events/:event_id/objectives"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.GetObjectiveTreeForEventHandler()},
@@ -33,11 +42,66 @@ func setupObjectiveController() []RouteInfo {
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		// todo: move this somewhere else
 		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "POST", Path: "/validations", HandlerFunc: e.validateObjectivesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "GET", Path: "/validations", HandlerFunc: e.getObjectiveValidationsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
 	}
 	return routes
+}
+
+type ValidationRequest struct {
+	TimeoutSeconds int `json:"timeout_seconds" binding:"required"`
+}
+
+// @id ValidateObjectives
+// @Description Validates item objectives for an event seeing if there are completions on trade
+// @Tags objective
+// @Accept json
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Success 204
+// @Router /events/{event_id}/objectives/validations [post]
+func (e *ObjectiveController) validateObjectivesHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		var validationRequest ValidationRequest
+		if err := c.BindJSON(&validationRequest); err != nil {
+			validationRequest.TimeoutSeconds = 300
+		}
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(validationRequest.TimeoutSeconds)*time.Second)
+			defer cancel()
+			cron.ValidationLoop(ctx, event, e.poeClient)
+		}()
+		c.JSON(204, nil)
+	}
+}
+
+// @id GetObjectiveValidations
+// @Description Gets objective validations for an event
+// @Tags objective
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Success 200 {array} ObjectiveValidation
+// @Router /events/{event_id}/objectives/validations [get]
+func (e *ObjectiveController) getObjectiveValidationsHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		validations, err := e.objectiveMatchService.GetValidationsByEventId(event.Id)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, utils.Map(validations, toObjectiveValidationResponse))
+	}
 }
 
 // @id GetObjectiveTreeForEvent
@@ -53,8 +117,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		if event == nil {
 			return
 		}
-
-		rootObjective, err := e.service.GetObjectiveTreeForEvent(event.Id, "Conditions")
+		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id, "Conditions")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objectives not found"})
@@ -103,7 +166,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 		}
 		model := objectiveCreate.toModel()
 		model.EventId = event.Id
-		objective, err := e.service.CreateObjective(model)
+		objective, err := e.objectiveService.CreateObjective(model)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -141,7 +204,7 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 			return
 		}
 
-		err = e.service.DeleteObjective(id)
+		err = e.objectiveService.DeleteObjective(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objective not found"})
@@ -170,7 +233,7 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		objective, err := e.service.GetObjectiveById(id)
+		objective, err := e.objectiveService.GetObjectiveById(id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objective not found"})
@@ -190,7 +253,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		parser, err := e.service.GetParser(currentEvent.Id)
+		parser, err := e.objectiveService.GetParser(currentEvent.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -309,5 +372,22 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 		ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
 		Children:        utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public) }),
 		HideProgress:    objective.HideProgress,
+	}
+}
+
+type ObjectiveValidation struct {
+	ObjectiveId int         `json:"objective_id"`
+	Timestamp   time.Time   `json:"timestamp"`
+	Item        client.Item `json:"item"`
+}
+
+func toObjectiveValidationResponse(validation *repository.ObjectiveValidation) *ObjectiveValidation {
+	if validation == nil {
+		return nil
+	}
+	return &ObjectiveValidation{
+		ObjectiveId: validation.ObjectiveId,
+		Timestamp:   validation.Timestamp,
+		Item:        validation.Item,
 	}
 }

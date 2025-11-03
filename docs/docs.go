@@ -607,6 +607,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/events/{event_id}/objectives/validations": {
+            "get": {
+                "description": "Gets objective validations for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "operationId": "GetObjectiveValidations",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ObjectiveValidation"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Validates item objectives for an event seeing if there are completions on trade",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "operationId": "ValidateObjectives",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/events/{event_id}/objectives/{id}": {
             "get": {
                 "security": [
@@ -4480,6 +4539,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "valid_to": {
+                    "type": "string"
+                }
+            }
+        },
+        "ObjectiveValidation": {
+            "type": "object",
+            "properties": {
+                "item": {
+                    "$ref": "#/definitions/Item"
+                },
+                "objective_id": {
+                    "type": "integer"
+                },
+                "timestamp": {
                     "type": "string"
                 }
             }

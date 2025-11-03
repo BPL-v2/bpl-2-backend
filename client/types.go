@@ -2,6 +2,9 @@ package client
 
 import (
 	"crypto/sha256"
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 )
@@ -443,6 +446,22 @@ type Item struct {
 	// Scourged              *ItemScourged   `json:"scourged,omitempty"`
 	// ArtFilename           *string         `json:"artFilename,omitempty"`
 	// Requirements           *[]ItemProperty     `json:"requirements,omitempty"`
+}
+
+func (i *Item) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New("failed to unmarshal JSONB value: not a byte slice")
+	}
+	return json.Unmarshal(bytes, i)
+}
+
+// Value implements the driver.Valuer interface for Item
+func (i Item) Value() (driver.Value, error) {
+	return json.Marshal(i)
 }
 
 type GemTab struct {

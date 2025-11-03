@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/client"
 	"bpl/config"
 	"log"
 	"time"
@@ -17,6 +18,12 @@ type ObjectiveMatch struct {
 	StashChangeId *int      `gorm:"index:obj_match_stash_change;references:stash_change(id)"`
 }
 
+type ObjectiveValidation struct {
+	ObjectiveId int         `gorm:"primaryKey;not null;references:objectives(id)"`
+	Timestamp   time.Time   `gorm:"not null"`
+	Item        client.Item `gorm:"type:jsonb;not null"`
+}
+
 type KafkaConsumer struct {
 	EventId int `gorm:"primaryKey;not null;references events(id)"`
 	GroupId int `gorm:"not null"`
@@ -28,6 +35,27 @@ type ObjectiveMatchRepository struct {
 
 func NewObjectiveMatchRepository() *ObjectiveMatchRepository {
 	return &ObjectiveMatchRepository{DB: config.DatabaseConnection()}
+}
+
+func (r *ObjectiveMatchRepository) SaveValidations(objectiveValidations []*ObjectiveValidation) error {
+	result := r.DB.Save(objectiveValidations)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+func (r *ObjectiveMatchRepository) GetValidationsByEventId(eventId int) ([]*ObjectiveValidation, error) {
+	var validations []*ObjectiveValidation
+	query := `SELECT ov.*
+			  FROM objective_validations ov
+			  JOIN objectives o ON ov.objective_id = o.id
+			  WHERE o.event_id = ?`
+	result := r.DB.Raw(query, eventId).Scan(&validations)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return validations, nil
 }
 
 func (r *ObjectiveMatchRepository) SaveMatches(objectiveMatches []*ObjectiveMatch) error {

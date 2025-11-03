@@ -50,3 +50,7 @@ func (e *ObjectiveMatchService) GetKafkaConsumer(eventId int) (*repository.Kafka
 func (e *ObjectiveMatchService) SaveKafkaConsumerId(consumer *repository.KafkaConsumer) error {
 	return e.objectiveMatchRepository.SaveKafkaConsumer(consumer)
 }
+
+func (e *ObjectiveMatchService) GetValidationsByEventId(eventId int) ([]*repository.ObjectiveValidation, error) {
+	return e.objectiveMatchRepository.GetValidationsByEventId(eventId)
+}

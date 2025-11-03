@@ -58,8 +58,8 @@ func (s *StashChangeService) GetCurrentChangeIdForEvent(event *repository.Event)
 	return &changeId, nil
 }
 
-func (s *StashChangeService) GetNinjaChangeId() (string, error) {
-	response, err := http.Get("https://poe.ninja/api/data/GetStats")
+func GetNinjaChangeId() (string, error) {
+	response, err := http.Get("https://poe.ninja/poe1/api/data/stats")
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch ninja change id: %s", err)
 	}
@@ -78,7 +78,7 @@ func (s *StashChangeService) GetInitialChangeId(event *repository.Event) (string
 		return stashChange, nil
 	}
 	log.Print("Initial change id not found, fetching from poe.ninja")
-	return s.GetNinjaChangeId()
+	return GetNinjaChangeId()
 }
 
 func ChangeIdToInt(changeId string) int {
@@ -94,7 +94,7 @@ func ChangeIdToInt(changeId string) int {
 }
 
 func (s *StashChangeService) GetNinjaDifference(changeId string) int {
-	ninjaId, err := s.GetNinjaChangeId()
+	ninjaId, err := GetNinjaChangeId()
 	if err != nil {
 		return 0
 	}
