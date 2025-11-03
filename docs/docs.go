@@ -4252,11 +4252,20 @@ const docTemplate = `{
                 "id"
             ],
             "properties": {
+                "discord_id": {
+                    "type": "string"
+                },
+                "discord_name": {
+                    "type": "string"
+                },
                 "display_name": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "poe_account_name": {
+                    "type": "string"
                 }
             }
         },

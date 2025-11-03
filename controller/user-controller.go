@@ -156,7 +156,7 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 			return
 		}
 		// loading event again to have preloads
-		event, err := e.eventService.GetEventById(event.Id, "Teams", "Teams.Users")
+		event, err := e.eventService.GetEventById(event.Id, "Teams", "Teams.Users", "Teams.Users.OauthAccounts")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Event not found"})
@@ -290,8 +290,11 @@ type NonSensitiveUser struct {
 }
 
 type MinimalUser struct {
-	Id          int    `json:"id" binding:"required"`
-	DisplayName string `json:"display_name" binding:"required"`
+	Id          int     `json:"id" binding:"required"`
+	DisplayName string  `json:"display_name" binding:"required"`
+	PoEName     *string `json:"poe_account_name"`
+	DiscordName *string `json:"discord_name"`
+	DiscordId   *string `json:"discord_id"`
 }
 
 func toUserResponse(user *repository.User) *User {
@@ -338,10 +341,20 @@ func toNonSensitiveUserResponse(user *repository.User) *NonSensitiveUser {
 }
 
 func toMinimalUserResponse(user *repository.User) *MinimalUser {
-	return &MinimalUser{
+	min := &MinimalUser{
 		Id:          user.Id,
 		DisplayName: user.DisplayName,
 	}
+	for _, oauth := range user.OauthAccounts {
+		switch oauth.Provider {
+		case repository.ProviderDiscord:
+			min.DiscordName = &oauth.Name
+			min.DiscordId = &oauth.AccountId
+		case repository.ProviderPoE:
+			min.PoEName = &oauth.Name
+		}
+	}
+	return min
 }
 
 type AtlasProgression struct {
