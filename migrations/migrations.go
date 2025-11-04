@@ -53,12 +53,12 @@ func migrateUp(db *sql.DB, version int) error {
 		fmt.Printf("error executing migration: %v", err)
 		return err
 	}
-	_, err = db.Exec("UPDATE migrations SET version = $1", version+1)
+	_, err = db.Exec("UPDATE migrations SET version = $1", version)
 	if err != nil {
 		fmt.Printf("error updating migration version: %v", err)
 		return err
 	}
-	fmt.Printf("Migrated to version %d\n", version+1)
+	fmt.Printf("Migrated to version %d\n", version)
 	return nil
 }
 
