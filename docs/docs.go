@@ -308,151 +308,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/{event_id}/conditions": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a condition",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "condition"
-                ],
-                "operationId": "CreateCondition",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Condition to create",
-                        "name": "condition",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ConditionCreate"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Condition"
-                        }
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/conditions/test": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Test an item for completion",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "condition"
-                ],
-                "operationId": "TestConditions",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/Item"
-                        }
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/conditions/valid-mappings": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get valid mappings for conditions",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "condition"
-                ],
-                "operationId": "GetValidMappings",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/ConditionMappings"
-                        }
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/conditions/{id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes a condition",
-                "tags": [
-                    "condition"
-                ],
-                "operationId": "DeleteCondition",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Condition Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {}
-            }
-        },
         "/events/{event_id}/duplicate": {
             "post": {
                 "security": [
@@ -602,6 +457,40 @@ const docTemplate = `{
                         "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/Objective"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/objectives/valid-mappings": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get valid mappings for conditions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "objective"
+                ],
+                "operationId": "GetValidMappings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ConditionMappings"
                         }
                     }
                 }
@@ -3881,42 +3770,12 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "field",
-                "id",
                 "operator",
                 "value"
             ],
             "properties": {
                 "field": {
                     "$ref": "#/definitions/ItemField"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "operator": {
-                    "$ref": "#/definitions/Operator"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "ConditionCreate": {
-            "type": "object",
-            "required": [
-                "field",
-                "objective_id",
-                "operator",
-                "value"
-            ],
-            "properties": {
-                "field": {
-                    "$ref": "#/definitions/ItemField"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "objective_id": {
-                    "type": "integer"
                 },
                 "operator": {
                     "$ref": "#/definitions/Operator"
@@ -4436,66 +4295,6 @@ const docTemplate = `{
                 }
             }
         },
-        "ObjectiveConditionCreate": {
-            "type": "object",
-            "required": [
-                "field",
-                "operator",
-                "value"
-            ],
-            "properties": {
-                "field": {
-                    "enum": [
-                        "BASE_TYPE",
-                        "NAME",
-                        "TYPE_LINE",
-                        "RARITY",
-                        "ILVL",
-                        "FRAME_TYPE",
-                        "TALISMAN_TIER",
-                        "ENCHANT_MODS",
-                        "EXPLICIT_MODS",
-                        "IMPLICIT_MODS",
-                        "CRAFTED_MODS",
-                        "FRACTURED_MODS",
-                        "SIX_LINK"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/ItemField"
-                        }
-                    ]
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "operator": {
-                    "enum": [
-                        "EQ",
-                        "NEQ",
-                        "GT",
-                        "GTE",
-                        "LT",
-                        "LTE",
-                        "IN",
-                        "NOT_IN",
-                        "MATCHES",
-                        "CONTAINS",
-                        "CONTAINS_ALL",
-                        "CONTAINS_MATCH",
-                        "CONTAINS_ALL_MATCHES"
-                    ],
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/Operator"
-                        }
-                    ]
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
         "ObjectiveCreate": {
             "type": "object",
             "required": [
@@ -4514,7 +4313,7 @@ const docTemplate = `{
                 "conditions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/ObjectiveConditionCreate"
+                        "$ref": "#/definitions/Condition"
                     }
                 },
                 "extra": {

@@ -745,33 +745,12 @@ definitions:
     properties:
       field:
         $ref: '#/definitions/ItemField'
-      id:
-        type: integer
       operator:
         $ref: '#/definitions/Operator'
       value:
         type: string
     required:
     - field
-    - id
-    - operator
-    - value
-    type: object
-  ConditionCreate:
-    properties:
-      field:
-        $ref: '#/definitions/ItemField'
-      id:
-        type: integer
-      objective_id:
-        type: integer
-      operator:
-        $ref: '#/definitions/Operator'
-      value:
-        type: string
-    required:
-    - field
-    - objective_id
     - operator
     - value
     type: object
@@ -1127,58 +1106,13 @@ definitions:
     - parent_id
     - required_number
     type: object
-  ObjectiveConditionCreate:
-    properties:
-      field:
-        allOf:
-        - $ref: '#/definitions/ItemField'
-        enum:
-        - BASE_TYPE
-        - NAME
-        - TYPE_LINE
-        - RARITY
-        - ILVL
-        - FRAME_TYPE
-        - TALISMAN_TIER
-        - ENCHANT_MODS
-        - EXPLICIT_MODS
-        - IMPLICIT_MODS
-        - CRAFTED_MODS
-        - FRACTURED_MODS
-        - SIX_LINK
-      id:
-        type: integer
-      operator:
-        allOf:
-        - $ref: '#/definitions/Operator'
-        enum:
-        - EQ
-        - NEQ
-        - GT
-        - GTE
-        - LT
-        - LTE
-        - IN
-        - NOT_IN
-        - MATCHES
-        - CONTAINS
-        - CONTAINS_ALL
-        - CONTAINS_MATCH
-        - CONTAINS_ALL_MATCHES
-      value:
-        type: string
-    required:
-    - field
-    - operator
-    - value
-    type: object
   ObjectiveCreate:
     properties:
       aggregation:
         $ref: '#/definitions/AggregationType'
       conditions:
         items:
-          $ref: '#/definitions/ObjectiveConditionCreate'
+          $ref: '#/definitions/Condition'
         type: array
       extra:
         type: string
@@ -2381,97 +2315,6 @@ paths:
             type: array
       tags:
       - characters
-  /events/{event_id}/conditions:
-    put:
-      consumes:
-      - application/json
-      description: Creates a condition
-      operationId: CreateCondition
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Condition to create
-        in: body
-        name: condition
-        required: true
-        schema:
-          $ref: '#/definitions/ConditionCreate'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/Condition'
-      security:
-      - BearerAuth: []
-      tags:
-      - condition
-  /events/{event_id}/conditions/{id}:
-    delete:
-      description: Deletes a condition
-      operationId: DeleteCondition
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Condition Id
-        in: path
-        name: id
-        required: true
-        type: integer
-      responses: {}
-      security:
-      - BearerAuth: []
-      tags:
-      - condition
-  /events/{event_id}/conditions/test:
-    post:
-      description: Test an item for completion
-      operationId: TestConditions
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/Item'
-      security:
-      - BearerAuth: []
-      tags:
-      - condition
-  /events/{event_id}/conditions/valid-mappings:
-    get:
-      description: Get valid mappings for conditions
-      operationId: GetValidMappings
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/ConditionMappings'
-      security:
-      - BearerAuth: []
-      tags:
-      - condition
   /events/{event_id}/duplicate:
     post:
       consumes:
@@ -2616,6 +2459,27 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/Objective'
+      security:
+      - BearerAuth: []
+      tags:
+      - objective
+  /events/{event_id}/objectives/valid-mappings:
+    get:
+      description: Get valid mappings for conditions
+      operationId: GetValidMappings
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ConditionMappings'
       security:
       - BearerAuth: []
       tags:

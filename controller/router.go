@@ -29,7 +29,6 @@ func SetRoutes(r *gin.Engine) {
 	group := r.Group("/api")
 	routes = append(routes, setupEventController()...)
 	routes = append(routes, setupTeamController()...)
-	routes = append(routes, setupConditionController()...)
 	routes = append(routes, setupObjectiveController(poeClient)...)
 	routes = append(routes, setupOauthController()...)
 	routes = append(routes, setupUserController()...)

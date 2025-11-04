@@ -20,7 +20,6 @@ type RecurringJob struct {
 
 type RecurringJobService struct {
 	objectiveRepository *repository.ObjectiveRepository
-	conditionRepository *repository.ConditionRepository
 	eventService        *service.EventService
 	poeClient           *client.PoEClient
 	jobRepository       *repository.RecurringJobsRepository
@@ -32,7 +31,6 @@ func NewRecurringJobService(poeClient *client.PoEClient) *RecurringJobService {
 
 	s := &RecurringJobService{
 		objectiveRepository: repository.NewObjectiveRepository(),
-		conditionRepository: repository.NewConditionRepository(),
 		jobRepository:       repository.NewRecurringJobsRepository(),
 		eventService:        eventService,
 		poeClient:           poeClient,

@@ -69,7 +69,7 @@ type Objective struct {
 	Name           string          `gorm:"not null"`
 	Extra          string          `gorm:"null"`
 	RequiredAmount int             `gorm:"not null"`
-	Conditions     []*Condition    `gorm:"foreignKey:ObjectiveId;constraint:OnDelete:CASCADE"`
+	Conditions     Conditions      `gorm:"type:jsonb"`
 	ParentId       *int            `gorm:"null"`
 	EventId        int             `gorm:"not null;references:events(id)"`
 	ObjectiveType  ObjectiveType   `gorm:"not null"`

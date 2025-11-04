@@ -224,7 +224,7 @@ func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err erro
 	if err != nil {
 		return nil, err
 	}
-	rootObjective, err := s.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPreset", "Conditions")
+	rootObjective, err := s.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPreset")
 	if err != nil {
 		return nil, err
 	}

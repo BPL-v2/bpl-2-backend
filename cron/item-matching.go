@@ -221,7 +221,7 @@ func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event
 		log.Fatal("Failed to create matching service:", err)
 		return err
 	}
-	objectives, err := m.objectiveService.GetObjectivesForEvent(event.Id, "Conditions")
+	objectives, err := m.objectiveService.GetObjectivesForEvent(event.Id)
 	if err != nil {
 		return err
 	}

@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"bpl/config"
-
-	"gorm.io/gorm"
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
 )
 
 type Operator string
@@ -121,34 +121,29 @@ const (
 )
 
 type Condition struct {
-	Id          int       `gorm:"primaryKey;autoIncrement"`
-	ObjectiveId int       `gorm:"not null"`
-	Field       ItemField `gorm:"not null"`
-	Operator    Operator  `gorm:"not null"`
-	Value       string    `gorm:"not null"`
+	Field    ItemField `json:"field"`
+	Operator Operator  `json:"operator"`
+	Value    string    `json:"value"`
 }
+type Conditions []*Condition
 
-type ConditionRepository struct {
-	DB *gorm.DB
-}
-
-func NewConditionRepository() *ConditionRepository {
-	return &ConditionRepository{DB: config.DatabaseConnection()}
-}
-
-func (r *ConditionRepository) SaveCondition(condition *Condition) (*Condition, error) {
-	r.DB.Model(&Objective{}).Where(Objective{Id: condition.ObjectiveId}).Update("sync_status", SyncStatusDesynced)
-	result := r.DB.Save(condition)
-	if result.Error != nil {
-		return nil, result.Error
+func (c *Conditions) Scan(value interface{}) error {
+	if value == nil {
+		*c = []*Condition{}
+		return nil
 	}
-	return condition, nil
+
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("failed to unmarshal JSONB value: not a byte slice")
+	}
+
+	return json.Unmarshal(bytes, c)
 }
 
-func (r *ConditionRepository) DeleteCondition(conditionId int) error {
-	condition := Condition{}
-	r.DB.Where(Condition{Id: conditionId}).First(&condition)
-	r.DB.Model(&Objective{}).Where(Objective{Id: condition.ObjectiveId}).Update("sync_status", SyncStatusDesynced)
-	result := r.DB.Delete(condition)
-	return result.Error
+func (c Conditions) Value() (driver.Value, error) {
+	if c == nil {
+		return json.Marshal([]Condition{})
+	}
+	return json.Marshal(c)
 }

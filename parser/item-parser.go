@@ -746,7 +746,7 @@ func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChec
 		dbModel.ITEM_CLASS: make(map[string][]*ItemObjectiveChecker),
 	}
 	for _, objective := range objectives {
-		if objective.ObjectiveType != dbModel.ObjectiveTypeItem {
+		if objective.ObjectiveType != dbModel.ObjectiveTypeItem || objective.Conditions == nil {
 			continue
 		}
 		discriminators, remainingConditions, err := GetDiscriminators(objective.Conditions)

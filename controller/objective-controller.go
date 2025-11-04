@@ -45,11 +45,30 @@ func setupObjectiveController(poeClient *client.PoEClient) []RouteInfo {
 		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "POST", Path: "/validations", HandlerFunc: e.validateObjectivesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "GET", Path: "/validations", HandlerFunc: e.getObjectiveValidationsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
 	}
 	return routes
+}
+
+// @id GetValidMappings
+// @Description Get valid mappings for conditions
+// @Security BearerAuth
+// @Tags objective
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Success 200 {object} ConditionMappings
+// @Router /events/{event_id}/objectives/valid-mappings [get]
+func (e *ObjectiveController) getValidMappingsHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, ConditionMappings{
+			FieldToType:                 repository.FieldToType,
+			ValidOperators:              repository.OperatorsForTypes,
+			ObjectiveTypeToNumberFields: repository.ObjectiveTypeToNumberFields,
+		})
+	}
 }
 
 type ValidationRequest struct {
@@ -119,7 +138,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		if event == nil {
 			return
 		}
-		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id, "Conditions")
+		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objectives not found"})
@@ -280,7 +299,6 @@ type ObjectiveConditionCreate struct {
 
 func (e *ObjectiveConditionCreate) toModel() *repository.Condition {
 	return &repository.Condition{
-		Id:       e.Id,
 		Operator: e.Operator,
 		Field:    e.ItemField,
 		Value:    e.FieldValue,
@@ -296,7 +314,7 @@ type ObjectiveCreate struct {
 	NumberField    repository.NumberField     `json:"number_field" binding:"required"`
 	Aggregation    repository.AggregationType `json:"aggregation" binding:"required"`
 	ParentId       int                        `json:"parent_id" binding:"required"`
-	Conditions     []ObjectiveConditionCreate `json:"conditions" binding:"required"`
+	Conditions     []Condition                `json:"conditions" binding:"required"`
 	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
 	ScoringId      *int                       `json:"scoring_preset_id"`
@@ -330,7 +348,7 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 		ObjectiveType:  e.ObjectiveType,
 		NumberField:    e.NumberField,
 		Aggregation:    e.Aggregation,
-		Conditions:     utils.Map(e.Conditions, func(c ObjectiveConditionCreate) *repository.Condition { return c.toModel() }),
+		Conditions:     utils.Map(e.Conditions, func(c Condition) *repository.Condition { return c.toModel() }),
 		ValidFrom:      e.ValidFrom,
 		ValidTo:        e.ValidTo,
 		ParentId:       &e.ParentId,
@@ -392,4 +410,35 @@ func toObjectiveValidationResponse(validation *repository.ObjectiveValidation) *
 		Timestamp:   validation.Timestamp,
 		Item:        validation.Item,
 	}
+}
+
+type Condition struct {
+	Operator   repository.Operator  `json:"operator" binding:"required"`
+	ItemField  repository.ItemField `json:"field" binding:"required"`
+	FieldValue string               `json:"value" binding:"required"`
+}
+
+func (e *Condition) toModel() *repository.Condition {
+	return &repository.Condition{
+		Operator: repository.Operator(e.Operator),
+		Field:    repository.ItemField(e.ItemField),
+		Value:    e.FieldValue,
+	}
+}
+
+func toConditionResponse(condition *repository.Condition) *Condition {
+	if condition == nil {
+		return nil
+	}
+	return &Condition{
+		Operator:   condition.Operator,
+		ItemField:  condition.Field,
+		FieldValue: condition.Value,
+	}
+}
+
+type ConditionMappings struct {
+	FieldToType                 map[repository.ItemField]repository.FieldType         `json:"field_to_type" binding:"required"`
+	ValidOperators              map[repository.FieldType][]repository.Operator        `json:"valid_operators" binding:"required"`
+	ObjectiveTypeToNumberFields map[repository.ObjectiveType][]repository.NumberField `json:"objective_type_to_number_fields" binding:"required"`
 }

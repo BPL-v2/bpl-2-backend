@@ -28,7 +28,7 @@ func AddToChangeId(changeId string, value int) string {
 func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 	objectiveMatchRepository := repository.NewObjectiveMatchRepository()
 	objectiveService := service.NewObjectiveService()
-	objectives, err := objectiveService.GetAllObjectives("Conditions")
+	objectives, err := objectiveService.GetAllObjectives()
 	if err != nil {
 		log.Print("Failed to get objectives for event:", err)
 		return
