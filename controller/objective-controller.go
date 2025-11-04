@@ -17,10 +17,11 @@ import (
 )
 
 type ObjectiveController struct {
-	objectiveService      *service.ObjectiveService
-	objectiveMatchService *service.ObjectiveMatchService
-	eventService          *service.EventService
-	poeClient             *client.PoEClient
+	objectiveService        *service.ObjectiveService
+	objectiveMatchService   *service.ObjectiveMatchService
+	eventService            *service.EventService
+	poeClient               *client.PoEClient
+	validationContextCancel *context.CancelFunc
 }
 
 func NewObjectiveController() *ObjectiveController {
@@ -65,6 +66,7 @@ type ValidationRequest struct {
 // @Router /events/{event_id}/objectives/validations [post]
 func (e *ObjectiveController) validateObjectivesHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		event := getEvent(c)
 		if event == nil {
 			return
@@ -73,8 +75,12 @@ func (e *ObjectiveController) validateObjectivesHandler() gin.HandlerFunc {
 		if err := c.BindJSON(&validationRequest); err != nil {
 			validationRequest.TimeoutSeconds = 300
 		}
+		if e.validationContextCancel != nil {
+			(*e.validationContextCancel)()
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(validationRequest.TimeoutSeconds)*time.Second)
+		e.validationContextCancel = &cancel
 		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(validationRequest.TimeoutSeconds)*time.Second)
 			defer cancel()
 			cron.ValidationLoop(ctx, event, e.poeClient)
 		}()
