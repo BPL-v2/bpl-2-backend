@@ -2,6 +2,8 @@ package repository
 
 import (
 	"bpl/config"
+	"database/sql/driver"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"time"
@@ -58,13 +60,57 @@ func (c *CharacterStat) IsEqual(other *CharacterStat) bool {
 		c.MovementSpeed == other.MovementSpeed
 }
 
+type PoBExport []byte
+
+func (p *PoBExport) FromString(s string) error {
+	s = strings.ReplaceAll(s, "-", "+")
+	s = strings.ReplaceAll(s, "_", "/")
+	decoded, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		return fmt.Errorf("failed to decode base64 string: %w", err)
+	}
+
+	*p = PoBExport(decoded)
+	return nil
+}
+
+func (p PoBExport) ToString() string {
+	encoded := base64.StdEncoding.EncodeToString([]byte(p))
+	// Convert to URL-safe format
+	encoded = strings.ReplaceAll(encoded, "+", "-")
+	encoded = strings.ReplaceAll(encoded, "/", "_")
+	return encoded
+}
+
+func (p *PoBExport) Scan(value interface{}) error {
+	if value == nil {
+		*p = nil
+		return nil
+	}
+
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("failed to scan PoBExport: expected []byte, got %T", value)
+	}
+
+	*p = PoBExport(bytes)
+	return nil
+}
+
+func (p PoBExport) Value() (driver.Value, error) {
+	if p == nil {
+		return nil, nil
+	}
+	return []byte(p), nil
+}
+
 type CharacterPob struct {
 	Id          int       `gorm:"not null;primaryKey"`
 	CharacterId string    `gorm:"not null;index"`
 	Level       int       `gorm:"not null"`
 	MainSkill   string    `gorm:"not null"`
 	Ascendancy  string    `gorm:"not null"`
-	Export      string    `gorm:"not null;type:text"`
+	Export      PoBExport `gorm:"not null;type:bytea"`
 	Timestamp   time.Time `gorm:"not null;index"`
 }
 

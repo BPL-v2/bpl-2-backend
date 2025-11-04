@@ -355,12 +355,15 @@ func updateStats(character *client.Character, event *repository.Event, character
 	if time.Since(cacheItem.LastPoBUpdate) > 5*time.Minute && export != cacheItem.OldPoBString {
 		cacheItem.OldPoBString = export
 		cacheItem.LastPoBUpdate = time.Now()
+		p := repository.PoBExport{}
+		p.FromString(export)
+
 		err := characterRepo.SavePoB(&repository.CharacterPob{
 			CharacterId: character.Id,
 			Level:       character.Level,
 			MainSkill:   character.GetMainSkill(),
 			Ascendancy:  character.Class,
-			Export:      export,
+			Export:      p,
 			Timestamp:   time.Now(),
 		})
 		pobsSavedCounter.Inc()
@@ -402,7 +405,7 @@ func InitCharacterStatsCache(eventId int, characterRepo *repository.CharacterRep
 				OldStats: &repository.CharacterStat{},
 			}
 		}
-		cache[pob.CharacterId].OldPoBString = pob.Export
+		cache[pob.CharacterId].OldPoBString = pob.Export.ToString()
 		cache[pob.CharacterId].LastPoBUpdate = pob.Timestamp
 	}
 	return cache

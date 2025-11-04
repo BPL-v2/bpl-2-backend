@@ -185,7 +185,7 @@ func toPoBResponse(pob *repository.CharacterPob) *PoB {
 		return nil
 	}
 	return &PoB{
-		ExportString: pob.Export,
+		ExportString: pob.Export.ToString(),
 		Level:        pob.Level,
 		Ascendancy:   pob.Ascendancy,
 		Mainskill:    pob.MainSkill,
