@@ -67,11 +67,6 @@ type ValidationRequest struct {
 // @Router /events/{event_id}/objectives/validations [post]
 func (e *ObjectiveController) validateObjectivesHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
 		var validationRequest ValidationRequest
 		if err := c.BindJSON(&validationRequest); err != nil {
 			validationRequest.TimeoutSeconds = 300
@@ -83,7 +78,7 @@ func (e *ObjectiveController) validateObjectivesHandler() gin.HandlerFunc {
 		e.validationContextCancel = &cancel
 		go func() {
 			defer cancel()
-			cron.ValidationLoop(ctx, event, e.poeClient)
+			cron.ValidationLoop(ctx, e.poeClient)
 		}()
 		c.JSON(204, nil)
 	}

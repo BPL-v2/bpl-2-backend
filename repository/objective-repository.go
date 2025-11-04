@@ -192,3 +192,16 @@ func (r *ObjectiveRepository) GetObjectivesByEventIdFlat(eventId int, preloads .
 	}
 	return objectives, nil
 }
+
+func (r *ObjectiveRepository) GetAllObjectives(preloads ...string) ([]*Objective, error) {
+	var objectives []*Objective
+	query := r.DB.Model(&Objective{})
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	result := query.Find(&objectives)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return objectives, nil
+}

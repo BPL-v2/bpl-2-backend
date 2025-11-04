@@ -69,6 +69,10 @@ func (e *ObjectiveService) GetObjectivesForEvent(eventId int, preloads ...string
 	return e.objectiveRepository.GetObjectivesByEventIdFlat(eventId, preloads...)
 }
 
+func (e *ObjectiveService) GetAllObjectives(preloads ...string) ([]*repository.Objective, error) {
+	return e.objectiveRepository.GetAllObjectives(preloads...)
+}
+
 func (e *ObjectiveService) DuplicateObjectives(oldEventId, newEventId int, presetIdMap map[int]int) error {
 	objectives, err := e.objectiveRepository.GetObjectivesByEventIdFlat(oldEventId, "Conditions")
 	if err != nil {

@@ -25,13 +25,10 @@ func AddToChangeId(changeId string, value int) string {
 	return strings.Join(parts, "-")
 }
 
-func ValidationLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
+func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 	objectiveMatchRepository := repository.NewObjectiveMatchRepository()
-	m, err := NewMatchingService(ctx, poeClient, event)
-	if err != nil {
-		log.Fatal("Failed to create matching service:", err)
-	}
-	objectives, err := m.objectiveService.GetObjectivesForEvent(event.Id, "Conditions")
+	objectiveService := service.NewObjectiveService()
+	objectives, err := objectiveService.GetAllObjectives("Conditions")
 	if err != nil {
 		log.Print("Failed to get objectives for event:", err)
 		return
