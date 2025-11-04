@@ -62,6 +62,7 @@ type ValidationRequest struct {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
+// @Param body body ValidationRequest true "Validation request"
 // @Success 204
 // @Router /events/{event_id}/objectives/validations [post]
 func (e *ObjectiveController) validateObjectivesHandler() gin.HandlerFunc {
@@ -382,9 +383,9 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 }
 
 type ObjectiveValidation struct {
-	ObjectiveId int         `json:"objective_id"`
-	Timestamp   time.Time   `json:"timestamp"`
-	Item        client.Item `json:"item"`
+	ObjectiveId int         `json:"objective_id" binding:"required"`
+	Timestamp   time.Time   `json:"timestamp" binding:"required"`
+	Item        client.Item `json:"item" binding:"required"`
 }
 
 func toObjectiveValidationResponse(validation *repository.ObjectiveValidation) *ObjectiveValidation {

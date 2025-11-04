@@ -1219,6 +1219,10 @@ definitions:
         type: integer
       timestamp:
         type: string
+    required:
+    - item
+    - objective_id
+    - timestamp
     type: object
   PoB:
     properties:
@@ -1554,6 +1558,13 @@ definitions:
         type: string
     required:
     - display_name
+    type: object
+  ValidationRequest:
+    properties:
+      timeout_seconds:
+        type: integer
+    required:
+    - timeout_seconds
     type: object
   RecurringJob:
     properties:
@@ -2642,6 +2653,12 @@ paths:
         name: event_id
         required: true
         type: integer
+      - description: Validation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/ValidationRequest'
       produces:
       - application/json
       responses:

@@ -657,6 +657,15 @@ const docTemplate = `{
                         "name": "event_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Validation request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ValidationRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -4545,6 +4554,11 @@ const docTemplate = `{
         },
         "ObjectiveValidation": {
             "type": "object",
+            "required": [
+                "item",
+                "objective_id",
+                "timestamp"
+            ],
             "properties": {
                 "item": {
                     "$ref": "#/definitions/Item"
@@ -5047,6 +5061,17 @@ const docTemplate = `{
             "properties": {
                 "display_name": {
                     "type": "string"
+                }
+            }
+        },
+        "ValidationRequest": {
+            "type": "object",
+            "required": [
+                "timeout_seconds"
+            ],
+            "properties": {
+                "timeout_seconds": {
+                    "type": "integer"
                 }
             }
         },
