@@ -34,11 +34,11 @@ func main() {
 	}
 
 	for {
+		version++
 		err = migrateUp(db, version)
 		if err != nil {
 			break
 		}
-		version++
 	}
 }
 
