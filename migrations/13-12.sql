@@ -1,1 +1,0 @@
-ALTER TABLE ladder_entries drop column twitch_account;

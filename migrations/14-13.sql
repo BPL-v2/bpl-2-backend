@@ -1,1 +1,0 @@
-ALTER TABLE events drop column application_end_time;

@@ -1,1 +1,0 @@
-ALTER TABLE signups DROP CONSTRAINT unique_user_event;

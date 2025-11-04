@@ -1,1 +1,0 @@
-ALTER TABLE events drop column waitlist_size;

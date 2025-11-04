@@ -32,4 +32,4 @@ COPY --from=builder /app/docs ./docs
 EXPOSE 8000
 
 ENV GIN_MODE=release
-CMD ["sh", "-c", "./migrate up head && ./server"]
+CMD ["sh", "-c", "./migrate && ./server"]

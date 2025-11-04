@@ -18,9 +18,7 @@ GOLINT=golangci-lint
 
 # Database related
 DB_CONTAINER=db-local
-MIGRATE_UP=go run migrations/migrations.go up head
-MIGRATE_DOWN=go run migrations/migrations.go down
-MIGRATE_VERSION=go run migrations/migrations.go up
+MIGRATE_UP=go run migrations/migrations.go
 
 # Default target
 .PHONY: all
@@ -135,15 +133,10 @@ swagger:
 	./generate-spec.sh
 
 # Database targets
-.PHONY: migrate-up
-migrate-up:
+.PHONY: migrate
+migrate:
 	@echo "Running database migrations up..."
 	$(MIGRATE_UP)
-
-.PHONY: migrate-down
-migrate-down:
-	@echo "Running database migrations down..."
-	$(MIGRATE_DOWN) 1
 
 
 .PHONY: db-shell

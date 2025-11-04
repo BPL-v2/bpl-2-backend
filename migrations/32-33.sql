@@ -1,2 +1,0 @@
-ALTER TABLE objectives
-ADD COLUMN hide_progress BOOLEAN NOT NULL DEFAULT FALSE;

@@ -5,26 +5,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	if (len(os.Args) < 3) || (os.Args[1] != "up" && os.Args[1] != "down") {
-		fmt.Println("Usage: migrate [up|down] [head|n]")
-		return
-	}
-
-	direction := os.Args[1]
-	value := os.Args[2]
-	valint, _ := strconv.Atoi(value)
-	if value != "head" && valint == 0 {
-		fmt.Println("Invalid value")
-		return
-	}
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -47,35 +33,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	i := 0
 	for {
-		if direction == "down" {
-			err = migrateDown(db, version)
-			if err != nil {
-				break
-			}
-			version--
-		} else if direction == "up" {
-			err = migrateUp(db, version)
-			if err != nil {
-				break
-			}
-			version++
-		} else {
-			fmt.Println("Invalid direction")
+		err = migrateUp(db, version)
+		if err != nil {
 			break
 		}
-		i++
-		if value != "head" {
-			if i >= valint {
-				break
-			}
-		}
+		version++
 	}
 }
 
 func migrateUp(db *sql.DB, version int) error {
-	file, err := os.ReadFile(fmt.Sprintf("migrations/%d-%d.sql", version, version+1))
+	file, err := os.ReadFile(fmt.Sprintf("migrations/%d.sql", version))
 	if err != nil {
 		fmt.Println("Cannot migrate further up")
 		return err
@@ -91,26 +59,6 @@ func migrateUp(db *sql.DB, version int) error {
 		return err
 	}
 	fmt.Printf("Migrated to version %d\n", version+1)
-	return nil
-}
-
-func migrateDown(db *sql.DB, version int) error {
-	file, err := os.ReadFile(fmt.Sprintf("migrations/%d-%d.sql", version, version-1))
-	if err != nil {
-		fmt.Println("Cannot migrate further down")
-		return err
-	}
-	_, err = db.Exec(string(file))
-	if err != nil {
-		fmt.Printf("error executing migration: %v", err)
-		return err
-	}
-	_, err = db.Exec("UPDATE migrations SET version = $1", version-1)
-	if err != nil {
-		fmt.Printf("error updating migration version: %v", err)
-		return err
-	}
-	fmt.Printf("Migrated to version %d\n", version-1)
 	return nil
 }
 
