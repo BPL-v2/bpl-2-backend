@@ -46,6 +46,8 @@ const (
 	RITUAL_MAP              ItemField = "RITUAL_VESSEL_MAP"
 	FACETOR_LENS_EXP        ItemField = "FACETOR_LENS_EXP"
 	MEMORY_STRANDS          ItemField = "MEMORY_STRANDS"
+	IS_FOULBORN             ItemField = "IS_FOULBORN"
+	FOULBORN_MODS           ItemField = "FOULBORN_MODS"
 )
 
 type FieldType string
@@ -94,6 +96,8 @@ var FieldToType = map[ItemField]FieldType{
 	RITUAL_BOSSES:           StringArray,
 	RITUAL_MAP:              StringArray,
 	MEMORY_STRANDS:          Int,
+	IS_FOULBORN:             Bool,
+	FOULBORN_MODS:           StringArray,
 }
 
 var OperatorsForTypes = map[FieldType][]Operator{

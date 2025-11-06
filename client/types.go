@@ -417,6 +417,8 @@ type Item struct {
 	Id                     string              `json:"id"`
 	Identified             bool                `json:"identified"`
 	Icon                   string              `json:"icon"`
+	Mutated                *bool               `json:"mutated"`
+	MutatedMods            *[]string           `json:"mutatedMods"`
 
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only

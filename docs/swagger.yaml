@@ -92,6 +92,12 @@ definitions:
         type: array
       memoryItem:
         type: boolean
+      mutated:
+        type: boolean
+      mutatedMods:
+        items:
+          type: string
+        type: array
       name:
         type: string
       notableProperties:
@@ -298,6 +304,12 @@ definitions:
         type: array
       memoryItem:
         type: boolean
+      mutated:
+        type: boolean
+      mutatedMods:
+        items:
+          type: string
+        type: array
       name:
         type: string
       notableProperties:
@@ -1602,6 +1614,8 @@ definitions:
     - RITUAL_VESSEL_MAP
     - FACETOR_LENS_EXP
     - MEMORY_STRANDS
+    - IS_FOULBORN
+    - FOULBORN_MODS
     type: string
     x-enum-comments:
       SOCKETS: as string like "RGBW"
@@ -1631,6 +1645,8 @@ definitions:
     - ""
     - ""
     - as string like "RGBW"
+    - ""
+    - ""
     - ""
     - ""
     - ""
@@ -1679,6 +1695,8 @@ definitions:
     - RITUAL_MAP
     - FACETOR_LENS_EXP
     - MEMORY_STRANDS
+    - IS_FOULBORN
+    - FOULBORN_MODS
   JobType:
     enum:
     - FetchStashChanges

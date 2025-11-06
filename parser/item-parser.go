@@ -41,6 +41,13 @@ func BoolFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) bool
 		return func(item *clientModel.Item) bool {
 			return item.Identified
 		}, nil
+	case dbModel.IS_FOULBORN:
+		return func(item *clientModel.Item) bool {
+			if item.Mutated != nil {
+				return *item.Mutated
+			}
+			return false
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid boolean field", field)
 	}
@@ -133,6 +140,13 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 
 func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) []string, error) {
 	switch field {
+	case dbModel.FOULBORN_MODS:
+		return func(item *clientModel.Item) []string {
+			if item.MutatedMods != nil {
+				return *item.MutatedMods
+			}
+			return []string{}
+		}, nil
 	case dbModel.ENCHANTS:
 		return func(item *clientModel.Item) []string {
 			if item.EnchantMods != nil {

@@ -2805,6 +2805,15 @@ const docTemplate = `{
                 "memoryItem": {
                     "type": "boolean"
                 },
+                "mutated": {
+                    "type": "boolean"
+                },
+                "mutatedMods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "name": {
                     "type": "string"
                 },
@@ -3112,6 +3121,15 @@ const docTemplate = `{
                 },
                 "memoryItem": {
                     "type": "boolean"
+                },
+                "mutated": {
+                    "type": "boolean"
+                },
+                "mutatedMods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -4995,7 +5013,9 @@ const docTemplate = `{
                 "RITUAL_VESSEL_BOSSES",
                 "RITUAL_VESSEL_MAP",
                 "FACETOR_LENS_EXP",
-                "MEMORY_STRANDS"
+                "MEMORY_STRANDS",
+                "IS_FOULBORN",
+                "FOULBORN_MODS"
             ],
             "x-enum-comments": {
                 "SOCKETS": "as string like \"RGBW\""
@@ -5026,6 +5046,8 @@ const docTemplate = `{
                 "",
                 "",
                 "as string like \"RGBW\"",
+                "",
+                "",
                 "",
                 "",
                 "",
@@ -5074,7 +5096,9 @@ const docTemplate = `{
                 "RITUAL_BOSSES",
                 "RITUAL_MAP",
                 "FACETOR_LENS_EXP",
-                "MEMORY_STRANDS"
+                "MEMORY_STRANDS",
+                "IS_FOULBORN",
+                "FOULBORN_MODS"
             ]
         },
         "JobType": {
