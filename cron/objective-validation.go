@@ -7,6 +7,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"context"
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -85,6 +86,7 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 			for _, stash := range response.Stashes {
 				for _, item := range stash.Items {
 					for _, match := range itemChecker.CheckForCompletions(&item) {
+						fmt.Printf("Item %s validated objective %s\n", item.Name, objectiveMap[match.ObjectiveId].Name)
 						validations[match.ObjectiveId] = &repository.ObjectiveValidation{
 							ObjectiveId: match.ObjectiveId,
 							Timestamp:   time.Now(),
@@ -100,6 +102,8 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 					log.Print("Failed to save validations:", err)
 					return
 				}
+			} else {
+				log.Printf("No validations found in batch %s\n", changeId)
 			}
 		}
 	}
