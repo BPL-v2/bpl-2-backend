@@ -48,6 +48,13 @@ func BoolFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) bool
 			}
 			return false
 		}, nil
+	case dbModel.IS_MIRRORED:
+		return func(item *clientModel.Item) bool {
+			if item.Duplicated != nil {
+				return *item.Duplicated
+			}
+			return false
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid boolean field", field)
 	}

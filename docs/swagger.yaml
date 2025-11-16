@@ -1608,6 +1608,7 @@ definitions:
     - IS_VAAL
     - IS_SPLIT
     - IS_IDENTIFIED
+    - IS_MIRRORED
     - SANCTUM_AFFLICTIONS
     - TEMPLE_ROOMS
     - RITUAL_VESSEL_BOSSES
@@ -1658,6 +1659,7 @@ definitions:
     - ""
     - ""
     - ""
+    - ""
     x-enum-varnames:
     - BASE_TYPE
     - NAME
@@ -1689,6 +1691,7 @@ definitions:
     - IS_VAAL
     - IS_SPLIT
     - IS_IDENTIFIED
+    - IS_MIRRORED
     - SANCTUM_MODS
     - TEMPLE_ROOMS
     - RITUAL_BOSSES

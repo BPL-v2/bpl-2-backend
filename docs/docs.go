@@ -5008,6 +5008,7 @@ const docTemplate = `{
                 "IS_VAAL",
                 "IS_SPLIT",
                 "IS_IDENTIFIED",
+                "IS_MIRRORED",
                 "SANCTUM_AFFLICTIONS",
                 "TEMPLE_ROOMS",
                 "RITUAL_VESSEL_BOSSES",
@@ -5058,6 +5059,7 @@ const docTemplate = `{
                 "",
                 "",
                 "",
+                "",
                 ""
             ],
             "x-enum-varnames": [
@@ -5091,6 +5093,7 @@ const docTemplate = `{
                 "IS_VAAL",
                 "IS_SPLIT",
                 "IS_IDENTIFIED",
+                "IS_MIRRORED",
                 "SANCTUM_MODS",
                 "TEMPLE_ROOMS",
                 "RITUAL_BOSSES",
