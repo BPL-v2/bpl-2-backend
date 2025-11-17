@@ -95,12 +95,12 @@ type Timing struct {
 
 type TimingCreate struct {
 	Key             repository.TimingKey `json:"key" binding:"required"`
-	DurationSeconds int64                `json:"duration_seconds" binding:"required"`
+	DurationSeconds *int64               `json:"duration_seconds" binding:"required"`
 }
 
 func toTiming(t TimingCreate) *repository.Timing {
 	return &repository.Timing{
 		Key:        t.Key,
-		DurationMs: t.DurationSeconds * 1000,
+		DurationMs: *t.DurationSeconds * 1000,
 	}
 }
