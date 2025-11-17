@@ -1939,6 +1939,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Update the timing configurations for various operations.",
                 "consumes": [
                     "application/json"

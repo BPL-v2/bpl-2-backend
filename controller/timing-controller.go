@@ -24,8 +24,7 @@ func setupTimingController() []RouteInfo {
 	baseUrl := "/timings"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTimings()},
-		{Method: "PUT", Path: "", HandlerFunc: e.setTimings()},
-	}
+		{Method: "PUT", Path: "", HandlerFunc: e.setTimings(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}}}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
 	}
@@ -63,6 +62,7 @@ func (c *TimingController) getTimings() gin.HandlerFunc {
 // @ID setTimings
 // @Summary Set timing configurations
 // @Description Update the timing configurations for various operations.
+// @Security BearerAuth
 // @Tags Timing
 // @Accept json
 // @Produce json

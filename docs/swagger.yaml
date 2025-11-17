@@ -3451,6 +3451,8 @@ paths:
       responses:
         "204":
           description: No Content
+      security:
+      - BearerAuth: []
       summary: Set timing configurations
       tags:
       - Timing
