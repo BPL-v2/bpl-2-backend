@@ -4896,14 +4896,14 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "description",
-                "duration_ms",
+                "duration_seconds",
                 "key"
             ],
             "properties": {
                 "description": {
                     "type": "string"
                 },
-                "duration_ms": {
+                "duration_seconds": {
                     "type": "integer"
                 },
                 "key": {
@@ -4914,11 +4914,11 @@ const docTemplate = `{
         "TimingCreate": {
             "type": "object",
             "required": [
-                "duration_ms",
+                "duration_seconds",
                 "key"
             ],
             "properties": {
-                "duration_ms": {
+                "duration_seconds": {
                     "type": "integer"
                 },
                 "key": {

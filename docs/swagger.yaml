@@ -1475,23 +1475,23 @@ definitions:
     properties:
       description:
         type: string
-      duration_ms:
+      duration_seconds:
         type: integer
       key:
         $ref: '#/definitions/TimingKey'
     required:
     - description
-    - duration_ms
+    - duration_seconds
     - key
     type: object
   TimingCreate:
     properties:
-      duration_ms:
+      duration_seconds:
         type: integer
       key:
         $ref: '#/definitions/TimingKey'
     required:
-    - duration_ms
+    - duration_seconds
     - key
     type: object
   User:

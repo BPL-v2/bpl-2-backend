@@ -48,11 +48,11 @@ func (c *TimingController) getTimings() gin.HandlerFunc {
 		timingsMs := make(map[repository.TimingKey]int64)
 		timingList := make([]Timing, 0, len(timings))
 		for key, duration := range timings {
-			timingsMs[key] = int64(duration / time.Millisecond)
+			timingsMs[key] = int64(duration / time.Second)
 			timingList = append(timingList, Timing{
-				Key:         key,
-				DurationMs:  int64(duration / time.Millisecond),
-				Description: repository.TimingKeyDescriptions[key],
+				Key:             key,
+				DurationSeconds: int64(duration / time.Second),
+				Description:     repository.TimingKeyDescriptions[key],
 			})
 		}
 		ctx.JSON(200, timingList)
@@ -88,19 +88,19 @@ func (c *TimingController) setTimings() gin.HandlerFunc {
 }
 
 type Timing struct {
-	Key         repository.TimingKey `json:"key" binding:"required"`
-	DurationMs  int64                `json:"duration_ms" binding:"required"`
-	Description string               `json:"description,omitempty" binding:"required"`
+	Key             repository.TimingKey `json:"key" binding:"required"`
+	DurationSeconds int64                `json:"duration_seconds" binding:"required"`
+	Description     string               `json:"description,omitempty" binding:"required"`
 }
 
 type TimingCreate struct {
-	Key        repository.TimingKey `json:"key" binding:"required"`
-	DurationMs int64                `json:"duration_ms" binding:"required"`
+	Key             repository.TimingKey `json:"key" binding:"required"`
+	DurationSeconds int64                `json:"duration_seconds" binding:"required"`
 }
 
 func toTiming(t TimingCreate) *repository.Timing {
 	return &repository.Timing{
 		Key:        t.Key,
-		DurationMs: t.DurationMs,
+		DurationMs: t.DurationSeconds * 1000,
 	}
 }
