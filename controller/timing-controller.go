@@ -72,8 +72,8 @@ func (c *TimingController) getTimings() gin.HandlerFunc {
 func (c *TimingController) setTimings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var timings []TimingCreate
-		if err := ctx.ShouldBindJSON(&timings); err != nil {
-			ctx.JSON(400, gin.H{"error": "Invalid request body"})
+		if err := ctx.BindJSON(&timings); err != nil {
+			ctx.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 		repoTimings := utils.Map(timings, toTiming)
