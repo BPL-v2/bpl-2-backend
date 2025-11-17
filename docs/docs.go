@@ -1930,10 +1930,9 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "integer",
-                                "format": "int64"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Timing"
                             }
                         }
                     }
@@ -1961,7 +1960,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Timing"
+                                "$ref": "#/definitions/TimingCreate"
                             }
                         }
                     }
@@ -4890,6 +4889,29 @@ const docTemplate = `{
         },
         "Timing": {
             "type": "object",
+            "required": [
+                "description",
+                "duration_ms",
+                "key"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "duration_ms": {
+                    "type": "integer"
+                },
+                "key": {
+                    "$ref": "#/definitions/TimingKey"
+                }
+            }
+        },
+        "TimingCreate": {
+            "type": "object",
+            "required": [
+                "duration_ms",
+                "key"
+            ],
             "properties": {
                 "duration_ms": {
                     "type": "integer"

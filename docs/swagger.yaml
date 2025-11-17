@@ -1473,10 +1473,26 @@ definitions:
     type: object
   Timing:
     properties:
+      description:
+        type: string
       duration_ms:
         type: integer
       key:
         $ref: '#/definitions/TimingKey'
+    required:
+    - description
+    - duration_ms
+    - key
+    type: object
+  TimingCreate:
+    properties:
+      duration_ms:
+        type: integer
+      key:
+        $ref: '#/definitions/TimingKey'
+    required:
+    - duration_ms
+    - key
     type: object
   User:
     properties:
@@ -3410,10 +3426,9 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              format: int64
-              type: integer
-            type: object
+            items:
+              $ref: '#/definitions/Timing'
+            type: array
       summary: Get timing configurations
       tags:
       - Timing
@@ -3429,7 +3444,7 @@ paths:
         required: true
         schema:
           items:
-            $ref: '#/definitions/Timing'
+            $ref: '#/definitions/TimingCreate'
           type: array
       produces:
       - application/json
