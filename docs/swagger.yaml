@@ -1471,6 +1471,13 @@ definitions:
     required:
     - user_id
     type: object
+  Timing:
+    properties:
+      duration_ms:
+        type: integer
+      key:
+        $ref: '#/definitions/TimingKey'
+    type: object
   User:
     properties:
       account_name:
@@ -1822,6 +1829,34 @@ definitions:
     x-enum-varnames:
     - OBJECTIVE
     - CATEGORY
+  TimingKey:
+    enum:
+    - delay_after_character_is_refetched
+    - delay_after_po_relevant_character_is_refetched
+    - delay_after_inactive_character_is_refetched
+    - delay_after_league_account_is_refetched
+    - delay_after_po_relevant_league_account_is_refetched
+    - delay_after_inactive_league_account_is_refetched
+    - delay_after_pob_is_recalculated
+    - delay_after_character_name_is_refetched
+    - character_inactivity_duration
+    - ladder_update_interval
+    - guildstash_update_interval
+    - public_stash_update_interval
+    type: string
+    x-enum-varnames:
+    - CharacterRefetchDelay
+    - CharacterRefetchDelayImportant
+    - CharacterRefetchDelayInactive
+    - LeagueAccountRefetchDelay
+    - LeagueAccountRefetchDelayImportant
+    - LeagueAccountRefetchDelayInactive
+    - PoBRecalculationDelay
+    - CharacterNameRefetchDelay
+    - InactivityDuration
+    - LadderUpdateInterval
+    - GuildstashUpdateInterval
+    - PublicStashUpdateInterval
   ApplicationStatus:
     enum:
     - applied
@@ -3365,6 +3400,45 @@ paths:
             type: string
       tags:
       - oauth
+  /timings:
+    get:
+      description: Retrieve the current timing configurations for various operations.
+      operationId: getTimings
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
+      summary: Get timing configurations
+      tags:
+      - Timing
+    put:
+      consumes:
+      - application/json
+      description: Update the timing configurations for various operations.
+      operationId: setTimings
+      parameters:
+      - description: List of timing configurations
+        in: body
+        name: timings
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/Timing'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      summary: Set timing configurations
+      tags:
+      - Timing
   /users:
     get:
       description: Fetches all users

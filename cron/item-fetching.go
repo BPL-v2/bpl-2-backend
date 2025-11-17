@@ -52,6 +52,7 @@ type FetchingService struct {
 	userRepository       *repository.UserRepository
 	guildStashRepository *repository.GuildStashRepository
 	activityRepository   *repository.ActivityRepository
+	timingRepository     *repository.TimingRepository
 }
 
 var (
@@ -72,9 +73,14 @@ func NewFetchingService(ctx context.Context, event *repository.Event, poeClient 
 			userRepository:       repository.NewUserRepository(),
 			guildStashRepository: repository.NewGuildStashRepository(),
 			activityRepository:   repository.NewActivityRepository(),
+			timingRepository:     repository.NewTimingRepository(),
 		}
 	})
 	return fetchingService
+}
+
+func (f *FetchingService) GetTimings() (map[repository.TimingKey]time.Duration, error) {
+	return f.timingRepository.GetTimings()
 }
 
 func (f *FetchingService) FetchStashChanges() error {
@@ -430,6 +436,10 @@ func (f *FetchingService) FetchGuildStashes() error {
 
 	for {
 		fmt.Printf("Fetching guild stashes for event %d\n", f.event.Id)
+		timings, err := f.GetTimings()
+		if err != nil {
+			return err
+		}
 		guildStashes, err := f.guildStashRepository.GetActiveByEvent(f.event.Id)
 		if err != nil {
 			return fmt.Errorf("failed to get guild stashes for event %d: %w", f.event.Id, err)
@@ -468,7 +478,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 		select {
 		case <-f.ctx.Done():
 			return fmt.Errorf("context canceled")
-		case <-time.After(1 * time.Minute):
+		case <-time.After(timings[repository.GuildstashUpdateInterval]):
 		}
 	}
 }

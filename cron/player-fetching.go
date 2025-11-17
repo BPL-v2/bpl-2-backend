@@ -46,9 +46,21 @@ type PlayerFetchingService struct {
 	objectiveService      *service.ObjectiveService
 	characterService      *service.CharacterService
 	ladderService         *service.LadderService
-	lastLadderUpdate      time.Time
-	client                *client.PoEClient
-	event                 *repository.Event
+	timingRepository      *repository.TimingRepository
+	timings               map[repository.TimingKey]time.Duration
+
+	lastLadderUpdate time.Time
+	client           *client.PoEClient
+	event            *repository.Event
+}
+
+func (s *PlayerFetchingService) ReloadTimings() error {
+	timings, err := s.timingRepository.GetTimings()
+	if err != nil {
+		return err
+	}
+	s.timings = timings
+	return nil
 }
 
 func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event) *PlayerFetchingService {
@@ -58,14 +70,15 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 		objectiveService:      service.NewObjectiveService(),
 		ladderService:         service.NewLadderService(),
 		characterService:      service.NewCharacterService(),
+		timingRepository:      repository.NewTimingRepository(),
 		lastLadderUpdate:      time.Now().Add(-1 * time.Hour),
 		client:                client,
 		event:                 event,
 	}
 }
 
-func (s *PlayerFetchingService) shouldUpdateLadder() bool {
-	return time.Since(s.lastLadderUpdate) > 30*time.Second
+func (s *PlayerFetchingService) shouldUpdateLadder(timings map[repository.TimingKey]time.Duration) bool {
+	return time.Since(s.lastLadderUpdate) > timings[repository.LadderUpdateInterval]
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate, event *repository.Event) {
@@ -154,7 +167,7 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 }
 
 func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
-	if !s.shouldUpdateLadder() {
+	if !s.shouldUpdateLadder(s.timings) {
 		return
 	}
 	s.lastLadderUpdate = time.Now()
@@ -468,23 +481,28 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 		case <-ctx.Done():
 			return
 		default:
+			err := service.ReloadTimings()
+			if err != nil {
+				log.Print(err)
+				return
+			}
 			wg := sync.WaitGroup{}
 			for _, player := range players {
-				if player.ShouldUpdateCharacterName() {
+				if player.ShouldUpdateCharacterName(service.timings) {
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {
 						defer wg.Done()
 						service.UpdateCharacterName(player, event)
 					}(player)
 				}
-				if player.ShouldUpdateCharacter() {
+				if player.ShouldUpdateCharacter(service.timings) {
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {
 						defer wg.Done()
 						service.UpdateCharacter(player, event)
 					}(player)
 				}
-				if player.ShouldUpdateLeagueAccount() {
+				if player.ShouldUpdateLeagueAccount(service.timings) {
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {
 						defer wg.Done()
@@ -492,7 +510,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 					}(player)
 				}
 			}
-			if service.shouldUpdateLadder() {
+			if service.shouldUpdateLadder(service.timings) {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()

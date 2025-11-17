@@ -1915,6 +1915,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/timings": {
+            "get": {
+                "description": "Retrieve the current timing configurations for various operations.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Timing"
+                ],
+                "summary": "Get timing configurations",
+                "operationId": "getTimings",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer",
+                                "format": "int64"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update the timing configurations for various operations.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Timing"
+                ],
+                "summary": "Set timing configurations",
+                "operationId": "setTimings",
+                "parameters": [
+                    {
+                        "description": "List of timing configurations",
+                        "name": "timings",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Timing"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "security": [
@@ -4830,6 +4888,17 @@ const docTemplate = `{
                 }
             }
         },
+        "Timing": {
+            "type": "object",
+            "properties": {
+                "duration_ms": {
+                    "type": "integer"
+                },
+                "key": {
+                    "$ref": "#/definitions/TimingKey"
+                }
+            }
+        },
         "User": {
             "type": "object",
             "required": [
@@ -5245,6 +5314,37 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "OBJECTIVE",
                 "CATEGORY"
+            ]
+        },
+        "TimingKey": {
+            "type": "string",
+            "enum": [
+                "delay_after_character_is_refetched",
+                "delay_after_po_relevant_character_is_refetched",
+                "delay_after_inactive_character_is_refetched",
+                "delay_after_league_account_is_refetched",
+                "delay_after_po_relevant_league_account_is_refetched",
+                "delay_after_inactive_league_account_is_refetched",
+                "delay_after_pob_is_recalculated",
+                "delay_after_character_name_is_refetched",
+                "character_inactivity_duration",
+                "ladder_update_interval",
+                "guildstash_update_interval",
+                "public_stash_update_interval"
+            ],
+            "x-enum-varnames": [
+                "CharacterRefetchDelay",
+                "CharacterRefetchDelayImportant",
+                "CharacterRefetchDelayInactive",
+                "LeagueAccountRefetchDelay",
+                "LeagueAccountRefetchDelayImportant",
+                "LeagueAccountRefetchDelayInactive",
+                "PoBRecalculationDelay",
+                "CharacterNameRefetchDelay",
+                "InactivityDuration",
+                "LadderUpdateInterval",
+                "GuildstashUpdateInterval",
+                "PublicStashUpdateInterval"
             ]
         },
         "ApplicationStatus": {

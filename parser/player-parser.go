@@ -54,48 +54,48 @@ func (p *PlayerUpdate) CanMakeRequests() bool {
 	return p.TokenExpiry.After(time.Now()) && p.Token != "" && p.SuccessiveErrors < 5
 }
 
-func (p *PlayerUpdate) ShouldUpdateCharacterName() bool {
+func (p *PlayerUpdate) ShouldUpdateCharacterName(timings map[repository.TimingKey]time.Duration) bool {
 	if !p.CanMakeRequests() {
 		return false
 	}
-	if p.New.CharacterName == "" {
-		return time.Since(p.LastUpdateTimes.CharacterName) > 30*time.Minute
-	}
-	return time.Since(p.LastUpdateTimes.CharacterName) > 60*time.Minute
+	return time.Since(p.LastUpdateTimes.CharacterName) > timings[repository.CharacterNameRefetchDelay]
 }
 
-func (p *PlayerUpdate) ShouldUpdateCharacter() bool {
+func (p *PlayerUpdate) ShouldUpdateCharacter(timings map[repository.TimingKey]time.Duration) bool {
 	if !p.CanMakeRequests() {
 		return false
 	}
 	if p.New.CharacterName == "" {
 		return false
 	}
-	if p.LastActive.After(time.Now().Add(-20 * time.Minute)) {
-		return time.Since(p.LastUpdateTimes.Character) > 2*time.Minute
+	if p.LastActive.Before(time.Now().Add(-timings[repository.InactivityDuration])) {
+		return time.Since(p.LastUpdateTimes.Character) > timings[repository.CharacterRefetchDelayInactive]
 	}
 	if p.New.CharacterLevel > 40 && !p.New.Pantheon {
-		return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
+		return time.Since(p.LastUpdateTimes.Character) > timings[repository.CharacterRefetchDelayImportant]
 	}
 	if p.New.CharacterLevel > 68 && !(p.New.AscendancyPoints >= 8) {
-		return time.Since(p.LastUpdateTimes.Character) > 5*time.Minute
+		return time.Since(p.LastUpdateTimes.Character) > timings[repository.CharacterRefetchDelayImportant]
 	}
-	return time.Since(p.LastUpdateTimes.Character) > 10*time.Minute
+	return time.Since(p.LastUpdateTimes.Character) > timings[repository.CharacterRefetchDelay]
 }
 
-func (p *PlayerUpdate) ShouldUpdateLeagueAccount() bool {
+func (p *PlayerUpdate) ShouldUpdateLeagueAccount(timings map[repository.TimingKey]time.Duration) bool {
 	if !p.CanMakeRequests() {
 		return false
 	}
 	if p.New.CharacterLevel < 55 {
 		return false
 	}
-
-	if p.New.MaxAtlasTreeNodes() < 100 {
-		return time.Since(p.LastUpdateTimes.LeagueAccount) > 5*time.Minute
+	if p.LastActive.Before(time.Now().Add(-timings[repository.InactivityDuration])) {
+		return time.Since(p.LastUpdateTimes.Character) > timings[repository.LeagueAccountRefetchDelayInactive]
 	}
 
-	return time.Since(p.LastUpdateTimes.LeagueAccount) > 15*time.Minute
+	if p.New.MaxAtlasTreeNodes() < 100 {
+		return time.Since(p.LastUpdateTimes.LeagueAccount) > timings[repository.LeagueAccountRefetchDelayImportant]
+	}
+
+	return time.Since(p.LastUpdateTimes.LeagueAccount) > timings[repository.LeagueAccountRefetchDelay]
 }
 
 type TeamObjectiveChecker func(p []*Player) int

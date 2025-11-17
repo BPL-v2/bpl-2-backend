@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS timings (
+    key VARCHAR(255) PRIMARY KEY,
+    duration_ms BIGINT NOT NULL
+);
