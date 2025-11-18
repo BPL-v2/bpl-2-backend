@@ -12,8 +12,8 @@ import (
 type CacheKey int
 
 const (
-	Score CacheKey = iota
-	Ladder
+	Score  CacheKey = 1
+	Ladder CacheKey = 2
 )
 
 type CachedData struct {

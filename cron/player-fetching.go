@@ -114,23 +114,23 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
 	fmt.Println("Updating character", player.New.CharacterName)
-	characterResponse, err := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
+	characterResponse, clientError := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.Character = time.Now()
-	if err != nil {
+	if clientError != nil {
 		player.SuccessiveErrors++
-		if err.StatusCode == 401 || err.StatusCode == 403 {
-			fmt.Printf("Error fetching character for player %d: %d", player.UserId, err.StatusCode)
+		if clientError.StatusCode == 401 || clientError.StatusCode == 403 {
+			fmt.Printf("Error fetching character for player %d: %d", player.UserId, clientError.StatusCode)
 			player.TokenExpiry = time.Now()
 			return
 		}
-		if err.StatusCode == 404 {
+		if clientError.StatusCode == 404 {
 			fmt.Printf("Character not found for player %d: %s\n", player.UserId, player.New.CharacterName)
 			player.New.CharacterName = ""
 			return
 		}
-		log.Printf("Error fetching character for player %d: %v", player.UserId, err)
+		log.Printf("Error fetching character for player %d: %v", player.UserId, clientError)
 		return
 	}
 
@@ -160,7 +160,12 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		Pantheon:         player.New.Pantheon,
 		AtlasPoints:      player.New.MaxAtlasTreeNodes(),
 	}
-	s.characterRepository.Save(character)
+	fmt.Printf("Saving character %s (%s) for user %d\n", character.Name, character.Id, player.UserId)
+	fmt.Printf("Character details: Level %d, Main Skill %s, Ascendancy %s, Ascendancy Points %d, Pantheon %v, Atlas Points %d\n", characterResponse.Character.Level, characterResponse.Character.GetMainSkill(), characterResponse.Character.Class, characterResponse.Character.GetAscendancyPoints(), characterResponse.Character.HasPantheon(), character.New.AtlasPoints)
+	err := s.characterRepository.Save(character)
+	if err != nil {
+		fmt.Printf("Error saving character %s (%s) for user %d: %v\n", character.Name, character.Id, player.UserId, err)
+	}
 }
 
 func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate) {
