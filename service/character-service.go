@@ -23,14 +23,7 @@ func NewCharacterService() *CharacterService {
 	}
 }
 
-func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUpdate) error {
-	if len(update.New.AtlasPassiveTrees) > 0 {
-		err := c.atlasService.SaveAtlasTrees(update.UserId, eventId, update.New.AtlasPassiveTrees)
-		if err != nil {
-			fmt.Println("Error saving atlas trees")
-			return err
-		}
-	}
+func (c *CharacterService) TrackActivity(eventId int, update *parser.PlayerUpdate) error {
 	if update.New.CharacterXP != update.Old.CharacterXP {
 		err := c.activityRepository.SaveActivity(&repository.Activity{
 			Time:    time.Now(),
@@ -42,32 +35,6 @@ func (c *CharacterService) SavePlayerUpdate(eventId int, update *parser.PlayerUp
 		}
 	}
 
-	if update.New.CharacterName != update.Old.CharacterName ||
-		update.New.CharacterLevel != update.Old.CharacterLevel ||
-		update.New.MainSkill != update.Old.MainSkill ||
-		update.New.Pantheon != update.Old.Pantheon ||
-		update.New.AscendancyPoints != update.Old.AscendancyPoints ||
-		update.New.Ascendancy != update.Old.Ascendancy ||
-		update.New.MaxAtlasTreeNodes() != update.Old.MaxAtlasTreeNodes() {
-		character := &repository.Character{
-			Id:               update.New.CharacterId,
-			UserId:           &update.UserId,
-			EventId:          eventId,
-			Name:             update.New.CharacterName,
-			Level:            update.New.CharacterLevel,
-			MainSkill:        update.New.MainSkill,
-			Ascendancy:       update.New.Ascendancy,
-			AscendancyPoints: update.New.AscendancyPoints,
-			Pantheon:         update.New.Pantheon,
-			AtlasPoints:      update.New.MaxAtlasTreeNodes(),
-		}
-		err := c.characterRepository.Save(character)
-		if err != nil {
-			fmt.Printf("Error saving character checkpoint for user %d: %v\n", update.UserId, err)
-			return err
-		}
-
-	}
 	return nil
 }
 

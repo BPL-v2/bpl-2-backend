@@ -46,7 +46,10 @@ type PlayerFetchingService struct {
 	objectiveService      *service.ObjectiveService
 	characterService      *service.CharacterService
 	ladderService         *service.LadderService
+	atlasService          *service.AtlasService
 	timingRepository      *repository.TimingRepository
+	characterRepository   *repository.CharacterRepository
+	activityRepository    *repository.ActivityRepository
 	timings               map[repository.TimingKey]time.Duration
 
 	lastLadderUpdate time.Time
@@ -70,7 +73,10 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 		objectiveService:      service.NewObjectiveService(),
 		ladderService:         service.NewLadderService(),
 		characterService:      service.NewCharacterService(),
+		atlasService:          service.NewAtlasService(),
 		timingRepository:      repository.NewTimingRepository(),
+		characterRepository:   repository.NewCharacterRepository(),
+		activityRepository:    repository.NewActivityRepository(),
 		lastLadderUpdate:      time.Now().Add(-1 * time.Hour),
 		client:                client,
 		event:                 event,
@@ -142,6 +148,19 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		charQueue <- characterResponse.Character
 		player.LastUpdateTimes.PoB = time.Now()
 	}
+	character := &repository.Character{
+		Id:               player.New.CharacterId,
+		UserId:           &player.UserId,
+		EventId:          event.Id,
+		Name:             player.New.CharacterName,
+		Level:            player.New.CharacterLevel,
+		MainSkill:        player.New.MainSkill,
+		Ascendancy:       player.New.Ascendancy,
+		AscendancyPoints: player.New.AscendancyPoints,
+		Pantheon:         player.New.Pantheon,
+		AtlasPoints:      player.New.MaxAtlasTreeNodes(),
+	}
+	s.characterRepository.Save(character)
 }
 
 func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate) {
@@ -164,6 +183,13 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 	}
 	player.SuccessiveErrors = 0
 	player.New.AtlasPassiveTrees = leagueAccount.LeagueAccount.AtlasPassiveTrees
+	if len(player.New.AtlasPassiveTrees) > 0 {
+		err := s.atlasService.SaveAtlasTrees(player.UserId, s.event.Id, player.New.AtlasPassiveTrees)
+		if err != nil {
+			fmt.Printf("Error saving atlas trees %d: %v\n", player.UserId, err)
+		}
+	}
+
 }
 
 func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
@@ -522,10 +548,14 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			for _, player := range players {
 				if player.New.CharacterXP != player.Old.CharacterXP {
 					player.LastActive = time.Now()
-				}
-				err := service.characterService.SavePlayerUpdate(event.Id, player)
-				if err != nil {
-					log.Print(err)
+					err = service.activityRepository.SaveActivity(&repository.Activity{
+						Time:    time.Now(),
+						UserId:  player.UserId,
+						EventId: event.Id,
+					})
+					if err != nil {
+						fmt.Printf("Error saving activity for player %d: %v\n", player.UserId, err)
+					}
 				}
 			}
 
