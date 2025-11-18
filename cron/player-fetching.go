@@ -161,7 +161,13 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		AtlasPoints:      player.New.MaxAtlasTreeNodes(),
 	}
 	fmt.Printf("Saving character %s (%s) for user %d\n", character.Name, character.Id, player.UserId)
-	fmt.Printf("Character details: Level %d, Main Skill %s, Ascendancy %s, Ascendancy Points %d, Pantheon %v, Atlas Points %d\n", characterResponse.Character.Level, characterResponse.Character.GetMainSkill(), characterResponse.Character.Class, characterResponse.Character.GetAscendancyPoints(), characterResponse.Character.HasPantheon(), character.New.AtlasPoints)
+	fmt.Printf("Character details: Level %d, Main Skill %s, Ascendancy %s, Ascendancy Points %d, Pantheon %v\n",
+		characterResponse.Character.Level,
+		characterResponse.Character.GetMainSkill(),
+		characterResponse.Character.Class,
+		characterResponse.Character.GetAscendancyPoints(),
+		characterResponse.Character.HasPantheon(),
+	)
 	err := s.characterRepository.Save(character)
 	if err != nil {
 		fmt.Printf("Error saving character %s (%s) for user %d: %v\n", character.Name, character.Id, player.UserId, err)
