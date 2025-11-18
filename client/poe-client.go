@@ -98,7 +98,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 	}
 
 	if response.StatusCode >= 400 {
-		fmt.Printf("Failed to call %s with response:\n", args.Path)
+		fmt.Printf("Error at path %s with params %v\n", args.Path, args.PathParams)
 		log.Print(string(respBody))
 		errorBody := &ErrorResponse{}
 		err = json.Unmarshal(respBody, errorBody)

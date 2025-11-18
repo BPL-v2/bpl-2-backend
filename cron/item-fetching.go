@@ -475,6 +475,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 		if err != nil {
 			fmt.Printf("Failed to save guild stashes: %v\n", err)
 		}
+		fmt.Printf("Completed fetching guild stashes for event %d, sleeping for %s\n", f.event.Id, timings[repository.GuildstashUpdateInterval])
 		select {
 		case <-f.ctx.Done():
 			return fmt.Errorf("context canceled")
