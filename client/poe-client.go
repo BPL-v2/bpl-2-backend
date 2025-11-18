@@ -28,6 +28,7 @@ type ClientError struct {
 	Error           any
 	Description     string
 	ResponseHeaders http.Header
+	Path            string
 }
 
 type ErrorResponse struct {
@@ -69,6 +70,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 				StatusCode:  0,
 				Error:       "bpl2_client_request_body_error",
 				Description: err.Error(),
+				Path:        args.Path,
 			}
 		}
 		args.Body = strings.NewReader(string(bodyString))
@@ -79,6 +81,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 			StatusCode:  0,
 			Error:       "bpl2_client_request_error",
 			Description: err.Error(),
+			Path:        args.Path,
 		}
 	}
 	responseCounter.WithLabelValues(fmt.Sprintf("%d", response.StatusCode)).Inc()
@@ -90,10 +93,12 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 			Error:           "bpl2_client_response_body_read_error",
 			Description:     err.Error(),
 			ResponseHeaders: response.Header,
+			Path:            args.Path,
 		}
 	}
 
 	if response.StatusCode >= 400 {
+		fmt.Printf("Failed to call %s with response:\n", args.Path)
 		log.Print(string(respBody))
 		errorBody := &ErrorResponse{}
 		err = json.Unmarshal(respBody, errorBody)
@@ -103,6 +108,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 				Error:           "bpl2_client_response_error_body_parse_error",
 				Description:     err.Error(),
 				ResponseHeaders: response.Header,
+				Path:            args.Path,
 			}
 		}
 		return nil, &ClientError{
@@ -110,18 +116,21 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 			Error:           errorBody.Error,
 			Description:     errorBody.ErrorDescription,
 			ResponseHeaders: response.Header,
+			Path:            args.Path,
 		}
 	}
 
 	result := new(T)
 	err = json.Unmarshal(respBody, result)
 	if err != nil {
+		fmt.Printf("Failed to call %s with response:\n", args.Path)
 		fmt.Println(string(respBody))
 		return nil, &ClientError{
 			StatusCode:      response.StatusCode,
 			Error:           "bpl2_client_response_body_parse_error",
 			Description:     err.Error(),
 			ResponseHeaders: response.Header,
+			Path:            args.Path,
 		}
 	}
 	return result, nil
