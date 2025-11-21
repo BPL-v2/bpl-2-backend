@@ -30,6 +30,11 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 	objectiveMatchRepository := repository.NewObjectiveMatchRepository()
 	objectiveService := service.NewObjectiveService()
 	objectives, err := objectiveService.GetAllObjectives()
+	for _, obj := range objectives {
+		obj.ValidFrom = nil
+		obj.ValidTo = nil
+	}
+
 	if err != nil {
 		log.Print("Failed to get objectives for event:", err)
 		return
