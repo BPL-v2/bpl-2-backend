@@ -807,6 +807,7 @@ func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChec
 
 func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResult {
 	results := make([]*CheckResult, 0)
+	item.Name = strings.ReplaceAll(item.Name, "Foulborn ", "")
 	if checkers, ok := ic.Funcmap[dbModel.BASE_TYPE][item.BaseType]; ok {
 		results = append(results, applyCheckers(checkers, item)...)
 	}
