@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
@@ -28,6 +29,7 @@ type OauthService struct {
 	Config                     map[repository.Provider]*oauth2.Config
 	clientConfig               map[repository.Provider]*clientcredentials.Config
 	stateMap                   map[string]OauthState
+	mu                         *sync.Mutex
 	userService                *UserService
 	clientCredentialRepository *repository.ClientCredentialsRepository
 	oauthRepository            *repository.OauthRepository
@@ -110,8 +112,8 @@ func NewOauthService() *OauthService {
 				Scopes:       []string{"service:psapi"},
 			},
 		},
-
 		stateMap:                   make(map[string]OauthState),
+		mu:                         &sync.Mutex{},
 		userService:                NewUserService(),
 		clientCredentialRepository: repository.NewClientCredentialsRepository(),
 		oauthRepository:            repository.NewOauthRepository(),
@@ -120,6 +122,8 @@ func NewOauthService() *OauthService {
 
 func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string, redirectUrl string) (string, string) {
 	// clean up old verifiers
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	for verifier, v := range e.stateMap {
 		if v.Timeout < time.Now().Unix() {
 			delete(e.stateMap, verifier)
@@ -198,7 +202,9 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 	return authState, err
 }
 func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
+	e.mu.Lock()
 	authState, ok := e.stateMap[state]
+	e.mu.Unlock()
 	if !ok {
 		return nil, nil, fmt.Errorf("state is unknown")
 	}
@@ -278,7 +284,9 @@ func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth
 
 func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
 	client := client.NewPoEClient(1, true, 10)
+	e.mu.Lock()
 	authState, ok := e.stateMap[state]
+	e.mu.Unlock()
 	if !ok {
 		return nil, fmt.Errorf("state is unknown")
 	}
