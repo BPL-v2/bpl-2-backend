@@ -35,7 +35,6 @@ type Config struct {
 	POEClientID     string
 	POEClientSecret string
 	POEClientAgent  string
-	OldPOEToken     string
 
 	// Path of Building
 	POBServerURL string
@@ -80,7 +79,6 @@ func loadConfig() *Config {
 		POEClientID:     getEnv("POE_CLIENT_ID"),
 		POEClientSecret: getEnv("POE_CLIENT_SECRET"),
 		POEClientAgent:  getEnv("POE_CLIENT_AGENT"),
-		OldPOEToken:     getEnv("OLD_POE_CLIENT_TOKEN"),
 
 		// Path of Building - optional
 		POBServerURL: getEnvWithDefault("POB_SERVER_URL", "localhost:8080"),

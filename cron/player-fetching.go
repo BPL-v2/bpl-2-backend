@@ -2,7 +2,6 @@ package cron
 
 import (
 	"bpl/client"
-	"bpl/config"
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
@@ -47,6 +46,7 @@ type PlayerFetchingService struct {
 	characterService      *service.CharacterService
 	ladderService         *service.LadderService
 	atlasService          *service.AtlasService
+	oauthService          *service.OauthService
 	timingRepository      *repository.TimingRepository
 	characterRepository   *repository.CharacterRepository
 	activityRepository    *repository.ActivityRepository
@@ -74,6 +74,7 @@ func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event)
 		ladderService:         service.NewLadderService(),
 		characterService:      service.NewCharacterService(),
 		atlasService:          service.NewAtlasService(),
+		oauthService:          service.NewOauthService(),
 		timingRepository:      repository.NewTimingRepository(),
 		characterRepository:   repository.NewCharacterRepository(),
 		activityRepository:    repository.NewActivityRepository(),
@@ -214,7 +215,12 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 		// todo: get the ladder for the correct event
 		resp, clientError = s.client.GetPoE2Ladder(s.event.Name)
 	} else {
-		resp, clientError = s.client.GetFullLadder(config.Env().OldPOEToken, s.event.Name)
+		token, err := s.oauthService.GetApplicationToken(repository.ProviderPoE)
+		if err != nil {
+			log.Printf("Error fetching application token: %v", err)
+			return
+		}
+		resp, clientError = s.client.GetFullLadder(token, s.event.Name)
 	}
 	if clientError != nil {
 		log.Printf("Error fetching ladder: %v", clientError)

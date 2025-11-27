@@ -560,7 +560,7 @@ func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string) (
 		"grant_type":    {"client_credentials"},
 		"client_id":     {clientId},
 		"client_secret": {clientSecret},
-		"scope":         {"service:psapi"},
+		"scope":         {"service:psapi service:leagues:ladder"},
 	}
 	return sendRequest[ClientCredentialsGrantResponse](c,
 		"GetClientCredentials",
