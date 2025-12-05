@@ -245,7 +245,7 @@ func (f *FetchingService) FilterStashChanges() error {
 						}
 					}
 				}
-			}
+			} //
 			message := repository.StashChangeMessage{
 				ChangeId:     stashChange.ChangeId,
 				NextChangeId: stashChange.NextChangeId,
