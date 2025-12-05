@@ -105,6 +105,11 @@ func (m *MatchingService) getItemMatches(
 			accountName = *stash.AccountName
 		}
 
+		if len(stash.Id) != 64 {
+			log.Printf("WARN: skipping stash with invalid ID length (%d): %q", len(stash.Id), stash.Id)
+			continue
+		}
+
 		userId := new(int)
 		teamId := stash.TeamId
 
