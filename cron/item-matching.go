@@ -13,6 +13,8 @@ import (
 	"log"
 	"time"
 
+	"runtime"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/segmentio/kafka-go"
@@ -61,10 +63,43 @@ func (m *MatchingService) GetStashChange(reader *kafka.Reader) (stashChange repo
 	return stashChange, nil
 }
 
-func (m *MatchingService) getItemMatches(stashChange repository.StashChangeMessage, userMap map[string]*repository.TeamUserWithPoEToken, teamMap map[string]string, itemChecker *parser.ItemChecker, desyncedObjectiveIds []int) []*repository.ObjectiveMatch {
+func (m *MatchingService) getItemMatches(
+	stashChange repository.StashChangeMessage,
+	userMap map[string]*repository.TeamUserWithPoEToken,
+	teamMap map[string]string,
+	itemChecker *parser.ItemChecker,
+	desyncedObjectiveIds []int,
+) []*repository.ObjectiveMatch {
+	defer func() {
+		if r := recover(); r != nil {
+			buf := make([]byte, 1<<20)
+			n := runtime.Stack(buf, true)
+			log.Printf("PANIC in getItemMatches: %v\nstack:\n%s\n", r, string(buf[:n]))
+		}
+	}()
+	if m == nil {
+		log.Printf("ERROR: MatchingService receiver is nil")
+		return nil
+	}
+	if m.event == nil {
+		log.Printf("ERROR: m.event is nil")
+		return nil
+	}
+	if itemChecker == nil {
+		log.Printf("ERROR: itemChecker is nil")
+		return nil
+	}
+	if m.objectiveMatchService == nil {
+		log.Printf("ERROR: objectiveMatchService is nil")
+		return nil
+	}
+
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
-	for _, stash := range stashChange.Stashes {
+
+	stashes := stashChange.Stashes
+
+	for _, stash := range stashes {
 		var accountName string
 		if stash.AccountName != nil {
 			accountName = *stash.AccountName
@@ -72,35 +107,50 @@ func (m *MatchingService) getItemMatches(stashChange repository.StashChangeMessa
 
 		userId := new(int)
 		teamId := stash.TeamId
-		if accountName != "" && userMap[accountName] != nil {
-			userId = &userMap[accountName].UserId
-			teamId = userMap[accountName].TeamId
+
+		if accountName != "" {
+			if u, ok := userMap[accountName]; ok && u != nil {
+				userId = &u.UserId
+				teamId = u.TeamId
+			}
 		}
-		if stash.League != nil && *stash.League == m.event.Name && teamId != 0 {
-			completions := make(map[int]int)
+
+		if stash.League == nil || *stash.League != m.event.Name || teamId == 0 {
+			continue
+		}
+
+		completions := make(map[int]int)
+		if stash.Items != nil {
 			for _, item := range stash.Items {
 				for _, result := range itemChecker.CheckForCompletions(&item) {
-					// while syncing we only update the completions for objectives that are desynced
 					if syncFinished || utils.Contains(desyncedObjectiveIds, result.ObjectiveId) {
 						completions[result.ObjectiveId] += result.Number
 					}
 				}
 			}
-			teamLabel := "unknown"
-			if accountName != "" {
-				if lbl, ok := teamMap[accountName]; ok && lbl != "" {
-					teamLabel = lbl
-				}
-			}
-			teamMatchesTotal.WithLabelValues(teamLabel).Add(float64(len(completions)))
-			stashChange := &repository.StashChange{
-				StashId:   stash.Id,
-				EventId:   m.event.Id,
-				Timestamp: stashChange.Timestamp,
-			}
-			matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, userId, teamId, stashChange)...)
 		}
+
+		teamLabel := "<unknown>"
+		if accountName != "" {
+			if lbl, ok := teamMap[accountName]; ok && lbl != "" {
+				teamLabel = lbl
+			} else {
+				log.Printf("DEBUG: no teamMap entry for account %q (stash id: %s, teamId: %d)", accountName, stash.Id, teamId)
+			}
+		} else {
+			log.Printf("DEBUG: stash %s has no AccountName; teamId=%d", stash.Id, teamId)
+		}
+
+		teamMatchesTotal.WithLabelValues(teamLabel).Add(float64(len(completions)))
+
+		sc := &repository.StashChange{
+			StashId:   stash.Id,
+			EventId:   m.event.Id,
+			Timestamp: stashChange.Timestamp,
+		}
+		matches = append(matches, m.objectiveMatchService.CreateItemMatches(completions, userId, teamId, sc)...)
 	}
+
 	return matches
 }
 
