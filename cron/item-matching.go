@@ -65,11 +65,16 @@ func (m *MatchingService) getItemMatches(stashChange repository.StashChangeMessa
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 	for _, stash := range stashChange.Stashes {
+		var accountName string
+		if stash.AccountName != nil {
+			accountName = *stash.AccountName
+		}
+
 		userId := new(int)
 		teamId := stash.TeamId
-		if stash.AccountName != nil && userMap[*stash.AccountName] != nil {
-			userId = &userMap[*stash.AccountName].UserId
-			teamId = userMap[*stash.AccountName].TeamId
+		if accountName != "" && userMap[accountName] != nil {
+			userId = &userMap[accountName].UserId
+			teamId = userMap[accountName].TeamId
 		}
 		if stash.League != nil && *stash.League == m.event.Name && teamId != 0 {
 			completions := make(map[int]int)
@@ -81,7 +86,13 @@ func (m *MatchingService) getItemMatches(stashChange repository.StashChangeMessa
 					}
 				}
 			}
-			teamMatchesTotal.WithLabelValues(teamMap[*stash.AccountName]).Add(float64(len(completions)))
+			teamLabel := "unknown"
+			if accountName != "" {
+				if lbl, ok := teamMap[accountName]; ok && lbl != "" {
+					teamLabel = lbl
+				}
+			}
+			teamMatchesTotal.WithLabelValues(teamLabel).Add(float64(len(completions)))
 			stashChange := &repository.StashChange{
 				StashId:   stash.Id,
 				EventId:   m.event.Id,
