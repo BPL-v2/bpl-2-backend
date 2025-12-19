@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -468,22 +469,12 @@ func IntComparator(condition *dbModel.Condition) (itemChecker, error) {
 	case dbModel.IN:
 		return func(item *clientModel.Item) bool {
 			fiedValue := getter(item)
-			for _, v := range intValues {
-				if fiedValue == v {
-					return true
-				}
-			}
-			return false
+			return slices.Contains(intValues, fiedValue)
 		}, nil
 	case dbModel.NOT_IN:
 		return func(item *clientModel.Item) bool {
 			fiedValue := getter(item)
-			for _, v := range intValues {
-				if fiedValue == v {
-					return false
-				}
-			}
-			return true
+			return !slices.Contains(intValues, fiedValue)
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for integer field %s", condition.Operator, condition.Field)
@@ -509,26 +500,19 @@ func StringComparator(condition *dbModel.Condition) (itemChecker, error) {
 		var values = strings.Split(condition.Value, ",")
 		return func(item *clientModel.Item) bool {
 			fiedValue := getter(item)
-			for _, v := range values {
-				if fiedValue == v {
-					return true
-				}
-			}
-			return false
+			return slices.Contains(values, fiedValue)
 		}, nil
 	case dbModel.NOT_IN:
 		var values = strings.Split(condition.Value, ",")
 		return func(item *clientModel.Item) bool {
 			fiedValue := getter(item)
-			for _, v := range values {
-				if fiedValue == v {
-					return false
-				}
-			}
-			return true
+			return !slices.Contains(values, fiedValue)
 		}, nil
 	case dbModel.MATCHES:
-		var expression = regexp.MustCompile(condition.Value)
+		expression, err := regexp.Compile(condition.Value)
+		if err != nil {
+			return nil, err
+		}
 		return func(item *clientModel.Item) bool {
 			return expression.MatchString(getter(item))
 		}, nil
@@ -561,7 +545,10 @@ func StringComparator(condition *dbModel.Condition) (itemChecker, error) {
 			return len(getter(item)) < length
 		}, nil
 	case dbModel.DOES_NOT_MATCH:
-		var expression = regexp.MustCompile(condition.Value)
+		expression, err := regexp.Compile(condition.Value)
+		if err != nil {
+			return nil, err
+		}
 		return func(item *clientModel.Item) bool {
 			return !expression.MatchString(getter(item))
 		}, nil
@@ -605,14 +592,12 @@ func StringArrayComparator(condition *dbModel.Condition) (itemChecker, error) {
 			return true
 		}, nil
 	case dbModel.CONTAINS_MATCH:
-		expression := regexp.MustCompile(condition.Value)
+		expression, err := regexp.Compile(condition.Value)
+		if err != nil {
+			return nil, err
+		}
 		return func(item *clientModel.Item) bool {
-			for _, actualValues := range getter(item) {
-				if expression.MatchString(actualValues) {
-					return true
-				}
-			}
-			return false
+			return slices.ContainsFunc(getter(item), expression.MatchString)
 		}, nil
 	case dbModel.LENGTH_EQ:
 		length, err := strconv.Atoi(condition.Value)
@@ -639,14 +624,12 @@ func StringArrayComparator(condition *dbModel.Condition) (itemChecker, error) {
 			return len(getter(item)) < length
 		}, nil
 	case dbModel.DOES_NOT_MATCH:
-		expression := regexp.MustCompile(condition.Value)
+		expression, err := regexp.Compile(condition.Value)
+		if err != nil {
+			return nil, err
+		}
 		return func(item *clientModel.Item) bool {
-			for _, actualValue := range getter(item) {
-				if expression.MatchString(actualValue) {
-					return false
-				}
-			}
-			return true
+			return !slices.ContainsFunc(getter(item), expression.MatchString)
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for string array field %s", condition.Operator, condition.Field)
