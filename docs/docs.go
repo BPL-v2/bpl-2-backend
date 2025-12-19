@@ -4645,6 +4645,9 @@ const docTemplate = `{
                 "partner": {
                     "$ref": "#/definitions/NonSensitiveUser"
                 },
+                "partnerWish": {
+                    "type": "string"
+                },
                 "partner_id": {
                     "type": "integer"
                 },
@@ -5425,11 +5428,17 @@ const docTemplate = `{
                 "number_of_signups_before": {
                     "type": "integer"
                 },
-                "partner": {
+                "partner_wish": {
                     "type": "string"
                 },
                 "team_id": {
                     "type": "integer"
+                },
+                "users_who_want_to_sign_up_with_you": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         }

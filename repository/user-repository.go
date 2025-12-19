@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/lib/pq"
@@ -79,6 +80,14 @@ func (u *User) GetAccountName(provider Provider) *string {
 		}
 	}
 	return nil
+}
+
+func (u *User) HasPoEName(name string) bool {
+	poeName := u.GetAccountName(ProviderPoE)
+	if poeName == nil {
+		return false
+	}
+	return strings.EqualFold(strings.Split(*poeName, "#")[0], strings.Split(name, "#")[0])
 }
 
 type UserRepository struct {

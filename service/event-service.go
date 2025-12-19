@@ -17,12 +17,13 @@ const (
 )
 
 type EventStatus struct {
-	TeamId                *int              `json:"team_id"`
-	IsTeamLead            bool              `json:"is_team_lead" binding:"required"`
-	ApplicationStatus     ApplicationStatus `json:"application_status" binding:"required"`
-	NumberOfSignups       int               `json:"number_of_signups" binding:"required"`
-	NumberOfSignupsBefore int               `json:"number_of_signups_before" binding:"required"`
-	Partner               *string           `json:"partner"`
+	TeamId                      *int              `json:"team_id"`
+	IsTeamLead                  bool              `json:"is_team_lead" binding:"required"`
+	ApplicationStatus           ApplicationStatus `json:"application_status" binding:"required"`
+	NumberOfSignups             int               `json:"number_of_signups" binding:"required"`
+	NumberOfSignupsBefore       int               `json:"number_of_signups_before" binding:"required"`
+	PartnerWish                 *string           `json:"partner_wish"`
+	UsersWhoWantToSignUpWithYou []string          `json:"users_who_want_to_sign_up_with_you"`
 }
 
 type EventService struct {
@@ -124,27 +125,22 @@ func (e *EventService) GetEventStatus(event *repository.Event, user *repository.
 		return eventStatus, err
 	}
 	count := 0
-	partnerId := 0
 	for _, signup := range signups {
 		count++
 		if signup.UserId == user.Id {
-			if signup.PartnerId != nil {
-				partnerId = *signup.PartnerId
-			}
-
 			if count > event.MaxSize {
 				eventStatus.ApplicationStatus = ApplicationStatusWaitlisted
 			} else {
 				eventStatus.ApplicationStatus = ApplicationStatusApplied
 			}
 			eventStatus.NumberOfSignupsBefore = count - 1
+			eventStatus.PartnerWish = signup.PartnerWish
+		}
+		if signup.PartnerWish != nil && user.HasPoEName(*signup.PartnerWish) {
+			eventStatus.UsersWhoWantToSignUpWithYou = append(eventStatus.UsersWhoWantToSignUpWithYou, *signup.User.GetAccountName(repository.ProviderPoE))
 		}
 	}
-	for _, signup := range signups {
-		if signup.UserId == partnerId && signup.PartnerId != nil && *signup.PartnerId == user.Id {
-			eventStatus.Partner = signup.User.GetAccountName(repository.ProviderPoE)
-		}
-	}
+
 	if team != nil {
 		eventStatus.TeamId = &team.TeamId
 		eventStatus.IsTeamLead = team.IsTeamLead

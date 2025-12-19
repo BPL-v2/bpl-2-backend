@@ -43,19 +43,7 @@ func main() {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	_ = db
-	// // autoMigrate(db)
-	// repo := repository.NewCharacterRepository()
-	// pob, err := repo.GetPobs("7fbbfe1cd33c56b07b3b3ef1a4e1a0bc21b8f0a431aec94185c71e8c697f22f6")
-	// if err != nil {
-	// 	fmt.Println("Error getting pobs:", err)
-	// 	return
-	// }
-	// x, err := client.DecodePoBExport(pob[10].Export)
-	// if err != nil {
-	// 	fmt.Println("Error decoding pob:", err)
-	// 	return
-	// }
-	// fmt.Println("GetPassives:", x.GetPassives())
+	// autoMigrate(db)
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.SetTrustedProxies(nil)

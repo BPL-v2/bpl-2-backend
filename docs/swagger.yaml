@@ -1302,6 +1302,8 @@ definitions:
         $ref: '#/definitions/NonSensitiveUser'
       partner_id:
         type: integer
+      partnerWish:
+        type: string
       team_id:
         type: integer
       team_lead:
@@ -1907,10 +1909,14 @@ definitions:
         type: integer
       number_of_signups_before:
         type: integer
-      partner:
+      partner_wish:
         type: string
       team_id:
         type: integer
+      users_who_want_to_sign_up_with_you:
+        items:
+          type: string
+        type: array
     required:
     - application_status
     - is_team_lead

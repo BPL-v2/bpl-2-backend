@@ -185,15 +185,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 		signup.NeedsHelp = signupCreate.NeedsHelp
 		signup.WantsToHelp = signupCreate.WantsToHelp
 		signup.Extra = signupCreate.Extra
-		if signupCreate.PartnerAccountName != "" {
-			partner, err := e.userService.GetUserByOauthProviderAndAccountName(repository.ProviderPoE, signupCreate.PartnerAccountName)
-			if err != nil {
-				c.JSON(404, gin.H{"error": "Could not find partner account"})
-				return
-			}
-			signup.PartnerId = &partner.Id
-			signup.Partner = partner
-		}
+		signup.PartnerWish = signupCreate.PartnerAccountName
 		signup, err = e.signupService.SaveSignup(signup)
 		if err != nil {
 			c.JSON(400, gin.H{"error": err.Error()})
@@ -271,16 +263,21 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 			teamUsersMap[teamUser.UserId] = teamUser
 		}
 		signupsWithUsers := make([]*Signup, 0)
+		partnerMap := repository.GetSignupPartners(signups)
 		for _, signup := range signups {
 			resp := &Signup{
 				User:             toNonSensitiveUserResponse(signup.User),
-				PartnerId:        signup.PartnerId,
 				Timestamp:        signup.Timestamp,
 				ExpectedPlaytime: signup.ExpectedPlayTime,
 				NeedsHelp:        signup.NeedsHelp,
 				WantsToHelp:      signup.WantsToHelp,
 				ActualPlaytime:   signup.ActualPlayTime,
 				Extra:            signup.Extra,
+			}
+			partnerSignup := partnerMap[signup.UserId]
+			if partnerSignup != nil && partnerMap[partnerSignup.User.Id] != nil && partnerMap[partnerSignup.User.Id].UserId == signup.UserId {
+				resp.PartnerId = &partnerSignup.UserId
+				resp.Partner = toNonSensitiveUserResponse(partnerSignup.User)
 			}
 			if teamUser, ok := teamUsersMap[signup.UserId]; ok {
 				resp.TeamId = &teamUser.TeamId
@@ -295,6 +292,7 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 
 type Signup struct {
 	User             *NonSensitiveUser `json:"user" binding:"required"`
+	PartnerWish      *string
 	Partner          *NonSensitiveUser `json:"partner"`
 	PartnerId        *int              `json:"partner_id"`
 	Timestamp        time.Time         `json:"timestamp" binding:"required"`
@@ -311,7 +309,7 @@ type SignupCreate struct {
 	ExpectedPlaytime   int     `json:"expected_playtime" binding:"required"`
 	NeedsHelp          bool    `json:"needs_help"`
 	WantsToHelp        bool    `json:"wants_to_help"`
-	PartnerAccountName string  `json:"partner_account_name"`
+	PartnerAccountName *string `json:"partner_account_name"`
 	Extra              *string `json:"extra"`
 }
 
@@ -322,8 +320,7 @@ func toSignupResponse(signup *repository.Signup) *Signup {
 
 	return &Signup{
 		User:             toNonSensitiveUserResponse(signup.User),
-		Partner:          toNonSensitiveUserResponse(signup.Partner),
-		PartnerId:        signup.PartnerId,
+		PartnerWish:      signup.PartnerWish,
 		Timestamp:        signup.Timestamp,
 		ExpectedPlaytime: signup.ExpectedPlayTime,
 		ActualPlaytime:   signup.ActualPlayTime,
