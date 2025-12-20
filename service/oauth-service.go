@@ -359,3 +359,40 @@ func (e *OauthService) GetToken(provider repository.Provider) (token string, exp
 	}
 	return oauthToken.AccessToken, &oauthToken.Expiry, nil
 }
+
+func (e *OauthService) RefreshOnePoEToken() error {
+	oauth, err := e.oauthRepository.GetOauthForTokenRefresh(repository.ProviderPoE)
+	if err != nil {
+		return err
+	}
+	oauthConfig := e.Config[repository.ProviderPoE]
+	poeClient := client.NewPoEClient(1, false, 10)
+	resp, clientError := poeClient.RefreshAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, oauth.RefreshToken)
+	if clientError != nil {
+		return fmt.Errorf("failed to refresh access token: %v", clientError)
+	}
+	oauth.AccessToken = resp.AccessToken
+	oauth.RefreshToken = resp.RefreshToken
+	oauth.Expiry = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	oauth.AccountId = resp.Sub
+	oauth.Name = resp.Username
+	_, err = e.oauthRepository.SaveOauth(oauth)
+	fmt.Printf("Refreshed PoE token for user %s\n", oauth.Name)
+	return err
+}
+
+func (e *OauthService) RefreshPoETokensLoop(ctx context.Context, sleepDuration time.Duration) {
+	ticker := time.NewTicker(sleepDuration)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			err := e.RefreshOnePoEToken()
+			if err != nil {
+				fmt.Printf("Failed to refresh PoE token: %v\n", err)
+			}
+		}
+	}
+}

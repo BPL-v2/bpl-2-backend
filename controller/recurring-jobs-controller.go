@@ -48,9 +48,9 @@ func (j *JobCreate) toJob() (*cron.RecurringJob, error) {
 var jobList = []repository.JobType{
 	repository.FetchStashChanges,
 	repository.EvaluateStashChanges,
-	// service.CalculateScores,
 	repository.FetchCharacterData,
 	repository.FetchGuildStashes,
+	repository.RefreshPoETokens,
 }
 
 func NewRecurringJobsController(poeClient *client.PoEClient) *RecurringJobsController {

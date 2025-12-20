@@ -21,6 +21,7 @@ type RecurringJob struct {
 type RecurringJobService struct {
 	objectiveRepository *repository.ObjectiveRepository
 	eventService        *service.EventService
+	oauthService        *service.OauthService
 	poeClient           *client.PoEClient
 	jobRepository       *repository.RecurringJobsRepository
 	Jobs                map[repository.JobType]*RecurringJob
@@ -32,6 +33,7 @@ func NewRecurringJobService(poeClient *client.PoEClient) *RecurringJobService {
 	s := &RecurringJobService{
 		objectiveRepository: repository.NewObjectiveRepository(),
 		jobRepository:       repository.NewRecurringJobsRepository(),
+		oauthService:        service.NewOauthService(),
 		eventService:        eventService,
 		poeClient:           poeClient,
 		Jobs:                make(map[repository.JobType]*RecurringJob),
@@ -103,6 +105,8 @@ func (s *RecurringJobService) StartJob(job *RecurringJob) error {
 		return s.FetchCharacterData(job)
 	case repository.FetchGuildStashes:
 		return s.FetchGuildStashes(job)
+	case repository.RefreshPoETokens:
+		return s.RefreshPoETokens(job)
 	default:
 		return fmt.Errorf("invalid job type")
 	}
@@ -154,5 +158,12 @@ func (s *RecurringJobService) FetchGuildStashes(job *RecurringJob) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
 	job.Cancel = cancel
 	go GuildStashFetchLoop(ctx, event, s.poeClient)
+	return nil
+}
+
+func (s *RecurringJobService) RefreshPoETokens(job *RecurringJob) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
+	job.Cancel = cancel
+	go s.oauthService.RefreshPoETokensLoop(ctx, time.Duration(10)*time.Minute)
 	return nil
 }

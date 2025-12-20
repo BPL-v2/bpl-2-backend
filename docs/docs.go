@@ -5216,14 +5216,16 @@ const docTemplate = `{
                 "EvaluateStashChanges",
                 "FetchCharacterData",
                 "FetchGuildStashes",
-                "DetermineGuildStashAccess"
+                "DetermineGuildStashAccess",
+                "RefreshPoETokens"
             ],
             "x-enum-varnames": [
                 "FetchStashChanges",
                 "EvaluateStashChanges",
                 "FetchCharacterData",
                 "FetchGuildStashes",
-                "DetermineGuildStashAccess"
+                "DetermineGuildStashAccess",
+                "RefreshPoETokens"
             ]
         },
         "NumberField": {

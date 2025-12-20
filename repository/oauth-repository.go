@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -69,4 +70,21 @@ func (r *OauthRepository) DeleteOauthsByUserIdAndProvider(userId int, provider P
 		return result.Error
 	}
 	return nil
+}
+
+func (r *OauthRepository) GetOauthForTokenRefresh(provider Provider) (*Oauth, error) {
+	var oauth *Oauth
+	result := r.DB.Preload("User").Where("provider = ? AND refresh_token != '' AND expiry > NOW()", provider).Order("expiry ASC").First(&oauth)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get user for token refresh: %v", result.Error)
+	}
+	return oauth, nil
+}
+
+func (r *OauthRepository) SaveOauth(oauth *Oauth) (*Oauth, error) {
+	result := r.DB.Save(oauth)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to save oauth: %v", result.Error)
+	}
+	return oauth, nil
 }
