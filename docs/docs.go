@@ -4352,6 +4352,9 @@ const docTemplate = `{
                 "number_field": {
                     "$ref": "#/definitions/NumberField"
                 },
+                "number_field_explanation": {
+                    "type": "string"
+                },
                 "objective_type": {
                     "$ref": "#/definitions/ObjectiveType"
                 },
@@ -4410,6 +4413,9 @@ const docTemplate = `{
                 },
                 "number_field": {
                     "$ref": "#/definitions/NumberField"
+                },
+                "number_field_explanation": {
+                    "type": "string"
                 },
                 "objective_type": {
                     "$ref": "#/definitions/ObjectiveType"

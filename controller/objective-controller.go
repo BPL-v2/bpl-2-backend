@@ -306,54 +306,57 @@ func (e *ObjectiveConditionCreate) toModel() *repository.Condition {
 }
 
 type ObjectiveCreate struct {
-	Id             int                        `json:"id"`
-	Name           string                     `json:"name" binding:"required"`
-	Extra          string                     `json:"extra"`
-	RequiredNumber int                        `json:"required_number" binding:"required"`
-	ObjectiveType  repository.ObjectiveType   `json:"objective_type" binding:"required"`
-	NumberField    repository.NumberField     `json:"number_field" binding:"required"`
-	Aggregation    repository.AggregationType `json:"aggregation" binding:"required"`
-	ParentId       int                        `json:"parent_id" binding:"required"`
-	Conditions     []Condition                `json:"conditions" binding:"required"`
-	ValidFrom      *time.Time                 `json:"valid_from" binding:"omitempty"`
-	ValidTo        *time.Time                 `json:"valid_to" binding:"omitempty"`
-	ScoringId      *int                       `json:"scoring_preset_id"`
-	HideProgress   bool                       `json:"hide_progress"`
+	Id                     int                        `json:"id"`
+	Name                   string                     `json:"name" binding:"required"`
+	Extra                  string                     `json:"extra"`
+	RequiredNumber         int                        `json:"required_number" binding:"required"`
+	ObjectiveType          repository.ObjectiveType   `json:"objective_type" binding:"required"`
+	NumberField            repository.NumberField     `json:"number_field" binding:"required"`
+	NumberFieldExplanation *string                    `json:"number_field_explanation"`
+	Aggregation            repository.AggregationType `json:"aggregation" binding:"required"`
+	ParentId               int                        `json:"parent_id" binding:"required"`
+	Conditions             []Condition                `json:"conditions" binding:"required"`
+	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty"`
+	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty"`
+	ScoringId              *int                       `json:"scoring_preset_id"`
+	HideProgress           bool                       `json:"hide_progress"`
 }
 
 type Objective struct {
-	Id              int                        `json:"id" binding:"required"`
-	Name            string                     `json:"name" binding:"required"`
-	Extra           string                     `json:"extra" binding:"required"`
-	RequiredNumber  int                        `json:"required_number" binding:"required"`
-	ParentId        *int                       `json:"parent_id" binding:"required"`
-	ObjectiveType   repository.ObjectiveType   `json:"objective_type" binding:"required"`
-	Conditions      []*Condition               `json:"conditions" binding:"required"`
-	ValidFrom       *time.Time                 `json:"valid_from" binding:"omitempty"`
-	ValidTo         *time.Time                 `json:"valid_to" binding:"omitempty"`
-	ScoringPresetId *int                       `json:"scoring_preset_id"`
-	ScoringPreset   *ScoringPreset             `json:"scoring_preset"`
-	NumberField     repository.NumberField     `json:"number_field" binding:"required"`
-	Aggregation     repository.AggregationType `json:"aggregation" binding:"required"`
-	Children        []*Objective               `json:"children" binding:"required"`
-	HideProgress    bool                       `json:"hide_progress" binding:"required"`
+	Id                     int                        `json:"id" binding:"required"`
+	Name                   string                     `json:"name" binding:"required"`
+	Extra                  string                     `json:"extra" binding:"required"`
+	RequiredNumber         int                        `json:"required_number" binding:"required"`
+	ParentId               *int                       `json:"parent_id" binding:"required"`
+	ObjectiveType          repository.ObjectiveType   `json:"objective_type" binding:"required"`
+	Conditions             []*Condition               `json:"conditions" binding:"required"`
+	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty"`
+	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty"`
+	ScoringPresetId        *int                       `json:"scoring_preset_id"`
+	ScoringPreset          *ScoringPreset             `json:"scoring_preset"`
+	NumberField            repository.NumberField     `json:"number_field" binding:"required"`
+	NumberFieldExplanation *string                    `json:"number_field_explanation"`
+	Aggregation            repository.AggregationType `json:"aggregation" binding:"required"`
+	Children               []*Objective               `json:"children" binding:"required"`
+	HideProgress           bool                       `json:"hide_progress" binding:"required"`
 }
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {
 	return &repository.Objective{
-		Id:             e.Id,
-		Name:           e.Name,
-		Extra:          e.Extra,
-		RequiredAmount: e.RequiredNumber,
-		ObjectiveType:  e.ObjectiveType,
-		NumberField:    e.NumberField,
-		Aggregation:    e.Aggregation,
-		Conditions:     utils.Map(e.Conditions, func(c Condition) *repository.Condition { return c.toModel() }),
-		ValidFrom:      e.ValidFrom,
-		ValidTo:        e.ValidTo,
-		ParentId:       &e.ParentId,
-		ScoringId:      e.ScoringId,
-		HideProgress:   e.HideProgress,
+		Id:                     e.Id,
+		Name:                   e.Name,
+		Extra:                  e.Extra,
+		RequiredAmount:         e.RequiredNumber,
+		ObjectiveType:          e.ObjectiveType,
+		NumberField:            e.NumberField,
+		NumberFieldExplanation: e.NumberFieldExplanation,
+		Aggregation:            e.Aggregation,
+		Conditions:             utils.Map(e.Conditions, func(c Condition) *repository.Condition { return c.toModel() }),
+		ValidFrom:              e.ValidFrom,
+		ValidTo:                e.ValidTo,
+		ParentId:               &e.ParentId,
+		ScoringId:              e.ScoringId,
+		HideProgress:           e.HideProgress,
 	}
 }
 
@@ -363,35 +366,37 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 	}
 	if public && objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &Objective{
-			Name:            fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
-			ParentId:        objective.ParentId,
-			ValidFrom:       objective.ValidFrom,
-			ValidTo:         objective.ValidTo,
-			ScoringPresetId: objective.ScoringId,
-			ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
-			HideProgress:    objective.HideProgress,
-			Children:        make([]*Objective, 0),
-			Conditions:      make([]*Condition, 0),
-			NumberField:     objective.NumberField,
+			Name:                   fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
+			ParentId:               objective.ParentId,
+			ValidFrom:              objective.ValidFrom,
+			ValidTo:                objective.ValidTo,
+			ScoringPresetId:        objective.ScoringId,
+			ScoringPreset:          toScoringPresetResponse(objective.ScoringPreset),
+			HideProgress:           objective.HideProgress,
+			Children:               make([]*Objective, 0),
+			Conditions:             make([]*Condition, 0),
+			NumberField:            objective.NumberField,
+			NumberFieldExplanation: objective.NumberFieldExplanation,
 		}
 	}
 
 	return &Objective{
-		Id:              objective.Id,
-		Name:            objective.Name,
-		Extra:           objective.Extra,
-		RequiredNumber:  objective.RequiredAmount,
-		ParentId:        objective.ParentId,
-		ObjectiveType:   objective.ObjectiveType,
-		ValidFrom:       objective.ValidFrom,
-		ValidTo:         objective.ValidTo,
-		Conditions:      utils.Map(objective.Conditions, toConditionResponse),
-		NumberField:     objective.NumberField,
-		Aggregation:     objective.Aggregation,
-		ScoringPresetId: objective.ScoringId,
-		ScoringPreset:   toScoringPresetResponse(objective.ScoringPreset),
-		Children:        utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public) }),
-		HideProgress:    objective.HideProgress,
+		Id:                     objective.Id,
+		Name:                   objective.Name,
+		Extra:                  objective.Extra,
+		RequiredNumber:         objective.RequiredAmount,
+		ParentId:               objective.ParentId,
+		ObjectiveType:          objective.ObjectiveType,
+		ValidFrom:              objective.ValidFrom,
+		ValidTo:                objective.ValidTo,
+		Conditions:             utils.Map(objective.Conditions, toConditionResponse),
+		NumberField:            objective.NumberField,
+		NumberFieldExplanation: objective.NumberFieldExplanation,
+		Aggregation:            objective.Aggregation,
+		ScoringPresetId:        objective.ScoringId,
+		ScoringPreset:          toScoringPresetResponse(objective.ScoringPreset),
+		Children:               utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public) }),
+		HideProgress:           objective.HideProgress,
 	}
 }
 

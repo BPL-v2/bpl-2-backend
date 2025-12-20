@@ -1091,6 +1091,8 @@ definitions:
         type: string
       number_field:
         $ref: '#/definitions/NumberField'
+      number_field_explanation:
+        type: string
       objective_type:
         $ref: '#/definitions/ObjectiveType'
       parent_id:
@@ -1136,6 +1138,8 @@ definitions:
         type: string
       number_field:
         $ref: '#/definitions/NumberField'
+      number_field_explanation:
+        type: string
       objective_type:
         $ref: '#/definitions/ObjectiveType'
       parent_id:

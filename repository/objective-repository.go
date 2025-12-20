@@ -65,23 +65,24 @@ const (
 )
 
 type Objective struct {
-	Id             int             `gorm:"primaryKey"`
-	Name           string          `gorm:"not null"`
-	Extra          string          `gorm:"null"`
-	RequiredAmount int             `gorm:"not null"`
-	Conditions     Conditions      `gorm:"type:jsonb"`
-	ParentId       *int            `gorm:"null"`
-	EventId        int             `gorm:"not null;references:events(id)"`
-	ObjectiveType  ObjectiveType   `gorm:"not null"`
-	NumberField    NumberField     `gorm:"not null"`
-	Aggregation    AggregationType `gorm:"not null"`
-	ValidFrom      *time.Time      `gorm:"null"`
-	ValidTo        *time.Time      `gorm:"null"`
-	ScoringId      *int            `gorm:"null;references:scoring_presets(id)"`
-	HideProgress   bool            `gorm:"not null;default:false"`
-	ScoringPreset  *ScoringPreset  `gorm:"foreignKey:ScoringId;references:Id"`
-	SyncStatus     SyncStatus      `gorm:"not null;default:DESYNCED"`
-	Children       []*Objective    `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
+	Id                     int             `gorm:"primaryKey"`
+	Name                   string          `gorm:"not null"`
+	Extra                  string          `gorm:"null"`
+	RequiredAmount         int             `gorm:"not null"`
+	Conditions             Conditions      `gorm:"type:jsonb"`
+	ParentId               *int            `gorm:"null"`
+	EventId                int             `gorm:"not null;references:events(id)"`
+	ObjectiveType          ObjectiveType   `gorm:"not null"`
+	NumberField            NumberField     `gorm:"not null"`
+	Aggregation            AggregationType `gorm:"not null"`
+	ValidFrom              *time.Time      `gorm:"null"`
+	ValidTo                *time.Time      `gorm:"null"`
+	ScoringId              *int            `gorm:"null;references:scoring_presets(id)"`
+	HideProgress           bool            `gorm:"not null;default:false"`
+	ScoringPreset          *ScoringPreset  `gorm:"foreignKey:ScoringId;references:Id"`
+	SyncStatus             SyncStatus      `gorm:"not null;default:DESYNCED"`
+	NumberFieldExplanation *string         `gorm:"null"`
+	Children               []*Objective    `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
 }
 
 func (o *Objective) FlatMap() []*Objective {
