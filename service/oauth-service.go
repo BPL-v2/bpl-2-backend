@@ -368,6 +368,8 @@ func (e *OauthService) RefreshOnePoEToken() error {
 	poeClient := client.NewPoEClient(1, false, 10)
 	resp, clientError := poeClient.RefreshAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, oauth.RefreshToken)
 	if clientError != nil {
+		oauth.RefreshToken = ""
+		e.oauthRepository.SaveOauth(oauth)
 		return fmt.Errorf("failed to refresh access token: %v", clientError)
 	}
 	oauth.AccessToken = resp.AccessToken
