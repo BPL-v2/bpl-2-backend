@@ -678,8 +678,30 @@ func ComperatorFromConditions(conditions []*dbModel.Condition) (itemChecker, err
 	}, nil
 }
 
+type DiscriminatorField int
+
+const (
+	BASE_TYPE  DiscriminatorField = iota
+	NAME       DiscriminatorField = iota
+	ITEM_CLASS DiscriminatorField = iota
+	NONE       DiscriminatorField = iota
+)
+
+func toDiscriminatorField(field dbModel.ItemField) DiscriminatorField {
+	switch field {
+	case dbModel.BASE_TYPE:
+		return BASE_TYPE
+	case dbModel.NAME:
+		return NAME
+	case dbModel.ITEM_CLASS:
+		return ITEM_CLASS
+	default:
+		return NONE
+	}
+}
+
 type Discriminator struct {
-	field dbModel.ItemField
+	field DiscriminatorField
 	value string
 }
 
@@ -688,7 +710,7 @@ func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*db
 		if condition.Field == dbModel.BASE_TYPE || condition.Field == dbModel.NAME || condition.Field == dbModel.ITEM_CLASS {
 			if condition.Operator == dbModel.EQ {
 				discriminators := []*Discriminator{
-					{field: condition.Field, value: condition.Value},
+					{field: toDiscriminatorField(condition.Field), value: condition.Value},
 				}
 				remainingConditions := append(conditions[:i], conditions[i+1:]...)
 				return discriminators, remainingConditions, nil
@@ -697,14 +719,14 @@ func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*db
 				values := strings.Split(condition.Value, ",")
 				discriminators := make([]*Discriminator, 0, len(values))
 				for _, value := range values {
-					discriminators = append(discriminators, &Discriminator{field: condition.Field, value: value})
+					discriminators = append(discriminators, &Discriminator{field: toDiscriminatorField(condition.Field), value: value})
 				}
 				remainingConditions := append(conditions[:i], conditions[i+1:]...)
 				return discriminators, remainingConditions, nil
 			}
 		}
 	}
-	return nil, conditions, fmt.Errorf("at least one condition must be an equality/in condition on the baseType or name field")
+	return []*Discriminator{{field: NONE, value: ""}}, conditions, nil
 }
 
 func ValidateConditions(conditions []*dbModel.Condition) error {
@@ -740,14 +762,15 @@ type CheckResult struct {
 }
 
 type ItemChecker struct {
-	Funcmap map[dbModel.ItemField]map[string][]*ItemObjectiveChecker
+	Funcmap map[DiscriminatorField]map[string][]*ItemObjectiveChecker
 }
 
 func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChecker, error) {
-	funcMap := map[dbModel.ItemField]map[string][]*ItemObjectiveChecker{
-		dbModel.BASE_TYPE:  make(map[string][]*ItemObjectiveChecker),
-		dbModel.NAME:       make(map[string][]*ItemObjectiveChecker),
-		dbModel.ITEM_CLASS: make(map[string][]*ItemObjectiveChecker),
+	funcMap := map[DiscriminatorField]map[string][]*ItemObjectiveChecker{
+		BASE_TYPE:  make(map[string][]*ItemObjectiveChecker),
+		NAME:       make(map[string][]*ItemObjectiveChecker),
+		ITEM_CLASS: make(map[string][]*ItemObjectiveChecker),
+		NONE:       make(map[string][]*ItemObjectiveChecker),
 	}
 	for _, objective := range objectives {
 		if objective.ObjectiveType != dbModel.ObjectiveTypeItem || objective.Conditions == nil {
@@ -791,13 +814,16 @@ func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChec
 func (ic *ItemChecker) CheckForCompletions(item *clientModel.Item) []*CheckResult {
 	results := make([]*CheckResult, 0)
 	item.Name = strings.ReplaceAll(item.Name, "Foulborn ", "")
-	if checkers, ok := ic.Funcmap[dbModel.BASE_TYPE][item.BaseType]; ok {
+	if checkers, ok := ic.Funcmap[BASE_TYPE][item.BaseType]; ok {
 		results = append(results, applyCheckers(checkers, item)...)
 	}
-	if checkers, ok := ic.Funcmap[dbModel.NAME][item.Name]; ok {
+	if checkers, ok := ic.Funcmap[NAME][item.Name]; ok {
 		results = append(results, applyCheckers(checkers, item)...)
 	}
-	if checkers, ok := ic.Funcmap[dbModel.ITEM_CLASS][ItemClasses[item.BaseType]]; ok {
+	if checkers, ok := ic.Funcmap[ITEM_CLASS][ItemClasses[item.BaseType]]; ok {
+		results = append(results, applyCheckers(checkers, item)...)
+	}
+	if checkers, ok := ic.Funcmap[NONE][""]; ok {
 		results = append(results, applyCheckers(checkers, item)...)
 	}
 	return results
