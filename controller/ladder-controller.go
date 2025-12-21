@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -17,18 +18,18 @@ type LadderController struct {
 	activityService  *service.ActivityService
 }
 
-func NewLadderController() *LadderController {
+func NewLadderController(poeClient *client.PoEClient) *LadderController {
 	return &LadderController{
 		ladderService:    service.NewLadderService(),
-		characterService: service.NewCharacterService(),
+		characterService: service.NewCharacterService(poeClient),
 		userService:      service.NewUserService(),
 		signupService:    service.NewSignupService(),
 		activityService:  service.NewActivityService(),
 	}
 }
 
-func setupLadderController() []RouteInfo {
-	c := NewLadderController()
+func setupLadderController(poeClient *client.PoEClient) []RouteInfo {
+	c := NewLadderController(poeClient)
 	baseUrl := "events/:event_id"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/ladder", HandlerFunc: c.getLadderHandler()},

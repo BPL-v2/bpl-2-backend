@@ -195,6 +195,16 @@ func (r *CharacterRepository) GetCharactersForUser(user *User) ([]*Character, er
 	}
 	return charData, nil
 }
+func (r *CharacterRepository) GetCharacterById(characterId string) (*Character, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharacterById"))
+	defer timer.ObserveDuration()
+	character := &Character{}
+	err := r.DB.Where("id = ?", characterId).First(character).Error
+	if err != nil {
+		return nil, err
+	}
+	return character, nil
+}
 
 func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*CharacterStat, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharacterHistory"))

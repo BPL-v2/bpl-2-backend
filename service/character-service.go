@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bpl/client"
 	"bpl/parser"
 	"bpl/repository"
 	"fmt"
@@ -10,16 +11,20 @@ import (
 type CharacterService struct {
 	characterRepository *repository.CharacterRepository
 	teamRepository      *repository.TeamRepository
+	userRepository      *repository.UserRepository
 	activityRepository  *repository.ActivityRepository
 	atlasService        *AtlasService
+	poeClient           *client.PoEClient
 }
 
-func NewCharacterService() *CharacterService {
+func NewCharacterService(poeClient *client.PoEClient) *CharacterService {
 	return &CharacterService{
 		characterRepository: repository.NewCharacterRepository(),
 		teamRepository:      repository.NewTeamRepository(),
+		userRepository:      repository.NewUserRepository(),
 		activityRepository:  repository.NewActivityRepository(),
 		atlasService:        NewAtlasService(),
+		poeClient:           poeClient,
 	}
 }
 
@@ -74,4 +79,26 @@ func (c *CharacterService) GetPobs(characterId string) ([]*repository.CharacterP
 		return nil, err
 	}
 	return pob, nil
+}
+
+func (c *CharacterService) UpdateCharacter(characterId string) (*client.Character, error) {
+	character, err := c.characterRepository.GetCharacterById(characterId)
+	if err != nil {
+		return nil, err
+	}
+	if character.UserId == nil {
+		return nil, fmt.Errorf("character has no user")
+	}
+	user, err := c.userRepository.GetUserById(*character.UserId, "OauthAccounts")
+	if err != nil {
+		return nil, err
+	}
+	if user.GetPoEToken() == "" {
+		return nil, fmt.Errorf("user has no poe token")
+	}
+	response, clientErr := c.poeClient.GetCharacter(user.GetPoEToken(), character.Name, nil)
+	if clientErr != nil {
+		return nil, fmt.Errorf("%s", clientErr.Description)
+	}
+	return response.Character, nil
 }

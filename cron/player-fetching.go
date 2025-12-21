@@ -53,7 +53,7 @@ type PlayerFetchingService struct {
 	timings               map[repository.TimingKey]time.Duration
 
 	lastLadderUpdate time.Time
-	client           *client.PoEClient
+	poeClient        *client.PoEClient
 	event            *repository.Event
 }
 
@@ -66,20 +66,20 @@ func (s *PlayerFetchingService) ReloadTimings() error {
 	return nil
 }
 
-func NewPlayerFetchingService(client *client.PoEClient, event *repository.Event) *PlayerFetchingService {
+func NewPlayerFetchingService(poeClient *client.PoEClient, event *repository.Event) *PlayerFetchingService {
 	return &PlayerFetchingService{
 		userRepository:        repository.NewUserRepository(),
 		objectiveMatchService: service.NewObjectiveMatchService(),
 		objectiveService:      service.NewObjectiveService(),
 		ladderService:         service.NewLadderService(),
-		characterService:      service.NewCharacterService(),
+		characterService:      service.NewCharacterService(poeClient),
 		atlasService:          service.NewAtlasService(),
 		oauthService:          service.NewOauthService(),
 		timingRepository:      repository.NewTimingRepository(),
 		characterRepository:   repository.NewCharacterRepository(),
 		activityRepository:    repository.NewActivityRepository(),
 		lastLadderUpdate:      time.Now().Add(-1 * time.Hour),
-		client:                client,
+		poeClient:             poeClient,
 		event:                 event,
 	}
 }
@@ -89,7 +89,7 @@ func (s *PlayerFetchingService) shouldUpdateLadder(timings map[repository.Timing
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate, event *repository.Event) {
-	charactersResponse, err := s.client.ListCharacters(player.Token, event.GetRealm())
+	charactersResponse, err := s.poeClient.ListCharacters(player.Token, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.CharacterName = time.Now()
@@ -115,7 +115,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
 	fmt.Println("Updating character", player.New.CharacterName)
-	characterResponse, clientError := s.client.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
+	characterResponse, clientError := s.poeClient.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.Character = time.Now()
@@ -179,7 +179,7 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 	if s.event.GameVersion == repository.PoE2 {
 		return
 	}
-	leagueAccount, err := s.client.GetLeagueAccount(player.Token, s.event.Name)
+	leagueAccount, err := s.poeClient.GetLeagueAccount(player.Token, s.event.Name)
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.LeagueAccount = time.Now()
@@ -213,14 +213,14 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 	var clientError *client.ClientError
 	if s.event.GameVersion == repository.PoE2 {
 		// todo: get the ladder for the correct event
-		resp, clientError = s.client.GetPoE2Ladder(s.event.Name)
+		resp, clientError = s.poeClient.GetPoE2Ladder(s.event.Name)
 	} else {
 		token, err := s.oauthService.GetApplicationToken(repository.ProviderPoE)
 		if err != nil {
 			log.Printf("Error fetching application token: %v", err)
 			return
 		}
-		resp, clientError = s.client.GetFullLadder(token, s.event.Name)
+		resp, clientError = s.poeClient.GetFullLadder(token, s.event.Name)
 	}
 	if clientError != nil {
 		log.Printf("Error fetching ladder: %v", clientError)

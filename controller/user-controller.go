@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -18,17 +19,17 @@ type UserController struct {
 	atlasService     *service.AtlasService
 }
 
-func NewUserController() *UserController {
+func NewUserController(poeClient *client.PoEClient) *UserController {
 	return &UserController{
 		userService:      service.NewUserService(),
 		eventService:     service.NewEventService(),
-		characterService: service.NewCharacterService(),
+		characterService: service.NewCharacterService(poeClient),
 		atlasService:     service.NewAtlasService(),
 	}
 }
 
-func setupUserController() []RouteInfo {
-	e := NewUserController()
+func setupUserController(poeClient *client.PoEClient) []RouteInfo {
+	e := NewUserController(poeClient)
 	basePath := ""
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/events/:event_id/users", HandlerFunc: e.getUsersForEventHandler()},

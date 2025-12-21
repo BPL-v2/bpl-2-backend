@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -16,19 +17,20 @@ type CharacterController struct {
 	userService      *service.UserService
 }
 
-func NewCharacterController() *CharacterController {
+func NewCharacterController(poeClient *client.PoEClient) *CharacterController {
 	return &CharacterController{
-		characterService: service.NewCharacterService(),
+		characterService: service.NewCharacterService(poeClient),
 		userService:      service.NewUserService(),
 	}
 }
 
-func setupCharacterController() []RouteInfo {
-	e := NewCharacterController()
+func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
+	e := NewCharacterController(poeClient)
 	basePath := "users/:user_id/characters"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getUserCharactersHandler()},
 		{Method: "GET", Path: "/:character_id", HandlerFunc: e.getCharacterHistoryHandler()},
+		{Method: "PATCH", Path: "/:character_id", HandlerFunc: e.updateCharacterHandler()},
 		{Method: "GET", Path: "/:character_id/pobs", HandlerFunc: e.getPoBExportHandler()},
 		// {Method: "GET", Path: "/:user_id/:event_id/:character_name", HandlerFunc: e.getTimeSeries()},
 	}
@@ -38,50 +40,29 @@ func setupCharacterController() []RouteInfo {
 	return routes
 }
 
-// @id GetCharacterTimeSeries
-// @Description Get the time series for a character
+// @id UpdateCharacter
+// @Description Update character details
 // @Tags characters
 // @Produce json
 // @Param user_id path int true "User ID"
-// @Param event_id path int true "Event ID"
-// @Param character_name path string true "Character name"
-// @Param start query string true "Start time"
-// @Param end query string true "End time"
-// @Success 200 {object} client.StatValues
-// @Router /characters/{user_id}/{event_id}/{character_name} [get]
-
-// func (e *CharacterController) getTimeSeries() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		start := c.Request.URL.Query().Get("start")
-// 		end := c.Request.URL.Query().Get("end")
-// 		if start == "" || end == "" {
-// 			c.JSON(400, gin.H{"error": "start and end are required"})
-// 			return
-// 		}
-// 		startTime, err := time.Parse(time.RFC3339, start)
-// 		if err != nil {
-// 			c.JSON(400, gin.H{"error": "start is invalid"})
-// 			return
-// 		}
-// 		endTime, err := time.Parse(time.RFC3339, end)
-// 		if err != nil {
-// 			c.JSON(400, gin.H{"error": "end is invalid"})
-// 			return
-// 		}
-// 		characterName := c.Param("character_name")
-// 		metrics := []string{
-// 			"XP",
-// 			"EHP",
-// 			"DPS",
-// 			"PhysMaxHit",
-// 			"EleMaxHit",
-// 			"HP",
-// 			"Mana",
-// 		}
-// 		statValues := client.GetCharacterMetrics(characterName, metrics, startTime, endTime)
-// 		c.JSON(200, statValues)
-// 	}
-// }
+// @Param character_id path string true "Character ID"
+// @Success 200 {object} client.Character
+// @Router /users/{user_id}/characters/{character_id} [patch]
+func (e *CharacterController) updateCharacterHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		characterId := c.Param("character_id")
+		character, err := e.characterService.UpdateCharacter(characterId)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.String(404, "Character not found")
+				return
+			}
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, character)
+	}
+}
 
 // @id GetPoBs
 // @Description Get all PoB exports for a character

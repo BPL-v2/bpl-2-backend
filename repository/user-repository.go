@@ -67,6 +67,9 @@ func (u *User) HasOneOfPermissions(perms ...Permission) bool {
 func (u *User) GetPoEToken() string {
 	for _, oauth := range u.OauthAccounts {
 		if oauth.Provider == "poe" {
+			if oauth.Expiry.Before(time.Now()) {
+				return ""
+			}
 			return oauth.AccessToken
 		}
 	}
