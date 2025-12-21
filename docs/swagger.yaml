@@ -3396,10 +3396,6 @@ paths:
         name: provider
         required: true
         type: string
-      - description: Redirect URL for oauth provider
-        in: query
-        name: redirect_url
-        type: string
       - description: Last URL to redirect to after oauth is finished
         in: query
         name: last_url

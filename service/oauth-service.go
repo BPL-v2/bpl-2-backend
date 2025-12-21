@@ -18,11 +18,10 @@ import (
 )
 
 type OauthState struct {
-	Verifier    string
-	Timeout     int64
-	User        *repository.User
-	LastUrl     string
-	RedirectUrl string
+	Verifier string
+	Timeout  int64
+	User     *repository.User
+	LastUrl  string
 }
 
 type OauthService struct {
@@ -79,6 +78,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://discord.com/oauth2/authorize",
 					TokenURL: "https://discord.com/api/oauth2/token",
 				},
+				RedirectURL: "https://bpl-poe.com/auth/discord/callback",
 			},
 			repository.ProviderTwitch: {
 				ClientID:     config.Env().TwitchClientID,
@@ -88,6 +88,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://id.twitch.tv/oauth2/authorize",
 					TokenURL: "https://id.twitch.tv/oauth2/token",
 				},
+				RedirectURL: "https://bpl-poe.com/auth/twitch/callback",
 			},
 			repository.ProviderPoE: {
 				ClientID:     config.Env().POEClientID,
@@ -97,6 +98,7 @@ func NewOauthService() *OauthService {
 					AuthURL:  "https://www.pathofexile.com/oauth/authorize",
 					TokenURL: "https://www.pathofexile.com/oauth/token",
 				},
+				RedirectURL: "https://bpl-poe.com/auth/poe/callback",
 			},
 		},
 		clientConfig: map[repository.Provider]*clientcredentials.Config{
@@ -120,7 +122,7 @@ func NewOauthService() *OauthService {
 	}
 }
 
-func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string, redirectUrl string) (string, string) {
+func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (string, string) {
 	// clean up old verifiers
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -132,19 +134,17 @@ func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string, red
 	state := oauth2.GenerateVerifier()
 	verifier := oauth2.GenerateVerifier()
 	e.stateMap[state] = OauthState{
-		Verifier:    verifier,
-		Timeout:     time.Now().Add(30 * time.Minute).Unix(),
-		User:        user,
-		LastUrl:     lastUrl,
-		RedirectUrl: redirectUrl,
+		Verifier: verifier,
+		Timeout:  time.Now().Add(30 * time.Minute).Unix(),
+		User:     user,
+		LastUrl:  lastUrl,
 	}
 	return state, verifier
 }
 
-func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string, redirectUrl string) string {
-	state, verifier := e.GetNewVerifier(user, lastUrl, redirectUrl)
+func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string) string {
+	state, verifier := e.GetNewVerifier(user, lastUrl)
 	config := e.Config[provider]
-	config.RedirectURL = redirectUrl
 	return config.AuthCodeURL(
 		state,
 		oauth2.SetAuthURLParam("code_challenge", oauth2.S256ChallengeFromVerifier(verifier)),
@@ -208,7 +208,6 @@ func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code 
 	if !ok {
 		return nil, nil, fmt.Errorf("state is unknown")
 	}
-	oauthConfig.RedirectURL = authState.RedirectUrl
 
 	token, err := oauthConfig.Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", authState.Verifier))
 	if err != nil {
@@ -290,7 +289,7 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 	if !ok {
 		return nil, fmt.Errorf("state is unknown")
 	}
-	resp, clientError := client.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, authState.RedirectUrl)
+	resp, clientError := client.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, oauthConfig.RedirectURL)
 	if clientError != nil {
 		fmt.Printf("Failed to get access token: %v\n", clientError)
 		return nil, fmt.Errorf("failed to get access token: %v", clientError)

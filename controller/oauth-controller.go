@@ -82,7 +82,6 @@ func (e *OauthController) loginDiscordBotHandler() gin.HandlerFunc {
 // @Tags oauth
 // @Security BearerAuth
 // @Param provider path repository.Provider true "Provider name"
-// @Param redirect_url query string false "Redirect URL for oauth provider"
 // @Param last_url query string false "Last URL to redirect to after oauth is finished"
 // @Success 200 {string} string
 // @Router /oauth2/{provider}/redirect [get]
@@ -95,8 +94,7 @@ func (e *OauthController) oauthRedirectHandler() gin.HandlerFunc {
 		}
 		user, _ := e.userService.GetUserFromAuthHeader(c)
 		lastUrl := c.Request.URL.Query().Get("last_url")
-		redirectUrl := c.Request.URL.Query().Get("redirect_url")
-		url := e.oauthService.GetOauthProviderUrl(user, provider, lastUrl, redirectUrl)
+		url := e.oauthService.GetOauthProviderUrl(user, provider, lastUrl)
 		c.JSON(200, url)
 	}
 }
