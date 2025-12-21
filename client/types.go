@@ -334,10 +334,8 @@ type ItemHybrid struct {
 }
 
 type ItemExtended struct {
-	Category      *string   `json:"category,omitempty"`
-	Subcategories *[]string `json:"subcategories,omitempty"`
-	Prefixes      *int      `json:"prefixes,omitempty"`
-	Suffixes      *int      `json:"suffixes,omitempty"`
+	Prefixes *int `json:"prefixes,omitempty"`
+	Suffixes *int `json:"suffixes,omitempty"`
 }
 
 type GemSocket string
@@ -417,8 +415,13 @@ type Item struct {
 	Id                     string              `json:"id"`
 	Identified             bool                `json:"identified"`
 	Icon                   string              `json:"icon"`
-	Mutated                *bool               `json:"mutated"`
-	MutatedMods            *[]string           `json:"mutatedMods"`
+	Mutated                *bool               `json:"mutated,omitempty"`
+	MutatedMods            *[]string           `json:"mutatedMods,omitempty"`
+	DoubleCorrupted        *bool               `json:"doubleCorrupted,omitempty"` // PoE2 only
+	BondedMods             *[]string           `json:"bondedMods,omitempty"`      // PoE2 only
+	Desecrated             *bool               `json:"desecrated,omitempty"`      // PoE2 only
+	DesecratedMods         *[]string           `json:"desecratedMods,omitempty"`  // PoE2 only
+	RuneMods               *[]string           `json:"runeMods,omitempty"`        // PoE2 only
 
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only
