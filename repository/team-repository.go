@@ -16,6 +16,7 @@ type Team struct {
 	AllowedClasses pq.StringArray `gorm:"not null;type:text[]"`
 	EventId        int            `gorm:"not null;references events(id)"`
 	Color          string         `gorm:"not null"`
+	DiscordRoleId  *string        `gorm:"null"`
 	Users          []*User        `gorm:"many2many:team_users"`
 }
 

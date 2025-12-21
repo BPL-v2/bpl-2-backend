@@ -4811,6 +4811,9 @@ const docTemplate = `{
                 "color": {
                     "type": "string"
                 },
+                "discord_role_id": {
+                    "type": "string"
+                },
                 "event_id": {
                     "type": "integer"
                 },
@@ -4839,6 +4842,9 @@ const docTemplate = `{
                     }
                 },
                 "color": {
+                    "type": "string"
+                },
+                "discord_role_id": {
                     "type": "string"
                 },
                 "id": {

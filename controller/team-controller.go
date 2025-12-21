@@ -218,6 +218,7 @@ type TeamCreate struct {
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 	Color          string   `json:"color"`
 	Abbreviation   string   `json:"abbreviation"`
+	DiscordRoleId  *string  `json:"discord_role_id,omitempty"`
 }
 
 type Team struct {
@@ -227,6 +228,7 @@ type Team struct {
 	AllowedClasses []string `json:"allowed_classes" binding:"required"`
 	EventId        int      `json:"event_id" binding:"required"`
 	Color          string   `json:"color"`
+	DiscordRoleId  *string  `json:"discord_role_id,omitempty"`
 }
 
 func teamUserCreateToModel(teamUserCreate TeamUserCreate) *repository.TeamUser {
@@ -243,6 +245,7 @@ func (e *TeamCreate) toModel() *repository.Team {
 		AllowedClasses: e.AllowedClasses,
 		Color:          e.Color,
 		Abbreviation:   e.Abbreviation,
+		DiscordRoleId:  e.DiscordRoleId,
 	}
 	if e.Id != nil {
 		team.Id = *e.Id

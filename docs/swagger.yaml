@@ -1417,6 +1417,8 @@ definitions:
         type: array
       color:
         type: string
+      discord_role_id:
+        type: string
       event_id:
         type: integer
       id:
@@ -1438,6 +1440,8 @@ definitions:
           type: string
         type: array
       color:
+        type: string
+      discord_role_id:
         type: string
       id:
         type: integer
