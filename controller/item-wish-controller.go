@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -61,7 +62,7 @@ func (e *ItemWishController) getItemWishesForTeamHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": "Failed to get item wishes"})
 			return
 		}
-		c.JSON(200, itemWishes)
+		c.JSON(200, utils.Map(itemWishes, toItemWishModel))
 
 	}
 }
@@ -104,7 +105,7 @@ func (e *ItemWishController) saveItemWishHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": "Failed to save item wish"})
 			return
 		}
-		c.JSON(200, toItemWishModel(*savedItemWish))
+		c.JSON(200, toItemWishModel(savedItemWish))
 	}
 }
 
@@ -157,11 +158,12 @@ type ItemWishRequest struct {
 	Priority  int                  `json:"priority"`
 }
 
-func toItemWishModel(iw repository.ItemWish) *ItemWish {
+func toItemWishModel(iw *repository.ItemWish) *ItemWish {
 	return &ItemWish{
 		UserId:    iw.UserID,
 		ItemField: iw.ItemField,
 		Value:     iw.Value,
 		Fulfilled: iw.Fulfilled,
+		Priority:  iw.Priority,
 	}
 }
