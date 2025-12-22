@@ -144,6 +144,7 @@ func (e *ItemWishController) deleteItemWishHandler() gin.HandlerFunc {
 }
 
 type ItemWish struct {
+	Id        int                  `json:"id"`
 	UserId    int                  `json:"user_id" binding:"required"`
 	ItemField repository.ItemField `json:"item_field" binding:"required"`
 	Value     string               `json:"value" binding:"required"`
@@ -160,6 +161,7 @@ type ItemWishRequest struct {
 
 func toItemWishModel(iw *repository.ItemWish) *ItemWish {
 	return &ItemWish{
+		Id:        iw.Id,
 		UserId:    iw.UserID,
 		ItemField: iw.ItemField,
 		Value:     iw.Value,

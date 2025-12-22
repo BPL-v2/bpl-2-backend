@@ -4798,6 +4798,9 @@ const docTemplate = `{
                 "fulfilled": {
                     "type": "boolean"
                 },
+                "id": {
+                    "type": "integer"
+                },
                 "item_field": {
                     "$ref": "#/definitions/ItemField"
                 },
