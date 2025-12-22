@@ -43,7 +43,7 @@ func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser, event *r
 }
 
 func (e *TeamService) GetTeamUsersForEvent(event *repository.Event) ([]*repository.TeamUser, error) {
-	return e.teamRepository.GetTeamUsersForEvent(event)
+	return e.teamRepository.GetTeamUsersForEvent(event.Id)
 }
 
 func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error) {

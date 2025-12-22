@@ -1,4 +1,54 @@
 definitions:
+  Character:
+    properties:
+      class:
+        type: string
+      current:
+        type: boolean
+      deleted:
+        type: boolean
+      equipment:
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+      experience:
+        type: integer
+      expired:
+        type: boolean
+      id:
+        type: string
+      inventory:
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+      jewels:
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+      league:
+        type: string
+      level:
+        type: integer
+      metadata:
+        $ref: '#/definitions/Metadata'
+      name:
+        type: string
+      passives:
+        $ref: '#/definitions/Passives'
+      realm:
+        $ref: '#/definitions/Realm'
+      rucksack:
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+      ruthless:
+        type: boolean
+      skills:
+        description: PoE2 only
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+    type: object
   DisplayItem:
     properties:
       abyssJewel:
@@ -9,6 +59,11 @@ definitions:
         type: array
       baseType:
         type: string
+      bondedMods:
+        description: PoE2 only
+        items:
+          type: string
+        type: array
       colour:
         type: string
       corrupted:
@@ -22,6 +77,17 @@ definitions:
           type: string
         type: array
       delve:
+        type: boolean
+      desecrated:
+        description: PoE2 only
+        type: boolean
+      desecratedMods:
+        description: PoE2 only
+        items:
+          type: string
+        type: array
+      doubleCorrupted:
+        description: PoE2 only
         type: boolean
       duplicated:
         type: boolean
@@ -116,6 +182,11 @@ definitions:
       rewards:
         items:
           $ref: '#/definitions/ItemReward'
+        type: array
+      runeMods:
+        description: PoE2 only
+        items:
+          type: string
         type: array
       ruthless:
         type: boolean
@@ -223,6 +294,11 @@ definitions:
         type: array
       baseType:
         type: string
+      bondedMods:
+        description: PoE2 only
+        items:
+          type: string
+        type: array
       colour:
         type: string
       corrupted:
@@ -236,6 +312,17 @@ definitions:
           type: string
         type: array
       delve:
+        type: boolean
+      desecrated:
+        description: PoE2 only
+        type: boolean
+      desecratedMods:
+        description: PoE2 only
+        items:
+          type: string
+        type: array
+      doubleCorrupted:
+        description: PoE2 only
         type: boolean
       duplicated:
         type: boolean
@@ -326,6 +413,11 @@ definitions:
         items:
           $ref: '#/definitions/ItemReward'
         type: array
+      runeMods:
+        description: PoE2 only
+        items:
+          type: string
+        type: array
       ruthless:
         type: boolean
       scourgeMods:
@@ -393,14 +485,8 @@ definitions:
     type: object
   ItemExtended:
     properties:
-      category:
-        type: string
       prefixes:
         type: integer
-      subcategories:
-        items:
-          type: string
-        type: array
       suffixes:
         type: integer
     type: object
@@ -431,6 +517,30 @@ definitions:
         type: integer
       total:
         type: integer
+    type: object
+  ItemJewelData:
+    properties:
+      radius:
+        type: integer
+      radiusMin:
+        type: integer
+      radiusVisual:
+        type: string
+      subgraph:
+        $ref: '#/definitions/ItemJewelDataSubgraph'
+      type:
+        type: string
+    type: object
+  ItemJewelDataSubgraph:
+    properties:
+      groups:
+        additionalProperties:
+          $ref: '#/definitions/PassiveGroup'
+        type: object
+      nodes:
+        additionalProperties:
+          $ref: '#/definitions/PassiveNode'
+        type: object
     type: object
   ItemLogbookMod:
     properties:
@@ -531,6 +641,200 @@ definitions:
         type: integer
       type:
         type: string
+    type: object
+  Metadata:
+    properties:
+      version:
+        type: string
+    type: object
+  PassiveGroup:
+    properties:
+      isProxy:
+        type: boolean
+      nodes:
+        items:
+          type: string
+        type: array
+      orbits:
+        items:
+          type: integer
+        type: array
+      proxy:
+        type: string
+      x:
+        type: number
+      "y":
+        type: number
+    type: object
+  PassiveNode:
+    properties:
+      activeEffectImage:
+        type: string
+      activeIcon:
+        type: string
+      ascendancyName:
+        type: string
+      classStartIndex:
+        type: integer
+      expansionJewel:
+        $ref: '#/definitions/PassiveNodeExpansionJewel'
+      flavourText:
+        items:
+          type: string
+        type: array
+      grantedDexterity:
+        type: integer
+      grantedIntelligence:
+        type: integer
+      grantedPassivePoints:
+        type: integer
+      grantedStrength:
+        type: integer
+      group:
+        type: string
+      icon:
+        type: string
+      in:
+        items:
+          type: string
+        type: array
+      inactiveIcon:
+        type: string
+      isAscendancyStart:
+        type: boolean
+      isBlighted:
+        type: boolean
+      isJewelSocket:
+        type: boolean
+      isKeystone:
+        type: boolean
+      isMastery:
+        type: boolean
+      isMultipleChoice:
+        type: boolean
+      isMultipleChoiceOption:
+        type: boolean
+      isNotable:
+        type: boolean
+      isProxy:
+        type: boolean
+      isTattoo:
+        type: boolean
+      masteryEffects:
+        items:
+          $ref: '#/definitions/PassiveNodeMasteryEffect'
+        type: array
+      name:
+        type: string
+      orbit:
+        type: integer
+      orbitIndex:
+        type: integer
+      out:
+        items:
+          type: string
+        type: array
+      recipe:
+        items:
+          type: string
+        type: array
+      reminderText:
+        items:
+          type: string
+        type: array
+      skill:
+        description: actually an int but it's a string in the ggg response
+        type: string
+      stats:
+        items:
+          type: string
+        type: array
+    type: object
+  PassiveNodeExpansionJewel:
+    properties:
+      index:
+        type: integer
+      parent:
+        type: string
+      proxy:
+        type: string
+      size:
+        type: integer
+    type: object
+  PassiveNodeMasteryEffect:
+    properties:
+      effect:
+        type: integer
+      reminderText:
+        items:
+          type: string
+        type: array
+      stats:
+        items:
+          type: string
+        type: array
+    type: object
+  Passives:
+    properties:
+      alternate_ascendancy:
+        type: string
+      bandit_choice:
+        type: string
+      hashes:
+        items:
+          type: integer
+        type: array
+      hashes_ex:
+        items:
+          type: integer
+        type: array
+      jewel_data:
+        additionalProperties:
+          $ref: '#/definitions/ItemJewelData'
+        type: object
+      mastery_effects:
+        additionalProperties:
+          type: integer
+        type: object
+      pantheon_major:
+        type: string
+      pantheon_minor:
+        type: string
+      skill_overrides:
+        additionalProperties:
+          $ref: '#/definitions/PassiveNode'
+        type: object
+      specialisation:
+        allOf:
+        - $ref: '#/definitions/Specialisations'
+        description: PoE2 only
+    type: object
+  Realm:
+    enum:
+    - pc
+    - sony
+    - xbox
+    - poe2
+    type: string
+    x-enum-varnames:
+    - PC
+    - Sony
+    - Xbox
+    - PoE2
+  Specialisations:
+    properties:
+      set1:
+        items:
+          type: integer
+        type: array
+      set2:
+        items:
+          type: integer
+        type: array
+      shapeshift:
+        items:
+          type: integer
+        type: array
     type: object
   StashTab:
     properties:
@@ -984,6 +1288,39 @@ definitions:
     - name
     - type
     - user_ids
+    type: object
+  ItemWish:
+    properties:
+      fulfilled:
+        type: boolean
+      item_field:
+        $ref: '#/definitions/ItemField'
+      priority:
+        type: integer
+      user_id:
+        type: integer
+      value:
+        type: string
+    required:
+    - fulfilled
+    - item_field
+    - user_id
+    - value
+    type: object
+  ItemWishRequest:
+    properties:
+      fulfilled:
+        type: boolean
+      item_field:
+        $ref: '#/definitions/ItemField'
+      priority:
+        type: integer
+      value:
+        type: string
+    required:
+    - fulfilled
+    - item_field
+    - value
     type: object
   JobCreate:
     properties:
@@ -3236,6 +3573,88 @@ paths:
             $ref: '#/definitions/Team'
       tags:
       - team
+  /events/{event_id}/teams/{team_id}/item_wishes:
+    get:
+      description: Get item wishes for a team in an event
+      operationId: GetItemWishesForTeam
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ItemWish'
+            type: array
+      tags:
+      - item_wishes
+    put:
+      consumes:
+      - application/json
+      description: Save an item wish for a user in a team
+      operationId: SaveItemWish
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Item Wish
+        in: body
+        name: item_wish
+        required: true
+        schema:
+          $ref: '#/definitions/ItemWishRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ItemWish'
+      tags:
+      - item_wishes
+  /events/{event_id}/teams/{team_id}/item_wishes/{wish_id}:
+    delete:
+      description: Delete an item wish for a user in a team
+      operationId: DeleteItemWish
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Wish ID
+        in: path
+        name: wish_id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - item_wishes
   /events/{event_id}/teams/users:
     put:
       consumes:
@@ -3581,6 +4000,29 @@ paths:
             items:
               $ref: '#/definitions/CharacterStat'
             type: array
+      tags:
+      - characters
+    patch:
+      description: Update character details
+      operationId: UpdateCharacter
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Character ID
+        in: path
+        name: character_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/Character'
       tags:
       - characters
   /users/{user_id}/characters/{character_id}/pobs:

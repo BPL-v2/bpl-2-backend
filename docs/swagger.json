@@ -1651,6 +1651,128 @@
                 }
             }
         },
+        "/events/{event_id}/teams/{team_id}/item_wishes": {
+            "get": {
+                "description": "Get item wishes for a team in an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "item_wishes"
+                ],
+                "operationId": "GetItemWishesForTeam",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ItemWish"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Save an item wish for a user in a team",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "item_wishes"
+                ],
+                "operationId": "SaveItemWish",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Item Wish",
+                        "name": "item_wish",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ItemWishRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ItemWish"
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/teams/{team_id}/item_wishes/{wish_id}": {
+            "delete": {
+                "description": "Delete an item wish for a user in a team",
+                "tags": [
+                    "item_wishes"
+                ],
+                "operationId": "DeleteItemWish",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Wish ID",
+                        "name": "wish_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/events/{event_id}/users": {
             "get": {
                 "description": "Fetches all users for an event",
@@ -2235,6 +2357,40 @@
                         }
                     }
                 }
+            },
+            "patch": {
+                "description": "Update character details",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "UpdateCharacter",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Character ID",
+                        "name": "character_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Character"
+                        }
+                    }
+                }
             }
         },
         "/users/{user_id}/characters/{character_id}/pobs": {
@@ -2714,6 +2870,81 @@
         }
     },
     "definitions": {
+        "Character": {
+            "type": "object",
+            "properties": {
+                "class": {
+                    "type": "string"
+                },
+                "current": {
+                    "type": "boolean"
+                },
+                "deleted": {
+                    "type": "boolean"
+                },
+                "equipment": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    }
+                },
+                "experience": {
+                    "type": "integer"
+                },
+                "expired": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "inventory": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    }
+                },
+                "jewels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    }
+                },
+                "league": {
+                    "type": "string"
+                },
+                "level": {
+                    "type": "integer"
+                },
+                "metadata": {
+                    "$ref": "#/definitions/Metadata"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "passives": {
+                    "$ref": "#/definitions/Passives"
+                },
+                "realm": {
+                    "$ref": "#/definitions/Realm"
+                },
+                "rucksack": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    }
+                },
+                "ruthless": {
+                    "type": "boolean"
+                },
+                "skills": {
+                    "description": "PoE2 only",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    }
+                }
+            }
+        },
         "DisplayItem": {
             "type": "object",
             "properties": {
@@ -2728,6 +2959,13 @@
                 },
                 "baseType": {
                     "type": "string"
+                },
+                "bondedMods": {
+                    "description": "PoE2 only",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "colour": {
                     "type": "string"
@@ -2748,6 +2986,21 @@
                     }
                 },
                 "delve": {
+                    "type": "boolean"
+                },
+                "desecrated": {
+                    "description": "PoE2 only",
+                    "type": "boolean"
+                },
+                "desecratedMods": {
+                    "description": "PoE2 only",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "doubleCorrupted": {
+                    "description": "PoE2 only",
                     "type": "boolean"
                 },
                 "duplicated": {
@@ -2888,6 +3141,13 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ItemReward"
+                    }
+                },
+                "runeMods": {
+                    "description": "PoE2 only",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
                 "ruthless": {
@@ -3049,6 +3309,13 @@
                 "baseType": {
                     "type": "string"
                 },
+                "bondedMods": {
+                    "description": "PoE2 only",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "colour": {
                     "type": "string"
                 },
@@ -3068,6 +3335,21 @@
                     }
                 },
                 "delve": {
+                    "type": "boolean"
+                },
+                "desecrated": {
+                    "description": "PoE2 only",
+                    "type": "boolean"
+                },
+                "desecratedMods": {
+                    "description": "PoE2 only",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "doubleCorrupted": {
+                    "description": "PoE2 only",
                     "type": "boolean"
                 },
                 "duplicated": {
@@ -3203,6 +3485,13 @@
                         "$ref": "#/definitions/ItemReward"
                     }
                 },
+                "runeMods": {
+                    "description": "PoE2 only",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "ruthless": {
                     "type": "boolean"
                 },
@@ -3303,17 +3592,8 @@
         "ItemExtended": {
             "type": "object",
             "properties": {
-                "category": {
-                    "type": "string"
-                },
                 "prefixes": {
                     "type": "integer"
-                },
-                "subcategories": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
                 },
                 "suffixes": {
                     "type": "integer"
@@ -3360,6 +3640,43 @@
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "ItemJewelData": {
+            "type": "object",
+            "properties": {
+                "radius": {
+                    "type": "integer"
+                },
+                "radiusMin": {
+                    "type": "integer"
+                },
+                "radiusVisual": {
+                    "type": "string"
+                },
+                "subgraph": {
+                    "$ref": "#/definitions/ItemJewelDataSubgraph"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "ItemJewelDataSubgraph": {
+            "type": "object",
+            "properties": {
+                "groups": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/PassiveGroup"
+                    }
+                },
+                "nodes": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/PassiveNode"
+                    }
                 }
             }
         },
@@ -3508,6 +3825,299 @@
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "Metadata": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "PassiveGroup": {
+            "type": "object",
+            "properties": {
+                "isProxy": {
+                    "type": "boolean"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "orbits": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "proxy": {
+                    "type": "string"
+                },
+                "x": {
+                    "type": "number"
+                },
+                "y": {
+                    "type": "number"
+                }
+            }
+        },
+        "PassiveNode": {
+            "type": "object",
+            "properties": {
+                "activeEffectImage": {
+                    "type": "string"
+                },
+                "activeIcon": {
+                    "type": "string"
+                },
+                "ascendancyName": {
+                    "type": "string"
+                },
+                "classStartIndex": {
+                    "type": "integer"
+                },
+                "expansionJewel": {
+                    "$ref": "#/definitions/PassiveNodeExpansionJewel"
+                },
+                "flavourText": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "grantedDexterity": {
+                    "type": "integer"
+                },
+                "grantedIntelligence": {
+                    "type": "integer"
+                },
+                "grantedPassivePoints": {
+                    "type": "integer"
+                },
+                "grantedStrength": {
+                    "type": "integer"
+                },
+                "group": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "in": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "inactiveIcon": {
+                    "type": "string"
+                },
+                "isAscendancyStart": {
+                    "type": "boolean"
+                },
+                "isBlighted": {
+                    "type": "boolean"
+                },
+                "isJewelSocket": {
+                    "type": "boolean"
+                },
+                "isKeystone": {
+                    "type": "boolean"
+                },
+                "isMastery": {
+                    "type": "boolean"
+                },
+                "isMultipleChoice": {
+                    "type": "boolean"
+                },
+                "isMultipleChoiceOption": {
+                    "type": "boolean"
+                },
+                "isNotable": {
+                    "type": "boolean"
+                },
+                "isProxy": {
+                    "type": "boolean"
+                },
+                "isTattoo": {
+                    "type": "boolean"
+                },
+                "masteryEffects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PassiveNodeMasteryEffect"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orbit": {
+                    "type": "integer"
+                },
+                "orbitIndex": {
+                    "type": "integer"
+                },
+                "out": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "recipe": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "reminderText": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "skill": {
+                    "description": "actually an int but it's a string in the ggg response",
+                    "type": "string"
+                },
+                "stats": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "PassiveNodeExpansionJewel": {
+            "type": "object",
+            "properties": {
+                "index": {
+                    "type": "integer"
+                },
+                "parent": {
+                    "type": "string"
+                },
+                "proxy": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                }
+            }
+        },
+        "PassiveNodeMasteryEffect": {
+            "type": "object",
+            "properties": {
+                "effect": {
+                    "type": "integer"
+                },
+                "reminderText": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "stats": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "Passives": {
+            "type": "object",
+            "properties": {
+                "alternate_ascendancy": {
+                    "type": "string"
+                },
+                "bandit_choice": {
+                    "type": "string"
+                },
+                "hashes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "hashes_ex": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "jewel_data": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/ItemJewelData"
+                    }
+                },
+                "mastery_effects": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "pantheon_major": {
+                    "type": "string"
+                },
+                "pantheon_minor": {
+                    "type": "string"
+                },
+                "skill_overrides": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/PassiveNode"
+                    }
+                },
+                "specialisation": {
+                    "description": "PoE2 only",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/Specialisations"
+                        }
+                    ]
+                }
+            }
+        },
+        "Realm": {
+            "type": "string",
+            "enum": [
+                "pc",
+                "sony",
+                "xbox",
+                "poe2"
+            ],
+            "x-enum-varnames": [
+                "PC",
+                "Sony",
+                "Xbox",
+                "PoE2"
+            ]
+        },
+        "Specialisations": {
+            "type": "object",
+            "properties": {
+                "set1": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "set2": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "shapeshift": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -4165,6 +4775,54 @@
                     "items": {
                         "type": "integer"
                     }
+                }
+            }
+        },
+        "ItemWish": {
+            "type": "object",
+            "required": [
+                "fulfilled",
+                "item_field",
+                "user_id",
+                "value"
+            ],
+            "properties": {
+                "fulfilled": {
+                    "type": "boolean"
+                },
+                "item_field": {
+                    "$ref": "#/definitions/ItemField"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "ItemWishRequest": {
+            "type": "object",
+            "required": [
+                "fulfilled",
+                "item_field",
+                "value"
+            ],
+            "properties": {
+                "fulfilled": {
+                    "type": "boolean"
+                },
+                "item_field": {
+                    "$ref": "#/definitions/ItemField"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "string"
                 }
             }
         },

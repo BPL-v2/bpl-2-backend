@@ -1,0 +1,9 @@
+CREATE TABLE item_wishes (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    item_field TEXT NOT NULL,
+    value TEXT NOT NULL,
+    fulfilled BOOLEAN NOT NULL DEFAULT FALSE,
+    priority INTEGER NOT NULL DEFAULT 0
+);

@@ -50,6 +50,7 @@ type PlayerFetchingService struct {
 	timingRepository      *repository.TimingRepository
 	characterRepository   *repository.CharacterRepository
 	activityRepository    *repository.ActivityRepository
+	itemWishService       *service.ItemWishService
 	timings               map[repository.TimingKey]time.Duration
 
 	lastLadderUpdate time.Time
@@ -75,6 +76,7 @@ func NewPlayerFetchingService(poeClient *client.PoEClient, event *repository.Eve
 		characterService:      service.NewCharacterService(poeClient),
 		atlasService:          service.NewAtlasService(),
 		oauthService:          service.NewOauthService(),
+		itemWishService:       service.NewItemWishService(),
 		timingRepository:      repository.NewTimingRepository(),
 		characterRepository:   repository.NewCharacterRepository(),
 		activityRepository:    repository.NewActivityRepository(),
@@ -134,7 +136,10 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		log.Printf("Error fetching character for player %d: %v", player.UserId, clientError)
 		return
 	}
-
+	err := s.itemWishService.UpdateItemWishFulfillment(event.Id, player.UserId, characterResponse.Character)
+	if err != nil {
+		log.Printf("Error updating item wish fulfillment for player %d: %v", player.UserId, err)
+	}
 	player.SuccessiveErrors = 0
 	player.New.CharacterName = characterResponse.Character.Name
 	player.New.CharacterId = characterResponse.Character.Id
@@ -169,7 +174,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		characterResponse.Character.GetAscendancyPoints(),
 		characterResponse.Character.HasPantheon(),
 	)
-	err := s.characterRepository.Save(character)
+	err = s.characterRepository.Save(character)
 	if err != nil {
 		fmt.Printf("Error saving character %s (%s) for user %d: %v\n", character.Name, character.Id, player.UserId, err)
 	}
@@ -554,11 +559,9 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				}
 			}
 			if service.shouldUpdateLadder(service.timings) {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
+				wg.Go(func() {
 					service.UpdateLadder(players)
-				}()
+				})
 			}
 			wg.Wait()
 
