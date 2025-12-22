@@ -51,6 +51,7 @@ type User struct {
 	Id          int         `gorm:"primaryKey autoIncrement"`
 	DisplayName string      `gorm:"not null"`
 	Permissions Permissions `gorm:"type:text[];not null;default:'{}'"`
+	Referrer    *string     `gorm:"type:text;null"`
 
 	OauthAccounts []*Oauth `gorm:"foreignKey:UserId"`
 }

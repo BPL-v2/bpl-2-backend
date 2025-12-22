@@ -964,6 +964,8 @@ definitions:
         type: string
       redirect_url:
         type: string
+      referrer:
+        type: string
       state:
         type: string
     required:
@@ -1322,7 +1324,6 @@ definitions:
       value:
         type: string
     required:
-    - fulfilled
     - item_field
     - value
     type: object

@@ -152,20 +152,20 @@ func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repos
 	)
 }
 
-func (e *OauthService) Verify(state string, code string, provider repository.Provider, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthService) Verify(state string, code string, referrer *string, provider repository.Provider, oauthConfig oauth2.Config) (*OauthState, error) {
 	switch provider {
 	case repository.ProviderDiscord:
-		return e.VerifyDiscord(state, code, oauthConfig)
+		return e.VerifyDiscord(state, code, referrer, oauthConfig)
 	case repository.ProviderTwitch:
-		return e.VerifyTwitch(state, code, oauthConfig)
+		return e.VerifyTwitch(state, code, referrer, oauthConfig)
 	case repository.ProviderPoE:
-		return e.VerifyPoE(state, code, oauthConfig)
+		return e.VerifyPoE(state, code, referrer, oauthConfig)
 	default:
 		return nil, fmt.Errorf("not implemented")
 	}
 }
 
-func (e *OauthService) addAccountToUser(authState *OauthState, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
+func (e *OauthService) addAccountToUser(authState *OauthState, referrer *string, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
 	if err == nil {
 		fmt.Printf("Updating %s account %s for user %s\n", provider, accountName, user.DisplayName)
@@ -176,6 +176,7 @@ func (e *OauthService) addAccountToUser(authState *OauthState, accountId string,
 			Permissions:   []repository.Permission{},
 			DisplayName:   accountName,
 			OauthAccounts: []*repository.Oauth{},
+			Referrer:      referrer,
 		}
 	} else {
 		fmt.Printf("Adding %s account %s to user %s\n", provider, accountName, authState.User.DisplayName)
@@ -216,7 +217,7 @@ func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code 
 	return &authState, token, nil
 }
 
-func (e *OauthService) VerifyDiscord(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthService) VerifyDiscord(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
 
 	authState, token, err := e.fetchToken(oauthConfig, state, code)
 	if err != nil {
@@ -235,10 +236,10 @@ func (e *OauthService) VerifyDiscord(state string, code string, oauthConfig oaut
 		fmt.Printf("Failed to decode discord user response: %v\n", err)
 		return nil, fmt.Errorf("failed to decode discord user response: %v", err)
 	}
-	return e.addAccountToUser(authState, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
+	return e.addAccountToUser(authState, referrer, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
 }
 
-func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthService) VerifyTwitch(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
 	authState, token, err := e.fetchToken(oauthConfig, state, code)
 	if err != nil {
 		return nil, err
@@ -278,10 +279,10 @@ func (e *OauthService) VerifyTwitch(state string, code string, oauthConfig oauth
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode twitch extended user response: %v", err)
 	}
-	return e.addAccountToUser(authState, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
+	return e.addAccountToUser(authState, referrer, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
 }
 
-func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthService) VerifyPoE(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
 	client := client.NewPoEClient(1, true, 10)
 	e.mu.Lock()
 	authState, ok := e.stateMap[state]
@@ -305,7 +306,7 @@ func (e *OauthService) VerifyPoE(state string, code string, oauthConfig oauth2.C
 		fmt.Printf("Failed to get profile: %v\n", clientError)
 		return nil, fmt.Errorf("failed to get profile: %v", clientError)
 	}
-	return e.addAccountToUser(&authState, profile.UUId, profile.Name, token, repository.ProviderPoE)
+	return e.addAccountToUser(&authState, referrer, profile.UUId, profile.Name, token, repository.ProviderPoE)
 }
 
 func (e *OauthService) GetApplicationToken(provider repository.Provider) (string, error) {

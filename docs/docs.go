@@ -4325,6 +4325,9 @@ const docTemplate = `{
                 "redirect_url": {
                     "type": "string"
                 },
+                "referrer": {
+                    "type": "string"
+                },
                 "state": {
                     "type": "string"
                 }
@@ -4818,7 +4821,6 @@ const docTemplate = `{
         "ItemWishRequest": {
             "type": "object",
             "required": [
-                "fulfilled",
                 "item_field",
                 "value"
             ],

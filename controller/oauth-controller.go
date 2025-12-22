@@ -122,7 +122,7 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 		config := *e.oauthService.Config[provider]
 		config.RedirectURL = body.RedirectUrl
 		fmt.Printf("Callback - Provider %s\n", provider)
-		verifier, err := e.oauthService.Verify(body.State, body.Code, provider, config)
+		verifier, err := e.oauthService.Verify(body.State, body.Code, body.Referrer, provider, config)
 		if err != nil {
 			fmt.Printf("Failed to verify oauth: %v\n", err)
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -140,9 +140,10 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 }
 
 type CallbackBody struct {
-	RedirectUrl string `json:"redirect_url" binding:"required"`
-	Code        string `json:"code" binding:"required"`
-	State       string `json:"state" binding:"required"`
+	RedirectUrl string  `json:"redirect_url" binding:"required"`
+	Code        string  `json:"code" binding:"required"`
+	State       string  `json:"state" binding:"required"`
+	Referrer    *string `json:"referrer"`
 }
 
 type CallbackResponse struct {

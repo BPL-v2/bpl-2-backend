@@ -4317,6 +4317,9 @@
                 "redirect_url": {
                     "type": "string"
                 },
+                "referrer": {
+                    "type": "string"
+                },
                 "state": {
                     "type": "string"
                 }
@@ -4810,7 +4813,6 @@
         "ItemWishRequest": {
             "type": "object",
             "required": [
-                "fulfilled",
                 "item_field",
                 "value"
             ],
