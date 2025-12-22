@@ -99,6 +99,9 @@ func (e *ItemWishController) saveItemWishHandler() gin.HandlerFunc {
 			Value:     itemWishReq.Value,
 			Fulfilled: itemWishReq.Fulfilled,
 		}
+		if itemWishReq.Id != nil {
+			itemWish.Id = *itemWishReq.Id
+		}
 
 		savedItemWish, err := e.itemWishService.SaveItemWish(itemWish)
 		if err != nil {
@@ -153,6 +156,7 @@ type ItemWish struct {
 }
 
 type ItemWishRequest struct {
+	Id        *int                 `json:"id"`
 	ItemField repository.ItemField `json:"item_field" binding:"required"`
 	Value     string               `json:"value" binding:"required"`
 	Fulfilled bool                 `json:"fulfilled" binding:"required"`
