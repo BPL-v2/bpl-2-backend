@@ -159,7 +159,7 @@ type ItemWishRequest struct {
 	Id        *int                 `json:"id"`
 	ItemField repository.ItemField `json:"item_field" binding:"required"`
 	Value     string               `json:"value" binding:"required"`
-	Fulfilled bool                 `json:"fulfilled" binding:"required"`
+	Fulfilled bool                 `json:"fulfilled"`
 	Priority  int                  `json:"priority"`
 }
 
