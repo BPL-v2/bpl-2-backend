@@ -4315,14 +4315,10 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "code",
-                "redirect_url",
                 "state"
             ],
             "properties": {
                 "code": {
-                    "type": "string"
-                },
-                "redirect_url": {
                     "type": "string"
                 },
                 "referrer": {

@@ -962,15 +962,12 @@ definitions:
     properties:
       code:
         type: string
-      redirect_url:
-        type: string
       referrer:
         type: string
       state:
         type: string
     required:
     - code
-    - redirect_url
     - state
     type: object
   CallbackResponse:
