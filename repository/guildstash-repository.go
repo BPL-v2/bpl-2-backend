@@ -280,3 +280,12 @@ func (r *GuildStashRepository) GetEarliestDeposits(event *Event) ([]*PlayerCompl
 	}
 	return results, nil
 }
+
+func (r *GuildStashRepository) GetGuildById(guildId int) (*Guild, error) {
+	var guild Guild
+	err := r.db.Where("id = ?", guildId).First(&guild).Error
+	if err != nil {
+		return nil, err
+	}
+	return &guild, nil
+}

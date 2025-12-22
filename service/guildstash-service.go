@@ -127,6 +127,10 @@ func (s *GuildStashService) GetGuildsForEvent(event *repository.Event) ([]*repos
 	}))
 }
 
+func (s *GuildStashService) GetGuildById(guildId int) (*repository.Guild, error) {
+	return s.GuildStashRepository.GetGuildById(guildId)
+}
+
 func (s *GuildStashService) GetEarliestDeposits(event *repository.Event) ([]*repository.PlayerCompletion, error) {
 	return s.GuildStashRepository.GetEarliestDeposits(event)
 }
