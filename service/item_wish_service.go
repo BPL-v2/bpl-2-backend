@@ -39,7 +39,7 @@ func (s *ItemWishService) UpdateItemWish(itemWish *repository.ItemWish, teamId i
 		if err != nil {
 			return nil, err
 		}
-		priority := int(math.Max(math.Min(float64(*Priority), float64(len(itemWishes))), 0))
+		priority := int(math.Max(math.Min(float64(*Priority), float64(len(itemWishes)-1)), 0))
 		for _, iw := range itemWishes {
 			if iw.Priority == priority {
 				iw.Priority = itemWish.Priority
