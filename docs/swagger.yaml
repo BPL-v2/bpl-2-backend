@@ -1092,6 +1092,18 @@ definitions:
     - objective_type_to_number_fields
     - valid_operators
     type: object
+  CreateItemWish:
+    properties:
+      build_enabling:
+        type: boolean
+      item_field:
+        $ref: '#/definitions/ItemField'
+      value:
+        type: string
+    required:
+    - item_field
+    - value
+    type: object
   Event:
     properties:
       application_end_time:
@@ -1290,6 +1302,8 @@ definitions:
     type: object
   ItemWish:
     properties:
+      build_enabling:
+        type: boolean
       fulfilled:
         type: boolean
       id:
@@ -1303,25 +1317,12 @@ definitions:
       value:
         type: string
     required:
+    - build_enabling
     - fulfilled
+    - id
     - item_field
+    - priority
     - user_id
-    - value
-    type: object
-  ItemWishRequest:
-    properties:
-      fulfilled:
-        type: boolean
-      id:
-        type: integer
-      item_field:
-        $ref: '#/definitions/ItemField'
-      priority:
-        type: integer
-      value:
-        type: string
-    required:
-    - item_field
     - value
     type: object
   JobCreate:
@@ -1842,6 +1843,15 @@ definitions:
     required:
     - duration_seconds
     - key
+    type: object
+  UpdateItemWish:
+    properties:
+      build_enabling:
+        type: boolean
+      fulfilled:
+        type: boolean
+      priority:
+        type: integer
     type: object
   User:
     properties:
@@ -3601,11 +3611,11 @@ paths:
             type: array
       tags:
       - item_wishes
-    put:
+    post:
       consumes:
       - application/json
-      description: Save an item wish for a user in a team
-      operationId: SaveItemWish
+      description: Create an item wish for a user in a team
+      operationId: CreateItemWish
       parameters:
       - description: Event ID
         in: path
@@ -3622,12 +3632,12 @@ paths:
         name: item_wish
         required: true
         schema:
-          $ref: '#/definitions/ItemWishRequest'
+          $ref: '#/definitions/CreateItemWish'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/ItemWish'
       tags:
@@ -3655,6 +3665,42 @@ paths:
       responses:
         "204":
           description: No Content
+      tags:
+      - item_wishes
+    patch:
+      consumes:
+      - application/json
+      description: Change an item wish for a user in a team
+      operationId: ChangeItemWish
+      parameters:
+      - description: Event ID
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Wish ID
+        in: path
+        name: wish_id
+        required: true
+        type: integer
+      - description: Item Wish
+        in: body
+        name: item_wish
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateItemWish'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ItemWish'
       tags:
       - item_wishes
   /events/{event_id}/teams/users:

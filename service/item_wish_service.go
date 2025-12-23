@@ -17,7 +17,36 @@ func NewItemWishService() *ItemWishService {
 	}
 }
 
-func (s *ItemWishService) SaveItemWish(itemWish *repository.ItemWish) (*repository.ItemWish, error) {
+func (s *ItemWishService) CreateItemWish(itemWish *repository.ItemWish, teamId int) (*repository.ItemWish, error) {
+	itemWishes, err := s.itemWishRepository.GetSimilarItemWishesInTeam(teamId, itemWish.ItemField, itemWish.Value)
+	if err != nil {
+		return nil, err
+	}
+	itemWish.Priority = len(itemWishes)
+	return s.itemWishRepository.SaveItemWish(itemWish)
+}
+
+func (s *ItemWishService) UpdateItemWish(itemWish *repository.ItemWish, teamId int, Fulfilled *bool, BuildEnabling *bool, Priority *int) (*repository.ItemWish, error) {
+	if Fulfilled != nil {
+		itemWish.Fulfilled = *Fulfilled
+	}
+	if BuildEnabling != nil {
+		itemWish.BuildEnabling = *BuildEnabling
+	}
+	if Priority != nil {
+		itemWishes, err := s.itemWishRepository.GetSimilarItemWishesInTeam(teamId, itemWish.ItemField, itemWish.Value)
+		if err != nil {
+			return nil, err
+		}
+		for _, iw := range itemWishes {
+			if iw.Priority == *Priority {
+				iw.Priority = itemWish.Priority
+				s.itemWishRepository.SaveItemWish(iw)
+				break
+			}
+		}
+		itemWish.Priority = *Priority
+	}
 	return s.itemWishRepository.SaveItemWish(itemWish)
 }
 
@@ -29,8 +58,8 @@ func (s *ItemWishService) DeleteItemWish(id int) error {
 	return s.itemWishRepository.DeleteItemWish(id)
 }
 
-func (s *ItemWishService) GetItemWishesForTeam(eventId int, teamId int) ([]*repository.ItemWish, error) {
-	itemWishes, err := s.itemWishRepository.GetItemWishesForTeam(eventId, teamId)
+func (s *ItemWishService) GetItemWishesForTeam(teamId int) ([]*repository.ItemWish, error) {
+	itemWishes, err := s.itemWishRepository.GetItemWishesForTeam(teamId)
 	if err != nil {
 		return nil, err
 	}

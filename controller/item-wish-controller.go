@@ -26,7 +26,8 @@ func setupItemWishController() []RouteInfo {
 	basePath := "events/:event_id/teams/:team_id/item_wishes"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getItemWishesForTeamHandler(), Authenticated: true},
-		{Method: "PUT", Path: "", HandlerFunc: e.saveItemWishHandler(), Authenticated: true},
+		{Method: "POST", Path: "", HandlerFunc: e.creatItemWishHandler(), Authenticated: true},
+		{Method: "PATCH", Path: "/:wish_id", HandlerFunc: e.changeItemWishHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/:wish_id", HandlerFunc: e.deleteItemWishHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
@@ -57,7 +58,7 @@ func (e *ItemWishController) getItemWishesForTeamHandler() gin.HandlerFunc {
 			return
 		}
 
-		itemWishes, err := e.itemWishService.GetItemWishesForTeam(event.Id, teamId)
+		itemWishes, err := e.itemWishService.GetItemWishesForTeam(teamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Failed to get item wishes"})
 			return
@@ -67,17 +68,17 @@ func (e *ItemWishController) getItemWishesForTeamHandler() gin.HandlerFunc {
 	}
 }
 
-// @id SaveItemWish
-// @Description Save an item wish for a user in a team
+// @id CreateItemWish
+// @Description Create an item wish for a user in a team
 // @Tags item_wishes
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
 // @Param team_id path int true "Team ID"
-// @Param item_wish body ItemWishRequest true "Item Wish"
-// @Success 200 {object} ItemWish
-// @Router /events/{event_id}/teams/{team_id}/item_wishes [put]
-func (e *ItemWishController) saveItemWishHandler() gin.HandlerFunc {
+// @Param item_wish body CreateItemWish true "Item Wish"
+// @Success 201 {object} ItemWish
+// @Router /events/{event_id}/teams/{team_id}/item_wishes [post]
+func (e *ItemWishController) creatItemWishHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		teamUser, _, err := e.userService.GetTeamForUser(c, event)
@@ -86,7 +87,7 @@ func (e *ItemWishController) saveItemWishHandler() gin.HandlerFunc {
 			return
 		}
 
-		var itemWishReq ItemWishRequest
+		var itemWishReq CreateItemWish
 		if err := c.ShouldBindJSON(&itemWishReq); err != nil {
 			c.JSON(400, gin.H{"error": "Invalid request body"})
 			return
@@ -97,18 +98,66 @@ func (e *ItemWishController) saveItemWishHandler() gin.HandlerFunc {
 			EventID:   event.Id,
 			ItemField: itemWishReq.ItemField,
 			Value:     itemWishReq.Value,
-			Fulfilled: itemWishReq.Fulfilled,
-		}
-		if itemWishReq.Id != nil {
-			itemWish.Id = *itemWishReq.Id
+			Fulfilled: false,
 		}
 
-		savedItemWish, err := e.itemWishService.SaveItemWish(itemWish)
+		savedItemWish, err := e.itemWishService.CreateItemWish(itemWish, teamUser.TeamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Failed to save item wish"})
 			return
 		}
-		c.JSON(200, toItemWishModel(savedItemWish))
+		c.JSON(201, toItemWishModel(savedItemWish))
+	}
+}
+
+// @id ChangeItemWish
+// @Description Change an item wish for a user in a team
+// @Tags item_wishes
+// @Accept json
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Param team_id path int true "Team ID"
+// @Param wish_id path int true "Wish ID"
+// @Param item_wish body UpdateItemWish true "Item Wish"
+// @Success 200 {object} ItemWish
+// @Router /events/{event_id}/teams/{team_id}/item_wishes/{wish_id} [patch]
+func (e *ItemWishController) changeItemWishHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		wishId, err := strconv.Atoi(c.Param("wish_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "Invalid wish ID"})
+			return
+		}
+		var itemWishReq UpdateItemWish
+		if err := c.ShouldBindJSON(&itemWishReq); err != nil {
+			c.JSON(400, gin.H{"error": "Invalid request body"})
+			return
+		}
+		itemWish, err := e.itemWishService.GetItemWishById(wishId)
+		if err != nil {
+			c.JSON(404, gin.H{"error": "Failed to get item wish"})
+			return
+		}
+		teamUser, _, err := e.userService.GetTeamForUser(c, getEvent(c))
+		if err != nil {
+			c.JSON(403, gin.H{"error": "You are not part of a team"})
+			return
+		}
+		if (itemWishReq.BuildEnabling != nil || itemWishReq.Fulfilled != nil) && itemWish.UserID != teamUser.UserId {
+			c.JSON(403, gin.H{"error": "Only the user who created the wish can change its fulfilled or build enabling status"})
+			return
+		}
+		if (itemWishReq.Priority != nil) && !teamUser.IsTeamLead {
+			c.JSON(403, gin.H{"error": "Only team leads can change the priority of wishes"})
+			return
+		}
+
+		updatedItemWish, err := e.itemWishService.UpdateItemWish(itemWish, teamUser.TeamId, itemWishReq.Fulfilled, itemWishReq.BuildEnabling, itemWishReq.Priority)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to update item wish"})
+			return
+		}
+		c.JSON(200, toItemWishModel(updatedItemWish))
 	}
 }
 
@@ -147,29 +196,35 @@ func (e *ItemWishController) deleteItemWishHandler() gin.HandlerFunc {
 }
 
 type ItemWish struct {
-	Id        int                  `json:"id"`
-	UserId    int                  `json:"user_id" binding:"required"`
-	ItemField repository.ItemField `json:"item_field" binding:"required"`
-	Value     string               `json:"value" binding:"required"`
-	Fulfilled bool                 `json:"fulfilled" binding:"required"`
-	Priority  int                  `json:"priority"`
+	Id            int                  `json:"id" binding:"required"`
+	UserId        int                  `json:"user_id" binding:"required"`
+	ItemField     repository.ItemField `json:"item_field" binding:"required"`
+	Value         string               `json:"value" binding:"required"`
+	Fulfilled     bool                 `json:"fulfilled" binding:"required"`
+	BuildEnabling bool                 `json:"build_enabling" binding:"required"`
+	Priority      int                  `json:"priority" binding:"required"`
 }
 
-type ItemWishRequest struct {
-	Id        *int                 `json:"id"`
-	ItemField repository.ItemField `json:"item_field" binding:"required"`
-	Value     string               `json:"value" binding:"required"`
-	Fulfilled bool                 `json:"fulfilled"`
-	Priority  int                  `json:"priority"`
+type CreateItemWish struct {
+	ItemField     repository.ItemField `json:"item_field" binding:"required"`
+	Value         string               `json:"value" binding:"required"`
+	BuildEnabling bool                 `json:"build_enabling"`
+}
+
+type UpdateItemWish struct {
+	Fulfilled     *bool `json:"fulfilled"`
+	BuildEnabling *bool `json:"build_enabling"`
+	Priority      *int  `json:"priority"`
 }
 
 func toItemWishModel(iw *repository.ItemWish) *ItemWish {
 	return &ItemWish{
-		Id:        iw.Id,
-		UserId:    iw.UserID,
-		ItemField: iw.ItemField,
-		Value:     iw.Value,
-		Fulfilled: iw.Fulfilled,
-		Priority:  iw.Priority,
+		Id:            iw.Id,
+		UserId:        iw.UserID,
+		ItemField:     iw.ItemField,
+		Value:         iw.Value,
+		Fulfilled:     iw.Fulfilled,
+		Priority:      iw.Priority,
+		BuildEnabling: iw.BuildEnabling,
 	}
 }

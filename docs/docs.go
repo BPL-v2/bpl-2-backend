@@ -1697,8 +1697,8 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "Save an item wish for a user in a team",
+            "post": {
+                "description": "Create an item wish for a user in a team",
                 "consumes": [
                     "application/json"
                 ],
@@ -1708,7 +1708,7 @@ const docTemplate = `{
                 "tags": [
                     "item_wishes"
                 ],
-                "operationId": "SaveItemWish",
+                "operationId": "CreateItemWish",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1730,13 +1730,13 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ItemWishRequest"
+                            "$ref": "#/definitions/CreateItemWish"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/ItemWish"
                         }
@@ -1777,6 +1777,59 @@ const docTemplate = `{
                 "responses": {
                     "204": {
                         "description": "No Content"
+                    }
+                }
+            },
+            "patch": {
+                "description": "Change an item wish for a user in a team",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "item_wishes"
+                ],
+                "operationId": "ChangeItemWish",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event ID",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Wish ID",
+                        "name": "wish_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Item Wish",
+                        "name": "item_wish",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UpdateItemWish"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ItemWish"
+                        }
                     }
                 }
             }
@@ -4502,6 +4555,24 @@ const docTemplate = `{
                 }
             }
         },
+        "CreateItemWish": {
+            "type": "object",
+            "required": [
+                "item_field",
+                "value"
+            ],
+            "properties": {
+                "build_enabling": {
+                    "type": "boolean"
+                },
+                "item_field": {
+                    "$ref": "#/definitions/ItemField"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         "Event": {
             "type": "object",
             "required": [
@@ -4788,12 +4859,18 @@ const docTemplate = `{
         "ItemWish": {
             "type": "object",
             "required": [
+                "build_enabling",
                 "fulfilled",
+                "id",
                 "item_field",
+                "priority",
                 "user_id",
                 "value"
             ],
             "properties": {
+                "build_enabling": {
+                    "type": "boolean"
+                },
                 "fulfilled": {
                     "type": "boolean"
                 },
@@ -4807,30 +4884,6 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "user_id": {
-                    "type": "integer"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "ItemWishRequest": {
-            "type": "object",
-            "required": [
-                "item_field",
-                "value"
-            ],
-            "properties": {
-                "fulfilled": {
-                    "type": "boolean"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "item_field": {
-                    "$ref": "#/definitions/ItemField"
-                },
-                "priority": {
                     "type": "integer"
                 },
                 "value": {
@@ -5594,6 +5647,20 @@ const docTemplate = `{
                 },
                 "key": {
                     "$ref": "#/definitions/TimingKey"
+                }
+            }
+        },
+        "UpdateItemWish": {
+            "type": "object",
+            "properties": {
+                "build_enabling": {
+                    "type": "boolean"
+                },
+                "fulfilled": {
+                    "type": "boolean"
+                },
+                "priority": {
+                    "type": "integer"
                 }
             }
         },
