@@ -299,12 +299,12 @@ func (e *GuildStashController) getGuildStashForUser() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		user, err := e.userService.GetUserFromAuthHeader(c)
+		teamUser, _, err := e.userService.GetTeamForUser(c, event)
 		if err != nil {
-			c.JSON(401, gin.H{"error": "unauthorized"})
+			c.JSON(403, "unauthorized")
 			return
 		}
-		tabs, err := e.guildStashService.GetGuildStashesForUserForEvent(*user, *event)
+		tabs, err := e.guildStashService.GetGuildStashesForTeam(teamUser.TeamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
