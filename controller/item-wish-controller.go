@@ -95,7 +95,7 @@ func (e *ItemWishController) creatItemWishHandler() gin.HandlerFunc {
 
 		itemWish := &repository.ItemWish{
 			UserID:    teamUser.UserId,
-			EventID:   event.Id,
+			TeamID:    teamUser.TeamId,
 			ItemField: itemWishReq.ItemField,
 			Value:     itemWishReq.Value,
 			Fulfilled: false,
