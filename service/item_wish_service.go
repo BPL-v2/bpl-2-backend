@@ -66,8 +66,8 @@ func (s *ItemWishService) GetItemWishesForTeam(teamId int) ([]*repository.ItemWi
 	return itemWishes, nil
 }
 
-func (s *ItemWishService) UpdateItemWishFulfillment(eventId int, userId int, character *client.Character) error {
-	itemWishes, err := s.itemWishRepository.GetItemWishesForEventAndUser(eventId, userId)
+func (s *ItemWishService) UpdateItemWishFulfillment(teamId int, userId int, character *client.Character) error {
+	itemWishes, err := s.itemWishRepository.GetItemWishesForTeamAndUser(teamId, userId)
 	if err != nil {
 		return err
 	}

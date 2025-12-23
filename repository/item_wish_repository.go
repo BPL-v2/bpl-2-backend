@@ -17,15 +17,15 @@ func NewItemWishRepository() *ItemWishRepository {
 type ItemWish struct {
 	Id            int       `gorm:"not null;primaryKey;autoIncrement"`
 	UserID        int       `gorm:"not null;index:idx_user_event_item_wish"`
-	EventID       int       `gorm:"not null;index:idx_user_event_item_wish"`
+	TeamID        int       `gorm:"not null;index:idx_user_team_item_wish"`
 	ItemField     ItemField `gorm:"not null"`
 	Value         string    `gorm:"not null"`
 	Fulfilled     bool      `gorm:"not null;default:false"`
 	BuildEnabling bool      `gorm:"not null;default:false"`
 	Priority      int       `gorm:"not null;default:0"`
 
-	User  *User  `gorm:"foreignKey:UserID"`
-	Event *Event `gorm:"foreignKey:EventID"`
+	User *User `gorm:"foreignKey:UserID"`
+	Team *Team `gorm:"foreignKey:TeamID"`
 }
 
 func (r *ItemWishRepository) SaveItemWish(itemWish *ItemWish) (*ItemWish, error) {
@@ -33,8 +33,8 @@ func (r *ItemWishRepository) SaveItemWish(itemWish *ItemWish) (*ItemWish, error)
 	return itemWish, err
 }
 
-func (r *ItemWishRepository) GetItemWishesForEventAndUser(eventId int, userId int) (itemWishes []*ItemWish, err error) {
-	err = r.DB.Where("event_id = ? AND user_id = ?", eventId, userId).Find(&itemWishes).Error
+func (r *ItemWishRepository) GetItemWishesForTeamAndUser(teamId int, userId int) (itemWishes []*ItemWish, err error) {
+	err = r.DB.Where("team_id = ? AND user_id = ?", teamId, userId).Find(&itemWishes).Error
 	if err != nil {
 		return nil, err
 	}
@@ -42,11 +42,7 @@ func (r *ItemWishRepository) GetItemWishesForEventAndUser(eventId int, userId in
 }
 
 func (r *ItemWishRepository) GetItemWishesForTeam(teamId int) (itemWishes []*ItemWish, err error) {
-	query := `SELECT iw.* FROM item_wishes iw
-				JOIN teams t ON iw.event_id = t.event_id
-				JOIN team_users tu ON t.id = tu.team_id
-				WHERE t.id = ? AND tu.user_id = iw.user_id`
-	err = r.DB.Raw(query, teamId).Scan(&itemWishes).Error
+	err = r.DB.Where("team_id = ?", teamId).Find(&itemWishes).Error
 	if err != nil {
 		return nil, err
 	}
@@ -54,11 +50,7 @@ func (r *ItemWishRepository) GetItemWishesForTeam(teamId int) (itemWishes []*Ite
 }
 
 func (r *ItemWishRepository) GetSimilarItemWishesInTeam(teamId int, itemField ItemField, value string) (itemWishes []*ItemWish, err error) {
-	query := `SELECT iw.* FROM item_wishes iw
-				JOIN teams t ON iw.event_id = t.event_id
-				JOIN team_users tu ON t.id = tu.team_id
-				WHERE t.id = ? AND iw.item_field = ? AND iw.value = ?`
-	err = r.DB.Raw(query, teamId, itemField, value).Scan(&itemWishes).Error
+	err = r.DB.Where("team_id = ?  AND item_field = ? AND value = ?", teamId, itemField, value).Find(&itemWishes).Error
 	if err != nil {
 		return nil, err
 	}

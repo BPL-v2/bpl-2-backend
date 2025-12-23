@@ -136,7 +136,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		log.Printf("Error fetching character for player %d: %v", player.UserId, clientError)
 		return
 	}
-	err := s.itemWishService.UpdateItemWishFulfillment(event.Id, player.UserId, characterResponse.Character)
+	err := s.itemWishService.UpdateItemWishFulfillment(player.TeamId, player.UserId, characterResponse.Character)
 	if err != nil {
 		log.Printf("Error updating item wish fulfillment for player %d: %v", player.UserId, err)
 	}
