@@ -4,6 +4,7 @@ import (
 	"bpl/client"
 	"bpl/repository"
 	"bpl/utils"
+	"math"
 )
 
 type ItemWishService struct {
@@ -38,14 +39,15 @@ func (s *ItemWishService) UpdateItemWish(itemWish *repository.ItemWish, teamId i
 		if err != nil {
 			return nil, err
 		}
+		priority := int(math.Max(math.Min(float64(*Priority), float64(len(itemWishes))), 0))
 		for _, iw := range itemWishes {
-			if iw.Priority == *Priority {
+			if iw.Priority == priority {
 				iw.Priority = itemWish.Priority
 				s.itemWishRepository.SaveItemWish(iw)
 				break
 			}
 		}
-		itemWish.Priority = *Priority
+		itemWish.Priority = priority
 	}
 	return s.itemWishRepository.SaveItemWish(itemWish)
 }
