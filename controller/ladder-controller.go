@@ -173,6 +173,9 @@ func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
 			UserId: userId,
 			Trees:  make(map[int][]int),
 		}
+		for index, tree := range trees {
+			atlas.Trees[index] = tree.Nodes
+		}
 		primaryIndex := 0
 		latestTimestamp := time.Time{}
 		for index, tree := range trees {
