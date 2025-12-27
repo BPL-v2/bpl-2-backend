@@ -166,7 +166,7 @@ func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
 			userAtlases[atlas.UserID] = &Atlas{
 				UserId:  atlas.UserID,
 				EventId: atlas.EventID,
-				Index:   -1,
+				Index:   atlas.Index,
 				Trees:   map[int][]int{},
 			}
 		}
