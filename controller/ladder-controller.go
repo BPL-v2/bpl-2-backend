@@ -150,29 +150,41 @@ type LadderEntry struct {
 }
 
 type Atlas struct {
-	UserId  int           `json:"user_id" binding:"required"`
-	EventId int           `json:"event_id" binding:"required"`
-	Index   int           `json:"index" binding:"required"`
-	Trees   map[int][]int `json:"trees" binding:"required"`
+	UserId       int           `json:"user_id" binding:"required"`
+	PrimaryIndex int           `json:"primary_index" binding:"required"`
+	Trees        map[int][]int `json:"trees" binding:"required"`
 }
 
 func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
 	if atlases == nil {
 		return nil
 	}
-	userAtlases := make(map[int]*Atlas)
+	userAtlases := make(map[int]map[int]*repository.AtlasTree)
 	for _, atlas := range atlases {
 		if userAtlases[atlas.UserID] == nil {
-			userAtlases[atlas.UserID] = &Atlas{
-				UserId:  atlas.UserID,
-				EventId: atlas.EventID,
-				Index:   atlas.Index,
-				Trees:   map[int][]int{},
+			userAtlases[atlas.UserID] = make(map[int]*repository.AtlasTree)
+		}
+		userAtlases[atlas.UserID][atlas.Index] = atlas
+	}
+
+	mappedAtlases := make([]*Atlas, 0)
+	for userId, trees := range userAtlases {
+		atlas := &Atlas{
+			UserId: userId,
+			Trees:  make(map[int][]int),
+		}
+		primaryIndex := 0
+		latestTimestamp := time.Time{}
+		for index, tree := range trees {
+			if tree.Timestamp.After(latestTimestamp) {
+				latestTimestamp = tree.Timestamp
+				primaryIndex = index
 			}
 		}
-		userAtlases[atlas.UserID].Trees[atlas.Index] = atlas.Nodes
+		atlas.PrimaryIndex = primaryIndex
+		mappedAtlases = append(mappedAtlases, atlas)
 	}
-	return utils.Values(userAtlases)
+	return mappedAtlases
 }
 
 func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterStat, lastActivities map[int]time.Time) []*LadderEntry {

@@ -929,9 +929,7 @@ definitions:
     type: object
   Atlas:
     properties:
-      event_id:
-        type: integer
-      index:
+      primary_index:
         type: integer
       trees:
         additionalProperties:
@@ -942,8 +940,7 @@ definitions:
       user_id:
         type: integer
     required:
-    - event_id
-    - index
+    - primary_index
     - trees
     - user_id
     type: object

@@ -4321,16 +4321,12 @@ const docTemplate = `{
         "Atlas": {
             "type": "object",
             "required": [
-                "event_id",
-                "index",
+                "primary_index",
                 "trees",
                 "user_id"
             ],
             "properties": {
-                "event_id": {
-                    "type": "integer"
-                },
-                "index": {
+                "primary_index": {
                     "type": "integer"
                 },
                 "trees": {
