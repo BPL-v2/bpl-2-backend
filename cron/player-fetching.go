@@ -150,7 +150,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	player.New.AscendancyPoints = characterResponse.Character.GetAscendancyPoints()
 	player.New.MainSkill = characterResponse.Character.GetMainSkill()
 	player.New.EquipmentHash = characterResponse.Character.EquipmentHash()
-	if player.New.EquipmentHash != player.Old.EquipmentHash || time.Since(player.LastUpdateTimes.PoB) > 15*time.Minute {
+	if player.New.EquipmentHash != player.Old.EquipmentHash {
 		charQueue <- characterResponse.Character
 		player.LastUpdateTimes.PoB = time.Now()
 	}
