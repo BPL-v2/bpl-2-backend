@@ -4580,6 +4580,7 @@ const docTemplate = `{
                 "id",
                 "is_current",
                 "is_locked",
+                "is_main_event",
                 "is_public",
                 "max_size",
                 "name",
@@ -4609,6 +4610,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "is_locked": {
+                    "type": "boolean"
+                },
+                "is_main_event": {
                     "type": "boolean"
                 },
                 "is_public": {
@@ -4669,6 +4673,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "is_locked": {
+                    "type": "boolean"
+                },
+                "is_main_event": {
                     "type": "boolean"
                 },
                 "is_public": {

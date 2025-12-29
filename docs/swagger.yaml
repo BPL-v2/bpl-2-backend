@@ -1119,6 +1119,8 @@ definitions:
         type: boolean
       is_locked:
         type: boolean
+      is_main_event:
+        type: boolean
       is_public:
         type: boolean
       max_size:
@@ -1142,6 +1144,7 @@ definitions:
     - id
     - is_current
     - is_locked
+    - is_main_event
     - is_public
     - max_size
     - name
@@ -1165,6 +1168,8 @@ definitions:
       is_current:
         type: boolean
       is_locked:
+        type: boolean
+      is_main_event:
         type: boolean
       is_public:
         type: boolean

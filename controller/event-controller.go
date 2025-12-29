@@ -241,6 +241,7 @@ type EventCreate struct {
 	ApplicationEndTime   time.Time              `json:"application_end_time" binding:"required"`
 	Public               bool                   `json:"is_public"`
 	Locked               bool                   `json:"is_locked"`
+	IsMainEvent          bool                   `json:"is_main_event"`
 }
 
 type Event struct {
@@ -258,6 +259,7 @@ type Event struct {
 	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
 	Public               bool                   `json:"is_public" binding:"required"`
 	Locked               bool                   `json:"is_locked" binding:"required"`
+	IsMainEvent          bool                   `json:"is_main_event" binding:"required"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {
@@ -274,6 +276,7 @@ func (e *EventCreate) toModel() *repository.Event {
 		ApplicationEndTime:   e.ApplicationEndTime,
 		Public:               e.Public,
 		Locked:               e.Locked,
+		IsMainEvent:          e.IsMainEvent,
 	}
 	if e.Id != nil {
 		event.Id = *e.Id
