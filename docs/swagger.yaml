@@ -1101,6 +1101,13 @@ definitions:
     - item_field
     - value
     type: object
+  EngagementAdd:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   Event:
     properties:
       application_end_time:
@@ -2570,6 +2577,26 @@ paths:
       - BearerAuth: []
       tags:
       - guild-stash
+  /engagement:
+    post:
+      consumes:
+      - application/json
+      description: Add a new engagement or increment existing engagement number
+      operationId: AddEngagement
+      parameters:
+      - description: Engagement to add
+        in: body
+        name: engagement
+        required: true
+        schema:
+          $ref: '#/definitions/EngagementAdd'
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      tags:
+      - engagement
   /events:
     get:
       description: Fetches all events

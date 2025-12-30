@@ -18,6 +18,39 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/engagement": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new engagement or increment existing engagement number",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "engagement"
+                ],
+                "operationId": "AddEngagement",
+                "parameters": [
+                    {
+                        "description": "Engagement to add",
+                        "name": "engagement",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/EngagementAdd"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/events": {
             "get": {
                 "security": [
@@ -4565,6 +4598,17 @@ const docTemplate = `{
                     "$ref": "#/definitions/ItemField"
                 },
                 "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "EngagementAdd": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }
