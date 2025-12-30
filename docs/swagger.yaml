@@ -2098,7 +2098,6 @@ definitions:
     - FetchCharacterData
     - FetchGuildStashes
     - DetermineGuildStashAccess
-    - RefreshPoETokens
     type: string
     x-enum-varnames:
     - FetchStashChanges
@@ -2106,7 +2105,6 @@ definitions:
     - FetchCharacterData
     - FetchGuildStashes
     - DetermineGuildStashAccess
-    - RefreshPoETokens
   NumberField:
     enum:
     - STACK_SIZE
