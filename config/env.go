@@ -32,9 +32,10 @@ type Config struct {
 	TwitchClientSecret string
 
 	// Path of Exile
-	POEClientID     string
-	POEClientSecret string
-	POEClientAgent  string
+	POEClientID      string
+	POEClientSecret  string
+	POEClientAgent   string
+	RefreshPoETokens bool
 
 	// Path of Building
 	POBServerURL string
@@ -76,9 +77,10 @@ func loadConfig() *Config {
 		TwitchClientSecret: getEnv("TWITCH_CLIENT_SECRET"),
 
 		// Path of Exile - required for game functionality
-		POEClientID:     getEnv("POE_CLIENT_ID"),
-		POEClientSecret: getEnv("POE_CLIENT_SECRET"),
-		POEClientAgent:  getEnv("POE_CLIENT_AGENT"),
+		POEClientID:      getEnv("POE_CLIENT_ID"),
+		POEClientSecret:  getEnv("POE_CLIENT_SECRET"),
+		POEClientAgent:   getEnv("POE_CLIENT_AGENT"),
+		RefreshPoETokens: getEnvWithDefault("REFRESH_POE_TOKENS", "false") == "true",
 
 		// Path of Building - optional
 		POBServerURL: getEnvWithDefault("POB_SERVER_URL", "localhost:8080"),

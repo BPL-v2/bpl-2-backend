@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bpl/client"
+	"bpl/cron"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -13,14 +14,16 @@ import (
 )
 
 type CharacterController struct {
-	characterService *service.CharacterService
-	userService      *service.UserService
+	characterService      *service.CharacterService
+	userService           *service.UserService
+	playerFetchingService *cron.PlayerFetchingService
 }
 
 func NewCharacterController(poeClient *client.PoEClient) *CharacterController {
 	return &CharacterController{
-		characterService: service.NewCharacterService(poeClient),
-		userService:      service.NewUserService(),
+		characterService:      service.NewCharacterService(poeClient),
+		userService:           service.NewUserService(),
+		playerFetchingService: cron.NewPlayerFetchingService(poeClient),
 	}
 }
 
@@ -51,12 +54,18 @@ func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
 func (e *CharacterController) updateCharacterHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		characterId := c.Param("character_id")
-		character, err := e.characterService.UpdateCharacter(characterId)
+		characterInfo, err := e.characterService.GetInfoForCharacter(characterId)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.String(404, "Character not found")
-				return
-			}
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		playerUpdate, err := characterInfo.ToPlayerUpdate()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		character, err := e.playerFetchingService.UpdateCharacter(playerUpdate, characterInfo.Event)
+		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}

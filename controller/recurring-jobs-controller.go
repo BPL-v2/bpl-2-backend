@@ -50,14 +50,12 @@ var jobList = []repository.JobType{
 	repository.EvaluateStashChanges,
 	repository.FetchCharacterData,
 	repository.FetchGuildStashes,
-	repository.RefreshPoETokens,
 }
 
 func NewRecurringJobsController(poeClient *client.PoEClient) *RecurringJobsController {
 	controller := &RecurringJobsController{
 		service: cron.NewRecurringJobService(poeClient),
 	}
-	// controller.StartScoreUpdater()
 	return controller
 }
 

@@ -50,7 +50,7 @@ func (r *ItemWishRepository) GetItemWishesForTeam(teamId int) (itemWishes []*Ite
 }
 
 func (r *ItemWishRepository) GetSimilarItemWishesInTeam(teamId int, itemField ItemField, value string) (itemWishes []*ItemWish, err error) {
-	err = r.DB.Where("team_id = ?  AND item_field = ? AND value = ?", teamId, itemField, value).Find(&itemWishes).Error
+	err = r.DB.Where("team_id = ? AND item_field = ? AND value = ?", teamId, itemField, value).Find(&itemWishes).Error
 	if err != nil {
 		return nil, err
 	}

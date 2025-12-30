@@ -2,6 +2,7 @@ package cron
 
 import (
 	"bpl/client"
+	"bpl/config"
 	"bpl/repository"
 	"bpl/service"
 	"context"
@@ -43,8 +44,17 @@ func NewRecurringJobService(poeClient *client.PoEClient) *RecurringJobService {
 	if err != nil {
 		log.Fatal(err)
 	}
+	s.StartLongRunningJobs()
 	s.Jobs = jobs
 	return s
+}
+
+func (s *RecurringJobService) StartLongRunningJobs() {
+	if config.Env().RefreshPoETokens {
+		// make sure to only run this on the server
+		go s.oauthService.RefreshPoETokensLoop(context.Background(), time.Duration(10)*time.Minute)
+	}
+	go PlayerStatsLoop(context.Background())
 }
 
 func (s *RecurringJobService) InitializeJobs() (map[repository.JobType]*RecurringJob, error) {
@@ -105,8 +115,6 @@ func (s *RecurringJobService) StartJob(job *RecurringJob) error {
 		return s.FetchCharacterData(job)
 	case repository.FetchGuildStashes:
 		return s.FetchGuildStashes(job)
-	case repository.RefreshPoETokens:
-		return s.RefreshPoETokens(job)
 	default:
 		return fmt.Errorf("invalid job type")
 	}
@@ -145,7 +153,7 @@ func (s *RecurringJobService) FetchCharacterData(job *RecurringJob) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
 	job.Cancel = cancel
 	go PlayerFetchLoop(ctx, event, s.poeClient)
-	go PlayerStatsLoop(ctx, event)
+	go PlayerStatsLoop(ctx)
 	return nil
 }
 
@@ -158,12 +166,5 @@ func (s *RecurringJobService) FetchGuildStashes(job *RecurringJob) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
 	job.Cancel = cancel
 	go GuildStashFetchLoop(ctx, event, s.poeClient)
-	return nil
-}
-
-func (s *RecurringJobService) RefreshPoETokens(job *RecurringJob) error {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Until(job.EndDate))
-	job.Cancel = cancel
-	go s.oauthService.RefreshPoETokensLoop(ctx, time.Duration(10)*time.Minute)
 	return nil
 }

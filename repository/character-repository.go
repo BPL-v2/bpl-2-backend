@@ -217,6 +217,17 @@ func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*Charac
 	return charData, nil
 }
 
+func (r *CharacterRepository) GetLatestCharacterStats(characterId string) (*CharacterStat, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharacterStats"))
+	defer timer.ObserveDuration()
+	charData := &CharacterStat{}
+	err := r.DB.Where("character_id = ?", characterId).Order("time DESC").First(charData).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting latest character stats for character %s: %w", characterId, err)
+	}
+	return charData, nil
+}
+
 func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[string]*CharacterStat, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharacterStatsForEvent"))
 	defer timer.ObserveDuration()

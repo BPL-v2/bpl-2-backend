@@ -15,7 +15,6 @@ const (
 	FetchCharacterData        JobType = "FetchCharacterData"
 	FetchGuildStashes         JobType = "FetchGuildStashes"
 	DetermineGuildStashAccess JobType = "DetermineGuildStashAccess"
-	RefreshPoETokens          JobType = "RefreshPoETokens"
 	// CalculateScores      JobType = "CalculateScores"
 )
 

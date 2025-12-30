@@ -16,8 +16,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+type EventChar struct {
+	EventId   int
+	Character *client.Character
+}
+
 var (
-	charQueue = make(chan *client.Character, 2000)
+	charQueue = make(chan EventChar, 2000)
 )
 var pobQueueGauge = promauto.NewGauge(
 	prometheus.GaugeOpts{
@@ -55,7 +60,6 @@ type PlayerFetchingService struct {
 
 	lastLadderUpdate time.Time
 	poeClient        *client.PoEClient
-	event            *repository.Event
 }
 
 func (s *PlayerFetchingService) ReloadTimings() error {
@@ -67,7 +71,7 @@ func (s *PlayerFetchingService) ReloadTimings() error {
 	return nil
 }
 
-func NewPlayerFetchingService(poeClient *client.PoEClient, event *repository.Event) *PlayerFetchingService {
+func NewPlayerFetchingService(poeClient *client.PoEClient) *PlayerFetchingService {
 	return &PlayerFetchingService{
 		userRepository:        repository.NewUserRepository(),
 		objectiveMatchService: service.NewObjectiveMatchService(),
@@ -82,7 +86,6 @@ func NewPlayerFetchingService(poeClient *client.PoEClient, event *repository.Eve
 		activityRepository:    repository.NewActivityRepository(),
 		lastLadderUpdate:      time.Now().Add(-1 * time.Hour),
 		poeClient:             poeClient,
-		event:                 event,
 	}
 }
 
@@ -106,7 +109,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 	}
 	player.SuccessiveErrors = 0
 	for _, char := range charactersResponse.Characters {
-		if char.League != nil && *char.League == s.event.Name && char.Level > player.New.CharacterLevel {
+		if char.League != nil && *char.League == event.Name && char.Level > player.New.CharacterLevel {
 			player.New.CharacterName = char.Name
 			player.New.CharacterLevel = char.Level
 			player.New.CharacterXP = char.Experience
@@ -115,7 +118,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 	}
 }
 
-func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) {
+func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) (*client.Character, error) {
 	fmt.Println("Updating character", player.New.CharacterName)
 	characterResponse, clientError := s.poeClient.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
 	player.Mu.Lock()
@@ -124,17 +127,14 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	if clientError != nil {
 		player.SuccessiveErrors++
 		if clientError.StatusCode == 401 || clientError.StatusCode == 403 {
-			fmt.Printf("Error fetching character for player %d: %d", player.UserId, clientError.StatusCode)
 			player.TokenExpiry = time.Now()
-			return
+			return nil, fmt.Errorf("error fetching character for player %d: %d", player.UserId, clientError.StatusCode)
 		}
 		if clientError.StatusCode == 404 {
-			fmt.Printf("Character not found for player %d: %s\n", player.UserId, player.New.CharacterName)
 			player.New.CharacterName = ""
-			return
+			return nil, fmt.Errorf("character not found for player %d: %s", player.UserId, player.New.CharacterName)
 		}
-		log.Printf("Error fetching character for player %d: %v", player.UserId, clientError)
-		return
+		return nil, fmt.Errorf("error fetching character for player %d: %v", player.UserId, clientError)
 	}
 	err := s.itemWishService.UpdateItemWishFulfillment(player.TeamId, player.UserId, characterResponse.Character)
 	if err != nil {
@@ -151,7 +151,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	player.New.MainSkill = characterResponse.Character.GetMainSkill()
 	player.New.EquipmentHash = characterResponse.Character.EquipmentHash()
 	if player.New.EquipmentHash != player.Old.EquipmentHash {
-		charQueue <- characterResponse.Character
+		charQueue <- EventChar{EventId: event.Id, Character: characterResponse.Character}
 		player.LastUpdateTimes.PoB = time.Now()
 	}
 	character := &repository.Character{
@@ -166,25 +166,18 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		Pantheon:         player.New.Pantheon,
 		AtlasPoints:      player.New.MaxAtlasTreeNodes(),
 	}
-	fmt.Printf("Saving character %s (%s) for user %d\n", character.Name, character.Id, player.UserId)
-	fmt.Printf("Character details: Level %d, Main Skill %s, Ascendancy %s, Ascendancy Points %d, Pantheon %v\n",
-		characterResponse.Character.Level,
-		characterResponse.Character.GetMainSkill(),
-		characterResponse.Character.Class,
-		characterResponse.Character.GetAscendancyPoints(),
-		characterResponse.Character.HasPantheon(),
-	)
 	err = s.characterRepository.Save(character)
 	if err != nil {
-		fmt.Printf("Error saving character %s (%s) for user %d: %v\n", character.Name, character.Id, player.UserId, err)
+		return nil, fmt.Errorf("Error saving character %s (%s) for user %d: %v\n", character.Name, character.Id, player.UserId, err)
 	}
+	return characterResponse.Character, nil
 }
 
-func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate) {
-	if s.event.GameVersion == repository.PoE2 {
+func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate, event *repository.Event) {
+	if event.GameVersion == repository.PoE2 {
 		return
 	}
-	leagueAccount, err := s.poeClient.GetLeagueAccount(player.Token, s.event.Name)
+	leagueAccount, err := s.poeClient.GetLeagueAccount(player.Token, event.Name)
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.LeagueAccount = time.Now()
@@ -201,7 +194,7 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 	player.SuccessiveErrors = 0
 	player.New.AtlasPassiveTrees = leagueAccount.LeagueAccount.AtlasPassiveTrees
 	if len(player.New.AtlasPassiveTrees) > 0 {
-		err := s.atlasService.SaveAtlasTrees(player.UserId, s.event.Id, player.New.AtlasPassiveTrees)
+		err := s.atlasService.SaveAtlasTrees(player.UserId, event.Id, player.New.AtlasPassiveTrees)
 		if err != nil {
 			fmt.Printf("Error saving atlas trees %d: %v\n", player.UserId, err)
 		}
@@ -209,23 +202,23 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate)
 
 }
 
-func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
+func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate, event *repository.Event) {
 	if !s.shouldUpdateLadder(s.timings) {
 		return
 	}
 	s.lastLadderUpdate = time.Now()
 	var resp *client.GetLeagueLadderResponse
 	var clientError *client.ClientError
-	if s.event.GameVersion == repository.PoE2 {
+	if event.GameVersion == repository.PoE2 {
 		// todo: get the ladder for the correct event
-		resp, clientError = s.poeClient.GetPoE2Ladder(s.event.Name)
+		resp, clientError = s.poeClient.GetPoE2Ladder(event.Name)
 	} else {
 		token, err := s.oauthService.GetApplicationToken(repository.ProviderPoE)
 		if err != nil {
 			log.Printf("Error fetching application token: %v", err)
 			return
 		}
-		resp, clientError = s.poeClient.GetFullLadder(token, s.event.Name)
+		resp, clientError = s.poeClient.GetFullLadder(token, event.Name)
 	}
 	if clientError != nil {
 		log.Printf("Error fetching ladder: %v", clientError)
@@ -270,14 +263,14 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate) {
 	// 		})
 	// 	}
 	// }
-	err := s.ladderService.UpsertLadder(entriesToPersist, s.event.Id, charToUserId)
+	err := s.ladderService.UpsertLadder(entriesToPersist, event.Id, charToUserId)
 	if err != nil {
 		log.Print(clientError)
 	}
 }
 
-func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdate, error) {
-	users, err := service.userRepository.GetUsersForEvent(service.event.Id)
+func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event) ([]*parser.PlayerUpdate, error) {
+	users, err := service.userRepository.GetUsersForEvent(event.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +293,7 @@ func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdat
 			}{},
 		}
 	})
-	latestCharacters, err := service.characterService.GetCharactersForEvent(service.event.Id)
+	latestCharacters, err := service.characterService.GetCharactersForEvent(event.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -332,11 +325,11 @@ func (service *PlayerFetchingService) initPlayerUpdates() ([]*parser.PlayerUpdat
 	return players, nil
 }
 
-func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.PlayerUpdate) []*parser.PlayerUpdate {
-	users, err := service.userRepository.GetUsersForEvent(service.event.Id)
+func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.PlayerUpdate, event *repository.Event) []*parser.PlayerUpdate {
+	users, err := service.userRepository.GetUsersForEvent(event.Id)
 	usermap := make(map[int]*repository.TeamUserWithPoEToken, len(users))
 	if err != nil {
-		fmt.Printf("Error fetching users for event %d: %v", service.event.Id, err)
+		fmt.Printf("Error fetching users for event %d: %v", event.Id, err)
 		return players
 	}
 	for _, player := range players {
@@ -375,16 +368,22 @@ func float2Int32(f float64) int32 {
 	return int32(f)
 }
 
-func updateStats(character *client.Character, event *repository.Event, characterRepo *repository.CharacterRepository, cache map[string]*PlayerStatsCache, mu *sync.Mutex) {
+func updateStats(character *client.Character, eventId int, characterRepo *repository.CharacterRepository) {
+	oldStats, err := characterRepo.GetLatestCharacterStats(character.Id)
+	if err != nil {
+		log.Printf("Error fetching latest stats for character %s: %v", character.Name, err)
+		return
+	}
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
 		fmt.Printf("Error fetching PoB export for character %s: %v\n", character.Name, err)
 		return
 	}
+	pobsCalculatedCounter.Inc()
 	stats := pob.Build.PlayerStats
 	newStats := &repository.CharacterStat{
 		Time:          time.Now(),
-		EventId:       event.Id,
+		EventId:       eventId,
 		CharacterId:   character.Id,
 		DPS:           float2Int64(utils.Max(stats.CombinedDPS, stats.CullingDPS, stats.FullDPS, stats.FullDotDPS, stats.PoisonDPS, stats.ReservationDPS, stats.TotalDPS, stats.TotalDotDPS, stats.WithBleedDPS, stats.WithIgniteDPS, stats.WithPoisonDPS)),
 		EHP:           float2Int32(stats.TotalEHP),
@@ -398,48 +397,27 @@ func updateStats(character *client.Character, event *repository.Event, character
 		XP:            int64(character.Experience),
 		MovementSpeed: float2Int32(stats.EffectiveMovementSpeedMod * 100),
 	}
-	mu.Lock()
-	defer mu.Unlock()
-	if cache[character.Name] == nil {
-		cache[character.Name] = &PlayerStatsCache{
-			OldStats: &repository.CharacterStat{},
-		}
-		if character.Equipment != nil {
-			cache[character.Name].NumFilledSlots = len(*character.Equipment)
-		}
-	}
-	// trying to filter out saving stats for characters that are missing equipment pieces if their DPS went down
-	cacheItem := cache[character.Name]
-	if newStats.DPS < cacheItem.OldStats.DPS && character.Equipment != nil && cacheItem.NumFilledSlots > len(*character.Equipment) {
+	if oldStats.IsEqual(newStats) {
+		log.Printf("No changes in stats for character %s, skipping save", character.Name)
 		return
 	}
-	if time.Since(cacheItem.LastPoBUpdate) > 5*time.Minute && export != cacheItem.OldPoBString {
-		cacheItem.OldPoBString = export
-		cacheItem.LastPoBUpdate = time.Now()
-		p := repository.PoBExport{}
-		p.FromString(export)
-
-		err := characterRepo.SavePoB(&repository.CharacterPob{
-			CharacterId: character.Id,
-			Level:       character.Level,
-			MainSkill:   character.GetMainSkill(),
-			Ascendancy:  character.Class,
-			Export:      p,
-			Timestamp:   time.Now(),
-		})
-		pobsSavedCounter.Inc()
-		if err != nil {
-			log.Printf("Error saving PoB for character %s: %v", character.Name, err)
-		}
+	p := repository.PoBExport{}
+	p.FromString(export)
+	err = characterRepo.SavePoB(&repository.CharacterPob{
+		CharacterId: character.Id,
+		Level:       character.Level,
+		MainSkill:   character.GetMainSkill(),
+		Ascendancy:  character.Class,
+		Export:      p,
+		Timestamp:   time.Now(),
+	})
+	if err != nil {
+		log.Printf("Error saving PoB for character %s: %v", character.Name, err)
 	}
-	if !cacheItem.OldStats.IsEqual(newStats) {
-		cacheItem.OldStats = newStats
-		err := characterRepo.CreateCharacterStat(newStats)
-		if err != nil {
-			log.Printf("Error saving character stats for %s: %v", character.Name, err)
-			log.Printf("db stats: %+v", newStats)
-			log.Printf("client stats: %+v", stats)
-		}
+	pobsSavedCounter.Inc()
+	err = characterRepo.CreateCharacterStat(newStats)
+	if err != nil {
+		log.Printf("Error saving character stats for %s: %v", character.Name, err)
 	}
 }
 
@@ -473,42 +451,38 @@ func InitCharacterStatsCache(eventId int, characterRepo *repository.CharacterRep
 
 }
 
-func PlayerStatsLoop(ctx context.Context, event *repository.Event) {
+func PlayerStatsLoop(ctx context.Context) {
 	characterRepo := repository.NewCharacterRepository()
-	cache := InitCharacterStatsCache(event.Id, characterRepo)
-	mu := sync.Mutex{}
 	// make sure that only 2 goroutines are running at the same time
 	semaphore := make(chan struct{}, 2)
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			character, ok := <-charQueue
+			eventCharacter, ok := <-charQueue
 			pobQueueGauge.Set(float64(len(charQueue)))
 			if !ok {
 				log.Println("PoB queue closed, stopping player stats loop")
 				return
 			}
 			semaphore <- struct{}{}
-			go func(character *client.Character) {
+			go func(eventCharacter EventChar) {
 				defer func() { <-semaphore }() // Release the slot when done
-				updateStats(character, event, characterRepo, cache, &mu)
-				pobsCalculatedCounter.Inc()
-			}(character)
+				updateStats(eventCharacter.Character, eventCharacter.EventId, characterRepo)
+			}(eventCharacter)
 		}
 	}
 }
 
 func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
-	service := NewPlayerFetchingService(poeClient, event)
-	players, err := service.initPlayerUpdates()
+	service := NewPlayerFetchingService(poeClient)
+	players, err := service.initPlayerUpdates(event)
 	if err != nil {
 		log.Print(err)
 		return
 	}
-	objectives, err := service.objectiveService.GetObjectivesForEvent(service.event.Id)
+	objectives, err := service.objectiveService.GetObjectivesForEvent(event.Id)
 	if err != nil {
 		log.Print(err)
 		return
@@ -547,20 +521,23 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {
 						defer wg.Done()
-						service.UpdateCharacter(player, event)
+						_, err := service.UpdateCharacter(player, event)
+						if err != nil {
+							fmt.Printf("Error updating character for player %d: %v\n", player.UserId, err)
+						}
 					}(player)
 				}
 				if player.ShouldUpdateLeagueAccount(service.timings) {
 					wg.Add(1)
 					go func(player *parser.PlayerUpdate) {
 						defer wg.Done()
-						service.UpdateLeagueAccount(player)
+						service.UpdateLeagueAccount(player, event)
 					}(player)
 				}
 			}
 			if service.shouldUpdateLadder(service.timings) {
 				wg.Go(func() {
-					service.UpdateLadder(players)
+					service.UpdateLadder(players, event)
 				})
 			}
 			wg.Wait()
@@ -596,7 +573,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			for _, player := range players {
 				player.Old = player.New
 			}
-			players = service.UpdatePlayerTokens(players)
+			players = service.UpdatePlayerTokens(players, event)
 			fmt.Printf("PlayerFetchLoop for event %s completed, waiting for next iteration\n", event.Name)
 			time.Sleep(1 * time.Second)
 		}

@@ -5,11 +5,13 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	"fmt"
+	"sync"
 	"time"
 )
 
 type CharacterService struct {
 	characterRepository *repository.CharacterRepository
+	eventRepository     *repository.EventRepository
 	teamRepository      *repository.TeamRepository
 	userRepository      *repository.UserRepository
 	activityRepository  *repository.ActivityRepository
@@ -51,6 +53,10 @@ func (c *CharacterService) GetCharactersForEvent(eventId int) ([]*repository.Cha
 	return c.characterRepository.GetCharactersForEvent(eventId)
 }
 
+func (c *CharacterService) GetCharacterById(characterId string) (*repository.Character, error) {
+	return c.characterRepository.GetCharacterById(characterId)
+}
+
 func (c *CharacterService) GetCharacterHistory(characterId string) ([]*repository.CharacterStat, error) {
 	return c.characterRepository.GetCharacterHistory(characterId)
 }
@@ -73,6 +79,7 @@ func (c *CharacterService) GetPobForIdBeforeTimestamp(characterId string, timest
 	}
 	return pob, nil
 }
+
 func (c *CharacterService) GetPobs(characterId string) ([]*repository.CharacterPob, error) {
 	pob, err := c.characterRepository.GetPobs(characterId)
 	if err != nil {
@@ -101,4 +108,64 @@ func (c *CharacterService) UpdateCharacter(characterId string) (*client.Characte
 		return nil, fmt.Errorf("%s", clientErr.Description)
 	}
 	return response.Character, nil
+}
+
+type CharacterInfo struct {
+	User      *repository.User
+	Event     *repository.Event
+	Character *repository.Character
+	TeamId    int
+}
+
+func (ci *CharacterInfo) ToPlayerUpdate() (*parser.PlayerUpdate, error) {
+	for _, oauth := range ci.User.OauthAccounts {
+		if oauth.Provider == repository.ProviderPoE && oauth.Expiry.After(time.Now()) {
+			return &parser.PlayerUpdate{
+				UserId:      ci.User.Id,
+				TeamId:      ci.TeamId,
+				AccountName: *ci.User.GetAccountName(repository.ProviderPoE),
+				Token:       oauth.AccessToken,
+				TokenExpiry: oauth.Expiry,
+				Mu:          sync.Mutex{},
+				New: parser.Player{
+					CharacterId:   ci.Character.Id,
+					CharacterName: ci.Character.Name,
+				},
+				Old: parser.Player{},
+				LastUpdateTimes: struct {
+					CharacterName time.Time
+					Character     time.Time
+					LeagueAccount time.Time
+					PoB           time.Time
+				}{},
+			}, nil
+		}
+	}
+	return nil, fmt.Errorf("no valid PoE oauth token found for user")
+}
+
+func (c *CharacterService) GetInfoForCharacter(characterId string) (*CharacterInfo, error) {
+	character, err := c.characterRepository.GetCharacterById(characterId)
+	if err != nil {
+		return nil, err
+	}
+	if character.UserId == nil {
+		return nil, fmt.Errorf("character has no associtated user")
+	}
+	user, err := c.userRepository.GetUserById(*character.UserId, "OauthAccounts")
+	if err != nil {
+		return nil, err
+	}
+	teamUser, err := c.teamRepository.GetTeamForUser(character.EventId, *character.UserId)
+	if err != nil {
+		return nil, err
+	}
+	event, err := c.eventRepository.GetEventById(character.EventId)
+	return &CharacterInfo{
+		Character: character,
+		User:      user,
+		Event:     event,
+		TeamId:    teamUser.TeamId,
+	}, nil
+
 }
