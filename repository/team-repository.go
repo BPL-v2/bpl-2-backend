@@ -170,3 +170,12 @@ func (r *TeamRepository) GetTeamForUser(eventId int, userId int) (*TeamUser, err
 	}
 	return team, nil
 }
+
+func (r *TeamRepository) GetAllTeamUsers() ([]*TeamUser, error) {
+	teamUsers := make([]*TeamUser, 0)
+	result := r.DB.Find(&teamUsers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return teamUsers, nil
+}

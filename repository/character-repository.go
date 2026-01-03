@@ -275,3 +275,23 @@ func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPo
 	}
 	return charData, nil
 }
+
+func (r *CharacterRepository) GetAllHighestLevelCharactersForEachEventAndUser() ([]*Character, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetAllHighestLevelCharactersForEachEventAndUser"))
+	defer timer.ObserveDuration()
+	charData := []*Character{}
+	query := `SELECT c.* FROM characters c
+		JOIN (
+			SELECT event_id, user_id, MAX(level) as max_level
+			FROM characters
+			WHERE user_id IS NOT NULL
+			GROUP BY event_id, user_id
+		) as max_chars
+		ON c.event_id = max_chars.event_id AND c.user_id = max_chars.user_id AND c.level = max_chars.max_level
+		ORDER BY c.event_id, c.user_id`
+	err := r.DB.Raw(query).Scan(&charData).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting all highest level characters for each event and user: %w", err)
+	}
+	return charData, nil
+}

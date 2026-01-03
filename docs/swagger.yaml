@@ -910,6 +910,26 @@ definitions:
       viewer_count:
         type: integer
     type: object
+  Achievement:
+    properties:
+      name:
+        $ref: '#/definitions/AchievementName'
+      user_id:
+        type: integer
+    required:
+    - name
+    - user_id
+    type: object
+  AchievementCreate:
+    properties:
+      name:
+        $ref: '#/definitions/AchievementName'
+      user_id:
+        type: integer
+    required:
+    - name
+    - user_id
+    type: object
   Action:
     enum:
     - added
@@ -1919,6 +1939,36 @@ definitions:
     - job_type
     - sleep_after_each_run_seconds
     type: object
+  AchievementName:
+    enum:
+    - Participated in an event
+    - Won an event
+    - Teamlead
+    - MVP
+    - Played 5 leagues
+    - Played 10 leagues
+    - Reached level 90
+    - Reached level 95
+    - Reached level 100
+    - Submitted a bounty
+    - Submitted a point unique
+    - Played 5 different ascendancies
+    - Played 10 different ascendancies
+    type: string
+    x-enum-varnames:
+    - AchievementParticipated
+    - AchievementWinner
+    - AchievementTeamlead
+    - AchievementMVP
+    - AchievementPlayed5Leagues
+    - AchievementPlayed10Leagues
+    - AchievementReachedLvl90
+    - AchievementReachedLvl95
+    - AchievementReachedLvl100
+    - AchievementSubmittedABounty
+    - AchievementSubmittedAPointUnique
+    - AchievementPlayed5DifferentAscendancies
+    - AchievementPlayed10DifferentAscendancies
   AggregationType:
     enum:
     - SUM_LATEST
@@ -2575,6 +2625,57 @@ paths:
       - BearerAuth: []
       tags:
       - guild-stash
+  /achievements:
+    get:
+      description: Retrieve all user achievements in the system.
+      operationId: getAchievements
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/Achievement'
+            type: array
+      summary: Get achievements
+      tags:
+      - Achievement
+    patch:
+      description: Update achievements for all users based on their current progress.
+      operationId: updateAchievements
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      summary: Update achievements
+      tags:
+      - Achievement
+    post:
+      consumes:
+      - application/json
+      description: Add new achievement to the system.
+      operationId: addAchievement
+      parameters:
+      - description: Achievement to add
+        in: body
+        name: achievements
+        required: true
+        schema:
+          $ref: '#/definitions/AchievementCreate'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      security:
+      - BearerAuth: []
+      summary: Add achievement
+      tags:
+      - Achievement
   /engagement:
     post:
       consumes:

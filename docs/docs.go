@@ -18,6 +18,86 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/achievements": {
+            "get": {
+                "description": "Retrieve all user achievements in the system.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievement"
+                ],
+                "summary": "Get achievements",
+                "operationId": "getAchievements",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/Achievement"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add new achievement to the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievement"
+                ],
+                "summary": "Add achievement",
+                "operationId": "addAchievement",
+                "parameters": [
+                    {
+                        "description": "Achievement to add",
+                        "name": "achievements",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/AchievementCreate"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update achievements for all users based on their current progress.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Achievement"
+                ],
+                "summary": "Update achievements",
+                "operationId": "updateAchievements",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/engagement": {
             "post": {
                 "security": [
@@ -4327,6 +4407,36 @@ const docTemplate = `{
                 }
             }
         },
+        "Achievement": {
+            "type": "object",
+            "required": [
+                "name",
+                "user_id"
+            ],
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/AchievementName"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "AchievementCreate": {
+            "type": "object",
+            "required": [
+                "name",
+                "user_id"
+            ],
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/AchievementName"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "Action": {
             "type": "string",
             "enum": [
@@ -5795,6 +5905,39 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "AchievementName": {
+            "type": "string",
+            "enum": [
+                "Participated in an event",
+                "Won an event",
+                "Teamlead",
+                "MVP",
+                "Played 5 leagues",
+                "Played 10 leagues",
+                "Reached level 90",
+                "Reached level 95",
+                "Reached level 100",
+                "Submitted a bounty",
+                "Submitted a point unique",
+                "Played 5 different ascendancies",
+                "Played 10 different ascendancies"
+            ],
+            "x-enum-varnames": [
+                "AchievementParticipated",
+                "AchievementWinner",
+                "AchievementTeamlead",
+                "AchievementMVP",
+                "AchievementPlayed5Leagues",
+                "AchievementPlayed10Leagues",
+                "AchievementReachedLvl90",
+                "AchievementReachedLvl95",
+                "AchievementReachedLvl100",
+                "AchievementSubmittedABounty",
+                "AchievementSubmittedAPointUnique",
+                "AchievementPlayed5DifferentAscendancies",
+                "AchievementPlayed10DifferentAscendancies"
+            ]
         },
         "AggregationType": {
             "type": "string",
