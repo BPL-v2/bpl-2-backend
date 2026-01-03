@@ -3,7 +3,6 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
-	"bpl/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +36,7 @@ func setupAchievementController() []RouteInfo {
 // @Description Retrieve all user achievements in the system.
 // @Tags Achievement
 // @Produce json
-// @Success 200 {array} Achievement
+// @Success 200 {object} map[repository.AchievementName][]int
 // @Router /achievements [get]
 func (c *AchievementController) getAchievements() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -46,7 +45,7 @@ func (c *AchievementController) getAchievements() gin.HandlerFunc {
 			ctx.JSON(404, gin.H{"error": "Event not found"})
 			return
 		}
-		ctx.JSON(200, utils.Map(achievements, toAchievement))
+		ctx.JSON(200, achievements)
 	}
 }
 
@@ -67,13 +66,12 @@ func (c *AchievementController) addAchievement() gin.HandlerFunc {
 			ctx.JSON(400, gin.H{"error": "Invalid request body"})
 			return
 		}
-		achievement := achievementCreate.toAchievement()
 		err := c.AchievementService.SaveAchievement(achievementCreate.toAchievement())
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": "Failed to save achievement"})
 			return
 		}
-		ctx.JSON(201, toAchievement(achievement))
+		ctx.JSON(201, achievementCreate)
 	}
 }
 
@@ -96,11 +94,6 @@ func (c *AchievementController) updateAchievements() gin.HandlerFunc {
 	}
 }
 
-type Achievement struct {
-	Name   repository.AchievementName `json:"name" binding:"required"`
-	UserId int                        `json:"user_id" binding:"required"`
-}
-
 type AchievementCreate struct {
 	Name   repository.AchievementName `json:"name" binding:"required"`
 	UserId int                        `json:"user_id" binding:"required"`
@@ -110,12 +103,5 @@ func (t AchievementCreate) toAchievement() *repository.Achievement {
 	return &repository.Achievement{
 		Name:   t.Name,
 		UserId: t.UserId,
-	}
-}
-
-func toAchievement(a *repository.Achievement) Achievement {
-	return Achievement{
-		Name:   a.Name,
-		UserId: a.UserId,
 	}
 }

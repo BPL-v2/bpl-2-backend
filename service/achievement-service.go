@@ -16,8 +16,17 @@ func NewAchievementService() *AchievementService {
 	}
 }
 
-func (s *AchievementService) FindAllAchievements() ([]*repository.Achievement, error) {
-	return s.achievementRepository.GetAllAchievements()
+func (s *AchievementService) FindAllAchievements() (map[repository.AchievementName][]int, error) {
+
+	achievements, err := s.achievementRepository.GetAllAchievements()
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[repository.AchievementName][]int)
+	for _, achievement := range achievements {
+		result[achievement.Name] = append(result[achievement.Name], achievement.UserId)
+	}
+	return result, nil
 }
 
 func (s *AchievementService) SaveAchievement(achievement *repository.Achievement) error {

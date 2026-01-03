@@ -33,9 +33,12 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Achievement"
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
                             }
                         }
                     }
@@ -4403,21 +4406,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "viewer_count": {
-                    "type": "integer"
-                }
-            }
-        },
-        "Achievement": {
-            "type": "object",
-            "required": [
-                "name",
-                "user_id"
-            ],
-            "properties": {
-                "name": {
-                    "$ref": "#/definitions/AchievementName"
-                },
-                "user_id": {
                     "type": "integer"
                 }
             }

@@ -910,16 +910,6 @@ definitions:
       viewer_count:
         type: integer
     type: object
-  Achievement:
-    properties:
-      name:
-        $ref: '#/definitions/AchievementName'
-      user_id:
-        type: integer
-    required:
-    - name
-    - user_id
-    type: object
   AchievementCreate:
     properties:
       name:
@@ -2635,9 +2625,11 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/Achievement'
-            type: array
+            additionalProperties:
+              items:
+                type: integer
+              type: array
+            type: object
       summary: Get achievements
       tags:
       - Achievement
