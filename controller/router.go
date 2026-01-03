@@ -46,6 +46,7 @@ func SetRoutes(r *gin.Engine) {
 	routes = append(routes, setupTimingController()...)
 	routes = append(routes, setupItemWishController()...)
 	routes = append(routes, setupEngagementController()...)
+	routes = append(routes, setupAchievementController()...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
 		handlerfuncs = append(handlerfuncs, AuthenticationMiddleware())
