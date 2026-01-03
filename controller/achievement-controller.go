@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,7 +46,7 @@ func (c *AchievementController) getAchievements() gin.HandlerFunc {
 			ctx.JSON(404, gin.H{"error": "Event not found"})
 			return
 		}
-		ctx.JSON(200, achievements)
+		ctx.JSON(200, utils.Map(achievements, toAchievement))
 	}
 }
 
@@ -72,7 +73,7 @@ func (c *AchievementController) addAchievement() gin.HandlerFunc {
 			ctx.JSON(500, gin.H{"error": "Failed to save achievement"})
 			return
 		}
-		ctx.JSON(201, toAchievement(*achievement))
+		ctx.JSON(201, toAchievement(achievement))
 	}
 }
 
@@ -112,9 +113,9 @@ func (t AchievementCreate) toAchievement() *repository.Achievement {
 	}
 }
 
-func toAchievement(t repository.Achievement) Achievement {
+func toAchievement(a *repository.Achievement) Achievement {
 	return Achievement{
-		Name:   t.Name,
-		UserId: t.UserId,
+		Name:   a.Name,
+		UserId: a.UserId,
 	}
 }
