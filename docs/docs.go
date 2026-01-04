@@ -6235,7 +6235,8 @@ const docTemplate = `{
                 "RANKED_REVERSE",
                 "RANKED_COMPLETION_TIME",
                 "BONUS_PER_COMPLETION",
-                "BINGO_3"
+                "BINGO_3",
+                "BINGO_BOARD"
             ],
             "x-enum-varnames": [
                 "PRESENCE",
@@ -6245,7 +6246,8 @@ const docTemplate = `{
                 "RANKED_REVERSE",
                 "RANKED_COMPLETION",
                 "BONUS_PER_COMPLETION",
-                "BINGO_3"
+                "BINGO_3",
+                "BINGO_BOARD"
             ]
         },
         "ScoringPresetType": {

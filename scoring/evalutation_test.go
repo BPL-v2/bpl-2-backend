@@ -3,6 +3,7 @@ package scoring
 import (
 	"bpl/repository"
 	"bpl/utils"
+	"fmt"
 	"testing"
 	"time"
 
@@ -339,4 +340,156 @@ func TestHandleBingo(t *testing.T) {
 	assert.Equal(t, 10, idTeamIdScoreMap[5][2].Points)
 	assert.Equal(t, 10, idTeamIdScoreMap[6][3].Points)
 
+}
+
+func TestHandleBingoBoardHorizontal(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 10,
+		ScoringPreset: &repository.ScoringPreset{
+			Points: repository.ExtendingNumberSlice{30, 20, 10},
+		},
+	}
+	children := []*repository.Objective{}
+	for i := range 3 {
+		for j := range 3 {
+			children = append(children, &repository.Objective{Id: i*3 + j + 1, Extra: fmt.Sprintf("%d,%d", i, j)})
+		}
+	}
+	objective.Children = children
+
+	now := time.Now()
+	childScores := []*Score{
+		{Id: 1, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-24 * time.Hour)},
+		{Id: 2, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-23 * time.Hour)},
+		{Id: 3, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-22 * time.Hour)},
+	}
+
+	scores, err := handleBingoBoard(objective, make(ObjectiveTeamMatches), childScores)
+	assert.NoError(t, err)
+	bingoScore, found := utils.FindFirst(scores, func(a *Score) bool { return a.Id == 10 })
+	assert.True(t, found)
+	assert.Equal(t, int(objective.ScoringPreset.Points.Get(0)), bingoScore.Points)
+	assert.Equal(t, childScores[2].Timestamp.Unix(), bingoScore.Timestamp.Unix())
+}
+
+func TestGetBingoVertical(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 10,
+		ScoringPreset: &repository.ScoringPreset{
+			Points: repository.ExtendingNumberSlice{30, 20, 10},
+		},
+	}
+	children := []*repository.Objective{}
+	for i := range 3 {
+		for j := range 3 {
+			children = append(children, &repository.Objective{Id: i*3 + j + 1, Extra: fmt.Sprintf("%d,%d", i, j)})
+		}
+	}
+	objective.Children = children
+
+	now := time.Now()
+	childScores := []*Score{
+		{Id: 1, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-24 * time.Hour)},
+		{Id: 4, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-23 * time.Hour)},
+		{Id: 7, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-22 * time.Hour)},
+	}
+
+	scores, err := handleBingoBoard(objective, make(ObjectiveTeamMatches), childScores)
+	assert.NoError(t, err)
+	bingoScore, found := utils.FindFirst(scores, func(a *Score) bool { return a.Id == 10 })
+	assert.True(t, found)
+	assert.Equal(t, int(objective.ScoringPreset.Points.Get(0)), bingoScore.Points)
+	assert.Equal(t, childScores[2].Timestamp.Unix(), bingoScore.Timestamp.Unix())
+}
+
+func TestHandleBingoBoardDiagonal(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 10,
+		ScoringPreset: &repository.ScoringPreset{
+			Points: repository.ExtendingNumberSlice{30, 20, 10},
+		},
+	}
+	children := []*repository.Objective{}
+	for i := range 3 {
+		for j := range 3 {
+			children = append(children, &repository.Objective{Id: i*3 + j + 1, Extra: fmt.Sprintf("%d,%d", i, j)})
+		}
+	}
+	objective.Children = children
+
+	now := time.Now()
+	childScores := []*Score{
+		{Id: 1, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-24 * time.Hour)},
+		{Id: 5, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-23 * time.Hour)},
+		{Id: 9, TeamId: 1, Points: 10, Finished: true, Timestamp: now.Add(-22 * time.Hour)},
+	}
+
+	scores, err := handleBingoBoard(objective, make(ObjectiveTeamMatches), childScores)
+	assert.NoError(t, err)
+	bingoScore, found := utils.FindFirst(scores, func(a *Score) bool { return a.Id == 10 })
+	assert.True(t, found)
+	assert.Equal(t, int(objective.ScoringPreset.Points.Get(0)), bingoScore.Points)
+	assert.Equal(t, childScores[2].Timestamp.Unix(), bingoScore.Timestamp.Unix())
+}
+
+func TestHandleBingoBoardCorrectTime(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 10,
+		ScoringPreset: &repository.ScoringPreset{
+			Points: repository.ExtendingNumberSlice{30, 20, 10},
+		},
+	}
+	children := []*repository.Objective{}
+	childScores := []*Score{}
+	for i := range 3 {
+		for j := range 3 {
+			id := i*3 + j + 1
+			children = append(children, &repository.Objective{Id: id, Extra: fmt.Sprintf("%d,%d", i, j)})
+			childScores = append(childScores, &Score{Id: id, TeamId: 1, Points: 10, Finished: true, Timestamp: time.Now().Add(time.Duration(-id) * time.Hour)})
+		}
+	}
+	objective.Children = children
+
+	scores, err := handleBingoBoard(objective, make(ObjectiveTeamMatches), childScores)
+	assert.NoError(t, err)
+	bingoScore, found := utils.FindFirst(scores, func(a *Score) bool { return a.Id == 10 })
+	assert.True(t, found)
+	assert.Equal(t, int(objective.ScoringPreset.Points.Get(0)), bingoScore.Points)
+	assert.Equal(t, childScores[6].Timestamp.Unix(), bingoScore.Timestamp.Unix())
+}
+
+func TestHandleBingoBoardCorrectRanking(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 10,
+		ScoringPreset: &repository.ScoringPreset{
+			Points: repository.ExtendingNumberSlice{30, 20, 10},
+		},
+	}
+	timestamps := utils.Map([]int{1, 2, 3, 4, 5, 6, 7, 8, 9}, func(i int) time.Time {
+		return time.Now().Add(time.Duration(-i) * time.Hour)
+	})
+	children := []*repository.Objective{}
+	childScores := []*Score{}
+	for i := range 3 {
+		childScores = append(childScores, &Score{Id: i + 1, TeamId: 1, Points: 10, Finished: true, Timestamp: timestamps[i+1]})
+		childScores = append(childScores, &Score{Id: i + 1, TeamId: 2, Points: 10, Finished: true, Timestamp: timestamps[i]})
+		for j := range 3 {
+			id := i*3 + j + 1
+			children = append(children, &repository.Objective{Id: id, Extra: fmt.Sprintf("%d,%d", i, j)})
+		}
+	}
+	objective.Children = children
+
+	scores, err := handleBingoBoard(objective, make(ObjectiveTeamMatches), childScores)
+	assert.NoError(t, err)
+	bingoScoreTeam1, found := utils.FindFirst(scores, func(a *Score) bool { return a.Id == 10 && a.TeamId == 1 })
+	assert.True(t, found)
+	bingoScoreTeam2, found := utils.FindFirst(scores, func(a *Score) bool { return a.Id == 10 && a.TeamId == 2 })
+	assert.True(t, found)
+
+	assert.Equal(t, int(objective.ScoringPreset.Points.Get(0)), bingoScoreTeam1.Points)
+	assert.Equal(t, int(objective.ScoringPreset.Points.Get(1)), bingoScoreTeam2.Points)
+
+	assert.Equal(t, timestamps[1].Unix(), bingoScoreTeam1.Timestamp.Unix())
+	assert.Equal(t, timestamps[0].Unix(), bingoScoreTeam2.Timestamp.Unix())
 }

@@ -1,6 +1,8 @@
 package utils
 
-import "github.com/lib/pq"
+import (
+	"github.com/lib/pq"
+)
 
 func Map[A any, B any](input []A, mapper func(A) B) []B {
 	output := make([]B, len(input))

@@ -3,7 +3,10 @@ package scoring
 import (
 	"bpl/repository"
 	"bpl/utils"
+	"math"
+	"regexp"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -79,6 +82,7 @@ var scoringFunctions = map[repository.ScoringMethod]func(objective *repository.O
 	repository.RANKED_COMPLETION:    handleChildRanking,
 	repository.BONUS_PER_COMPLETION: handleChildBonus,
 	repository.BINGO_3:              handleBingoN(3),
+	repository.BINGO_BOARD:          handleBingoBoard,
 }
 
 func handlePointsFromValue(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
@@ -241,6 +245,127 @@ func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMat
 	}
 
 	return scores, nil
+}
+
+type Tuple struct {
+	X int
+	Y int
+}
+
+func handleBingoBoard(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
+	objectiveMap := make(map[int]*repository.Objective)
+	for _, child := range objective.Children {
+		objectiveMap[child.Id] = child
+	}
+	gridCellMap := make(map[int]Tuple)
+	regex := regexp.MustCompile(`(\d+),(\d+)`)
+	gridSize := 0
+	for _, child := range objective.Children {
+		matches := regex.FindStringSubmatch(child.Extra)
+		if len(matches) == 3 {
+			x, _ := strconv.Atoi(matches[1])
+			y, _ := strconv.Atoi(matches[2])
+			gridCellMap[child.Id] = Tuple{X: x, Y: y}
+			gridSize = utils.Max(gridSize, x+1, y+1)
+		}
+	}
+
+	teamChildFinishes := make(map[int][]*Score)
+	for _, score := range childScores {
+		if score.Finished {
+			teamChildFinishes[score.TeamId] = append(teamChildFinishes[score.TeamId], score)
+		}
+	}
+
+	bingoScores := []*Score{}
+	for teamId, finishedGridCells := range teamChildFinishes {
+		gridToScores := make(map[int]map[int]*Score)
+		for _, score := range finishedGridCells {
+			cellPos, ok := gridCellMap[score.Id]
+			if !ok {
+				continue
+			}
+			if _, exists := gridToScores[cellPos.X]; !exists {
+				gridToScores[cellPos.X] = make(map[int]*Score)
+			}
+			gridToScores[cellPos.X][cellPos.Y] = score
+		}
+		score := &Score{
+			Id:     objective.Id,
+			TeamId: teamId,
+			Points: 0,
+			Number: 0,
+		}
+		finishTime := getBingoCompletionTime(gridToScores, gridSize)
+		if !finishTime.IsZero() {
+			score.Finished = true
+			score.Timestamp = finishTime
+		}
+		bingoScores = append(bingoScores, score)
+	}
+
+	sort.Slice(bingoScores, func(i, j int) bool {
+		if bingoScores[i].Finished != bingoScores[j].Finished {
+			return bingoScores[i].Finished
+		}
+		return bingoScores[i].Timestamp.Before(bingoScores[j].Timestamp)
+	})
+	rank := 1
+	for i, score := range bingoScores {
+		if score.Finished {
+			if i > 0 && (bingoScores[i-1].Finished && bingoScores[i-1].Timestamp.Before(score.Timestamp)) {
+				rank = i + 1
+			}
+			score.Rank = rank
+			score.Points = int(objective.ScoringPreset.Points.Get(rank - 1))
+		}
+	}
+	return append(bingoScores, childScores...), nil
+}
+
+func getBingoCompletionTime(scores map[int]map[int]*Score, gridSize int) time.Time {
+	finishTime := int64(math.MaxInt64)
+	rowTimes := map[int][]int64{}
+	colTimes := map[int][]int64{}
+	diag1Times := []int64{}
+	diag2Times := []int64{}
+	for x, row := range scores {
+		for y := range row {
+			gridSize = utils.Max(gridSize, x, y)
+		}
+	}
+	for x, row := range scores {
+		for y, score := range row {
+			if score.Finished {
+				rowTimes[x] = append(rowTimes[x], score.Timestamp.UnixNano())
+				colTimes[y] = append(colTimes[y], score.Timestamp.UnixNano())
+				if x == y {
+					diag1Times = append(diag1Times, score.Timestamp.UnixNano())
+				}
+				if x+y == gridSize-1 {
+					diag2Times = append(diag2Times, score.Timestamp.UnixNano())
+				}
+			}
+		}
+	}
+	for i := 0; i < gridSize; i++ {
+		if len(rowTimes[i]) == gridSize {
+			finishTime = utils.Min(utils.Max(rowTimes[i]...), finishTime)
+		}
+		if len(colTimes[i]) == gridSize {
+			finishTime = utils.Min(utils.Max(colTimes[i]...), finishTime)
+		}
+	}
+	if len(diag1Times) == gridSize {
+		finishTime = utils.Min(utils.Max(diag1Times...), finishTime)
+	}
+	if len(diag2Times) == gridSize {
+		finishTime = utils.Min(utils.Max(diag2Times...), finishTime)
+	}
+	if finishTime == int64(math.MaxInt64) {
+		return time.Time{}
+	}
+	return time.Unix(0, finishTime)
 }
 
 func handleChildBonus(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {

@@ -53,6 +53,7 @@ const (
 	RANKED_COMPLETION    ScoringMethod = "RANKED_COMPLETION_TIME"
 	BONUS_PER_COMPLETION ScoringMethod = "BONUS_PER_COMPLETION"
 	BINGO_3              ScoringMethod = "BINGO_3"
+	BINGO_BOARD          ScoringMethod = "BINGO_BOARD"
 )
 
 type ScoringPreset struct {

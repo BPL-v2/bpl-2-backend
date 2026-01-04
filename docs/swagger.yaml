@@ -2235,6 +2235,7 @@ definitions:
     - RANKED_COMPLETION_TIME
     - BONUS_PER_COMPLETION
     - BINGO_3
+    - BINGO_BOARD
     type: string
     x-enum-varnames:
     - PRESENCE
@@ -2245,6 +2246,7 @@ definitions:
     - RANKED_COMPLETION
     - BONUS_PER_COMPLETION
     - BINGO_3
+    - BINGO_BOARD
   ScoringPresetType:
     enum:
     - OBJECTIVE
