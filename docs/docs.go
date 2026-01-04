@@ -5931,6 +5931,7 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "SUM_LATEST",
+                "LATEST",
                 "EARLIEST",
                 "EARLIEST_FRESH_ITEM",
                 "MAXIMUM",
@@ -5940,6 +5941,7 @@ const docTemplate = `{
             ],
             "x-enum-varnames": [
                 "AggregationTypeSumLatest",
+                "AggregationTypeLatest",
                 "AggregationTypeEarliest",
                 "AggregationTypeEarliestFreshItem",
                 "AggregationTypeMaximum",

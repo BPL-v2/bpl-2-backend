@@ -23,6 +23,7 @@ type AggregationType string
 
 const (
 	AggregationTypeSumLatest         AggregationType = "SUM_LATEST"
+	AggregationTypeLatest            AggregationType = "LATEST"
 	AggregationTypeEarliest          AggregationType = "EARLIEST"
 	AggregationTypeEarliestFreshItem AggregationType = "EARLIEST_FRESH_ITEM"
 	AggregationTypeMaximum           AggregationType = "MAXIMUM"

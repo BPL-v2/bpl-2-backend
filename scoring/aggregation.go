@@ -47,6 +47,7 @@ var aggregationMap = map[repository.AggregationType]AggregationHandler{
 	repository.AggregationTypeEarliestFreshItem: handleEarliestFreshItem,
 	repository.AggregationTypeEarliest:          handleEarliest,
 	repository.AggregationTypeSumLatest:         handleLatestSum,
+	repository.AggregationTypeLatest:            handleLatest,
 	repository.AggregationTypeMaximum:           handleMaximum,
 	repository.AggregationTypeMinimum:           handleMinimum,
 	repository.AggregationTypeDifferenceBetween: handleDifferenceBetween,
@@ -154,7 +155,7 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 		rank = 1;
 	`
 	matches := make([]*Match, 0)
-	err := db.Raw(query, map[string]interface{}{"objectiveIds": unfinishedObjectiveIds}).Scan(&matches).Error
+	err := db.Raw(query, map[string]any{"objectiveIds": unfinishedObjectiveIds}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +238,7 @@ func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 		return nil, err
 	}
 	matches := make([]*Match, 0)
-	err = db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives)}).Scan(&matches).Error
+	err = db.Raw(query, map[string]any{"objectiveIds": getObjectiveIds(objectives)}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +253,7 @@ func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 	}
 	matches := make([]*Match, 0)
 	err = db.Raw(query,
-		map[string]interface{}{"objectiveIds": getObjectiveIds(objectives)}).Scan(&matches).Error
+		map[string]any{"objectiveIds": getObjectiveIds(objectives)}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
@@ -260,6 +261,42 @@ func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 }
 
 func handleLatestSum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
+	query := `
+    WITH latest AS (
+        SELECT
+            match.objective_id,
+            match.user_id,
+            MAX(timestamp) AS timestamp
+        FROM
+            objective_matches AS match
+        WHERE
+            match.objective_id IN @objectiveIds
+        GROUP BY
+            match.objective_id, match.user_id 
+    )		
+    SELECT
+        match.objective_id,
+        match.team_id,
+        SUM(match.number) AS number,
+        MAX(match.timestamp) AS timestamp
+    FROM
+        objective_matches AS match
+    JOIN
+        latest ON latest.objective_id = match.objective_id 
+        AND (latest.user_id = match.user_id OR (latest.user_id IS NULL AND match.user_id IS NULL))
+        AND latest.timestamp = match.timestamp
+    GROUP BY
+        match.objective_id, match.team_id
+    `
+	matches := make([]*Match, 0)
+	err := db.Raw(query, map[string]any{"objectiveIds": getObjectiveIds(objectives)}).Scan(&matches).Error
+	if err != nil {
+		return nil, err
+	}
+	return matches, nil
+}
+
+func handleLatest(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	query := `
 	WITH latest AS (
 		SELECT
@@ -276,17 +313,16 @@ func handleLatestSum(db *gorm.DB, objectives []*repository.Objective, teamIds []
 	SELECT
 		match.objective_id,
 		match.team_id,
-		SUM(match.number) AS number,
-        MAX(match.timestamp) AS timestamp
+		match.number,
+		match.timestamp,
+		match.user_id
 	FROM
 		objective_matches AS match
 	JOIN
 		latest ON latest.objective_id = match.objective_id AND latest.team_id = match.team_id
-	GROUP BY
-		match.objective_id, match.team_id
 	`
 	matches := make([]*Match, 0)
-	err := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives)}).Scan(&matches).Error
+	err := db.Raw(query, map[string]any{"objectiveIds": getObjectiveIds(objectives)}).Scan(&matches).Error
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +351,7 @@ func getFreshMatches(db *gorm.DB, objectives []*repository.Objective, teamIds []
         objective_matches.team_id
     `
 	matchList := make([]ObjectiveIdTeamId, 0)
-	result := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives), "eventId": eventId}).Scan(&matchList)
+	result := db.Raw(query, map[string]any{"objectiveIds": getObjectiveIds(objectives), "eventId": eventId}).Scan(&matchList)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -347,7 +383,7 @@ func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, te
 		objectiveMap[objective.Id] = *objective
 	}
 	preMatches := make([]*Match, 0)
-	err := db.Raw(query, map[string]interface{}{"objectiveIds": getObjectiveIds(objectives)}).Scan(&preMatches).Error
+	err := db.Raw(query, map[string]any{"objectiveIds": getObjectiveIds(objectives)}).Scan(&preMatches).Error
 	if err != nil {
 		return nil, err
 	}
