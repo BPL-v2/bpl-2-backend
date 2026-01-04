@@ -31,7 +31,7 @@ func NewCharacterService(poeClient *client.PoEClient) *CharacterService {
 }
 
 func (c *CharacterService) TrackActivity(eventId int, update *parser.PlayerUpdate) error {
-	if update.New.CharacterXP != update.Old.CharacterXP {
+	if update.New.Character.Experience != update.Old.Character.Experience {
 		err := c.activityRepository.SaveActivity(&repository.Activity{
 			Time:    time.Now(),
 			UserId:  update.UserId,
@@ -128,8 +128,12 @@ func (ci *CharacterInfo) ToPlayerUpdate() (*parser.PlayerUpdate, error) {
 				TokenExpiry: oauth.Expiry,
 				Mu:          sync.Mutex{},
 				New: parser.Player{
-					CharacterId:   ci.Character.Id,
-					CharacterName: ci.Character.Name,
+					Character: &client.Character{
+						Id:    ci.Character.Id,
+						Name:  ci.Character.Name,
+						Class: ci.Character.Ascendancy,
+						Level: ci.Character.Level,
+					},
 				},
 				Old: parser.Player{},
 				LastUpdateTimes: struct {

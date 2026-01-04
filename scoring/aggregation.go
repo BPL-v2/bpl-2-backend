@@ -76,6 +76,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		repository.AggregationTypeMaximum,
 		repository.AggregationTypeMinimum,
 		repository.AggregationTypeSumLatest,
+		repository.AggregationTypeLatest,
 		repository.AggregationTypeDifferenceBetween,
 	} {
 		if handler, ok := aggregationMap[aggregation]; ok {

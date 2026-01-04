@@ -83,7 +83,7 @@ func loadConfig() *Config {
 		RefreshPoETokens: getEnvWithDefault("REFRESH_POE_TOKENS", "false") == "true",
 
 		// Path of Building - optional
-		POBServerURL: getEnvWithDefault("POB_SERVER_URL", "localhost:8080"),
+		POBServerURL: getEnvWithDefault("POB_SERVER_URL", "http://localhost:8080"),
 
 		// Other
 		KafkaBroker: getEnvWithDefault("KAFKA_BROKER", "localhost:9092"),

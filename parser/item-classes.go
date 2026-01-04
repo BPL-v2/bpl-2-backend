@@ -3715,3 +3715,38 @@ var ItemClasses = map[string]string{
 	"Vortex of Projection":                           "TransfiguredGem",
 	"Wild Strike of Extremes":                        "TransfiguredGem",
 }
+
+var SuperClasses = map[string]string{
+	"Two Hand Sword":           "Weapon",
+	"Wand":                     "Weapon",
+	"Dagger":                   "Weapon",
+	"Rune Dagger":              "Weapon",
+	"Claw":                     "Weapon",
+	"One Hand Axe":             "Weapon",
+	"One Hand Sword":           "Weapon",
+	"Thrusting One Hand Sword": "Weapon",
+	"One Hand Mace":            "Weapon",
+	"Sceptre":                  "Weapon",
+	"Bow":                      "Weapon",
+	"Staff":                    "Weapon",
+	"Warstaff":                 "Weapon",
+	"Two Hand Axe":             "Weapon",
+	"Two Hand Mace":            "Weapon",
+	"FishingRod":               "Weapon",
+
+	"Body Armour": "Armour",
+	"Helmet":      "Armour",
+	"Gloves":      "Armour",
+	"Boots":       "Armour",
+	"Shield":      "Armour",
+
+	"Belt":   "Accessory",
+	"Amulet": "Accessory",
+	"Ring":   "Accessory",
+	"Jewel":  "Accessory",
+
+	"LifeFlask":    "Flask",
+	"ManaFlask":    "Flask",
+	"HybridFlask":  "Flask",
+	"UtilityFlask": "Flask",
+}

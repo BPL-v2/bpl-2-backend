@@ -23,7 +23,9 @@ type EventChar struct {
 
 var (
 	charQueue = make(chan EventChar, 2000)
+	statQueue = make(chan *repository.CharacterStat, 2000)
 )
+
 var pobQueueGauge = promauto.NewGauge(
 	prometheus.GaugeOpts{
 		Name: "bpl_pob_queue_size",
@@ -109,18 +111,18 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 	}
 	player.SuccessiveErrors = 0
 	for _, char := range charactersResponse.Characters {
-		if char.League != nil && *char.League == event.Name && char.Level > player.New.CharacterLevel {
-			player.New.CharacterName = char.Name
-			player.New.CharacterLevel = char.Level
-			player.New.CharacterXP = char.Experience
-			player.New.Ascendancy = char.Class
+		if char.League != nil && *char.League == event.Name && char.Level > player.New.Character.Level {
+			player.New.Character.Name = char.Name
+			player.New.Character.Level = char.Level
+			player.New.Character.Experience = char.Experience
+			player.New.Character.Class = char.Class
 		}
 	}
 }
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) (*client.Character, error) {
-	fmt.Println("Updating character", player.New.CharacterName)
-	characterResponse, clientError := s.poeClient.GetCharacter(player.Token, player.New.CharacterName, event.GetRealm())
+	fmt.Println("Updating character", player.New.Character.Name)
+	characterResponse, clientError := s.poeClient.GetCharacter(player.Token, player.New.Character.Name, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.Character = time.Now()
@@ -131,8 +133,8 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 			return nil, fmt.Errorf("error fetching character for player %d: %d", player.UserId, clientError.StatusCode)
 		}
 		if clientError.StatusCode == 404 {
-			player.New.CharacterName = ""
-			return nil, fmt.Errorf("character not found for player %d: %s", player.UserId, player.New.CharacterName)
+			player.New.Character.Name = ""
+			return nil, fmt.Errorf("character not found for player %d: %s", player.UserId, player.New.Character.Name)
 		}
 		return nil, fmt.Errorf("error fetching character for player %d: %v", player.UserId, clientError)
 	}
@@ -141,29 +143,21 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		log.Printf("Error updating item wish fulfillment for player %d: %v", player.UserId, err)
 	}
 	player.SuccessiveErrors = 0
-	player.New.CharacterName = characterResponse.Character.Name
-	player.New.CharacterId = characterResponse.Character.Id
-	player.New.CharacterLevel = characterResponse.Character.Level
-	player.New.CharacterXP = characterResponse.Character.Experience
-	player.New.Ascendancy = characterResponse.Character.Class
-	player.New.Pantheon = characterResponse.Character.HasPantheon()
-	player.New.AscendancyPoints = characterResponse.Character.GetAscendancyPoints()
-	player.New.MainSkill = characterResponse.Character.GetMainSkill()
-	player.New.EquipmentHash = characterResponse.Character.EquipmentHash()
-	if player.New.EquipmentHash != player.Old.EquipmentHash {
+	player.New.Character = characterResponse.Character
+	if player.Old.Character == nil || (player.New.Character.EquipmentHash() != player.Old.Character.EquipmentHash()) {
+		log.Printf("Character equipment changed for player %d, queuing for PoB processing", player.UserId)
 		charQueue <- EventChar{EventId: event.Id, Character: characterResponse.Character}
 		player.LastUpdateTimes.PoB = time.Now()
 	}
 	character := &repository.Character{
-		Id:               player.New.CharacterId,
+		Id:               player.New.Character.Id,
 		UserId:           &player.UserId,
 		EventId:          event.Id,
-		Name:             player.New.CharacterName,
-		Level:            player.New.CharacterLevel,
-		MainSkill:        player.New.MainSkill,
-		Ascendancy:       player.New.Ascendancy,
-		AscendancyPoints: player.New.AscendancyPoints,
-		Pantheon:         player.New.Pantheon,
+		Name:             player.New.Character.Name,
+		Level:            player.New.Character.Level,
+		MainSkill:        player.New.Character.GetMainSkill(),
+		Ascendancy:       player.New.Character.Class,
+		AscendancyPoints: player.New.Character.GetAscendancyPoints(),
 		AtlasPoints:      player.New.MaxAtlasTreeNodes(),
 	}
 	err = s.characterRepository.Save(character)
@@ -229,40 +223,26 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate, eve
 	foundInLadder := make(map[string]bool)
 	charToUserId := map[string]int{}
 	for _, player := range players {
-		charToUpdate[player.New.CharacterName] = player
-		charToUserId[player.New.CharacterName] = player.UserId
+		charToUpdate[player.New.Character.Name] = player
+		charToUserId[player.New.Character.Name] = player.UserId
 	}
 
 	entriesToPersist := make([]*client.LadderEntry, 0, len(resp.Ladder.Entries))
 	for _, entry := range resp.Ladder.Entries {
 		entriesToPersist = append(entriesToPersist, &entry)
 		if player, ok := charToUpdate[entry.Character.Name]; ok {
-			foundInLadder[entry.Character.Name] = true
 			player.Mu.Lock()
-			player.New.CharacterLevel = entry.Character.Level
+			foundInLadder[entry.Character.Name] = true
+			player.New.Character.Level = entry.Character.Level
 			if entry.Character.Depth != nil && entry.Character.Depth.Default != nil {
 				player.New.DelveDepth = *entry.Character.Depth.Default
 			}
 			if entry.Character.Experience != nil {
-				player.New.CharacterXP = *entry.Character.Experience
+				player.New.Character.Experience = *entry.Character.Experience
 			}
 			player.Mu.Unlock()
 		}
 	}
-	// for charName, player := range charToUpdate {
-	// 	if _, ok := foundInLadder[charName]; !ok {
-	// 		entriesToPersist = append(entriesToPersist, &client.LadderEntry{
-	// 			Character: client.LadderEntryCharacter{
-	// 				Name:       charName,
-	// 				Level:      player.New.CharacterLevel,
-	// 				Experience: &player.New.CharacterXP,
-	// 				Class:      player.New.Ascendancy,
-	// 			},
-	// 			Rank:    0,
-	// 			Account: &client.Account{Name: player.AccountName},
-	// 		})
-	// 	}
-	// }
 	err := s.ladderService.UpsertLadder(entriesToPersist, event.Id, charToUserId)
 	if err != nil {
 		log.Print(clientError)
@@ -282,9 +262,15 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 			Token:            user.Token,
 			TokenExpiry:      user.TokenExpiry,
 			SuccessiveErrors: 0,
-			New:              parser.Player{},
-			Old:              parser.Player{},
-			Mu:               sync.Mutex{},
+			New: parser.Player{
+				Character: &client.Character{},
+				Stats:     &repository.CharacterStat{},
+			},
+			Old: parser.Player{
+				Character: &client.Character{},
+				Stats:     &repository.CharacterStat{},
+			},
+			Mu: sync.Mutex{},
 			LastUpdateTimes: struct {
 				CharacterName time.Time
 				Character     time.Time
@@ -304,20 +290,14 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 
 	for _, player := range players {
 		if character, ok := characterMap[player.UserId]; ok {
-			player.New.CharacterName = character.Name
-			player.Old.CharacterName = character.Name
-			player.New.CharacterId = character.Id
-			player.Old.CharacterId = character.Id
-			player.New.CharacterLevel = character.Level
-			player.Old.CharacterLevel = character.Level
-			player.New.MainSkill = character.MainSkill
-			player.Old.MainSkill = character.MainSkill
-			player.New.Pantheon = character.Pantheon
-			player.Old.Pantheon = character.Pantheon
-			player.New.Ascendancy = character.Ascendancy
-			player.Old.Ascendancy = character.Ascendancy
-			player.New.AscendancyPoints = character.AscendancyPoints
-			player.Old.AscendancyPoints = character.AscendancyPoints
+			player.New.Character.Name = character.Name
+			player.Old.Character.Name = character.Name
+			player.New.Character.Id = character.Id
+			player.Old.Character.Id = character.Id
+			player.New.Character.Level = character.Level
+			player.Old.Character.Level = character.Level
+			player.New.Character.Class = character.Ascendancy
+			player.Old.Character.Class = character.Ascendancy
 			player.LastUpdateTimes.CharacterName = time.Now()
 
 		}
@@ -369,11 +349,6 @@ func float2Int32(f float64) int32 {
 }
 
 func updateStats(character *client.Character, eventId int, characterRepo *repository.CharacterRepository) {
-	oldStats, err := characterRepo.GetLatestCharacterStats(character.Id)
-	if err != nil {
-		log.Printf("Error fetching latest stats for character %s: %v", character.Name, err)
-		return
-	}
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
 		fmt.Printf("Error fetching PoB export for character %s: %v\n", character.Name, err)
@@ -397,7 +372,9 @@ func updateStats(character *client.Character, eventId int, characterRepo *reposi
 		XP:            int64(character.Experience),
 		MovementSpeed: float2Int32(stats.EffectiveMovementSpeedMod * 100),
 	}
-	if oldStats.IsEqual(newStats) {
+	statQueue <- newStats
+	oldStats, _ := characterRepo.GetLatestCharacterStats(character.Id)
+	if newStats.IsEqual(oldStats) {
 		log.Printf("No changes in stats for character %s, skipping save", character.Name)
 		return
 	}
@@ -474,6 +451,17 @@ func PlayerStatsLoop(ctx context.Context) {
 		}
 	}
 }
+func drainStatQueue() map[string]*repository.CharacterStat {
+	statMap := make(map[string]*repository.CharacterStat)
+	for {
+		select {
+		case stat := <-statQueue:
+			statMap[stat.CharacterId] = stat
+		default:
+			return statMap
+		}
+	}
+}
 
 func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
 	service := NewPlayerFetchingService(poeClient)
@@ -542,8 +530,11 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			}
 			wg.Wait()
 
+			statMap := drainStatQueue()
 			for _, player := range players {
-				if player.New.CharacterXP != player.Old.CharacterXP {
+				player.Mu.Lock()
+				player.New.Stats = statMap[player.New.Character.Id]
+				if player.New.Character.Experience != player.Old.Character.Experience {
 					player.LastActive = time.Now()
 					err = service.activityRepository.SaveActivity(&repository.Activity{
 						Time:    time.Now(),
@@ -554,6 +545,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 						fmt.Printf("Error saving activity for player %d: %v\n", player.UserId, err)
 					}
 				}
+				player.Mu.Unlock()
 			}
 
 			matches := utils.FlatMap(players, func(player *parser.PlayerUpdate) []*repository.ObjectiveMatch {
@@ -574,7 +566,6 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				player.Old = player.New
 			}
 			players = service.UpdatePlayerTokens(players, event)
-			fmt.Printf("PlayerFetchLoop for event %s completed, waiting for next iteration\n", event.Name)
 			time.Sleep(1 * time.Second)
 		}
 	}
@@ -593,17 +584,20 @@ func (m *PlayerFetchingService) GetPlayerMatches(player *parser.PlayerUpdate, pl
 }
 
 func (m *PlayerFetchingService) GetTeamMatches(players []*parser.PlayerUpdate, teamChecker *parser.TeamChecker) []*repository.ObjectiveMatch {
+	matches := []*repository.ObjectiveMatch{}
 	if len(players) == 0 {
-		return []*repository.ObjectiveMatch{}
+		return matches
 	}
 	now := time.Now()
-	return utils.Map(teamChecker.CheckForCompletions(players), func(result *parser.CheckResult) *repository.ObjectiveMatch {
-		return &repository.ObjectiveMatch{
-			ObjectiveId: result.ObjectiveId,
-			UserId:      &players[0].UserId,
-			Number:      result.Number,
-			Timestamp:   now,
-			TeamId:      players[0].TeamId,
+	for _, result := range teamChecker.CheckForCompletions(players) {
+		if result.Number > 0 {
+			matches = append(matches, &repository.ObjectiveMatch{
+				ObjectiveId: result.ObjectiveId,
+				Number:      result.Number,
+				Timestamp:   now,
+				TeamId:      players[0].TeamId,
+			})
 		}
-	})
+	}
+	return matches
 }

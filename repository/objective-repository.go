@@ -37,12 +37,38 @@ type NumberField string
 const (
 	NumberFieldStackSize NumberField = "STACK_SIZE"
 
-	NumberFieldPlayerLevel       NumberField = "PLAYER_LEVEL"
-	NumberFieldDelveDepth        NumberField = "DELVE_DEPTH"
-	NumberFieldDelveDepthPast100 NumberField = "DELVE_DEPTH_PAST_100"
-	NumberFieldPantheon          NumberField = "PANTHEON"
-	NumberFieldAscendancy        NumberField = "ASCENDANCY"
-	NumberFieldPlayerScore       NumberField = "PLAYER_SCORE"
+	NumberFieldPlayerLevel             NumberField = "PLAYER_LEVEL"
+	NumberFieldDelveDepth              NumberField = "DELVE_DEPTH"
+	NumberFieldDelveDepthPast100       NumberField = "DELVE_DEPTH_PAST_100"
+	NumberFieldPantheon                NumberField = "PANTHEON"
+	NumberFieldAscendancy              NumberField = "ASCENDANCY"
+	NumberFieldFullyAscended           NumberField = "FULLY_ASCENDED"
+	NumberFieldBloodlineAscendancy     NumberField = "BLOODLINE_ASCENDANCY"
+	NumberFieldPlayerScore             NumberField = "PLAYER_SCORE"
+	NumberFieldHasRareAscendancyPast90 NumberField = "HAS_RARE_ASCENDANCY_PAST_90"
+
+	NumberFieldWeaponQuality NumberField = "WEAPON_QUALITY"
+	NumberFieldArmourQuality NumberField = "ARMOUR_QUALITY"
+	NumberFieldFlaskQuality  NumberField = "FLASK_QUALITY"
+
+	NumberFieldEvasion          NumberField = "EVASION"
+	NumberFieldEnergyShield     NumberField = "ENERGY_SHIELD"
+	NumberFieldArmour           NumberField = "ARMOUR"
+	NumberFieldHP               NumberField = "HP"
+	NumberFieldMana             NumberField = "MANA"
+	NumberFieldFullDPS          NumberField = "FULL_DPS"
+	NumberFieldEHP              NumberField = "EHP"
+	NumberFieldIncMovementSpeed NumberField = "INC_MOVEMENT_SPEED"
+	NumberFieldPhysMaxHit       NumberField = "PHYS_MAX_HIT"
+	NumberFieldEleMaxHit        NumberField = "ELE_MAX_HIT"
+
+	NumberFieldAtlasPoints NumberField = "ATLAS_POINTS"
+
+	NumberFieldInfluenceEquipped           NumberField = "INFLUENCE_EQUIPPED"
+	NumberFieldFoulbornEquipped            NumberField = "FOULBORN_EQUIPPED"
+	NumberFieldGemsEquipped                NumberField = "GEMS_EQUIPPED"
+	NumberFieldCorruptedItemsEquipped      NumberField = "CORRUPTED_ITEMS_EQUIPPED"
+	NumberFieldJewelsWithImplicitsEquipped NumberField = "JEWELS_WITH_IMPLICITS_EQUIPPED"
 
 	NumberFieldSubmissionValue NumberField = "SUBMISSION_VALUE"
 
@@ -50,9 +76,67 @@ const (
 )
 
 var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
-	ObjectiveTypeItem:       {NumberFieldStackSize},
-	ObjectiveTypePlayer:     {NumberFieldPlayerLevel, NumberFieldDelveDepth, NumberFieldDelveDepthPast100, NumberFieldPantheon, NumberFieldAscendancy, NumberFieldPlayerScore},
-	ObjectiveTypeTeam:       {NumberFieldPlayerLevel, NumberFieldDelveDepth, NumberFieldDelveDepthPast100, NumberFieldPantheon, NumberFieldAscendancy, NumberFieldPlayerScore},
+	ObjectiveTypeItem: {NumberFieldStackSize},
+	ObjectiveTypePlayer: {
+		NumberFieldPlayerLevel,
+		NumberFieldDelveDepth,
+		NumberFieldDelveDepthPast100,
+		NumberFieldPantheon,
+		NumberFieldAscendancy,
+		NumberFieldBloodlineAscendancy,
+		NumberFieldFullyAscended,
+		NumberFieldPlayerScore,
+		NumberFieldWeaponQuality,
+		NumberFieldArmourQuality,
+		NumberFieldFlaskQuality,
+		NumberFieldEvasion,
+		NumberFieldEnergyShield,
+		NumberFieldArmour,
+		NumberFieldHP,
+		NumberFieldMana,
+		NumberFieldFullDPS,
+		NumberFieldEHP,
+		NumberFieldIncMovementSpeed,
+		NumberFieldPhysMaxHit,
+		NumberFieldEleMaxHit,
+		NumberFieldAtlasPoints,
+		NumberFieldInfluenceEquipped,
+		NumberFieldFoulbornEquipped,
+		NumberFieldGemsEquipped,
+		NumberFieldCorruptedItemsEquipped,
+		NumberFieldJewelsWithImplicitsEquipped,
+		NumberFieldHasRareAscendancyPast90,
+	},
+	ObjectiveTypeTeam: {
+		NumberFieldPlayerLevel,
+		NumberFieldDelveDepth,
+		NumberFieldDelveDepthPast100,
+		NumberFieldPantheon,
+		NumberFieldAscendancy,
+		NumberFieldBloodlineAscendancy,
+		NumberFieldFullyAscended,
+		NumberFieldPlayerScore,
+		NumberFieldWeaponQuality,
+		NumberFieldArmourQuality,
+		NumberFieldFlaskQuality,
+		NumberFieldEvasion,
+		NumberFieldEnergyShield,
+		NumberFieldArmour,
+		NumberFieldHP,
+		NumberFieldMana,
+		NumberFieldFullDPS,
+		NumberFieldEHP,
+		NumberFieldIncMovementSpeed,
+		NumberFieldPhysMaxHit,
+		NumberFieldEleMaxHit,
+		NumberFieldAtlasPoints,
+		NumberFieldInfluenceEquipped,
+		NumberFieldFoulbornEquipped,
+		NumberFieldGemsEquipped,
+		NumberFieldCorruptedItemsEquipped,
+		NumberFieldJewelsWithImplicitsEquipped,
+		NumberFieldHasRareAscendancyPast90,
+	},
 	ObjectiveTypeSubmission: {NumberFieldSubmissionValue},
 	ObjectiveTypeCategory:   {NumberFieldFinishedObjectives},
 }

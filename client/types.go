@@ -681,6 +681,9 @@ type Character struct {
 }
 
 func (c *Character) EquipmentHash() [32]byte {
+	if c.Equipment == nil {
+		return sha256.Sum256([]byte{})
+	}
 	equipCopy := make([]Item, len(*c.Equipment))
 	copy(equipCopy, *c.Equipment)
 	sort.Slice(equipCopy, func(i, j int) bool {

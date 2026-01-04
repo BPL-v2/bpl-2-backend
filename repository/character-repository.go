@@ -47,6 +47,9 @@ type CharacterStat struct {
 }
 
 func (c *CharacterStat) IsEqual(other *CharacterStat) bool {
+	if other == nil {
+		return false
+	}
 	return c.DPS == other.DPS &&
 		c.EHP == other.EHP &&
 		c.PhysMaxHit == other.PhysMaxHit &&
@@ -167,7 +170,6 @@ func (r *CharacterRepository) Save(character *Character) error {
 	if character.Id == "" || character.Name == "" {
 		return fmt.Errorf("character ID and Name must be set")
 	}
-	fmt.Println("Creating character checkpoint for", character.Name, "with id", character.Id)
 	return r.DB.Save(&character).Error
 }
 
