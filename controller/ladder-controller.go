@@ -156,9 +156,6 @@ type Atlas struct {
 }
 
 func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
-	if atlases == nil {
-		return nil
-	}
 	userAtlases := make(map[int]map[int]*repository.AtlasTree)
 	for _, atlas := range atlases {
 		if userAtlases[atlas.UserID] == nil {
