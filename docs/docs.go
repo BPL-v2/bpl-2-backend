@@ -4629,6 +4629,40 @@ const docTemplate = `{
                 }
             }
         },
+        "Completion": {
+            "type": "object",
+            "required": [
+                "finished",
+                "number",
+                "points",
+                "preset_id",
+                "rank",
+                "timestamp"
+            ],
+            "properties": {
+                "finished": {
+                    "type": "boolean"
+                },
+                "number": {
+                    "type": "integer"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "preset_id": {
+                    "type": "integer"
+                },
+                "rank": {
+                    "type": "integer"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "Condition": {
             "type": "object",
             "required": [
@@ -5173,7 +5207,8 @@ const docTemplate = `{
                 "number_field",
                 "objective_type",
                 "parent_id",
-                "required_number"
+                "required_number",
+                "scoring_presets"
             ],
             "properties": {
                 "aggregation": {
@@ -5218,11 +5253,11 @@ const docTemplate = `{
                 "required_number": {
                     "type": "integer"
                 },
-                "scoring_preset": {
-                    "$ref": "#/definitions/ScoringPreset"
-                },
-                "scoring_preset_id": {
-                    "type": "integer"
+                "scoring_presets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ScoringPreset"
+                    }
                 },
                 "valid_from": {
                     "type": "string"
@@ -5280,8 +5315,11 @@ const docTemplate = `{
                 "required_number": {
                     "type": "integer"
                 },
-                "scoring_preset_id": {
-                    "type": "integer"
+                "scoring_preset_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "valid_from": {
                     "type": "string"
@@ -5351,30 +5389,18 @@ const docTemplate = `{
         "Score": {
             "type": "object",
             "required": [
-                "finished",
-                "number",
-                "points",
-                "rank",
-                "timestamp"
+                "bonus_points",
+                "completions"
             ],
             "properties": {
-                "finished": {
-                    "type": "boolean"
-                },
-                "number": {
+                "bonus_points": {
                     "type": "integer"
                 },
-                "points": {
-                    "type": "integer"
-                },
-                "rank": {
-                    "type": "integer"
-                },
-                "timestamp": {
-                    "type": "integer"
-                },
-                "user_id": {
-                    "type": "integer"
+                "completions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Completion"
+                    }
                 }
             }
         },

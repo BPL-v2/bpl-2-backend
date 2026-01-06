@@ -5,6 +5,7 @@ import (
 	"bpl/config"
 	"bpl/repository"
 	"bpl/scoring"
+	"bpl/utils"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -59,14 +60,14 @@ func (s ScoreMap) setDiff(score *scoring.Score, diff *ScoreDifference) {
 	if _, ok := s[score.TeamId]; !ok {
 		s[score.TeamId] = make(map[int]*ScoreDifference)
 	}
-	s[score.TeamId][score.Id] = diff
+	s[score.TeamId][score.ObjectiveId] = diff
 }
 
 func (s ScoreMap) GetSimpleScore() map[int]int {
 	scores := make(map[int]int)
 	for _, teamScore := range s {
 		for _, scoreDiff := range teamScore {
-			scores[scoreDiff.Score.TeamId] += scoreDiff.Score.Points
+			scores[scoreDiff.Score.TeamId] += scoreDiff.Score.Points()
 		}
 	}
 	return scores
@@ -120,33 +121,36 @@ func GetScoreDifference(prevDiff *ScoreDifference, scoreA *scoring.Score) *Score
 		return &ScoreDifference{Score: scoreA, DiffType: Added}
 	}
 	scoreB := prevDiff.Score
-	fieldDiff := make([]string, 0)
-	if scoreB.Points != scoreA.Points {
-		fieldDiff = append(fieldDiff, "Points")
-	}
-	if scoreB.UserId != scoreA.UserId {
-		fieldDiff = append(fieldDiff, "UserId")
-	}
-	if scoreB.Rank != scoreA.Rank {
-		fieldDiff = append(fieldDiff, "Rank")
-	}
-	if scoreB.Number != scoreA.Number {
-		fieldDiff = append(fieldDiff, "Number")
-	}
-	if scoreB.Finished != scoreA.Finished {
-		fieldDiff = append(fieldDiff, "Finished")
+	fieldDiff := make(map[string]bool)
+	for presetId, completionA := range scoreA.PresetCompletions {
+		completionB, ok := scoreB.PresetCompletions[presetId]
+		if !ok {
+			continue
+		}
+		if completionB.Points != completionA.Points {
+			fieldDiff["Points"] = true
+		}
+		if completionB.Rank != completionA.Rank {
+			fieldDiff["Rank"] = true
+		}
+		if completionB.Number != completionA.Number {
+			fieldDiff["Number"] = true
+		}
+		if completionB.Finished != completionA.Finished {
+			fieldDiff["Finished"] = true
+		}
 	}
 	if len(fieldDiff) == 0 {
 		return &ScoreDifference{Score: scoreA, DiffType: Unchanged}
 	}
-	return &ScoreDifference{Score: scoreA, FieldDiff: fieldDiff, DiffType: Changed}
+	return &ScoreDifference{Score: scoreA, FieldDiff: utils.Keys(fieldDiff), DiffType: Changed}
 }
 
 func Diff(scoreMap ScoreMap, scores []*scoring.Score) (ScoreMap, ScoreMap) {
 	newMap := make(ScoreMap)
 	diffMap := make(ScoreMap)
 	for _, score := range scores {
-		scorediff := GetScoreDifference(scoreMap[score.TeamId][score.Id], score)
+		scorediff := GetScoreDifference(scoreMap[score.TeamId][score.ObjectiveId], score)
 		newMap.setDiff(score, scorediff)
 		if scorediff.DiffType != Unchanged {
 			diffMap.setDiff(score, scorediff)
@@ -220,27 +224,53 @@ func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
 }
 
 func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err error) {
-	event, err := s.eventService.GetEventById(eventId, "Teams.Users")
+	event, err := s.eventService.GetEventById(eventId, "Teams", "Teams.Users")
 	if err != nil {
 		return nil, err
 	}
-	rootObjective, err := s.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPreset")
+	rootObjective, err := s.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPresets")
 	if err != nil {
 		return nil, err
 	}
 	matches := scoring.AggregateMatches(s.db, event, rootObjective.FlatMap())
-	scores, err := scoring.EvaluateAggregations(rootObjective, matches)
+	teamScores := make(map[int]map[int]*scoring.Score)
+	for _, team := range event.Teams {
+		teamScores[team.Id] = make(map[int]*scoring.Score)
+		for _, obj := range rootObjective.FlatMap() {
+			presetCompletions := make(map[int]*scoring.PresetCompletion)
+			for _, preset := range obj.ScoringPresets {
+				presetCompletions[preset.Id] = &scoring.PresetCompletion{
+					ObjectiveId: obj.Id,
+				}
+			}
+			teamScores[team.Id][obj.Id] = &scoring.Score{
+				ObjectiveId:       obj.Id,
+				TeamId:            team.Id,
+				HideProgress:      obj.HideProgress,
+				PresetCompletions: presetCompletions,
+			}
+		}
+	}
+	err = scoring.EvaluateAggregations(rootObjective, matches, teamScores)
 	if err != nil {
 		return nil, err
 	}
+	scores := make([]*scoring.Score, 0)
+	for _, teamScore := range teamScores {
+		for _, score := range teamScore {
+			scores = append(scores, score)
+		}
+	}
 	overrides, _ := s.GetPlayerAttributionsFromGuildstash(event, rootObjective)
 	for _, score := range scores {
-		override, ok := overrides[score.Id][score.TeamId]
-		if !ok || score.Timestamp.Before(override.Timestamp) {
+		override, ok := overrides[score.ObjectiveId][score.TeamId]
+		if !ok || score.Timestamp().Before(override.Timestamp) {
 			continue
 		}
-		score.UserId = override.UserId
-		score.Timestamp = override.Timestamp
+		for _, completion := range score.PresetCompletions {
+			completion.UserId = override.UserId
+			completion.Timestamp = override.Timestamp
+		}
 	}
 
 	return scores, nil

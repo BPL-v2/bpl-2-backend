@@ -138,7 +138,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		if event == nil {
 			return
 		}
-		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id)
+		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPresets")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objectives not found"})
@@ -187,7 +187,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 		}
 		model := objectiveCreate.toModel()
 		model.EventId = event.Id
-		objective, err := e.objectiveService.CreateObjective(model)
+		objective, err := e.objectiveService.CreateObjective(model, objectiveCreate.ScoringIds)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -254,7 +254,7 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		objective, err := e.objectiveService.GetObjectiveById(id)
+		objective, err := e.objectiveService.GetObjectiveById(id, "ScoringPresets")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objective not found"})
@@ -297,14 +297,6 @@ type ObjectiveConditionCreate struct {
 	FieldValue string               `json:"value" binding:"required"`
 }
 
-func (e *ObjectiveConditionCreate) toModel() *repository.Condition {
-	return &repository.Condition{
-		Operator: e.Operator,
-		Field:    e.ItemField,
-		Value:    e.FieldValue,
-	}
-}
-
 type ObjectiveCreate struct {
 	Id                     int                        `json:"id"`
 	Name                   string                     `json:"name" binding:"required"`
@@ -318,7 +310,7 @@ type ObjectiveCreate struct {
 	Conditions             []Condition                `json:"conditions" binding:"required"`
 	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty"`
-	ScoringId              *int                       `json:"scoring_preset_id"`
+	ScoringIds             []int                      `json:"scoring_preset_ids" binding:"required"`
 	HideProgress           bool                       `json:"hide_progress"`
 }
 
@@ -332,8 +324,7 @@ type Objective struct {
 	Conditions             []*Condition               `json:"conditions" binding:"required"`
 	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty"`
 	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty"`
-	ScoringPresetId        *int                       `json:"scoring_preset_id"`
-	ScoringPreset          *ScoringPreset             `json:"scoring_preset"`
+	ScoringPresets         []*ScoringPreset           `json:"scoring_presets" binding:"required"`
 	NumberField            repository.NumberField     `json:"number_field" binding:"required"`
 	NumberFieldExplanation *string                    `json:"number_field_explanation"`
 	Aggregation            repository.AggregationType `json:"aggregation" binding:"required"`
@@ -355,7 +346,6 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 		ValidFrom:              e.ValidFrom,
 		ValidTo:                e.ValidTo,
 		ParentId:               &e.ParentId,
-		ScoringId:              e.ScoringId,
 		HideProgress:           e.HideProgress,
 	}
 }
@@ -370,8 +360,7 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 			ParentId:               objective.ParentId,
 			ValidFrom:              objective.ValidFrom,
 			ValidTo:                objective.ValidTo,
-			ScoringPresetId:        objective.ScoringId,
-			ScoringPreset:          toScoringPresetResponse(objective.ScoringPreset),
+			ScoringPresets:         utils.Map(objective.ScoringPresets, toScoringPresetResponse),
 			HideProgress:           objective.HideProgress,
 			Children:               make([]*Objective, 0),
 			Conditions:             make([]*Condition, 0),
@@ -393,8 +382,7 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 		NumberField:            objective.NumberField,
 		NumberFieldExplanation: objective.NumberFieldExplanation,
 		Aggregation:            objective.Aggregation,
-		ScoringPresetId:        objective.ScoringId,
-		ScoringPreset:          toScoringPresetResponse(objective.ScoringPreset),
+		ScoringPresets:         utils.Map(objective.ScoringPresets, toScoringPresetResponse),
 		Children:               utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public) }),
 		HideProgress:           objective.HideProgress,
 	}

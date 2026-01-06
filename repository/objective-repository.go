@@ -149,25 +149,29 @@ const (
 	SyncStatusDesynced SyncStatus = "DESYNCED"
 )
 
+type ObjectiveScoringPreset struct {
+	ObjectiveId     int `gorm:"primaryKey"`
+	ScoringPresetId int `gorm:"primaryKey"`
+}
+
 type Objective struct {
-	Id                     int             `gorm:"primaryKey"`
-	Name                   string          `gorm:"not null"`
-	Extra                  string          `gorm:"null"`
-	RequiredAmount         int             `gorm:"not null"`
-	Conditions             Conditions      `gorm:"type:jsonb"`
-	ParentId               *int            `gorm:"null"`
-	EventId                int             `gorm:"not null;references:events(id)"`
-	ObjectiveType          ObjectiveType   `gorm:"not null"`
-	NumberField            NumberField     `gorm:"not null"`
-	Aggregation            AggregationType `gorm:"not null"`
-	ValidFrom              *time.Time      `gorm:"null"`
-	ValidTo                *time.Time      `gorm:"null"`
-	ScoringId              *int            `gorm:"null;references:scoring_presets(id)"`
-	HideProgress           bool            `gorm:"not null;default:false"`
-	ScoringPreset          *ScoringPreset  `gorm:"foreignKey:ScoringId;references:Id"`
-	SyncStatus             SyncStatus      `gorm:"not null;default:DESYNCED"`
-	NumberFieldExplanation *string         `gorm:"null"`
-	Children               []*Objective    `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
+	Id                     int              `gorm:"primaryKey"`
+	Name                   string           `gorm:"not null"`
+	Extra                  string           `gorm:"null"`
+	RequiredAmount         int              `gorm:"not null"`
+	Conditions             Conditions       `gorm:"type:jsonb"`
+	ParentId               *int             `gorm:"null"`
+	EventId                int              `gorm:"not null;references:events(id)"`
+	ObjectiveType          ObjectiveType    `gorm:"not null"`
+	NumberField            NumberField      `gorm:"not null"`
+	Aggregation            AggregationType  `gorm:"not null"`
+	ValidFrom              *time.Time       `gorm:"null"`
+	ValidTo                *time.Time       `gorm:"null"`
+	ScoringPresets         []*ScoringPreset `gorm:"many2many:objective_scoring_presets;joinForeignKey:objective_id;joinReferences:scoring_preset_id"`
+	HideProgress           bool             `gorm:"not null;default:false"`
+	SyncStatus             SyncStatus       `gorm:"not null;default:DESYNCED"`
+	NumberFieldExplanation *string          `gorm:"null"`
+	Children               []*Objective     `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
 }
 
 func (o *Objective) FlatMap() []*Objective {
@@ -218,9 +222,31 @@ func (r *ObjectiveRepository) DeleteObjectivesByEventId(eventId int) error {
 	return result.Error
 }
 
-func (r *ObjectiveRepository) RemoveScoringId(scoringId int) error {
-	result := r.DB.Model(&Objective{}).Where(Objective{ScoringId: &scoringId}).Update("scoring_id", nil)
-	return result.Error
+func (r *ObjectiveRepository) RemoveScoringPreset(scoringId int) error {
+	// Remove all associations between objectives and this scoring preset
+	return r.DB.Where("scoring_preset_id = ?", scoringId).Delete(&ObjectiveScoringPreset{}).Error
+}
+
+func (r *ObjectiveRepository) AssociateScoringPresets(objectiveId int, presetIds []int) error {
+	if len(presetIds) == 0 {
+		return nil
+	}
+	err := r.DB.Where("objective_id = ?", objectiveId).Delete(&ObjectiveScoringPreset{}).Error
+	if err != nil {
+		return err
+	}
+	if len(presetIds) == 0 {
+		return nil
+	}
+	associations := make([]ObjectiveScoringPreset, len(presetIds))
+	for i, presetId := range presetIds {
+		associations[i] = ObjectiveScoringPreset{
+			ObjectiveId:     objectiveId,
+			ScoringPresetId: presetId,
+		}
+	}
+
+	return r.DB.Create(&associations).Error
 }
 
 func (r *ObjectiveRepository) StartSync(objectiveIds []int) error {

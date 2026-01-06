@@ -253,29 +253,35 @@ func (e *ScoreController) getLatestScoresForEventHandler() gin.HandlerFunc {
 	}
 }
 
-type Score struct {
+type Completion struct {
+	PresetId  int   `json:"preset_id" binding:"required"`
 	Points    int   `json:"points" binding:"required"`
 	UserId    *int  `json:"user_id,omitempty"`
-	Rank      int   `json:"rank" binding:"required"`
 	Timestamp int64 `json:"timestamp" binding:"required"`
 	Number    int   `json:"number" binding:"required"`
 	Finished  bool  `json:"finished" binding:"required"`
+	Rank      int   `json:"rank" binding:"required"`
+}
+
+type Score struct {
+	Completions []Completion `json:"completions" binding:"required"`
+	BonusPoints int          `json:"bonus_points" binding:"required"`
 }
 
 type ScoreDiff struct {
 	ObjectiveId int              `json:"objective_id" binding:"required"`
 	TeamId      int              `json:"team_id" binding:"required"`
-	Score       *Score           `json:"score" binding:"required"`
+	Score       Score            `json:"score" binding:"required"`
 	FieldDiff   []string         `json:"field_diff,omitempty" binding:"required"`
 	DiffType    service.Difftype `json:"diff_type" binding:"required"`
 }
 
 func toScoreDiffResponse(scoreDiff *service.ScoreDifference) *ScoreDiff {
 	return &ScoreDiff{
-		Score:       toScoreResponse(scoreDiff.Score),
+		Score:       *toScoreResponse(scoreDiff.Score),
 		FieldDiff:   scoreDiff.FieldDiff,
 		DiffType:    scoreDiff.DiffType,
-		ObjectiveId: scoreDiff.Score.Id,
+		ObjectiveId: scoreDiff.Score.ObjectiveId,
 		TeamId:      scoreDiff.Score.TeamId,
 	}
 }
@@ -293,15 +299,27 @@ func toScoreMapResponse(scoreMap service.ScoreMap, teamId int) []*ScoreDiff {
 }
 
 func toScoreResponse(score *scoring.Score) *Score {
-	resp := &Score{
-		Finished:  score.Finished,
-		Timestamp: score.Timestamp.Unix(),
-		Number:    score.Number,
-		Points:    score.Points,
-		Rank:      score.Rank,
+	scoreResponse := &Score{
+		Completions: make([]Completion, 0, len(score.PresetCompletions)),
+		BonusPoints: score.BonusPoints,
 	}
-	if score.UserId != 0 {
-		resp.UserId = &score.UserId
+	for presetId, completion := range score.PresetCompletions {
+		scoreResponse.Completions = append(scoreResponse.Completions, toCompletionResponse(completion, presetId))
 	}
-	return resp
+	return scoreResponse
+}
+
+func toCompletionResponse(completion *scoring.PresetCompletion, presetId int) Completion {
+	comp := Completion{
+		PresetId:  presetId,
+		Points:    completion.Points,
+		Timestamp: completion.Timestamp.Unix(),
+		Number:    completion.Number,
+		Finished:  completion.Finished,
+		Rank:      completion.Rank,
+	}
+	if completion.UserId != 0 {
+		comp.UserId = &completion.UserId
+	}
+	return comp
 }

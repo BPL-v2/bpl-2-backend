@@ -15,20 +15,56 @@ import (
 
 type ScoreType string
 
+type PresetCompletion struct {
+	Finished    bool
+	Timestamp   time.Time
+	Rank        int
+	UserId      int
+	Points      int
+	Number      int
+	ObjectiveId int
+}
+
 type Score struct {
-	Id           int
-	Points       int
-	TeamId       int
-	UserId       int
-	Rank         int
-	Timestamp    time.Time
-	Number       int
-	Finished     bool
-	HideProgress bool
+	ObjectiveId       int
+	TeamId            int
+	PresetCompletions map[int]*PresetCompletion
+	HideProgress      bool
+	BonusPoints       int
+}
+
+func (s *Score) Finished() bool {
+	for _, pc := range s.PresetCompletions {
+		if !pc.Finished {
+			return false
+		}
+	}
+	return true
+}
+
+func (s *Score) Timestamp() time.Time {
+	latest := time.Time{}
+	if !s.Finished() {
+		return latest
+	}
+	for _, pc := range s.PresetCompletions {
+		if pc.Timestamp.After(latest) {
+			latest = pc.Timestamp
+		}
+	}
+	return latest
+}
+
+func (s *Score) Points() int {
+	total := s.BonusPoints
+	for _, pc := range s.PresetCompletions {
+		total += pc.Points
+	}
+	return total
 }
 
 func (s *Score) CanShowTo(teamId int) bool {
-	return (s.TeamId == teamId) || s.Finished || !s.HideProgress
+	return (s.TeamId == teamId) || s.Finished() || !s.HideProgress
 }
 
 var scoreEvaluationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
@@ -39,41 +75,33 @@ var scoreEvaluationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
 	},
 })
 
-func EvaluateAggregations(objective *repository.Objective, aggregations ObjectiveTeamMatches) ([]*Score, error) {
+func EvaluateAggregations(objective *repository.Objective, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	timer := prometheus.NewTimer(scoreEvaluationDuration)
 	defer timer.ObserveDuration()
-	scores := make([]*Score, 0)
 	for _, childObjective := range objective.Children {
-		childScores, err := EvaluateAggregations(childObjective, aggregations)
+		err := EvaluateAggregations(childObjective, aggregations, scoreMap)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		scores = append(scores, childScores...)
 	}
-
-	if objective.ScoringPreset != nil {
-		if fun, ok := scoringFunctions[objective.ScoringPreset.ScoringMethod]; ok {
-			categoryScores, err := fun(objective, aggregations, scores)
+	for _, preset := range objective.ScoringPresets {
+		if fun, ok := scoringFunctions[preset.ScoringMethod]; ok {
+			err := fun(objective, preset, aggregations, scoreMap)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			for _, score := range categoryScores {
-				score.HideProgress = objective.HideProgress
-			}
-			scores = append(scores, categoryScores...)
 		}
 	}
-
-	return scores, nil
+	return nil
 }
 
 type TeamCompletion struct {
 	TeamId              int
 	ObjectivesCompleted int
-	LatestTimestamp     time.Time
+	LatestTimestamp     int64
 }
 
-var scoringFunctions = map[repository.ScoringMethod]func(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error){
+var scoringFunctions = map[repository.ScoringMethod]func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error{
 	repository.PRESENCE:             handlePresence,
 	repository.RANKED_TIME:          handleRankedTime,
 	repository.RANKED_VALUE:         handleRankedValue,
@@ -85,128 +113,129 @@ var scoringFunctions = map[repository.ScoringMethod]func(objective *repository.O
 	repository.BINGO_BOARD:          handleBingoBoard,
 }
 
-func handlePointsFromValue(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
-	scores := make([]*Score, 0)
+func handlePointsFromValue(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	for teamId, match := range aggregations[objective.Id] {
-		score := &Score{
-			Id:        objective.Id,
-			TeamId:    teamId,
-			UserId:    match.UserId,
-			Timestamp: match.Timestamp,
-			Number:    match.Number,
-			Points:    int(objective.ScoringPreset.Points.Get(0) * float64(match.Number)),
-			Finished:  match.Finished,
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+			continue
 		}
-		if objective.ScoringPreset.PointCap != 0 && score.Points > objective.ScoringPreset.PointCap {
-			score.Points = objective.ScoringPreset.PointCap
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion.Number = match.Number
+		completion.UserId = match.UserId
+		completion.Finished = match.Finished
+		completion.Timestamp = match.Timestamp
+		completion.Points = int(scoringPreset.Points.Get(0) * float64(match.Number))
+		if scoringPreset.PointCap != 0 && completion.Points > scoringPreset.PointCap {
+			completion.Points = scoringPreset.PointCap
 		}
-		scores = append(scores, score)
 	}
-	return scores, nil
+	return nil
 }
 
-func handlePresence(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
-	scores := make([]*Score, 0)
+func handlePresence(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	for teamId, match := range aggregations[objective.Id] {
-		score := &Score{
-			Id:        objective.Id,
-			TeamId:    teamId,
-			UserId:    match.UserId,
-			Timestamp: match.Timestamp,
-			Number:    match.Number,
-			Finished:  match.Finished,
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+			continue
 		}
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion.Number = match.Number
+		completion.UserId = match.UserId
+		completion.Finished = match.Finished
+		completion.Timestamp = match.Timestamp
 		if match.Finished {
-			score.Points = int(objective.ScoringPreset.Points.Get(0))
+			completion.Points = int(scoringPreset.Points.Get(0))
 		}
-		scores = append(scores, score)
 	}
-
-	return scores, nil
+	return nil
+}
+func handleBingoN(n int) func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+	// can't be assed to fix this right now
+	return func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+		return nil
+	}
 }
 
-func handleBingoN(n int) func(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
-	// Handles a category of collection goals where a team must finish n goals to score, but does not get more points for finishing more than n.
-	return func(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
-		sc := make(map[int][]*Score, 0)
+// func handleBingoN(n int) func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) (map[int]map[int]*Score, error) {
+// 	// Handles a category of collection goals where a team must finish n goals to score, but does not get more points for finishing more than n.
+// 	return func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) (map[int]map[int]*Score, error) {
+// 		sc := make(map[int][]*Score, 0)
 
-		for _, score := range childScores {
-			if score.Points > 0 {
-				sc[score.TeamId] = append(sc[score.TeamId], score)
-			}
-		}
-		timeToFinish := make(map[int]time.Time, 0)
-		for teamId, scores := range sc {
-			if len(scores) < n {
-				continue
-			}
-			sort.Slice(scores, func(i, j int) bool {
-				return scores[i].Timestamp.Before(scores[j].Timestamp)
-			})
-			timeToFinish[teamId] = scores[n-1].Timestamp
-			for i := n; i < len(scores); i++ {
-				scores[i].Points = 0
-			}
-		}
-		finishes := make([]TeamCompletion, 0, len(timeToFinish))
-		for teamId, ts := range timeToFinish {
-			finishes = append(finishes, TeamCompletion{TeamId: teamId, LatestTimestamp: ts})
-		}
-		sort.Slice(finishes, func(i, j int) bool {
-			return finishes[i].LatestTimestamp.Before(finishes[j].LatestTimestamp)
-		})
+// 		for _, score := range childScores {
+// 			if score.Points > 0 {
+// 				sc[score.TeamId] = append(sc[score.TeamId], score)
+// 			}
+// 		}
+// 		timeToFinish := make(map[int]time.Time, 0)
+// 		for teamId, scores := range sc {
+// 			if len(scores) < n {
+// 				continue
+// 			}
+// 			sort.Slice(scores, func(i, j int) bool {
+// 				return scores[i].Timestamp.Before(scores[j].Timestamp)
+// 			})
+// 			timeToFinish[teamId] = scores[n-1].Timestamp
+// 			for i := n; i < len(scores); i++ {
+// 				scores[i].Points = 0
+// 			}
+// 		}
+// 		finishes := make([]TeamCompletion, 0, len(timeToFinish))
+// 		for teamId, ts := range timeToFinish {
+// 			finishes = append(finishes, TeamCompletion{TeamId: teamId, LatestTimestamp: ts})
+// 		}
+// 		sort.Slice(finishes, func(i, j int) bool {
+// 			return finishes[i].LatestTimestamp.Before(finishes[j].LatestTimestamp)
+// 		})
 
-		placements := make(map[int]int, len(finishes))
-		scores := make([]*Score, 0)
-		rank := 1
-		for i, f := range finishes {
-			if i > 0 && f.LatestTimestamp.After(finishes[i-1].LatestTimestamp) {
-				rank = i + 1
-			}
-			placements[f.TeamId] = rank
-			scores = append(scores, &Score{
-				Id:        objective.Id,
-				TeamId:    f.TeamId,
-				Timestamp: f.LatestTimestamp,
-				Number:    n,
-				Finished:  true,
-				Points:    int(objective.ScoringPreset.Points.Get(rank - 1)),
-				Rank:      rank,
-			})
-		}
-		return scores, nil
-	}
+// 		placements := make(map[int]int, len(finishes))
+// 		scores := make([]*Score, 0)
+// 		rank := 1
+// 		for i, f := range finishes {
+// 			if i > 0 && f.LatestTimestamp.After(finishes[i-1].LatestTimestamp) {
+// 				rank = i + 1
+// 			}
+// 			placements[f.TeamId] = rank
+// 			scores = append(scores, &Score{
+// 				ObjectiveId: objective.Id,
+// 				TeamId:      f.TeamId,
+// 				Timestamp:   f.LatestTimestamp,
+// 				Number:      n,
+// 				Finished:    true,
+// 				Points:      int(scoringPreset.Points.Get(rank - 1)),
+// 				Rank:        rank,
+// 			})
+// 		}
+// 		return scores, nil
+// 	}
 
-}
+// }
 
-func handleRankedTime(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
+func handleRankedTime(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	rankFun := func(a, b *Match) bool {
 		if a.Finished && b.Finished {
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Finished
 	}
-	return handleRanked(objective, aggregations, rankFun)
+	return handleRanked(objective, scoringPreset, aggregations, rankFun, scoreMap)
 }
 
-func handleRankedValue(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
+func handleRankedValue(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	rankFun := func(a, b *Match) bool {
 		if a.Number == b.Number {
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Number > b.Number
 	}
-	return handleRanked(objective, aggregations, rankFun)
+	return handleRanked(objective, scoringPreset, aggregations, rankFun, scoreMap)
 }
 
-func handleRankedReverse(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
+func handleRankedReverse(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	rankFun := func(a, b *Match) bool {
 		if a.Number == b.Number {
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Number < b.Number
 	}
-	return handleRanked(objective, aggregations, rankFun)
+	return handleRanked(objective, scoringPreset, aggregations, rankFun, scoreMap)
 }
 
 func isTiedWithNext(index int, matches []*Match, rankFun func(a, b *Match) bool) bool {
@@ -216,8 +245,7 @@ func isTiedWithNext(index int, matches []*Match, rankFun func(a, b *Match) bool)
 	return rankFun(matches[index], matches[index+1]) == rankFun(matches[index+1], matches[index])
 }
 
-func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMatches, rankFun func(a, b *Match) bool) ([]*Score, error) {
-	scores := make([]*Score, 0)
+func handleRanked(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, rankFun func(a, b *Match) bool, scoreMap map[int]map[int]*Score) error {
 	matches := make([]*Match, 0)
 	for _, match := range aggregations[objective.Id] {
 		matches = append(matches, match)
@@ -225,26 +253,24 @@ func handleRanked(objective *repository.Objective, aggregations ObjectiveTeamMat
 	sort.Slice(matches, func(i, j int) bool { return rankFun(matches[i], matches[j]) })
 	i := 0
 	for j, match := range matches {
-		score := &Score{
-			Id:        objective.Id,
-			TeamId:    match.TeamId,
-			UserId:    match.UserId,
-			Timestamp: match.Timestamp,
-			Number:    match.Number,
-			Finished:  match.Finished,
+		if scoreMap[match.TeamId] == nil || scoreMap[match.TeamId][objective.Id] == nil || scoreMap[match.TeamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+			continue
 		}
+		completion := scoreMap[match.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion.UserId = match.UserId
+		completion.Timestamp = match.Timestamp
+		completion.Number = match.Number
+		completion.Finished = match.Finished
+
 		if match.Finished {
-			score.Rank = i + 1
-			score.Points = int(objective.ScoringPreset.Points.Get(i))
+			completion.Rank = i + 1
+			completion.Points = int(scoringPreset.Points.Get(i))
 		}
-		scores = append(scores, score)
 		if !isTiedWithNext(j, matches, rankFun) {
 			i++
 		}
-
 	}
-
-	return scores, nil
+	return nil
 }
 
 type Tuple struct {
@@ -252,7 +278,7 @@ type Tuple struct {
 	Y int
 }
 
-func handleBingoBoard(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
+func handleBingoBoard(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	objectiveMap := make(map[int]*repository.Objective)
 	for _, child := range objective.Children {
 		objectiveMap[child.Id] = child
@@ -270,38 +296,42 @@ func handleBingoBoard(objective *repository.Objective, aggregations ObjectiveTea
 		}
 	}
 
-	teamChildFinishes := make(map[int][]*Score)
-	for _, score := range childScores {
-		if score.Finished {
-			teamChildFinishes[score.TeamId] = append(teamChildFinishes[score.TeamId], score)
+	teamChildFinishes := make(map[int][]*PresetCompletion)
+	for teamId, teamScores := range scoreMap {
+		for objectiveId, score := range teamScores {
+			if _, ok := gridCellMap[objectiveId]; ok {
+				completion := score.PresetCompletions[scoringPreset.Id]
+				if completion != nil && completion.Finished {
+					teamChildFinishes[teamId] = append(teamChildFinishes[teamId], completion)
+				}
+			}
 		}
 	}
 
-	bingoScores := []*Score{}
+	bingoScores := []*PresetCompletion{}
 	for teamId, finishedGridCells := range teamChildFinishes {
-		gridToScores := make(map[int]map[int]*Score)
-		for _, score := range finishedGridCells {
-			cellPos, ok := gridCellMap[score.Id]
+		gridToScores := make(map[int]map[int]*PresetCompletion)
+		for _, completion := range finishedGridCells {
+			cellPos, ok := gridCellMap[completion.ObjectiveId]
 			if !ok {
 				continue
 			}
 			if _, exists := gridToScores[cellPos.X]; !exists {
-				gridToScores[cellPos.X] = make(map[int]*Score)
+				gridToScores[cellPos.X] = make(map[int]*PresetCompletion)
 			}
-			gridToScores[cellPos.X][cellPos.Y] = score
+			gridToScores[cellPos.X][cellPos.Y] = completion
 		}
-		score := &Score{
-			Id:     objective.Id,
-			TeamId: teamId,
-			Points: 0,
-			Number: 0,
+		// score := scoreMap[teamId][objective.Id]
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+			continue
 		}
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
 		finishTime := getBingoCompletionTime(gridToScores, gridSize)
 		if !finishTime.IsZero() {
-			score.Finished = true
-			score.Timestamp = finishTime
+			completion.Finished = true
+			completion.Timestamp = finishTime
 		}
-		bingoScores = append(bingoScores, score)
+		bingoScores = append(bingoScores, completion)
 	}
 
 	sort.Slice(bingoScores, func(i, j int) bool {
@@ -317,33 +347,33 @@ func handleBingoBoard(objective *repository.Objective, aggregations ObjectiveTea
 				rank = i + 1
 			}
 			score.Rank = rank
-			score.Points = int(objective.ScoringPreset.Points.Get(rank - 1))
+			score.Points = int(scoringPreset.Points.Get(rank - 1))
 		}
 	}
-	return append(bingoScores, childScores...), nil
+	return nil
 }
 
-func getBingoCompletionTime(scores map[int]map[int]*Score, gridSize int) time.Time {
+func getBingoCompletionTime(completions map[int]map[int]*PresetCompletion, gridSize int) time.Time {
 	finishTime := int64(math.MaxInt64)
 	rowTimes := map[int][]int64{}
 	colTimes := map[int][]int64{}
 	diag1Times := []int64{}
 	diag2Times := []int64{}
-	for x, row := range scores {
+	for x, row := range completions {
 		for y := range row {
 			gridSize = utils.Max(gridSize, x, y)
 		}
 	}
-	for x, row := range scores {
-		for y, score := range row {
-			if score.Finished {
-				rowTimes[x] = append(rowTimes[x], score.Timestamp.UnixNano())
-				colTimes[y] = append(colTimes[y], score.Timestamp.UnixNano())
+	for x, row := range completions {
+		for y, completion := range row {
+			if completion.Finished {
+				rowTimes[x] = append(rowTimes[x], completion.Timestamp.UnixNano())
+				colTimes[y] = append(colTimes[y], completion.Timestamp.UnixNano())
 				if x == y {
-					diag1Times = append(diag1Times, score.Timestamp.UnixNano())
+					diag1Times = append(diag1Times, completion.Timestamp.UnixNano())
 				}
 				if x+y == gridSize-1 {
-					diag2Times = append(diag2Times, score.Timestamp.UnixNano())
+					diag2Times = append(diag2Times, completion.Timestamp.UnixNano())
 				}
 			}
 		}
@@ -368,83 +398,79 @@ func getBingoCompletionTime(scores map[int]map[int]*Score, gridSize int) time.Ti
 	return time.Unix(0, finishTime)
 }
 
-func handleChildBonus(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
-	scores := make([]*Score, 0)
+func handleChildBonus(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	finishCounts := make(map[int]int)
 	teamIds := make(map[int]bool)
-	for _, score := range childScores {
-		if score.Finished {
-			finishCounts[score.TeamId]++
-		}
-		teamIds[score.TeamId] = true
-	}
 	childIds := utils.Map(objective.Children, func(o *repository.Objective) int { return o.Id })
-	for teamId := range teamIds {
-		teamChildScores := utils.Filter(childScores, func(s *Score) bool {
-			return s.TeamId == teamId && utils.Contains(childIds, s.Id) && s.Finished
-		})
-		sort.Slice(teamChildScores, func(i, j int) bool {
-			return teamChildScores[i].Timestamp.Before(teamChildScores[j].Timestamp)
-		})
-		latestTimestamp := time.Time{}
-		for i, score := range teamChildScores {
-			score.Points += int(objective.ScoringPreset.Points.Get(i))
-			if score.Timestamp.After(latestTimestamp) {
-				latestTimestamp = score.Timestamp
+	teamChildScores := map[int][]*Score{}
+	for teamId, objectiveScores := range scoreMap {
+		teamIds[teamId] = true
+		for _, id := range childIds {
+			score := objectiveScores[id]
+			if score != nil && score.Finished() {
+				finishCounts[teamId]++
+				teamChildScores[teamId] = append(teamChildScores[teamId], score)
 			}
 		}
-		score := &Score{
-			Id:        objective.Id,
-			TeamId:    teamId,
-			Points:    0,
-			Timestamp: latestTimestamp,
-			Number:    finishCounts[teamId],
-			Finished:  finishCounts[teamId] == len(objective.Children),
-		}
-		scores = append(scores, score)
+		sort.Slice(teamChildScores[teamId], func(i, j int) bool {
+			return teamChildScores[teamId][i].Timestamp().Before(teamChildScores[teamId][j].Timestamp())
+		})
 	}
-	return scores, nil
+
+	for teamId, childScores := range teamChildScores {
+		latestTimestamp := time.Time{}
+		for i, childScore := range childScores {
+			childScore.BonusPoints += int(scoringPreset.Points.Get(i))
+			currentTimestamp := childScore.Timestamp()
+			if currentTimestamp.After(latestTimestamp) {
+				latestTimestamp = currentTimestamp
+			}
+		}
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+			continue
+		}
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion.Finished = finishCounts[teamId] == len(objective.Children)
+		completion.Number = finishCounts[teamId]
+		completion.Timestamp = latestTimestamp
+	}
+	return nil
 }
 
-func handleChildRanking(objective *repository.Objective, aggregations ObjectiveTeamMatches, childScores []*Score) ([]*Score, error) {
-	teamCompletions := make(map[int]TeamCompletion)
+func handleChildRanking(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+	teamCompletions := make(map[int]*TeamCompletion)
+	for teamId := range scoreMap {
+		teamCompletions[teamId] = &TeamCompletion{TeamId: teamId}
+	}
 	childIds := map[int]bool{}
 	for _, child := range objective.Children {
 		childIds[child.Id] = true
-	}
-	for _, score := range childScores {
-		if score.Finished && childIds[score.Id] {
-			completion := teamCompletions[score.TeamId]
-			if score.Timestamp.After(completion.LatestTimestamp) {
-				completion.LatestTimestamp = score.Timestamp
+		for teamId, objectiveScores := range scoreMap {
+			childScore := objectiveScores[child.Id]
+			if childScore != nil && childScore.Finished() {
+				teamCompletions[teamId].ObjectivesCompleted++
+				teamCompletions[teamId].LatestTimestamp = utils.Max(teamCompletions[teamId].LatestTimestamp, childScore.Timestamp().UnixNano())
 			}
-			completion.TeamId = score.TeamId
-			completion.ObjectivesCompleted++
-			teamCompletions[score.TeamId] = completion
 		}
 	}
 	rankedTeams := utils.Values(teamCompletions)
 	sort.Slice(rankedTeams, func(i, j int) bool {
 		if rankedTeams[i].ObjectivesCompleted == rankedTeams[j].ObjectivesCompleted {
-			return rankedTeams[i].LatestTimestamp.Before(rankedTeams[j].LatestTimestamp)
+			return rankedTeams[i].LatestTimestamp < rankedTeams[j].LatestTimestamp
 		}
 		return rankedTeams[i].ObjectivesCompleted > rankedTeams[j].ObjectivesCompleted
 	})
-	scores := make([]*Score, 0)
 	for i, completion := range rankedTeams {
-		score := &Score{
-			Id:        objective.Id,
-			TeamId:    completion.TeamId,
-			Timestamp: completion.LatestTimestamp,
-			Number:    completion.ObjectivesCompleted,
+		if scoreMap[completion.TeamId] == nil || scoreMap[completion.TeamId][objective.Id] == nil || scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+			continue
 		}
+		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		comp.Number = completion.ObjectivesCompleted
 		if completion.ObjectivesCompleted == len(childIds) {
-			score.Finished = true
-			score.Points = int(objective.ScoringPreset.Points.Get(i))
-			score.Rank = i + 1
+			comp.Finished = true
+			comp.Points = int(scoringPreset.Points.Get(i))
+			comp.Rank = i + 1
 		}
-
-		scores = append(scores, score)
 	}
-	return scores, nil
+	return nil
 }

@@ -25,10 +25,6 @@ func (s *ScoringPresetService) GetPresetsForEvent(eventId int) ([]*repository.Sc
 }
 
 func (s *ScoringPresetService) DeletePreset(presetId int) error {
-	err := s.objectiveRepository.RemoveScoringId(presetId)
-	if err != nil {
-		return err
-	}
 	return s.scoringPresetRepository.DeletePreset(presetId)
 }
 

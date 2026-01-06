@@ -86,9 +86,6 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 	query := r.DB
 
 	for _, preload := range preloads {
-		if preload == "Teams.Users" {
-			continue
-		}
 		query = query.Preload(preload)
 	}
 

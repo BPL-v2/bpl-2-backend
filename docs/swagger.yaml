@@ -1063,6 +1063,30 @@ definitions:
     - timestamp
     - xp
     type: object
+  Completion:
+    properties:
+      finished:
+        type: boolean
+      number:
+        type: integer
+      points:
+        type: integer
+      preset_id:
+        type: integer
+      rank:
+        type: integer
+      timestamp:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - finished
+    - number
+    - points
+    - preset_id
+    - rank
+    - timestamp
+    type: object
   Condition:
     properties:
       field:
@@ -1458,10 +1482,10 @@ definitions:
         type: integer
       required_number:
         type: integer
-      scoring_preset:
-        $ref: '#/definitions/ScoringPreset'
-      scoring_preset_id:
-        type: integer
+      scoring_presets:
+        items:
+          $ref: '#/definitions/ScoringPreset'
+        type: array
       valid_from:
         type: string
       valid_to:
@@ -1478,6 +1502,7 @@ definitions:
     - objective_type
     - parent_id
     - required_number
+    - scoring_presets
     type: object
   ObjectiveCreate:
     properties:
@@ -1505,8 +1530,10 @@ definitions:
         type: integer
       required_number:
         type: integer
-      scoring_preset_id:
-        type: integer
+      scoring_preset_ids:
+        items:
+          type: integer
+        type: array
       valid_from:
         type: string
       valid_to:
@@ -1561,24 +1588,15 @@ definitions:
     type: object
   Score:
     properties:
-      finished:
-        type: boolean
-      number:
+      bonus_points:
         type: integer
-      points:
-        type: integer
-      rank:
-        type: integer
-      timestamp:
-        type: integer
-      user_id:
-        type: integer
+      completions:
+        items:
+          $ref: '#/definitions/Completion'
+        type: array
     required:
-    - finished
-    - number
-    - points
-    - rank
-    - timestamp
+    - bonus_points
+    - completions
     type: object
   ScoreDiff:
     properties:
