@@ -5276,7 +5276,8 @@ const docTemplate = `{
                 "number_field",
                 "objective_type",
                 "parent_id",
-                "required_number"
+                "required_number",
+                "scoring_preset_ids"
             ],
             "properties": {
                 "aggregation": {

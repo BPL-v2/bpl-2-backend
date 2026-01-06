@@ -817,3 +817,153 @@ func TestHandleBingoBoardCorrectRanking(t *testing.T) {
 	assert.Equal(t, timestamps[1].Unix(), scoreMap[1][objective.Id].PresetCompletions[presetId].Timestamp.Unix())
 	assert.Equal(t, timestamps[0].Unix(), scoreMap[2][objective.Id].PresetCompletions[presetId].Timestamp.Unix())
 }
+
+func TestMultipleScoringPresetsOnUmbrellaObjective(t *testing.T) {
+	// This tests that an umbrella objective can have multiple scoring methods applied:
+	// 1. RANKED_TIME - ranks teams based on completion time of all children
+	// 2. BONUS_PER_COMPLETION - gives bonus points for each completed child
+
+	rankedPresetId := 100
+	bonusPresetId := 200
+
+	objective := &repository.Objective{
+		Id: 10,
+		ScoringPresets: []*repository.ScoringPreset{
+			{
+				Id:            rankedPresetId,
+				ScoringMethod: repository.RANKED_COMPLETION,
+				Points:        repository.ExtendingNumberSlice{50, 30, 10}, // Points for ranking 1st, 2nd, 3rd
+			},
+			{
+				Id:            bonusPresetId,
+				ScoringMethod: repository.BONUS_PER_COMPLETION,
+				Points:        repository.ExtendingNumberSlice{15, 10, 5}, // Bonus for 1st, 2nd, 3rd+ child completed
+			},
+		},
+		Children: utils.Map([]int{1, 2, 3, 4}, func(id int) *repository.Objective {
+			return &repository.Objective{Id: id}
+		}),
+	}
+
+	now := time.Now()
+
+	// Team 1: Completes all 4 children, finishes FIRST (earliest latest timestamp at -21h)
+	// Team 2: Completes all 4 children, finishes SECOND (latest timestamp at -15h)
+	// Team 3: Completes all 4 children, finishes THIRD (latest timestamp at -10h)
+	childData := []struct {
+		objId, teamId int
+		timestamp     time.Time
+		finished      bool
+	}{
+		// Team 1 - completes all 4, last one finishes at -21h
+		{1, 1, now.Add(-24 * time.Hour), true},
+		{2, 1, now.Add(-23 * time.Hour), true},
+		{3, 1, now.Add(-22 * time.Hour), true},
+		{4, 1, now.Add(-21 * time.Hour), true}, // Latest timestamp for team 1
+		// Team 2 - completes all 4, last one finishes at -15h
+		{1, 2, now.Add(-20 * time.Hour), true},
+		{2, 2, now.Add(-18 * time.Hour), true},
+		{3, 2, now.Add(-16 * time.Hour), true},
+		{4, 2, now.Add(-15 * time.Hour), true}, // Latest timestamp for team 2
+		// Team 3 - completes all 4, last one finishes at -10h
+		{1, 3, now.Add(-14 * time.Hour), true},
+		{2, 3, now.Add(-12 * time.Hour), true},
+		{3, 3, now.Add(-11 * time.Hour), true},
+		{4, 3, now.Add(-10 * time.Hour), true}, // Latest timestamp for team 3
+	}
+
+	// Initialize scoreMap for all teams and all child objectives
+	scoreMap := make(map[int]map[int]*Score)
+	for teamId := 1; teamId <= 3; teamId++ {
+		scoreMap[teamId] = make(map[int]*Score)
+
+		// Initialize all child objectives for this team (even unfinished ones)
+		for childId := 1; childId <= 4; childId++ {
+			scoreMap[teamId][childId] = &Score{
+				ObjectiveId: childId,
+				TeamId:      teamId,
+				PresetCompletions: map[int]*PresetCompletion{
+					rankedPresetId: {
+						ObjectiveId: childId,
+						Finished:    false,
+						Timestamp:   time.Time{},
+					},
+					bonusPresetId: {
+						ObjectiveId: childId,
+						Finished:    false,
+						Timestamp:   time.Time{},
+					},
+				},
+			}
+		}
+	}
+
+	// Apply actual completion data
+	for _, data := range childData {
+		scoreMap[data.teamId][data.objId].PresetCompletions[rankedPresetId].Finished = data.finished
+		scoreMap[data.teamId][data.objId].PresetCompletions[rankedPresetId].Timestamp = data.timestamp
+		scoreMap[data.teamId][data.objId].PresetCompletions[bonusPresetId].Finished = data.finished
+		scoreMap[data.teamId][data.objId].PresetCompletions[bonusPresetId].Timestamp = data.timestamp
+	}
+
+	// Initialize parent objective scores with both presets
+	for teamId := range scoreMap {
+		scoreMap[teamId][objective.Id] = &Score{
+			ObjectiveId: objective.Id,
+			TeamId:      teamId,
+			PresetCompletions: map[int]*PresetCompletion{
+				rankedPresetId: {ObjectiveId: objective.Id},
+				bonusPresetId:  {ObjectiveId: objective.Id},
+			},
+		}
+	}
+
+	// Apply RANKED_COMPLETION scoring
+	err := handleChildRanking(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err)
+
+	// Apply BONUS_PER_COMPLETION scoring
+	err = handleChildBonus(objective, objective.ScoringPresets[1], make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err)
+
+	// Verify RANKED_COMPLETION results
+	// Team 1 completes all children last at -21h -> rank 1 (all children done)
+	// Team 2 completes 2 children last at -19h -> rank 2
+	// Team 3 completes 1 child last at -18h -> rank 3
+	assert.Equal(t, 50, scoreMap[1][objective.Id].PresetCompletions[rankedPresetId].Points, "Team 1 should rank 1st with 50 points")
+	assert.Equal(t, 1, scoreMap[1][objective.Id].PresetCompletions[rankedPresetId].Rank, "Team 1 should have rank 1")
+
+	assert.Equal(t, 30, scoreMap[2][objective.Id].PresetCompletions[rankedPresetId].Points, "Team 2 should rank 2nd with 30 points")
+	assert.Equal(t, 2, scoreMap[2][objective.Id].PresetCompletions[rankedPresetId].Rank, "Team 2 should have rank 2")
+
+	assert.Equal(t, 10, scoreMap[3][objective.Id].PresetCompletions[rankedPresetId].Points, "Team 3 should rank 3rd with 10 points")
+	assert.Equal(t, 3, scoreMap[3][objective.Id].PresetCompletions[rankedPresetId].Rank, "Team 3 should have rank 3")
+
+	// Verify BONUS_PER_COMPLETION results (applied to child objectives)
+	// All teams complete 4 children, so bonus is distributed by completion order
+	// Team 1: completes children at -24, -23, -22, -21 hours
+	assert.Equal(t, 15, scoreMap[1][1].BonusPoints, "Team 1, child 1 should have 15 bonus (completed first)")
+	assert.Equal(t, 10, scoreMap[1][2].BonusPoints, "Team 1, child 2 should have 10 bonus (completed second)")
+	assert.Equal(t, 5, scoreMap[1][3].BonusPoints, "Team 1, child 3 should have 5 bonus (completed third)")
+	assert.Equal(t, 5, scoreMap[1][4].BonusPoints, "Team 1, child 4 should have 5 bonus (completed fourth)")
+
+	// Team 2: completes children at -20, -18, -16, -15 hours
+	assert.Equal(t, 15, scoreMap[2][1].BonusPoints, "Team 2, child 1 should have 15 bonus (completed first)")
+	assert.Equal(t, 10, scoreMap[2][2].BonusPoints, "Team 2, child 2 should have 10 bonus (completed second)")
+	assert.Equal(t, 5, scoreMap[2][3].BonusPoints, "Team 2, child 3 should have 5 bonus (completed third)")
+	assert.Equal(t, 5, scoreMap[2][4].BonusPoints, "Team 2, child 4 should have 5 bonus (completed fourth)")
+
+	// Team 3: completes children at -14, -12, -11, -10 hours
+	assert.Equal(t, 15, scoreMap[3][1].BonusPoints, "Team 3, child 1 should have 15 bonus (completed first)")
+	assert.Equal(t, 10, scoreMap[3][2].BonusPoints, "Team 3, child 2 should have 10 bonus (completed second)")
+	assert.Equal(t, 5, scoreMap[3][3].BonusPoints, "Team 3, child 3 should have 5 bonus (completed third)")
+	assert.Equal(t, 5, scoreMap[3][4].BonusPoints, "Team 3, child 4 should have 5 bonus (completed fourth)")
+	// Verify that both scoring methods are independent and don't interfere
+	// The parent objective should have separate PresetCompletion entries for each preset
+	assert.NotNil(t, scoreMap[1][objective.Id].PresetCompletions[rankedPresetId], "Ranked preset should exist")
+	assert.NotNil(t, scoreMap[1][objective.Id].PresetCompletions[bonusPresetId], "Bonus preset should exist")
+
+	// Verify the presets are truly separate (bonus preset doesn't set Points/Rank on parent)
+	assert.Equal(t, 0, scoreMap[1][objective.Id].PresetCompletions[bonusPresetId].Points, "Bonus preset shouldn't set points on parent objective")
+	assert.Equal(t, 0, scoreMap[1][objective.Id].PresetCompletions[bonusPresetId].Rank, "Bonus preset shouldn't set rank on parent objective")
+}

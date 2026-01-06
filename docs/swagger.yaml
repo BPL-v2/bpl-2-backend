@@ -1546,6 +1546,7 @@ definitions:
     - objective_type
     - parent_id
     - required_number
+    - scoring_preset_ids
     type: object
   ObjectiveValidation:
     properties:
