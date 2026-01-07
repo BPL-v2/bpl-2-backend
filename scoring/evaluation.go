@@ -279,6 +279,11 @@ type Tuple struct {
 	Y int
 }
 
+type GridFinish struct {
+	Grid Tuple
+	Time time.Time
+}
+
 func handleBingoBoard(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	numberOfBingosRequired := 1
 	if val, ok := scoringPreset.Extra["required_number_of_bingos"]; ok {
@@ -287,7 +292,6 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 			numberOfBingosRequired = parsed
 		}
 	}
-
 	objectiveMap := make(map[int]*repository.Objective)
 	for _, child := range objective.Children {
 		objectiveMap[child.Id] = child
@@ -305,37 +309,32 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 		}
 	}
 
-	teamChildFinishes := make(map[int][]*PresetCompletion)
+	teamChildFinishes := make(map[int][]GridFinish)
+
 	for teamId, teamScores := range scoreMap {
-		for objectiveId, score := range teamScores {
-			if _, ok := gridCellMap[objectiveId]; ok {
-				completion := score.PresetCompletions[scoringPreset.Id]
-				if completion != nil && completion.Finished {
-					teamChildFinishes[teamId] = append(teamChildFinishes[teamId], completion)
-				}
+		for childId := range objectiveMap {
+			childScore := teamScores[childId]
+			if childScore != nil && childScore.Finished() {
+				teamChildFinishes[teamId] = append(teamChildFinishes[teamId], GridFinish{Grid: gridCellMap[childId], Time: childScore.Timestamp()})
 			}
 		}
 	}
 
 	bingoScores := []*PresetCompletion{}
 	for teamId, finishedGridCells := range teamChildFinishes {
-		gridToScores := make(map[int]map[int]*PresetCompletion)
+		gridTimestamps := make(map[int]map[int]time.Time)
 		for _, completion := range finishedGridCells {
-			cellPos, ok := gridCellMap[completion.ObjectiveId]
-			if !ok {
-				continue
+			cellPos := completion.Grid
+			if _, exists := gridTimestamps[cellPos.X]; !exists {
+				gridTimestamps[cellPos.X] = make(map[int]time.Time)
 			}
-			if _, exists := gridToScores[cellPos.X]; !exists {
-				gridToScores[cellPos.X] = make(map[int]*PresetCompletion)
-			}
-			gridToScores[cellPos.X][cellPos.Y] = completion
+			gridTimestamps[cellPos.X][cellPos.Y] = completion.Time
 		}
-		// score := scoreMap[teamId][objective.Id]
 		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
 			continue
 		}
 		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
-		finishTime := getBingoCompletionTime(numberOfBingosRequired, gridToScores, gridSize)
+		finishTime := getBingoCompletionTime(numberOfBingosRequired, gridTimestamps, gridSize)
 		if !finishTime.IsZero() {
 			completion.Finished = true
 			completion.Timestamp = finishTime
@@ -362,28 +361,27 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 	return nil
 }
 
-func getBingoCompletionTime(numberOfBingosRequired int, completions map[int]map[int]*PresetCompletion, gridSize int) time.Time {
+func getBingoCompletionTime(numberOfBingosRequired int, girdTimestamps map[int]map[int]time.Time, gridSize int) time.Time {
 	finishTime := int64(math.MaxInt64)
 	rowTimes := map[int][]int64{}
 	colTimes := map[int][]int64{}
 	diag1Times := []int64{}
 	diag2Times := []int64{}
-	for x, row := range completions {
+	for x, row := range girdTimestamps {
 		for y := range row {
 			gridSize = utils.Max(gridSize, x, y)
 		}
 	}
-	for x, row := range completions {
-		for y, completion := range row {
-			if completion.Finished {
-				rowTimes[x] = append(rowTimes[x], completion.Timestamp.UnixNano())
-				colTimes[y] = append(colTimes[y], completion.Timestamp.UnixNano())
-				if x == y {
-					diag1Times = append(diag1Times, completion.Timestamp.UnixNano())
-				}
-				if x+y == gridSize-1 {
-					diag2Times = append(diag2Times, completion.Timestamp.UnixNano())
-				}
+
+	for x, row := range girdTimestamps {
+		for y, timestamp := range row {
+			rowTimes[x] = append(rowTimes[x], timestamp.UnixNano())
+			colTimes[y] = append(colTimes[y], timestamp.UnixNano())
+			if x == y {
+				diag1Times = append(diag1Times, timestamp.UnixNano())
+			}
+			if x+y == gridSize-1 {
+				diag2Times = append(diag2Times, timestamp.UnixNano())
 			}
 		}
 	}
