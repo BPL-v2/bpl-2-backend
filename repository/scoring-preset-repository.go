@@ -3,6 +3,7 @@ package repository
 import (
 	"bpl/config"
 	"database/sql/driver"
+	"encoding/json"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -34,6 +35,27 @@ func (e ExtendingNumberSlice) Value() (driver.Value, error) {
 	return floatArray.Value()
 }
 
+type ExtraMap map[string]string
+
+func (e *ExtraMap) Scan(value any) error {
+	if value == nil {
+		*e = make(map[string]string)
+		return nil
+	}
+	bytes, ok := value.([]byte)
+	if !ok {
+		return nil
+	}
+	return json.Unmarshal(bytes, e)
+}
+
+func (e ExtraMap) Value() (driver.Value, error) {
+	if e == nil {
+		return json.Marshal(map[string]string{})
+	}
+	return json.Marshal(e)
+}
+
 type ScoringMethod string
 
 const (
@@ -59,7 +81,7 @@ type ScoringPreset struct {
 	Points        ExtendingNumberSlice `gorm:"type:numeric[];not null"`
 	PointCap      int                  `gorm:"not null"`
 	ScoringMethod ScoringMethod        `gorm:"not null"`
-	Extra         map[string]string    `gorm:"type:jsonb;not null;default:'{}'"`
+	Extra         ExtraMap             `gorm:"type:jsonb;not null;default:'{}'"`
 }
 
 type ScoringPresetRepository struct {
