@@ -2071,6 +2071,8 @@ definitions:
     - MEMORY_STRANDS
     - IS_FOULBORN
     - FOULBORN_MODS
+    - GRAFT_SKILL_NAME
+    - GRAFT_SKILL_LEVEL
     type: string
     x-enum-comments:
       SOCKETS: as string like "RGBW"
@@ -2100,6 +2102,8 @@ definitions:
     - ""
     - ""
     - as string like "RGBW"
+    - ""
+    - ""
     - ""
     - ""
     - ""
@@ -2154,6 +2158,8 @@ definitions:
     - MEMORY_STRANDS
     - IS_FOULBORN
     - FOULBORN_MODS
+    - GRAFT_SKILL_NAME
+    - GRAFT_SKILL_LEVEL
   JobType:
     enum:
     - FetchStashChanges
@@ -2199,6 +2205,7 @@ definitions:
     - GEMS_EQUIPPED
     - CORRUPTED_ITEMS_EQUIPPED
     - JEWELS_WITH_IMPLICITS_EQUIPPED
+    - ENCHANTED_ITEMS_EQUIPPED
     - SUBMISSION_VALUE
     - FINISHED_OBJECTIVES
     type: string
@@ -2232,6 +2239,7 @@ definitions:
     - NumberFieldGemsEquipped
     - NumberFieldCorruptedItemsEquipped
     - NumberFieldJewelsWithImplicitsEquipped
+    - NumberFieldEnchantedItemsEquipped
     - NumberFieldSubmissionValue
     - NumberFieldFinishedObjectives
   ObjectiveType:

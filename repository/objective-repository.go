@@ -69,6 +69,7 @@ const (
 	NumberFieldGemsEquipped                NumberField = "GEMS_EQUIPPED"
 	NumberFieldCorruptedItemsEquipped      NumberField = "CORRUPTED_ITEMS_EQUIPPED"
 	NumberFieldJewelsWithImplicitsEquipped NumberField = "JEWELS_WITH_IMPLICITS_EQUIPPED"
+	NumberFieldEnchantedItemsEquipped      NumberField = "ENCHANTED_ITEMS_EQUIPPED"
 
 	NumberFieldSubmissionValue NumberField = "SUBMISSION_VALUE"
 

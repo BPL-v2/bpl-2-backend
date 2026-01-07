@@ -6061,7 +6061,9 @@ const docTemplate = `{
                 "FACETOR_LENS_EXP",
                 "MEMORY_STRANDS",
                 "IS_FOULBORN",
-                "FOULBORN_MODS"
+                "FOULBORN_MODS",
+                "GRAFT_SKILL_NAME",
+                "GRAFT_SKILL_LEVEL"
             ],
             "x-enum-comments": {
                 "SOCKETS": "as string like \"RGBW\""
@@ -6092,6 +6094,8 @@ const docTemplate = `{
                 "",
                 "",
                 "as string like \"RGBW\"",
+                "",
+                "",
                 "",
                 "",
                 "",
@@ -6146,7 +6150,9 @@ const docTemplate = `{
                 "FACETOR_LENS_EXP",
                 "MEMORY_STRANDS",
                 "IS_FOULBORN",
-                "FOULBORN_MODS"
+                "FOULBORN_MODS",
+                "GRAFT_SKILL_NAME",
+                "GRAFT_SKILL_LEVEL"
             ]
         },
         "JobType": {
@@ -6198,6 +6204,7 @@ const docTemplate = `{
                 "GEMS_EQUIPPED",
                 "CORRUPTED_ITEMS_EQUIPPED",
                 "JEWELS_WITH_IMPLICITS_EQUIPPED",
+                "ENCHANTED_ITEMS_EQUIPPED",
                 "SUBMISSION_VALUE",
                 "FINISHED_OBJECTIVES"
             ],
@@ -6231,6 +6238,7 @@ const docTemplate = `{
                 "NumberFieldGemsEquipped",
                 "NumberFieldCorruptedItemsEquipped",
                 "NumberFieldJewelsWithImplicitsEquipped",
+                "NumberFieldEnchantedItemsEquipped",
                 "NumberFieldSubmissionValue",
                 "NumberFieldFinishedObjectives"
             ]

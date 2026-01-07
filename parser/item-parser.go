@@ -141,6 +141,13 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 			}
 			return ""
 		}, nil
+	case dbModel.GRAFT_SKILL_NAME:
+		return func(item *clientModel.Item) string {
+			if item.SocketedItems == nil || len(*item.SocketedItems) == 0 {
+				return ""
+			}
+			return (*item.SocketedItems)[0].BaseType
+		}, nil
 	default:
 		return nil, fmt.Errorf("%s is not a valid string field", field)
 	}
@@ -396,6 +403,28 @@ func IntFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) int, 
 							return 0
 						}
 						return strands
+					}
+				}
+			}
+			return 0
+		}, nil
+	case dbModel.GRAFT_SKILL_LEVEL:
+		return func(item *clientModel.Item) int {
+			if item.SocketedItems == nil {
+				return 0
+			}
+			for _, socketedItem := range *item.SocketedItems {
+				if socketedItem.Properties == nil {
+					continue
+				}
+				for _, property := range *socketedItem.Properties {
+					if property.Name == "Level" {
+						level, err := strconv.Atoi(strings.ReplaceAll(property.Values[0].Name(), " (Max)", ""))
+						if err != nil {
+							log.Printf("Error parsing graft skill level %s", property.Values[0].Name())
+							return 0
+						}
+						return level
 					}
 				}
 			}

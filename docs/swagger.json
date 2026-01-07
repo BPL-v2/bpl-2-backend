@@ -6053,7 +6053,9 @@
                 "FACETOR_LENS_EXP",
                 "MEMORY_STRANDS",
                 "IS_FOULBORN",
-                "FOULBORN_MODS"
+                "FOULBORN_MODS",
+                "GRAFT_SKILL_NAME",
+                "GRAFT_SKILL_LEVEL"
             ],
             "x-enum-comments": {
                 "SOCKETS": "as string like \"RGBW\""
@@ -6084,6 +6086,8 @@
                 "",
                 "",
                 "as string like \"RGBW\"",
+                "",
+                "",
                 "",
                 "",
                 "",
@@ -6138,7 +6142,9 @@
                 "FACETOR_LENS_EXP",
                 "MEMORY_STRANDS",
                 "IS_FOULBORN",
-                "FOULBORN_MODS"
+                "FOULBORN_MODS",
+                "GRAFT_SKILL_NAME",
+                "GRAFT_SKILL_LEVEL"
             ]
         },
         "JobType": {
@@ -6190,6 +6196,7 @@
                 "GEMS_EQUIPPED",
                 "CORRUPTED_ITEMS_EQUIPPED",
                 "JEWELS_WITH_IMPLICITS_EQUIPPED",
+                "ENCHANTED_ITEMS_EQUIPPED",
                 "SUBMISSION_VALUE",
                 "FINISHED_OBJECTIVES"
             ],
@@ -6223,6 +6230,7 @@
                 "NumberFieldGemsEquipped",
                 "NumberFieldCorruptedItemsEquipped",
                 "NumberFieldJewelsWithImplicitsEquipped",
+                "NumberFieldEnchantedItemsEquipped",
                 "NumberFieldSubmissionValue",
                 "NumberFieldFinishedObjectives"
             ]

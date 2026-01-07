@@ -49,6 +49,8 @@ const (
 	MEMORY_STRANDS          ItemField = "MEMORY_STRANDS"
 	IS_FOULBORN             ItemField = "IS_FOULBORN"
 	FOULBORN_MODS           ItemField = "FOULBORN_MODS"
+	GRAFT_SKILL_NAME        ItemField = "GRAFT_SKILL_NAME"
+	GRAFT_SKILL_LEVEL       ItemField = "GRAFT_SKILL_LEVEL"
 )
 
 type FieldType string
@@ -100,6 +102,8 @@ var FieldToType = map[ItemField]FieldType{
 	MEMORY_STRANDS:          Int,
 	IS_FOULBORN:             Bool,
 	FOULBORN_MODS:           StringArray,
+	GRAFT_SKILL_NAME:        String,
+	GRAFT_SKILL_LEVEL:       Int,
 }
 
 var OperatorsForTypes = map[FieldType][]Operator{
