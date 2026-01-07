@@ -48,6 +48,7 @@ const (
 	BONUS_PER_COMPLETION ScoringMethod = "BONUS_PER_COMPLETION"
 	BINGO_3              ScoringMethod = "BINGO_3"
 	BINGO_BOARD          ScoringMethod = "BINGO_BOARD"
+	MAX_CHILD_NUMBER_SUM ScoringMethod = "CHILD_NUMBER_SUM"
 )
 
 type ScoringPreset struct {
@@ -58,7 +59,7 @@ type ScoringPreset struct {
 	Points        ExtendingNumberSlice `gorm:"type:numeric[];not null"`
 	PointCap      int                  `gorm:"not null"`
 	ScoringMethod ScoringMethod        `gorm:"not null"`
-	Extra         *string              `gorm:"null"`
+	Extra         map[string]string    `gorm:"type:jsonb;not null;default:'{}'"`
 }
 
 type ScoringPresetRepository struct {

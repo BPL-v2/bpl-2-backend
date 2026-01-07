@@ -1625,7 +1625,9 @@ definitions:
       description:
         type: string
       extra:
-        type: string
+        additionalProperties:
+          type: string
+        type: object
       id:
         type: integer
       name:
@@ -1650,7 +1652,9 @@ definitions:
       description:
         type: string
       extra:
-        type: string
+        additionalProperties:
+          type: string
+        type: object
       id:
         type: integer
       name:
@@ -2299,6 +2303,7 @@ definitions:
     - BONUS_PER_COMPLETION
     - BINGO_3
     - BINGO_BOARD
+    - CHILD_NUMBER_SUM
     type: string
     x-enum-varnames:
     - PRESENCE
@@ -2310,6 +2315,7 @@ definitions:
     - BONUS_PER_COMPLETION
     - BINGO_3
     - BINGO_BOARD
+    - MAX_CHILD_NUMBER_SUM
   TimingKey:
     enum:
     - delay_after_character_is_refetched

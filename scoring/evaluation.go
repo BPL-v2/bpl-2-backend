@@ -107,10 +107,11 @@ var scoringFunctions = map[repository.ScoringMethod]func(objective *repository.O
 	repository.RANKED_VALUE:         handleRankedValue,
 	repository.RANKED_REVERSE:       handleRankedReverse,
 	repository.POINTS_FROM_VALUE:    handlePointsFromValue,
-	repository.RANKED_COMPLETION:    handleChildRanking,
+	repository.RANKED_COMPLETION:    handleChildRankingByTime,
 	repository.BONUS_PER_COMPLETION: handleChildBonus,
 	repository.BINGO_3:              handleBingoN(3),
 	repository.BINGO_BOARD:          handleBingoBoard,
+	repository.MAX_CHILD_NUMBER_SUM: handleChildRankingByNumber,
 }
 
 func handlePointsFromValue(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
@@ -279,6 +280,14 @@ type Tuple struct {
 }
 
 func handleBingoBoard(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+	numberOfBingosRequired := 1
+	if val, ok := scoringPreset.Extra["required_number_of_bingos"]; ok {
+		parsed, err := strconv.Atoi(val)
+		if err == nil {
+			numberOfBingosRequired = parsed
+		}
+	}
+
 	objectiveMap := make(map[int]*repository.Objective)
 	for _, child := range objective.Children {
 		objectiveMap[child.Id] = child
@@ -326,7 +335,7 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 			continue
 		}
 		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
-		finishTime := getBingoCompletionTime(gridToScores, gridSize)
+		finishTime := getBingoCompletionTime(numberOfBingosRequired, gridToScores, gridSize)
 		if !finishTime.IsZero() {
 			completion.Finished = true
 			completion.Timestamp = finishTime
@@ -353,7 +362,7 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 	return nil
 }
 
-func getBingoCompletionTime(completions map[int]map[int]*PresetCompletion, gridSize int) time.Time {
+func getBingoCompletionTime(numberOfBingosRequired int, completions map[int]map[int]*PresetCompletion, gridSize int) time.Time {
 	finishTime := int64(math.MaxInt64)
 	rowTimes := map[int][]int64{}
 	colTimes := map[int][]int64{}
@@ -378,21 +387,26 @@ func getBingoCompletionTime(completions map[int]map[int]*PresetCompletion, gridS
 			}
 		}
 	}
+	bingoCount := 0
 	for i := 0; i < gridSize; i++ {
 		if len(rowTimes[i]) == gridSize {
 			finishTime = utils.Min(utils.Max(rowTimes[i]...), finishTime)
+			bingoCount++
 		}
 		if len(colTimes[i]) == gridSize {
 			finishTime = utils.Min(utils.Max(colTimes[i]...), finishTime)
+			bingoCount++
 		}
 	}
 	if len(diag1Times) == gridSize {
 		finishTime = utils.Min(utils.Max(diag1Times...), finishTime)
+		bingoCount++
 	}
 	if len(diag2Times) == gridSize {
 		finishTime = utils.Min(utils.Max(diag2Times...), finishTime)
+		bingoCount++
 	}
-	if finishTime == int64(math.MaxInt64) {
+	if finishTime == int64(math.MaxInt64) || bingoCount < numberOfBingosRequired {
 		return time.Time{}
 	}
 	return time.Unix(0, finishTime)
@@ -437,7 +451,20 @@ func handleChildBonus(objective *repository.Objective, scoringPreset *repository
 	return nil
 }
 
-func handleChildRanking(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleChildRankingByTime(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+	requiredChildCompletions := len(objective.Children)
+	if val, ok := scoringPreset.Extra["required_child_completions"]; ok {
+		parsed, err := strconv.Atoi(val)
+		if err == nil {
+			requiredChildCompletions = parsed
+		}
+	}
+	if val, ok := scoringPreset.Extra["required_child_completions_percent"]; ok {
+		parsed, err := strconv.Atoi(val)
+		if err == nil {
+			requiredChildCompletions = (len(objective.Children) * parsed) / 100
+		}
+	}
 	teamCompletions := make(map[int]*TeamCompletion)
 	for teamId := range scoreMap {
 		teamCompletions[teamId] = &TeamCompletion{TeamId: teamId}
@@ -466,10 +493,45 @@ func handleChildRanking(objective *repository.Objective, scoringPreset *reposito
 		}
 		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
 		comp.Number = completion.ObjectivesCompleted
-		if completion.ObjectivesCompleted == len(childIds) {
+		if completion.ObjectivesCompleted == requiredChildCompletions {
 			comp.Finished = true
 			comp.Points = int(scoringPreset.Points.Get(i))
 			comp.Rank = i + 1
+		}
+	}
+	return nil
+}
+
+func handleChildRankingByNumber(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+	teamCompletions := make(map[int]*TeamCompletion)
+	for teamId := range scoreMap {
+		teamCompletions[teamId] = &TeamCompletion{TeamId: teamId}
+	}
+	childIds := map[int]bool{}
+	for _, child := range objective.Children {
+		childIds[child.Id] = true
+		for teamId, objectiveScores := range scoreMap {
+			childScore := objectiveScores[child.Id]
+			if childScore != nil {
+				teamCompletions[teamId].ObjectivesCompleted += childScore.PresetCompletions[scoringPreset.Id].Number
+			}
+		}
+	}
+	rankedTeams := utils.Values(teamCompletions)
+	sort.Slice(rankedTeams, func(i, j int) bool {
+		return rankedTeams[i].ObjectivesCompleted > rankedTeams[j].ObjectivesCompleted
+	})
+	rank := 1
+	for i, completion := range rankedTeams {
+		if scoreMap[completion.TeamId] == nil || scoreMap[completion.TeamId][objective.Id] == nil || scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+			continue
+		}
+		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		comp.Number = completion.ObjectivesCompleted
+		comp.Points = int(scoringPreset.Points.Get(rank - 1))
+		comp.Rank = rank
+		if i+1 < len(rankedTeams) && rankedTeams[i+1].ObjectivesCompleted < completion.ObjectivesCompleted {
+			rank++
 		}
 	}
 	return nil

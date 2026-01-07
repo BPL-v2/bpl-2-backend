@@ -5449,7 +5449,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "extra": {
-                    "type": "string"
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "id": {
                     "type": "integer"
@@ -5483,7 +5486,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "extra": {
-                    "type": "string"
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 },
                 "id": {
                     "type": "integer"
@@ -6307,7 +6313,8 @@ const docTemplate = `{
                 "RANKED_COMPLETION_TIME",
                 "BONUS_PER_COMPLETION",
                 "BINGO_3",
-                "BINGO_BOARD"
+                "BINGO_BOARD",
+                "CHILD_NUMBER_SUM"
             ],
             "x-enum-varnames": [
                 "PRESENCE",
@@ -6318,7 +6325,8 @@ const docTemplate = `{
                 "RANKED_COMPLETION",
                 "BONUS_PER_COMPLETION",
                 "BINGO_3",
-                "BINGO_BOARD"
+                "BINGO_BOARD",
+                "MAX_CHILD_NUMBER_SUM"
             ]
         },
         "TimingKey": {
