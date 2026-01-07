@@ -491,7 +491,7 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 		}
 		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
 		comp.Number = completion.ObjectivesCompleted
-		if completion.ObjectivesCompleted == requiredChildCompletions {
+		if completion.ObjectivesCompleted >= requiredChildCompletions {
 			comp.Finished = true
 			comp.Points = int(scoringPreset.Points.Get(i))
 			comp.Rank = i + 1
