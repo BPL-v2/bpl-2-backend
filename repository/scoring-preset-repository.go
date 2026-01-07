@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type ScoringPresetType string
 type ExtendingNumberSlice []float64
 
 func (e ExtendingNumberSlice) Get(i int) float64 {
@@ -35,11 +34,6 @@ func (e ExtendingNumberSlice) Value() (driver.Value, error) {
 	return floatArray.Value()
 }
 
-const (
-	OBJECTIVE ScoringPresetType = "OBJECTIVE"
-	CATEGORY  ScoringPresetType = "CATEGORY"
-)
-
 type ScoringMethod string
 
 const (
@@ -64,7 +58,7 @@ type ScoringPreset struct {
 	Points        ExtendingNumberSlice `gorm:"type:numeric[];not null"`
 	PointCap      int                  `gorm:"not null"`
 	ScoringMethod ScoringMethod        `gorm:"not null"`
-	Type          ScoringPresetType    `gorm:"not null"`
+	Extra         *string              `gorm:"null"`
 }
 
 type ScoringPresetRepository struct {

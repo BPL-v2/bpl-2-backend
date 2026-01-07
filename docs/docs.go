@@ -5442,11 +5442,13 @@ const docTemplate = `{
                 "id",
                 "name",
                 "points",
-                "scoring_method",
-                "type"
+                "scoring_method"
             ],
             "properties": {
                 "description": {
+                    "type": "string"
+                },
+                "extra": {
                     "type": "string"
                 },
                 "id": {
@@ -5466,9 +5468,6 @@ const docTemplate = `{
                 },
                 "scoring_method": {
                     "$ref": "#/definitions/ScoringMethod"
-                },
-                "type": {
-                    "$ref": "#/definitions/ScoringPresetType"
                 }
             }
         },
@@ -5477,11 +5476,13 @@ const docTemplate = `{
             "required": [
                 "name",
                 "points",
-                "scoring_method",
-                "type"
+                "scoring_method"
             ],
             "properties": {
                 "description": {
+                    "type": "string"
+                },
+                "extra": {
                     "type": "string"
                 },
                 "id": {
@@ -5501,9 +5502,6 @@ const docTemplate = `{
                 },
                 "scoring_method": {
                     "$ref": "#/definitions/ScoringMethod"
-                },
-                "type": {
-                    "$ref": "#/definitions/ScoringPresetType"
                 }
             }
         },
@@ -6321,17 +6319,6 @@ const docTemplate = `{
                 "BONUS_PER_COMPLETION",
                 "BINGO_3",
                 "BINGO_BOARD"
-            ]
-        },
-        "ScoringPresetType": {
-            "type": "string",
-            "enum": [
-                "OBJECTIVE",
-                "CATEGORY"
-            ],
-            "x-enum-varnames": [
-                "OBJECTIVE",
-                "CATEGORY"
             ]
         },
         "TimingKey": {

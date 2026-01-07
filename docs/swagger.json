@@ -5434,11 +5434,13 @@
                 "id",
                 "name",
                 "points",
-                "scoring_method",
-                "type"
+                "scoring_method"
             ],
             "properties": {
                 "description": {
+                    "type": "string"
+                },
+                "extra": {
                     "type": "string"
                 },
                 "id": {
@@ -5458,9 +5460,6 @@
                 },
                 "scoring_method": {
                     "$ref": "#/definitions/ScoringMethod"
-                },
-                "type": {
-                    "$ref": "#/definitions/ScoringPresetType"
                 }
             }
         },
@@ -5469,11 +5468,13 @@
             "required": [
                 "name",
                 "points",
-                "scoring_method",
-                "type"
+                "scoring_method"
             ],
             "properties": {
                 "description": {
+                    "type": "string"
+                },
+                "extra": {
                     "type": "string"
                 },
                 "id": {
@@ -5493,9 +5494,6 @@
                 },
                 "scoring_method": {
                     "$ref": "#/definitions/ScoringMethod"
-                },
-                "type": {
-                    "$ref": "#/definitions/ScoringPresetType"
                 }
             }
         },
@@ -6313,17 +6311,6 @@
                 "BONUS_PER_COMPLETION",
                 "BINGO_3",
                 "BINGO_BOARD"
-            ]
-        },
-        "ScoringPresetType": {
-            "type": "string",
-            "enum": [
-                "OBJECTIVE",
-                "CATEGORY"
-            ],
-            "x-enum-varnames": [
-                "OBJECTIVE",
-                "CATEGORY"
             ]
         },
         "TimingKey": {

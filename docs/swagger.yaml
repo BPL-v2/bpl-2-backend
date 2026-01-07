@@ -1624,6 +1624,8 @@ definitions:
     properties:
       description:
         type: string
+      extra:
+        type: string
       id:
         type: integer
       name:
@@ -1636,19 +1638,18 @@ definitions:
         type: array
       scoring_method:
         $ref: '#/definitions/ScoringMethod'
-      type:
-        $ref: '#/definitions/ScoringPresetType'
     required:
     - description
     - id
     - name
     - points
     - scoring_method
-    - type
     type: object
   ScoringPresetCreate:
     properties:
       description:
+        type: string
+      extra:
         type: string
       id:
         type: integer
@@ -1662,13 +1663,10 @@ definitions:
         type: array
       scoring_method:
         $ref: '#/definitions/ScoringMethod'
-      type:
-        $ref: '#/definitions/ScoringPresetType'
     required:
     - name
     - points
     - scoring_method
-    - type
     type: object
   Signup:
     properties:
@@ -2312,14 +2310,6 @@ definitions:
     - BONUS_PER_COMPLETION
     - BINGO_3
     - BINGO_BOARD
-  ScoringPresetType:
-    enum:
-    - OBJECTIVE
-    - CATEGORY
-    type: string
-    x-enum-varnames:
-    - OBJECTIVE
-    - CATEGORY
   TimingKey:
     enum:
     - delay_after_character_is_refetched
