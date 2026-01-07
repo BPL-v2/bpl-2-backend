@@ -495,6 +495,7 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 			comp.Finished = true
 			comp.Points = int(scoringPreset.Points.Get(i))
 			comp.Rank = i + 1
+			comp.Timestamp = time.Unix(0, completion.LatestTimestamp)
 		}
 	}
 	return nil
