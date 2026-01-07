@@ -1122,7 +1122,7 @@ func TestHandleChildRankingByNumber(t *testing.T) {
 
 func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 	// This tests RANKED_COMPLETION with Extra["required_child_completions"]
-	// Teams only score if they complete the specified number of children (not necessarily all)
+	// Teams score if they complete at least the specified number of children
 	presetId := 100
 	objective := &repository.Objective{
 		Id: 10,
@@ -1131,7 +1131,7 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 				Id:     presetId,
 				Points: repository.ExtendingNumberSlice{100, 75, 50},
 				Extra: map[string]string{
-					"required_child_completions": "2", // Only need 2 out of 4 children
+					"required_child_completions": "2", // Need at least 2 out of 4 children
 				},
 			},
 		},
@@ -1141,9 +1141,9 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 	}
 
 	now := time.Now()
-	// Team 1: Completes 2 children, finishes at -20h (latest) -> rank 1
-	// Team 2: Completes 2 children, finishes at -15h (latest) -> rank 2
-	// Team 3: Completes 4 children, finishes at -10h (latest) -> rank 3
+	// Team 3: Completes 4 children, finishes at -10h (latest) -> rank 1 (sorted first: 4 > 2)
+	// Team 1: Completes 2 children, finishes at -20h (earliest of 2-completion teams) -> rank 2
+	// Team 2: Completes 2 children, finishes at -15h (latest of 2-completion teams) -> rank 3
 	// Team 4: Completes 1 child -> doesn't score (not enough completions)
 	childData := []struct {
 		objId, teamId int
@@ -1200,13 +1200,13 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 	err := handleChildRankingByTime(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
 	assert.NoError(t, err, "handleChildRankingByTime should not return an error")
 
-	// Verify results - only teams with exactly 2 completions score
+	// Verify results - teams with at least 2 completions score
 	// Teams are sorted: Team 3 (4 completions), Team 1 (2 completions, earlier), Team 2 (2 completions, later), Team 4 (1 completion)
-	// Points are assigned based on position in sorted array, but only teams with exactly 2 completions get marked finished
+	// Points are assigned based on position in sorted array
 	assert.Equal(t, 4, scoreMap[3][objective.Id].PresetCompletions[presetId].Number, "Team 3 should have 4 completions")
-	assert.Equal(t, 0, scoreMap[3][objective.Id].PresetCompletions[presetId].Points, "Team 3 should have 0 points (completed more than required)")
-	assert.Equal(t, 0, scoreMap[3][objective.Id].PresetCompletions[presetId].Rank, "Team 3 should have rank 0")
-	assert.False(t, scoreMap[3][objective.Id].PresetCompletions[presetId].Finished, "Team 3 shouldn't be finished (exceeded requirement)")
+	assert.Equal(t, 100, scoreMap[3][objective.Id].PresetCompletions[presetId].Points, "Team 3 should have 100 points (position 1 in sorted array)")
+	assert.Equal(t, 1, scoreMap[3][objective.Id].PresetCompletions[presetId].Rank, "Team 3 should have rank 1")
+	assert.True(t, scoreMap[3][objective.Id].PresetCompletions[presetId].Finished, "Team 3 should be finished (4 >= 2)")
 
 	assert.Equal(t, 2, scoreMap[1][objective.Id].PresetCompletions[presetId].Number, "Team 1 should have 2 completions")
 	assert.Equal(t, 75, scoreMap[1][objective.Id].PresetCompletions[presetId].Points, "Team 1 should have 75 points (position 2 in sorted array)")
@@ -1235,7 +1235,7 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletionsPercent(t *testing.
 				Id:     presetId,
 				Points: repository.ExtendingNumberSlice{100, 75, 50},
 				Extra: map[string]string{
-					"required_child_completions_percent": "50", // Need 50% of 4 children = 2
+					"required_child_completions_percent": "50", // Need at least 50% of 4 children (>=2)
 				},
 			},
 		},
@@ -1245,9 +1245,9 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletionsPercent(t *testing.
 	}
 
 	now := time.Now()
-	// Team 1: Completes 3 children (75%) -> should score
-	// Team 2: Completes 2 children (50% exactly) -> should score
-	// Team 3: Completes 1 child (25%) -> should not score
+	// Team 1: Completes 3 children (75%) -> should score (75% >= 50%)
+	// Team 2: Completes 2 children (50% exactly) -> should score (50% >= 50%)
+	// Team 3: Completes 1 child (25%) -> should not score (25% < 50%)
 	childData := []struct {
 		objId, teamId int
 		timestamp     time.Time
@@ -1300,20 +1300,22 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletionsPercent(t *testing.
 	err := handleChildRankingByTime(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
 	assert.NoError(t, err, "handleChildRankingByTime should not return an error")
 
-	// Verify results - only teams with exactly 2 completions (50% of 4) should score
+	// Verify results - teams with at least 50% completions should be finished
 	// Teams are sorted: Team 1 (3 completions), Team 2 (2 completions), Team 3 (1 completion)
 	// Points are assigned based on position in sorted array
 	assert.Equal(t, 3, scoreMap[1][objective.Id].PresetCompletions[presetId].Number, "Team 1 should have 3 completions")
-	assert.Equal(t, 0, scoreMap[1][objective.Id].PresetCompletions[presetId].Points, "Team 1 should have 0 points (exceeded exact requirement)")
-	assert.False(t, scoreMap[1][objective.Id].PresetCompletions[presetId].Finished, "Team 1 shouldn't be finished (more than required 50%)")
+	assert.Equal(t, 100, scoreMap[1][objective.Id].PresetCompletions[presetId].Points, "Team 1 should have 100 points (position 1 in sorted array)")
+	assert.Equal(t, 1, scoreMap[1][objective.Id].PresetCompletions[presetId].Rank, "Team 1 should have rank 1")
+	assert.True(t, scoreMap[1][objective.Id].PresetCompletions[presetId].Finished, "Team 1 should be finished (75% >= 50%)")
 
 	assert.Equal(t, 2, scoreMap[2][objective.Id].PresetCompletions[presetId].Number, "Team 2 should have 2 completions")
 	assert.Equal(t, 75, scoreMap[2][objective.Id].PresetCompletions[presetId].Points, "Team 2 should have 75 points (position 2 in sorted array)")
 	assert.Equal(t, 2, scoreMap[2][objective.Id].PresetCompletions[presetId].Rank, "Team 2 should have rank 2")
-	assert.True(t, scoreMap[2][objective.Id].PresetCompletions[presetId].Finished, "Team 2 should be finished (exactly 50%)")
+	assert.True(t, scoreMap[2][objective.Id].PresetCompletions[presetId].Finished, "Team 2 should be finished (50% >= 50%)")
 
 	assert.Equal(t, 1, scoreMap[3][objective.Id].PresetCompletions[presetId].Number, "Team 3 should have 1 completion")
-	assert.Equal(t, 0, scoreMap[3][objective.Id].PresetCompletions[presetId].Points, "Team 3 should have 0 points (below 50%)")
+	assert.Equal(t, 0, scoreMap[3][objective.Id].PresetCompletions[presetId].Points, "Team 3 should have 0 points (25% < 50%)")
+	assert.Equal(t, 0, scoreMap[3][objective.Id].PresetCompletions[presetId].Rank, "Team 3 should have rank 0")
 	assert.False(t, scoreMap[3][objective.Id].PresetCompletions[presetId].Finished, "Team 3 shouldn't be finished")
 }
 
