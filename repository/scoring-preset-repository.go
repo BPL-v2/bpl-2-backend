@@ -94,10 +94,11 @@ func NewScoringPresetRepository() *ScoringPresetRepository {
 
 func (r *ScoringPresetRepository) SavePreset(preset *ScoringPreset) (*ScoringPreset, error) {
 	result := r.DB.Save(preset)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return preset, nil
+	return preset, result.Error
+}
+func (r *ScoringPresetRepository) SavePresets(presets []*ScoringPreset) ([]*ScoringPreset, error) {
+	result := r.DB.Save(presets)
+	return presets, result.Error
 }
 
 func (r *ScoringPresetRepository) GetPresetsForEvent(eventId int) ([]*ScoringPreset, error) {

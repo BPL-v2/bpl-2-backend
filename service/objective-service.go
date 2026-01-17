@@ -68,7 +68,7 @@ func (e *ObjectiveService) GetAllObjectives(preloads ...string) ([]*repository.O
 	return e.objectiveRepository.GetAllObjectives(preloads...)
 }
 
-func (e *ObjectiveService) DuplicateObjectives(oldEventId int, newEventId int, presetIdMap map[int]int) error {
+func (e *ObjectiveService) DuplicateObjectives(oldEventId int, newEventId int, presetMap map[int]*repository.ScoringPreset) error {
 	objectives, err := e.objectiveRepository.GetObjectivesByEventIdFlat(oldEventId, "ScoringPresets")
 	if err != nil {
 		return err
@@ -80,31 +80,28 @@ func (e *ObjectiveService) DuplicateObjectives(oldEventId int, newEventId int, p
 		newObjective.Id = 0
 		newObjective.EventId = newEventId
 
-		presetIds := utils.Filter(utils.Map(newObjective.ScoringPresets, func(preset *repository.ScoringPreset) int {
-			if newId, ok := presetIdMap[preset.Id]; ok {
-				return newId
+		newPresets := utils.Filter(utils.Map(objective.ScoringPresets, func(preset *repository.ScoringPreset) *repository.ScoringPreset {
+			if newPreset, ok := presetMap[preset.Id]; ok {
+				return newPreset
 			}
-			return 0
-		}), func(id int) bool { return id != 0 })
-		obj, err := e.objectiveRepository.SaveObjective(&newObjective)
-		if err != nil {
-			return err
-		}
-		e.objectiveRepository.AssociateScoringPresets(objective.Id, presetIds)
-		newObjectiveMap[oldId] = obj
+			return nil
+		}), func(preset *repository.ScoringPreset) bool { return preset != nil })
+		newObjective.ScoringPresets = newPresets
+
+		newObjectiveMap[oldId] = &newObjective
+	}
+	_, err = e.objectiveRepository.SaveObjectives(utils.Values(newObjectiveMap))
+	if err != nil {
+		return err
 	}
 	for _, objective := range objectives {
-		if objective.ParentId != nil {
-			if parent, ok := newObjectiveMap[*objective.ParentId]; ok {
-				if child, ok := newObjectiveMap[objective.Id]; ok {
-					child.ParentId = &parent.Id
-					_, err := e.objectiveRepository.SaveObjective(child)
-					if err != nil {
-						return err
-					}
-				}
-			}
+		newObjective := newObjectiveMap[objective.Id]
+		if newObjective == nil || objective.ParentId == nil || newObjectiveMap[*objective.ParentId] == nil {
+			continue
 		}
+		newObjective.ParentId = &newObjectiveMap[*objective.ParentId].Id
 	}
-	return nil
+	_, err = e.objectiveRepository.SaveObjectives(utils.Values(newObjectiveMap))
+	return err
+
 }

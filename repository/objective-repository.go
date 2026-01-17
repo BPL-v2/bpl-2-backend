@@ -200,6 +200,11 @@ func (r *ObjectiveRepository) SaveObjective(objective *Objective) (*Objective, e
 	return objective, nil
 }
 
+func (r *ObjectiveRepository) SaveObjectives(objectives []*Objective) ([]*Objective, error) {
+	result := r.DB.Save(objectives)
+	return objectives, result.Error
+}
+
 func (r *ObjectiveRepository) GetObjectiveById(objectiveId int, preloads ...string) (*Objective, error) {
 	var objective Objective
 	query := r.DB
