@@ -4761,6 +4761,7 @@ const docTemplate = `{
                 "max_size",
                 "name",
                 "teams",
+                "uses_medals",
                 "waitlist_size"
             ],
             "properties": {
@@ -4808,6 +4809,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/Team"
                     }
+                },
+                "uses_medals": {
+                    "type": "boolean"
                 },
                 "waitlist_size": {
                     "type": "integer"
@@ -4865,6 +4869,9 @@ const docTemplate = `{
                 },
                 "patch": {
                     "type": "string"
+                },
+                "uses_medals": {
+                    "type": "boolean"
                 },
                 "waitlist_size": {
                     "type": "integer"

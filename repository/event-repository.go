@@ -32,6 +32,7 @@ type Event struct {
 	Public               bool         `gorm:"not null"`
 	Locked               bool         `gorm:"not null"`
 	IsMainEvent          bool         `gorm:"not null"`
+	UsesMedals           bool         `gorm:"not null"`
 	Teams                []*Team      `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
 	Objectives           []*Objective `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE"`
 }

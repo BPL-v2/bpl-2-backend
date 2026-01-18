@@ -1174,6 +1174,8 @@ definitions:
         items:
           $ref: '#/definitions/Team'
         type: array
+      uses_medals:
+        type: boolean
       waitlist_size:
         type: integer
     required:
@@ -1190,6 +1192,7 @@ definitions:
     - max_size
     - name
     - teams
+    - uses_medals
     - waitlist_size
     type: object
   EventCreate:
@@ -1220,6 +1223,8 @@ definitions:
         type: string
       patch:
         type: string
+      uses_medals:
+        type: boolean
       waitlist_size:
         type: integer
     required:

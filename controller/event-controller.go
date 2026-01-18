@@ -242,6 +242,7 @@ type EventCreate struct {
 	Public               bool                   `json:"is_public"`
 	Locked               bool                   `json:"is_locked"`
 	IsMainEvent          bool                   `json:"is_main_event"`
+	UsesMedals           bool                   `json:"uses_medals"`
 }
 
 type Event struct {
@@ -260,6 +261,7 @@ type Event struct {
 	Public               bool                   `json:"is_public" binding:"required"`
 	Locked               bool                   `json:"is_locked" binding:"required"`
 	IsMainEvent          bool                   `json:"is_main_event" binding:"required"`
+	UsesMedals           bool                   `json:"uses_medals" binding:"required"`
 }
 
 func (e *EventCreate) toModel() *repository.Event {
@@ -303,5 +305,7 @@ func toEventResponse(event *repository.Event) *Event {
 		EventEndTime:         event.EventEndTime,
 		Public:               event.Public,
 		Locked:               event.Locked,
+		IsMainEvent:          event.IsMainEvent,
+		UsesMedals:           event.UsesMedals,
 	}
 }
