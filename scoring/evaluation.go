@@ -506,20 +506,33 @@ func handleChildRankingByNumber(objective *repository.Objective, scoringPreset *
 	for teamId := range scoreMap {
 		teamCompletions[teamId] = &TeamCompletion{TeamId: teamId}
 	}
-	childIds := map[int]bool{}
 	for _, child := range objective.Children {
-		childIds[child.Id] = true
 		for teamId, objectiveScores := range scoreMap {
 			childScore := objectiveScores[child.Id]
 			if childScore != nil {
-				teamCompletions[teamId].ObjectivesCompleted += childScore.PresetCompletions[scoringPreset.Id].Number
+				maxNum := 0
+				latest := time.Time{}
+				for _, comp := range childScore.PresetCompletions {
+					if comp.Number > maxNum {
+						maxNum = comp.Number
+						if comp.Timestamp.After(latest) {
+							latest = comp.Timestamp
+						}
+					}
+				}
+				teamCompletions[teamId].ObjectivesCompleted += maxNum
+				teamCompletions[teamId].LatestTimestamp = utils.Max(teamCompletions[teamId].LatestTimestamp, latest.UnixNano())
 			}
 		}
 	}
 	rankedTeams := utils.Values(teamCompletions)
-	sort.Slice(rankedTeams, func(i, j int) bool {
+	rankfun := func(i, j int) bool {
+		if rankedTeams[i].ObjectivesCompleted == rankedTeams[j].ObjectivesCompleted {
+			return rankedTeams[i].LatestTimestamp < rankedTeams[j].LatestTimestamp
+		}
 		return rankedTeams[i].ObjectivesCompleted > rankedTeams[j].ObjectivesCompleted
-	})
+	}
+	sort.Slice(rankedTeams, rankfun)
 	rank := 1
 	for i, completion := range rankedTeams {
 		if scoreMap[completion.TeamId] == nil || scoreMap[completion.TeamId][objective.Id] == nil || scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
@@ -527,9 +540,12 @@ func handleChildRankingByNumber(objective *repository.Objective, scoringPreset *
 		}
 		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
 		comp.Number = completion.ObjectivesCompleted
+		if comp.Number == 0 {
+			continue
+		}
 		comp.Points = int(scoringPreset.Points.Get(rank - 1))
 		comp.Rank = rank
-		if i+1 < len(rankedTeams) && rankedTeams[i+1].ObjectivesCompleted < completion.ObjectivesCompleted {
+		if i+1 < len(rankedTeams) && (rankfun(i, i+1) != rankfun(i+1, i)) {
 			rank++
 		}
 	}

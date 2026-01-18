@@ -113,7 +113,9 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 	}
 	unfinishedObjectiveIds := make([]int, 0)
 	existingMatches := make([]*Match, 0)
+	objectiveMap := make(map[int]repository.Objective)
 	for _, objective := range objectives {
+		objectiveMap[objective.Id] = *objective
 		existing, ok := earliestMatchesCache[objective.Id]
 		if ok {
 			existingMatches = append(existingMatches, existing...)
@@ -164,6 +166,7 @@ func handleEarliest(db *gorm.DB, objectives []*repository.Objective, teamIds []i
 	newCache := make(map[int][]*Match)
 	for _, match := range matches {
 		if match.Finished {
+			match.Number = objectiveMap[match.ObjectiveId].RequiredAmount
 			newCache[match.ObjectiveId] = append(newCache[match.ObjectiveId], match)
 		}
 	}
@@ -204,7 +207,7 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 		return "", fmt.Errorf("invalid aggregation type")
 	}
 	return fmt.Sprintf(`
-    WITH extreme AS (
+    WITH extreme_numbers AS (
         SELECT
             match.objective_id,
             match.team_id,
@@ -215,19 +218,35 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 			match.objective_id IN @objectiveIds
         GROUP BY
             match.objective_id, match.team_id
+    ),
+    extreme_with_timestamp AS (
+        SELECT
+            en.objective_id,
+            en.team_id,
+            en.number,
+            MIN(match.timestamp) AS timestamp
+        FROM
+            extreme_numbers en
+        JOIN
+            objective_matches AS match ON match.objective_id = en.objective_id
+            AND match.number = en.number
+            AND match.team_id = en.team_id
+        GROUP BY
+            en.objective_id, en.team_id, en.number
     )
     SELECT
         extreme.objective_id,
         extreme.team_id,
         match.user_id,
         extreme.number,
-		match.timestamp
+		extreme.timestamp
     FROM
-        extreme
+        extreme_with_timestamp AS extreme
     JOIN
         objective_matches AS match ON match.objective_id = extreme.objective_id
         AND match.number = extreme.number
         AND match.team_id = extreme.team_id
+        AND match.timestamp = extreme.timestamp
  	`, operator), nil
 
 }
