@@ -114,7 +114,8 @@ type CharacterPob struct {
 	MainSkill   string    `gorm:"not null"`
 	Ascendancy  string    `gorm:"not null"`
 	Export      PoBExport `gorm:"not null;type:bytea"`
-	Timestamp   time.Time `gorm:"not null;index"`
+	CreatedAt   time.Time `gorm:"not null;index"`
+	UpdatedAt   time.Time `gorm:"not null"`
 }
 
 type CharacterRepository struct {
@@ -127,8 +128,8 @@ func NewCharacterRepository() *CharacterRepository {
 
 func (r *CharacterRepository) GetPobByCharacterIdBeforeTimestamp(characterId string, timestamp time.Time) (*CharacterPob, error) {
 	characterPob := &CharacterPob{}
-	err := r.DB.Where("character_id = ? AND timestamp < ?", characterId, timestamp).
-		Order("timestamp DESC").First(characterPob).Error
+	err := r.DB.Where("character_id = ? AND created_at < ?", characterId, timestamp).
+		Order("created_at DESC").First(characterPob).Error
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func (r *CharacterRepository) GetPobByCharacterIdBeforeTimestamp(characterId str
 
 func (r *CharacterRepository) GetPobs(characterId string) ([]*CharacterPob, error) {
 	pobs := []*CharacterPob{}
-	err := r.DB.Where("character_id = ?", characterId).Order("timestamp ASC").Find(&pobs).Error
+	err := r.DB.Where("character_id = ?", characterId).Order("created_at ASC").Find(&pobs).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting PoBs for character %s: %w", characterId, err)
 	}

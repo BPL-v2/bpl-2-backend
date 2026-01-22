@@ -386,7 +386,7 @@ func updateStats(character *client.Character, eventId int, characterRepo *reposi
 		MainSkill:   character.GetMainSkill(),
 		Ascendancy:  character.Class,
 		Export:      p,
-		Timestamp:   time.Now(),
+		CreatedAt:   time.Now(),
 	})
 	if err != nil {
 		log.Printf("Error saving PoB for character %s: %v", character.Name, err)
@@ -422,7 +422,7 @@ func InitCharacterStatsCache(eventId int, characterRepo *repository.CharacterRep
 			}
 		}
 		cache[pob.CharacterId].OldPoBString = pob.Export.ToString()
-		cache[pob.CharacterId].LastPoBUpdate = pob.Timestamp
+		cache[pob.CharacterId].LastPoBUpdate = pob.CreatedAt
 	}
 	return cache
 

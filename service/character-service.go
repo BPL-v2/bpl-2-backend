@@ -165,6 +165,9 @@ func (c *CharacterService) GetInfoForCharacter(characterId string) (*CharacterIn
 		return nil, err
 	}
 	event, err := c.eventRepository.GetEventById(character.EventId)
+	if err != nil {
+		return nil, err
+	}
 	return &CharacterInfo{
 		Character: character,
 		User:      user,
@@ -172,4 +175,42 @@ func (c *CharacterService) GetInfoForCharacter(characterId string) (*CharacterIn
 		TeamId:    teamUser.TeamId,
 	}, nil
 
+}
+
+func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
+	newExport, err := client.UpdatePoBExport(pob.Export.ToString())
+	if err != nil {
+		return err
+	}
+	p := repository.PoBExport{}
+	p.FromString(newExport)
+	pob.Export = p
+	return c.characterRepository.SavePoB(pob)
+}
+
+func (c *CharacterService) UpdateLatestPoBs() error {
+	events, err := c.eventRepository.FindAll()
+	if err != nil {
+		fmt.Printf("Error getting events: %v\n", err)
+		return err
+	}
+	for _, event := range events {
+		pobs, err := c.characterRepository.GetLatestPoBsForEvent(event.Id)
+		if err != nil {
+			fmt.Printf("Error getting latest PoBs for event %d: %v\n", event.Id, err)
+			return err
+		}
+		for _, characterPob := range pobs {
+			// if characterPob.UpdatedAt.After(time.Now().Add(-24 * time.Hour)) {
+			// 	continue
+			// }
+			err := c.UpdatePoB(characterPob)
+			if err != nil {
+				fmt.Printf("Error updating PoB for character %s: %v\n", characterPob.CharacterId, err)
+				return err
+			}
+			fmt.Printf("Updated PoB for character %s\n", characterPob.CharacterId)
+		}
+	}
+	return nil
 }

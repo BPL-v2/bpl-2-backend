@@ -40,6 +40,7 @@ func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
 	}
+	go e.characterService.UpdateLatestPoBs()
 	return routes
 }
 
@@ -179,7 +180,7 @@ func toPoBResponse(pob *repository.CharacterPob) *PoB {
 		Level:        pob.Level,
 		Ascendancy:   pob.Ascendancy,
 		Mainskill:    pob.MainSkill,
-		Timestamp:    pob.Timestamp,
+		Timestamp:    pob.CreatedAt,
 	}
 }
 
