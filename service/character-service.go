@@ -22,6 +22,7 @@ type CharacterService struct {
 func NewCharacterService(poeClient *client.PoEClient) *CharacterService {
 	return &CharacterService{
 		characterRepository: repository.NewCharacterRepository(),
+		eventRepository:     repository.NewEventRepository(),
 		teamRepository:      repository.NewTeamRepository(),
 		userRepository:      repository.NewUserRepository(),
 		activityRepository:  repository.NewActivityRepository(),
