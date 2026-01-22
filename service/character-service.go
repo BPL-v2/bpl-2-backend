@@ -195,20 +195,22 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 		fmt.Printf("Error getting events: %v\n", err)
 		return err
 	}
+	updateStart := time.Date(2026, 01, 22, 0, 0, 0, 0, time.Local)
+
 	for _, event := range events {
+		fmt.Printf("Updating PoBs for Event %d", event.Id)
 		pobs, err := c.characterRepository.GetLatestPoBsForEvent(event.Id)
 		if err != nil {
 			fmt.Printf("Error getting latest PoBs for event %d: %v\n", event.Id, err)
-			return err
+			continue
 		}
 		for _, characterPob := range pobs {
-			// if characterPob.UpdatedAt.After(time.Now().Add(-24 * time.Hour)) {
-			// 	continue
-			// }
+			if characterPob.UpdatedAt.After(updateStart) {
+				continue
+			}
 			err := c.UpdatePoB(characterPob)
 			if err != nil {
 				fmt.Printf("Error updating PoB for character %s: %v\n", characterPob.CharacterId, err)
-				return err
 			}
 			fmt.Printf("Updated PoB for character %s\n", characterPob.CharacterId)
 		}
