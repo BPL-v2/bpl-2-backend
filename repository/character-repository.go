@@ -271,7 +271,7 @@ func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPo
 	query := `SELECT DISTINCT ON (character_id) pobs.* from character_pobs as pobs
 		JOIN characters ON pobs.character_id = characters.id
 		WHERE characters.event_id = ?
-		ORDER BY character_id, timestamp DESC`
+		ORDER BY character_id, created_at DESC`
 	err := r.DB.Raw(query, eventId).Scan(&charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting latest PoBs for event %d: %w", eventId, err)
