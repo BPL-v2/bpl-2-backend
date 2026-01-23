@@ -190,12 +190,15 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 }
 
 func (c *CharacterService) UpdateLatestPoBs() error {
+	fmt.Println("Starting PoB update process...")
 	semaphore := make(chan struct{}, 5)
 	updateStart := time.Date(2026, 01, 23, 0, 0, 0, 0, time.Local)
 	startId := 0
 
 	for {
+		fmt.Printf("Fetching PoBs starting from ID %d\n", startId+1)
 		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 100)
+
 		if err != nil {
 			fmt.Printf("Error getting PoBs from id %d: %v\n", startId, err)
 			return err
