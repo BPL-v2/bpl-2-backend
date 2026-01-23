@@ -196,7 +196,6 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 	startId := 0
 
 	for {
-		fmt.Printf("Fetching PoBs starting from ID %d\n", startId+1)
 		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 100)
 
 		if err != nil {
@@ -207,6 +206,7 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 			break
 		}
 		for _, characterPob := range pobs {
+			startId = characterPob.Id
 			if characterPob.UpdatedAt.After(updateStart) {
 				continue
 			}
@@ -220,7 +220,6 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 					fmt.Printf("Updated PoB for character %s\n", characterPob.CharacterId)
 				}
 			}(characterPob)
-			startId = characterPob.Id
 		}
 	}
 	return nil
