@@ -190,29 +190,34 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 }
 
 func (c *CharacterService) UpdateLatestPoBs() error {
-	events, err := c.eventRepository.FindAll()
-	if err != nil {
-		fmt.Printf("Error getting events: %v\n", err)
-		return err
-	}
-	updateStart := time.Date(2026, 01, 22, 0, 0, 0, 0, time.Local)
+	semaphore := make(chan struct{}, 3)
+	updateStart := time.Date(2026, 01, 23, 0, 0, 0, 0, time.Local)
+	startId := 0
 
-	for _, event := range events {
-		fmt.Printf("Updating PoBs for Event %d", event.Id)
-		pobs, err := c.characterRepository.GetLatestPoBsForEvent(event.Id)
+	for {
+		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 100)
 		if err != nil {
-			fmt.Printf("Error getting latest PoBs for event %d: %v\n", event.Id, err)
-			continue
+			fmt.Printf("Error getting PoBs from id %d: %v\n", startId, err)
+			return err
+		}
+		if len(pobs) == 0 {
+			break
 		}
 		for _, characterPob := range pobs {
 			if characterPob.UpdatedAt.After(updateStart) {
 				continue
 			}
-			err := c.UpdatePoB(characterPob)
-			if err != nil {
-				fmt.Printf("Error updating PoB for character %s: %v\n", characterPob.CharacterId, err)
-			}
-			fmt.Printf("Updated PoB for character %s\n", characterPob.CharacterId)
+			semaphore <- struct{}{}
+			go func(characterPob *repository.CharacterPob) {
+				defer func() { <-semaphore }() // Release the slot when done
+				err := c.UpdatePoB(characterPob)
+				if err != nil {
+					fmt.Printf("Error updating PoB for character %s: %v\n", characterPob.CharacterId, err)
+				} else {
+					fmt.Printf("Updated PoB for character %s\n", characterPob.CharacterId)
+				}
+			}(characterPob)
+			startId = characterPob.Id
 		}
 	}
 	return nil

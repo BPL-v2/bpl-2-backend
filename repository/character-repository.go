@@ -298,3 +298,14 @@ func (r *CharacterRepository) GetAllHighestLevelCharactersForEachEventAndUser() 
 	}
 	return charData, nil
 }
+
+func (r *CharacterRepository) GetPobsFromIdWithLimit(startId int, limit int) ([]*CharacterPob, error) {
+	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetPobsFromIdWithLimit"))
+	defer timer.ObserveDuration()
+	charData := []*CharacterPob{}
+	err := r.DB.Where("id >= ?", startId).Order("id ASC").Limit(limit).Find(&charData).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting PoBs starting from id %d with limit %d: %w", startId, limit, err)
+	}
+	return charData, nil
+}
