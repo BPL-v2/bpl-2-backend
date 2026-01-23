@@ -190,7 +190,7 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 }
 
 func (c *CharacterService) UpdateLatestPoBs() error {
-	semaphore := make(chan struct{}, 3)
+	semaphore := make(chan struct{}, 5)
 	updateStart := time.Date(2026, 01, 23, 0, 0, 0, 0, time.Local)
 	startId := 0
 
