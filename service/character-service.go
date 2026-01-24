@@ -186,12 +186,12 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 	p := repository.PoBExport{}
 	p.FromString(newExport)
 	pob.Export = p
+	pob.UpdatedAt = time.Now()
 	return c.characterRepository.SavePoB(pob)
 }
 
 func (c *CharacterService) UpdateLatestPoBs() error {
-	fmt.Println("Starting PoB update process...")
-	semaphore := make(chan struct{}, 5)
+	semaphore := make(chan struct{}, 3)
 	updateStart := time.Date(2026, 01, 23, 0, 0, 0, 0, time.Local)
 	startId := 0
 
