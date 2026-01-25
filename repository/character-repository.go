@@ -1,9 +1,14 @@
 package repository
 
 import (
+	"bpl/client"
 	"bpl/config"
+	"bpl/utils"
+	"bytes"
+	"compress/zlib"
 	"database/sql/driver"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"strings"
 	"time"
@@ -46,6 +51,45 @@ type CharacterStat struct {
 	Event     *Event     `gorm:"foreignKey:EventId"`
 }
 
+func float2Int64(f float64) int64 {
+	if f < 0 {
+		return -float2Int64(-f) // handle negative values
+	}
+	if f > float64(int(^uint(0)>>1)) {
+		return int64(^uint(0) >> 1) // max int value
+	}
+	return int64(f)
+}
+
+func float2Int32(f float64) int32 {
+	if f < 0 {
+		return -float2Int32(-f) // handle negative values
+	}
+	if f > float64(int32(^uint32(0)>>1)) {
+		return int32(^uint32(0) >> 1) // max int32 value
+	}
+	return int32(f)
+}
+
+func (cs *CharacterStat) AddStats(pob *CharacterPob) *CharacterStat {
+	pobData, err := pob.Export.Decode()
+	if err != nil {
+		return nil
+	}
+	stats := pobData.Build.PlayerStats
+	cs.DPS += float2Int64(utils.Max(stats.CombinedDPS, stats.CullingDPS, stats.FullDPS, stats.FullDotDPS, stats.PoisonDPS, stats.ReservationDPS, stats.TotalDPS, stats.TotalDotDPS, stats.WithBleedDPS, stats.WithIgniteDPS, stats.WithPoisonDPS))
+	cs.EHP += float2Int32(stats.TotalEHP)
+	cs.PhysMaxHit += float2Int32(stats.PhysicalMaximumHitTaken)
+	cs.EleMaxHit += float2Int32(utils.Min(stats.FireMaximumHitTaken, stats.ColdMaximumHitTaken, stats.LightningMaximumHitTaken))
+	cs.HP += float2Int32(stats.Life)
+	cs.Mana += float2Int32(stats.Mana)
+	cs.ES += float2Int32(stats.EnergyShield)
+	cs.Armour += float2Int32(stats.Armour)
+	cs.Evasion += float2Int32(stats.Evasion)
+	cs.MovementSpeed += float2Int32(stats.EffectiveMovementSpeedMod * 100)
+	return cs
+}
+
 func (c *CharacterStat) IsEqual(other *CharacterStat) bool {
 	if other == nil {
 		return false
@@ -85,7 +129,7 @@ func (p PoBExport) ToString() string {
 	return encoded
 }
 
-func (p *PoBExport) Scan(value interface{}) error {
+func (p *PoBExport) Scan(value any) error {
 	if value == nil {
 		*p = nil
 		return nil
@@ -116,6 +160,45 @@ type CharacterPob struct {
 	Export      PoBExport `gorm:"not null;type:bytea"`
 	CreatedAt   time.Time `gorm:"not null;index"`
 	UpdatedAt   time.Time `gorm:"not null"`
+
+	DPS           int64 `gorm:"not null"`
+	EHP           int32 `gorm:"not null"`
+	PhysMaxHit    int32 `gorm:"not null"`
+	EleMaxHit     int32 `gorm:"not null"`
+	HP            int32 `gorm:"not null"`
+	Mana          int32 `gorm:"not null"`
+	ES            int32 `gorm:"not null"`
+	Armour        int32 `gorm:"not null"`
+	Evasion       int32 `gorm:"not null"`
+	XP            int64 `gorm:"not null"`
+	MovementSpeed int32 `gorm:"not null"`
+}
+
+func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {
+	z, err := zlib.NewReader(bytes.NewReader(*p))
+	if err != nil {
+		return nil, fmt.Errorf("zlib decompress error: %w", err)
+	}
+	defer z.Close()
+	var pob client.PathOfBuilding
+	if err := xml.NewDecoder(z).Decode(&pob); err != nil {
+		return nil, fmt.Errorf("xml decode error: %w", err)
+	}
+	return &pob, nil
+}
+
+func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) error {
+	p.DPS = float2Int64(utils.Max(pob.Build.PlayerStats.CombinedDPS, pob.Build.PlayerStats.CullingDPS, pob.Build.PlayerStats.FullDPS, pob.Build.PlayerStats.FullDotDPS, pob.Build.PlayerStats.PoisonDPS, pob.Build.PlayerStats.ReservationDPS, pob.Build.PlayerStats.TotalDPS, pob.Build.PlayerStats.TotalDotDPS, pob.Build.PlayerStats.WithBleedDPS, pob.Build.PlayerStats.WithIgniteDPS, pob.Build.PlayerStats.WithPoisonDPS))
+	p.EHP = float2Int32(pob.Build.PlayerStats.TotalEHP)
+	p.PhysMaxHit = float2Int32(pob.Build.PlayerStats.PhysicalMaximumHitTaken)
+	p.EleMaxHit = float2Int32(utils.Min(pob.Build.PlayerStats.FireMaximumHitTaken, pob.Build.PlayerStats.ColdMaximumHitTaken, pob.Build.PlayerStats.LightningMaximumHitTaken))
+	p.HP = float2Int32(pob.Build.PlayerStats.Life)
+	p.Mana = float2Int32(pob.Build.PlayerStats.Mana)
+	p.ES = float2Int32(pob.Build.PlayerStats.EnergyShield)
+	p.Armour = float2Int32(pob.Build.PlayerStats.Armour)
+	p.Evasion = float2Int32(pob.Build.PlayerStats.Evasion)
+	p.MovementSpeed = float2Int32(pob.Build.PlayerStats.EffectiveMovementSpeedMod * 100)
+	return nil
 }
 
 type CharacterRepository struct {

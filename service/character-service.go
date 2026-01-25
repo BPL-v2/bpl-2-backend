@@ -206,6 +206,7 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 			break
 		}
 		for _, characterPob := range pobs {
+			fmt.Printf("Processing PoB ID %d\n", characterPob.Id)
 			startId = characterPob.Id
 			if characterPob.UpdatedAt.After(updateStart) {
 				continue
@@ -220,6 +221,36 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 					fmt.Printf("Updated PoB for character %s\n", characterPob.CharacterId)
 				}
 			}(characterPob)
+		}
+	}
+	return nil
+}
+
+func (c *CharacterService) UpdatePoBStats() error {
+	startId := 0
+	for {
+		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 100)
+
+		if err != nil {
+			fmt.Printf("Error getting PoBs from id %d: %v\n", startId, err)
+			return err
+		}
+		if len(pobs) == 0 {
+			break
+		}
+		for _, characterPob := range pobs {
+			startId = characterPob.Id
+			fmt.Printf("Updating stats for PoB ID %d\n", characterPob.Id)
+			pob, err := characterPob.Export.Decode()
+			if err != nil {
+				fmt.Printf("Error decoding PoB for character %s: %v\n", characterPob.CharacterId, err)
+				continue
+			}
+			characterPob.UpdateStats(pob)
+			err = c.characterRepository.SavePoB(characterPob)
+			if err != nil {
+				fmt.Printf("Error saving PoB for character %s: %v\n", characterPob.CharacterId, err)
+			}
 		}
 	}
 	return nil

@@ -40,7 +40,7 @@ func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
 	}
-	go e.characterService.UpdateLatestPoBs()
+	go e.characterService.UpdatePoBStats()
 	return routes
 }
 
