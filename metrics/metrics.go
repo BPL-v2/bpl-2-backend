@@ -18,6 +18,12 @@ var PobsCalculatedCounter = promauto.NewCounter(
 		Help: "Number of PoBs calculated",
 	},
 )
+var PobsCalculatedErrorCounter = promauto.NewCounter(
+	prometheus.CounterOpts{
+		Name: "bpl_pobs_calculated_error_total",
+		Help: "Number of PoB calculation errors",
+	},
+)
 var PobsSavedCounter = promauto.NewCounter(
 	prometheus.CounterOpts{
 		Name: "bpl_pobs_saved",

@@ -329,6 +329,7 @@ func float2Int32(f float64) int32 {
 func updateStats(character *client.Character, eventId int, characterRepo *repository.CharacterRepository) {
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
+		metrics.PobsCalculatedErrorCounter.Inc()
 		fmt.Printf("Error fetching PoB export for character %s: %v\n", character.Name, err)
 		return
 	}

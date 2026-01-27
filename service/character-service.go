@@ -181,10 +181,11 @@ func (c *CharacterService) GetInfoForCharacter(characterId string) (*CharacterIn
 
 func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 	newExport, err := client.UpdatePoBExport(pob.Export.ToString())
-	metrics.PobsCalculatedCounter.Inc()
 	if err != nil {
+		metrics.PobsCalculatedErrorCounter.Inc()
 		return err
 	}
+	metrics.PobsCalculatedCounter.Inc()
 	p := repository.PoBExport{}
 	p.FromString(newExport)
 	pob.Export = p
