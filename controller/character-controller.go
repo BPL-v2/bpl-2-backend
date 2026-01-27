@@ -40,7 +40,6 @@ func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
 	}
-	go e.characterService.UpdatePoBStats()
 	return routes
 }
 
@@ -164,11 +163,22 @@ type Character struct {
 }
 
 type PoB struct {
-	ExportString string    `json:"export_string" binding:"required"`
-	Level        int       `json:"level" binding:"required"`
-	Ascendancy   string    `json:"ascendancy" binding:"required"`
-	Mainskill    string    `json:"main_skill" binding:"required"`
-	Timestamp    time.Time `json:"timestamp" binding:"required"`
+	ExportString  string    `json:"export_string" binding:"required"`
+	Level         int       `json:"level" binding:"required"`
+	Ascendancy    string    `json:"ascendancy" binding:"required"`
+	Mainskill     string    `json:"main_skill" binding:"required"`
+	Timestamp     time.Time `json:"timestamp" binding:"required"`
+	DPS           int64     `json:"dps" binding:"required"`
+	EHP           int32     `json:"ehp" binding:"required"`
+	PhysMaxHit    int32     `json:"phys_max_hit" binding:"required"`
+	EleMaxHit     int32     `json:"ele_max_hit" binding:"required"`
+	HP            int32     `json:"hp" binding:"required"`
+	Mana          int32     `json:"mana" binding:"required"`
+	ES            int32     `json:"es" binding:"required"`
+	Armour        int32     `json:"armour" binding:"required"`
+	Evasion       int32     `json:"evasion" binding:"required"`
+	XP            int64     `json:"xp" binding:"required"`
+	MovementSpeed int32     `json:"movement_speed" binding:"required"`
 }
 
 func toPoBResponse(pob *repository.CharacterPob) *PoB {
@@ -176,11 +186,22 @@ func toPoBResponse(pob *repository.CharacterPob) *PoB {
 		return nil
 	}
 	return &PoB{
-		ExportString: pob.Export.ToString(),
-		Level:        pob.Level,
-		Ascendancy:   pob.Ascendancy,
-		Mainskill:    pob.MainSkill,
-		Timestamp:    pob.CreatedAt,
+		ExportString:  pob.Export.ToString(),
+		Level:         pob.Level,
+		Ascendancy:    pob.Ascendancy,
+		Mainskill:     pob.MainSkill,
+		Timestamp:     pob.CreatedAt,
+		DPS:           pob.DPS,
+		EHP:           pob.EHP,
+		PhysMaxHit:    pob.PhysMaxHit,
+		EleMaxHit:     pob.EleMaxHit,
+		HP:            pob.HP,
+		Mana:          pob.Mana,
+		ES:            pob.ES,
+		Armour:        pob.Armour,
+		Evasion:       pob.Evasion,
+		XP:            pob.XP,
+		MovementSpeed: pob.MovementSpeed,
 	}
 }
 

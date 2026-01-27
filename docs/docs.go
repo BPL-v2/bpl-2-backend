@@ -5359,18 +5359,50 @@ const docTemplate = `{
         "PoB": {
             "type": "object",
             "required": [
+                "armour",
                 "ascendancy",
+                "dps",
+                "ehp",
+                "ele_max_hit",
+                "es",
+                "evasion",
                 "export_string",
+                "hp",
                 "level",
                 "main_skill",
-                "timestamp"
+                "mana",
+                "movement_speed",
+                "phys_max_hit",
+                "timestamp",
+                "xp"
             ],
             "properties": {
+                "armour": {
+                    "type": "integer"
+                },
                 "ascendancy": {
                     "type": "string"
                 },
+                "dps": {
+                    "type": "integer"
+                },
+                "ehp": {
+                    "type": "integer"
+                },
+                "ele_max_hit": {
+                    "type": "integer"
+                },
+                "es": {
+                    "type": "integer"
+                },
+                "evasion": {
+                    "type": "integer"
+                },
                 "export_string": {
                     "type": "string"
+                },
+                "hp": {
+                    "type": "integer"
                 },
                 "level": {
                     "type": "integer"
@@ -5378,8 +5410,20 @@ const docTemplate = `{
                 "main_skill": {
                     "type": "string"
                 },
+                "mana": {
+                    "type": "integer"
+                },
+                "movement_speed": {
+                    "type": "integer"
+                },
+                "phys_max_hit": {
+                    "type": "integer"
+                },
                 "timestamp": {
                     "type": "string"
+                },
+                "xp": {
+                    "type": "integer"
                 }
             }
         },
