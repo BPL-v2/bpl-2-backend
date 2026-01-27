@@ -6,7 +6,19 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 )
+
+// Shared HTTP client with optimized transport for multiple replicas
+var httpClient = &http.Client{
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 10, // Allow up to 10 connections per host (covers all replicas)
+		IdleConnTimeout:     90 * time.Second,
+		DisableKeepAlives:   false,
+	},
+	Timeout: 30 * time.Second,
+}
 
 func GetPoBExport(characterData *Character) (*PathOfBuilding, string, error) {
 	jsonData, err := json.Marshal(characterData)
@@ -17,7 +29,7 @@ func GetPoBExport(characterData *Character) (*PathOfBuilding, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	response, err := (&http.Client{}).Do(request)
+	response, err := httpClient.Do(request)
 	if err != nil {
 		return nil, "", err
 	}
@@ -40,7 +52,7 @@ func UpdatePoBExport(pobString string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	response, err := (&http.Client{}).Do(request)
+	response, err := httpClient.Do(request)
 	if err != nil {
 		return "", err
 	}
