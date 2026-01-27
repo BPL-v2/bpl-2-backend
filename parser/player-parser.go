@@ -15,7 +15,7 @@ type Player struct {
 	AtlasPassiveTrees []client.AtlasPassiveTree
 	DelveDepth        int
 	Character         *client.Character
-	Stats             *repository.CharacterStat
+	PoB               *repository.CharacterPob
 }
 
 type PlayerUpdate struct {
@@ -255,75 +255,75 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 		}, nil
 	case repository.NumberFieldEvasion:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.Evasion)
+			return int(p.PoB.Evasion)
 		}, nil
 	case repository.NumberFieldArmour:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.Armour)
+			return int(p.PoB.Armour)
 		}, nil
 	case repository.NumberFieldEnergyShield:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.ES)
+			return int(p.PoB.ES)
 		}, nil
 	case repository.NumberFieldMana:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.Mana)
+			return int(p.PoB.Mana)
 		}, nil
 	case repository.NumberFieldHP:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.HP)
+			return int(p.PoB.HP)
 		}, nil
 
 	case repository.NumberFieldEHP:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.EHP)
+			return int(p.PoB.EHP)
 		}, nil
 	case repository.NumberFieldPhysMaxHit:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.PhysMaxHit)
+			return int(p.PoB.PhysMaxHit)
 		}, nil
 	case repository.NumberFieldEleMaxHit:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.EleMaxHit)
+			return int(p.PoB.EleMaxHit)
 		}, nil
 	case repository.NumberFieldIncMovementSpeed:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
 
-			return int(p.Stats.MovementSpeed) - 100
+			return int(p.PoB.MovementSpeed) - 100
 		}, nil
 	case repository.NumberFieldFullDPS:
 		return func(p *Player) int {
-			if p.Stats == nil {
+			if p.PoB == nil {
 				return 0
 			}
-			return int(p.Stats.DPS)
+			return int(p.PoB.DPS)
 		}, nil
 	case repository.NumberFieldHasRareAscendancyPast90:
 		return func(p *Player) int {

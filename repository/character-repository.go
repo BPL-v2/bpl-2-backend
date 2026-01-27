@@ -32,26 +32,6 @@ type Character struct {
 	OldAccountName   *string `gorm:"null;index"`
 }
 
-type CharacterStat struct {
-	Time          time.Time `gorm:"not null;index"`
-	EventId       int       `gorm:"not null;index"`
-	CharacterId   string    `gorm:"not null;index"`
-	DPS           int64     `gorm:"not null"`
-	EHP           int32     `gorm:"not null"`
-	PhysMaxHit    int32     `gorm:"not null"`
-	EleMaxHit     int32     `gorm:"not null"`
-	HP            int32     `gorm:"not null"`
-	Mana          int32     `gorm:"not null"`
-	ES            int32     `gorm:"not null"`
-	Armour        int32     `gorm:"not null"`
-	Evasion       int32     `gorm:"not null"`
-	XP            int64     `gorm:"not null"`
-	MovementSpeed int32     `gorm:"not null"`
-
-	Character *Character `gorm:"foreignKey:CharacterId"`
-	Event     *Event     `gorm:"foreignKey:EventId"`
-}
-
 func float2Int64(f float64) int64 {
 	if f < 0 {
 		return -float2Int64(-f) // handle negative values
@@ -70,42 +50,6 @@ func float2Int32(f float64) int32 {
 		return int32(^uint32(0) >> 1) // max int32 value
 	}
 	return int32(f)
-}
-
-func (cs *CharacterStat) AddStats(pob *CharacterPob) *CharacterStat {
-	pobData, err := pob.Export.Decode()
-	if err != nil {
-		return nil
-	}
-	stats := pobData.Build.PlayerStats
-	cs.DPS += float2Int64(utils.Max(stats.CombinedDPS, stats.CullingDPS, stats.FullDPS, stats.FullDotDPS, stats.PoisonDPS, stats.ReservationDPS, stats.TotalDPS, stats.TotalDotDPS, stats.WithBleedDPS, stats.WithIgniteDPS, stats.WithPoisonDPS))
-	cs.EHP += float2Int32(stats.TotalEHP)
-	cs.PhysMaxHit += float2Int32(stats.PhysicalMaximumHitTaken)
-	cs.EleMaxHit += float2Int32(utils.Min(stats.FireMaximumHitTaken, stats.ColdMaximumHitTaken, stats.LightningMaximumHitTaken))
-	cs.HP += float2Int32(stats.Life)
-	cs.Mana += float2Int32(stats.Mana)
-	cs.ES += float2Int32(stats.EnergyShield)
-	cs.Armour += float2Int32(stats.Armour)
-	cs.Evasion += float2Int32(stats.Evasion)
-	cs.MovementSpeed += float2Int32(stats.EffectiveMovementSpeedMod * 100)
-	return cs
-}
-
-func (c *CharacterStat) IsEqual(other *CharacterStat) bool {
-	if other == nil {
-		return false
-	}
-	return c.DPS == other.DPS &&
-		c.EHP == other.EHP &&
-		c.PhysMaxHit == other.PhysMaxHit &&
-		c.EleMaxHit == other.EleMaxHit &&
-		c.HP == other.HP &&
-		c.Mana == other.Mana &&
-		c.ES == other.ES &&
-		c.Armour == other.Armour &&
-		c.Evasion == other.Evasion &&
-		c.XP == other.XP &&
-		c.MovementSpeed == other.MovementSpeed
 }
 
 type PoBExport []byte
@@ -173,6 +117,23 @@ type CharacterPob struct {
 	Evasion       int32 `gorm:"not null"`
 	XP            int64 `gorm:"not null"`
 	MovementSpeed int32 `gorm:"not null"`
+}
+
+func (c *CharacterPob) HasEqualStats(other *CharacterPob) bool {
+	if other == nil {
+		return false
+	}
+	return c.DPS == other.DPS &&
+		c.EHP == other.EHP &&
+		c.PhysMaxHit == other.PhysMaxHit &&
+		c.EleMaxHit == other.EleMaxHit &&
+		c.HP == other.HP &&
+		c.Mana == other.Mana &&
+		c.ES == other.ES &&
+		c.Armour == other.Armour &&
+		c.Evasion == other.Evasion &&
+		c.XP == other.XP &&
+		c.MovementSpeed == other.MovementSpeed
 }
 
 func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {
@@ -247,17 +208,6 @@ func (r *CharacterRepository) SaveCharacters(characters []*Character) error {
 	return r.DB.CreateInBatches(characters, 500).Error
 }
 
-func (r *CharacterRepository) SaveCharacterStats(characterStats []*CharacterStat) error {
-	if len(characterStats) == 0 {
-		return nil
-	}
-	return r.DB.CreateInBatches(characterStats, 500).Error
-}
-
-func (r *CharacterRepository) CreateCharacterStat(characterStat *CharacterStat) error {
-	return r.DB.Create(&characterStat).Error
-}
-
 func (r *CharacterRepository) SavePoB(characterPoB *CharacterPob) error {
 	return r.DB.Save(&characterPoB).Error
 }
@@ -318,10 +268,10 @@ func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*Charac
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetLatestCharacterStats(characterId string) (*CharacterStat, error) {
-	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestCharacterStats"))
+func (r *CharacterRepository) GetLatestCharacterPoB(characterId string) (*CharacterPob, error) {
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestCharacterPoB"))
 	defer timer.ObserveDuration()
-	charData := &CharacterStat{}
+	charData := &CharacterPob{}
 	err := r.DB.Where("character_id = ?", characterId).Order("time DESC").First(charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting latest character stats for character %s: %w", characterId, err)
@@ -362,20 +312,6 @@ func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[
 		result[stat.CharacterId] = stat
 	}
 	return result, nil
-}
-
-func (r *CharacterRepository) GetLatestStatsForEvent(eventId int) ([]*CharacterStat, error) {
-	charData := []*CharacterStat{}
-	// for each unique character_id in the event, get the latest stat
-	query := `		SELECT DISTINCT ON (character_id) * FROM character_stats
-		WHERE event_id = ?
-		ORDER BY character_id, time DESC	
-	`
-	err := r.DB.Raw(query, eventId).Scan(&charData).Error
-	if err != nil {
-		return nil, fmt.Errorf("error getting latest stats for event %d: %w", eventId, err)
-	}
-	return charData, nil
 }
 
 func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPob, error) {

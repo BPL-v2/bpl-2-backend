@@ -14,14 +14,9 @@ import (
 	"time"
 )
 
-type EventChar struct {
-	EventId   int
-	Character *client.Character
-}
-
 var (
-	charQueue = make(chan EventChar, 2000)
-	statQueue = make(chan *repository.CharacterStat, 2000)
+	charQueue = make(chan *client.Character, 2000)
+	pobQueue  = make(chan *repository.CharacterPob, 2000)
 )
 
 type PlayerFetchingService struct {
@@ -124,7 +119,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	player.New.Character = characterResponse.Character
 	if player.Old.Character == nil || (player.New.Character.EquipmentHash() != player.Old.Character.EquipmentHash()) {
 		log.Printf("Character equipment changed for player %d, queuing for PoB processing", player.UserId)
-		charQueue <- EventChar{EventId: event.Id, Character: characterResponse.Character}
+		charQueue <- characterResponse.Character
 		player.LastUpdateTimes.PoB = time.Now()
 	}
 	character := &repository.Character{
@@ -242,11 +237,11 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 			SuccessiveErrors: 0,
 			New: parser.Player{
 				Character: &client.Character{},
-				Stats:     &repository.CharacterStat{},
+				PoB:       &repository.CharacterPob{},
 			},
 			Old: parser.Player{
 				Character: &client.Character{},
-				Stats:     &repository.CharacterStat{},
+				PoB:       &repository.CharacterPob{},
 			},
 			Mu: sync.Mutex{},
 			LastUpdateTimes: struct {
@@ -299,34 +294,7 @@ func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.Playe
 	return players
 }
 
-type PlayerStatsCache struct {
-	OldStats       *repository.CharacterStat
-	OldPoBString   string
-	LastPoBUpdate  time.Time
-	NumFilledSlots int
-}
-
-func float2Int64(f float64) int64 {
-	if f < 0 {
-		return -float2Int64(-f) // handle negative values
-	}
-	if f > float64(int(^uint(0)>>1)) {
-		return int64(^uint(0) >> 1) // max int value
-	}
-	return int64(f)
-}
-
-func float2Int32(f float64) int32 {
-	if f < 0 {
-		return -float2Int32(-f) // handle negative values
-	}
-	if f > float64(int32(^uint32(0)>>1)) {
-		return int32(^uint32(0) >> 1) // max int32 value
-	}
-	return int32(f)
-}
-
-func updateStats(character *client.Character, eventId int, characterRepo *repository.CharacterRepository) {
+func updateStats(character *client.Character, characterRepo *repository.CharacterRepository) {
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
 		metrics.PobsCalculatedErrorCounter.Inc()
@@ -334,110 +302,62 @@ func updateStats(character *client.Character, eventId int, characterRepo *reposi
 		return
 	}
 	metrics.PobsCalculatedCounter.Inc()
-	stats := pob.Build.PlayerStats
-	newStats := &repository.CharacterStat{
-		Time:          time.Now(),
-		EventId:       eventId,
-		CharacterId:   character.Id,
-		DPS:           float2Int64(utils.Max(stats.CombinedDPS, stats.CullingDPS, stats.FullDPS, stats.FullDotDPS, stats.PoisonDPS, stats.ReservationDPS, stats.TotalDPS, stats.TotalDotDPS, stats.WithBleedDPS, stats.WithIgniteDPS, stats.WithPoisonDPS)),
-		EHP:           float2Int32(stats.TotalEHP),
-		PhysMaxHit:    float2Int32(stats.PhysicalMaximumHitTaken),
-		EleMaxHit:     float2Int32(utils.Min(stats.FireMaximumHitTaken, stats.ColdMaximumHitTaken, stats.LightningMaximumHitTaken)),
-		HP:            float2Int32(stats.Life),
-		Mana:          float2Int32(stats.Mana),
-		ES:            float2Int32(stats.EnergyShield),
-		Armour:        float2Int32(stats.Armour),
-		Evasion:       float2Int32(stats.Evasion),
-		XP:            int64(character.Experience),
-		MovementSpeed: float2Int32(stats.EffectiveMovementSpeedMod * 100),
+	p := repository.PoBExport{}
+	p.FromString(export)
+	pobEntity := &repository.CharacterPob{
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		CharacterId: character.Id,
+		Level:       character.Level,
+		Ascendancy:  character.Class,
+		Export:      p,
+		XP:          int64(character.Experience),
 	}
-	statQueue <- newStats
-	oldStats, _ := characterRepo.GetLatestCharacterStats(character.Id)
-	if newStats.IsEqual(oldStats) {
+	pobEntity.UpdateStats(pob)
+	pobQueue <- pobEntity
+	oldPob, _ := characterRepo.GetLatestCharacterPoB(character.Id)
+	if pobEntity.HasEqualStats(oldPob) {
 		log.Printf("No changes in stats for character %s, skipping save", character.Name)
 		return
 	}
-	p := repository.PoBExport{}
-	p.FromString(export)
-	err = characterRepo.SavePoB(&repository.CharacterPob{
-		CharacterId: character.Id,
-		Level:       character.Level,
-		MainSkill:   character.GetMainSkill(),
-		Ascendancy:  character.Class,
-		Export:      p,
-		CreatedAt:   time.Now(),
-	})
-	if err != nil {
-		log.Printf("Error saving PoB for character %s: %v", character.Name, err)
-	}
 	metrics.PobsSavedCounter.Inc()
-	err = characterRepo.CreateCharacterStat(newStats)
+	err = characterRepo.SavePoB(pobEntity)
 	if err != nil {
 		log.Printf("Error saving character stats for %s: %v", character.Name, err)
 	}
 }
 
-func InitCharacterStatsCache(eventId int, characterRepo *repository.CharacterRepository) map[string]*PlayerStatsCache {
-	cache := make(map[string]*PlayerStatsCache)
-	stats, err := characterRepo.GetLatestStatsForEvent(eventId)
-	if err != nil {
-		log.Printf("Error fetching latest stats for event %d: %v", eventId, err)
-		return cache
-	}
-	pobs, err := characterRepo.GetLatestPoBsForEvent(eventId)
-	if err != nil {
-		log.Printf("Error fetching latest PoBs for event %d: %v", eventId, err)
-		return cache
-	}
-	for _, stat := range stats {
-		cache[stat.CharacterId] = &PlayerStatsCache{
-			OldStats: stat,
-		}
-	}
-	for _, pob := range pobs {
-		if cache[pob.CharacterId] == nil {
-			cache[pob.CharacterId] = &PlayerStatsCache{
-				OldStats: &repository.CharacterStat{},
-			}
-		}
-		cache[pob.CharacterId].OldPoBString = pob.Export.ToString()
-		cache[pob.CharacterId].LastPoBUpdate = pob.CreatedAt
-	}
-	return cache
-
-}
-
 func PlayerStatsLoop(ctx context.Context) {
 	characterRepo := repository.NewCharacterRepository()
-	// make sure that only 2 goroutines are running at the same time
-	semaphore := make(chan struct{}, 2)
+	// make sure that only 4 goroutines are running at the same time
+	semaphore := make(chan struct{}, 4)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			eventCharacter, ok := <-charQueue
+			character, ok := <-charQueue
 			metrics.PobQueueGauge.Set(float64(len(charQueue)))
 			if !ok {
 				log.Println("PoB queue closed, stopping player stats loop")
 				return
 			}
 			semaphore <- struct{}{}
-			go func(eventCharacter EventChar) {
+			go func(character *client.Character) {
 				defer func() { <-semaphore }() // Release the slot when done
-				updateStats(eventCharacter.Character, eventCharacter.EventId, characterRepo)
-			}(eventCharacter)
+				updateStats(character, characterRepo)
+			}(character)
 		}
 	}
 }
-func drainStatQueue() map[string]*repository.CharacterStat {
-	statMap := make(map[string]*repository.CharacterStat)
+func drainStatQueue() map[string]*repository.CharacterPob {
+	pobMap := make(map[string]*repository.CharacterPob)
 	for {
 		select {
-		case stat := <-statQueue:
-			statMap[stat.CharacterId] = stat
+		case pob := <-pobQueue:
+			pobMap[pob.CharacterId] = pob
 		default:
-			return statMap
+			return pobMap
 		}
 	}
 }
@@ -509,10 +429,10 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			}
 			wg.Wait()
 
-			statMap := drainStatQueue()
+			pobMap := drainStatQueue()
 			for _, player := range players {
 				player.Mu.Lock()
-				player.New.Stats = statMap[player.New.Character.Id]
+				player.New.PoB = pobMap[player.New.Character.Id]
 				if player.New.Character.Experience != player.Old.Character.Experience {
 					player.LastActive = time.Now()
 					err = service.activityRepository.SaveActivity(&repository.Activity{
