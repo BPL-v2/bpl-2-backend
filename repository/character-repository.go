@@ -303,11 +303,14 @@ func (r *CharacterRepository) GetCharacterById(characterId string) (*Character, 
 	return character, nil
 }
 
-func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*CharacterStat, error) {
+func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*CharacterPob, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharacterHistory"))
 	defer timer.ObserveDuration()
-	charData := []*CharacterStat{}
-	err := r.DB.Where(CharacterStat{CharacterId: characterId}).Find(&charData).Error
+	charData := []*CharacterPob{}
+	err := r.DB.
+		Select("created_at", "dps", "ehp", "phys_max_hit", "ele_max_hit", "hp", "mana", "es", "armour", "evasion", "xp", "movement_speed", "main_skill").
+		Where(CharacterPob{CharacterId: characterId}).
+		Find(&charData).Error
 	if err != nil {
 		return nil, err
 	}
@@ -325,19 +328,35 @@ func (r *CharacterRepository) GetLatestCharacterStats(characterId string) (*Char
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[string]*CharacterStat, error) {
+func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[string]*CharacterPob, error) {
 	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharacterStatsForEvent"))
 	defer timer.ObserveDuration()
-	charData := []*CharacterStat{}
-	query := `SELECT DISTINCT ON (character_id) * FROM character_stats
-		WHERE event_id = ?
-		ORDER BY character_id, time DESC
+	charData := []*CharacterPob{}
+	query := `SELECT DISTINCT ON (character_id) 
+					p.character_id,
+					p.created_at,
+					p.dps,
+					p.ehp,
+					p.phys_max_hit,
+					p.ele_max_hit,
+					p.hp,
+					p.mana,
+					p.es,
+					p.armour,
+					p.evasion,
+					p.xp,
+					p.movement_speed,
+					p.main_skill
+				FROM character_pobs as p
+				JOIN characters ON p.character_id = characters.id
+				WHERE characters.event_id = ?
+				ORDER BY character_id, created_at DESC
 	`
 	err := r.DB.Raw(query, eventId).Scan(&charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting latest character stats for event %d: %w", eventId, err)
 	}
-	result := make(map[string]*CharacterStat, len(charData))
+	result := make(map[string]*CharacterPob, len(charData))
 	for _, stat := range charData {
 		result[stat.CharacterId] = stat
 	}

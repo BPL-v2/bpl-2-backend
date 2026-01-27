@@ -4584,6 +4584,7 @@ const docTemplate = `{
                 "es",
                 "evasion",
                 "hp",
+                "main_skill",
                 "mana",
                 "movement_speed",
                 "phys_max_hit",
@@ -4611,6 +4612,9 @@ const docTemplate = `{
                 },
                 "hp": {
                     "type": "integer"
+                },
+                "main_skill": {
+                    "type": "string"
                 },
                 "mana": {
                     "type": "integer"

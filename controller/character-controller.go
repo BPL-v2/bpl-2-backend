@@ -29,6 +29,7 @@ func NewCharacterController(poeClient *client.PoEClient) *CharacterController {
 
 func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
 	e := NewCharacterController(poeClient)
+	e.characterService.UpdateLatestPoBs()
 	basePath := "users/:user_id/characters"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getUserCharactersHandler()},
@@ -206,18 +207,19 @@ func toPoBResponse(pob *repository.CharacterPob) *PoB {
 }
 
 type CharacterStat struct {
-	TimeStamp     int   `json:"timestamp" binding:"required"`
-	DPS           int64 `json:"dps" binding:"required"`
-	EHP           int32 `json:"ehp" binding:"required"`
-	PhysMaxHit    int32 `json:"phys_max_hit" binding:"required"`
-	EleMaxHit     int32 `json:"ele_max_hit" binding:"required"`
-	HP            int32 `json:"hp" binding:"required"`
-	Mana          int32 `json:"mana" binding:"required"`
-	ES            int32 `json:"es" binding:"required"`
-	Armour        int32 `json:"armour" binding:"required"`
-	Evasion       int32 `json:"evasion" binding:"required"`
-	XP            int64 `json:"xp" binding:"required"`
-	MovementSpeed int32 `json:"movement_speed" binding:"required"`
+	TimeStamp     int    `json:"timestamp" binding:"required"`
+	DPS           int64  `json:"dps" binding:"required"`
+	EHP           int32  `json:"ehp" binding:"required"`
+	PhysMaxHit    int32  `json:"phys_max_hit" binding:"required"`
+	EleMaxHit     int32  `json:"ele_max_hit" binding:"required"`
+	HP            int32  `json:"hp" binding:"required"`
+	Mana          int32  `json:"mana" binding:"required"`
+	ES            int32  `json:"es" binding:"required"`
+	Armour        int32  `json:"armour" binding:"required"`
+	Evasion       int32  `json:"evasion" binding:"required"`
+	XP            int64  `json:"xp" binding:"required"`
+	MovementSpeed int32  `json:"movement_speed" binding:"required"`
+	MainSkill     string `json:"main_skill" binding:"required"`
 }
 
 func toCharacterResponse(character *repository.Character) *Character {
@@ -238,22 +240,23 @@ func toCharacterResponse(character *repository.Character) *Character {
 	}
 }
 
-func toCharacterStatResponse(characterStat *repository.CharacterStat) *CharacterStat {
-	if characterStat == nil {
+func toCharacterStatResponse(pob *repository.CharacterPob) *CharacterStat {
+	if pob == nil {
 		return nil
 	}
 	return &CharacterStat{
-		TimeStamp:     int(characterStat.Time.Unix()),
-		DPS:           characterStat.DPS,
-		EHP:           characterStat.EHP,
-		PhysMaxHit:    characterStat.PhysMaxHit,
-		EleMaxHit:     characterStat.EleMaxHit,
-		HP:            characterStat.HP,
-		Mana:          characterStat.Mana,
-		ES:            characterStat.ES,
-		Armour:        characterStat.Armour,
-		Evasion:       characterStat.Evasion,
-		XP:            characterStat.XP,
-		MovementSpeed: characterStat.MovementSpeed,
+		TimeStamp:     int(pob.CreatedAt.Unix()),
+		DPS:           pob.DPS,
+		EHP:           pob.EHP,
+		PhysMaxHit:    pob.PhysMaxHit,
+		EleMaxHit:     pob.EleMaxHit,
+		HP:            pob.HP,
+		Mana:          pob.Mana,
+		ES:            pob.ES,
+		Armour:        pob.Armour,
+		Evasion:       pob.Evasion,
+		XP:            pob.XP,
+		MovementSpeed: pob.MovementSpeed,
+		MainSkill:     pob.MainSkill,
 	}
 }

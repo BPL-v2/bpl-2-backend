@@ -1039,6 +1039,8 @@ definitions:
         type: integer
       hp:
         type: integer
+      main_skill:
+        type: string
       mana:
         type: integer
       movement_speed:
@@ -1057,6 +1059,7 @@ definitions:
     - es
     - evasion
     - hp
+    - main_skill
     - mana
     - movement_speed
     - phys_max_hit

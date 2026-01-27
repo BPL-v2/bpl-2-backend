@@ -187,10 +187,10 @@ func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
 	return mappedAtlases
 }
 
-func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterStat, lastActivities map[int]time.Time) []*LadderEntry {
+func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterPob, lastActivities map[int]time.Time) []*LadderEntry {
 	response := make([]*LadderEntry, 0, len(entries))
 	characterMap := make(map[string]*repository.Character)
-	statsMap := make(map[string]*repository.CharacterStat)
+	statsMap := make(map[string]*repository.CharacterPob)
 	inLadder := make(map[string]bool)
 	for _, character := range characters {
 		characterMap[character.Name] = character

@@ -58,10 +58,10 @@ func (c *CharacterService) GetCharacterById(characterId string) (*repository.Cha
 	return c.characterRepository.GetCharacterById(characterId)
 }
 
-func (c *CharacterService) GetCharacterHistory(characterId string) ([]*repository.CharacterStat, error) {
+func (c *CharacterService) GetCharacterHistory(characterId string) ([]*repository.CharacterPob, error) {
 	return c.characterRepository.GetCharacterHistory(characterId)
 }
-func (c *CharacterService) GetLatestCharacterStatsForEvent(eventId int) (map[string]*repository.CharacterStat, error) {
+func (c *CharacterService) GetLatestCharacterStatsForEvent(eventId int) (map[string]*repository.CharacterPob, error) {
 	return c.characterRepository.GetLatestCharacterStatsForEvent(eventId)
 }
 
@@ -192,7 +192,7 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 
 func (c *CharacterService) UpdateLatestPoBs() error {
 	semaphore := make(chan struct{}, 3)
-	updateStart := time.Date(2026, 01, 23, 0, 0, 0, 0, time.Local)
+	updateStart := time.Date(2026, 01, 27, 0, 0, 0, 0, time.Local)
 	startId := 0
 
 	for {
