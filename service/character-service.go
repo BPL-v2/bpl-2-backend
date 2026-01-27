@@ -2,6 +2,7 @@ package service
 
 import (
 	"bpl/client"
+	"bpl/config"
 	"bpl/metrics"
 	"bpl/parser"
 	"bpl/repository"
@@ -194,7 +195,7 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 }
 
 func (c *CharacterService) UpdateLatestPoBs() error {
-	semaphore := make(chan struct{}, 4)
+	semaphore := make(chan struct{}, config.Env().NumberOfPoBReplicas)
 	updateStart := time.Date(2026, 01, 27, 0, 0, 0, 0, time.Local)
 	startId := 0
 

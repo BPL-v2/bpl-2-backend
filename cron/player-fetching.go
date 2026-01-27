@@ -2,6 +2,7 @@ package cron
 
 import (
 	"bpl/client"
+	"bpl/config"
 	"bpl/metrics"
 	"bpl/parser"
 	"bpl/repository"
@@ -330,7 +331,7 @@ func updateStats(character *client.Character, characterRepo *repository.Characte
 func PlayerStatsLoop(ctx context.Context) {
 	characterRepo := repository.NewCharacterRepository()
 	// make sure that only 4 goroutines are running at the same time
-	semaphore := make(chan struct{}, 4)
+	semaphore := make(chan struct{}, config.Env().NumberOfPoBReplicas)
 	for {
 		select {
 		case <-ctx.Done():

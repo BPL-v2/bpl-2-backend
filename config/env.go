@@ -38,7 +38,8 @@ type Config struct {
 	RefreshPoETokens bool
 
 	// Path of Building
-	POBServerURL string
+	POBServerURL        string
+	NumberOfPoBReplicas int
 
 	// Other
 	KafkaBroker string
@@ -83,7 +84,8 @@ func loadConfig() *Config {
 		RefreshPoETokens: getEnvWithDefault("REFRESH_POE_TOKENS", "false") == "true",
 
 		// Path of Building - optional
-		POBServerURL: getEnvWithDefault("POB_SERVER_URL", "http://localhost:8080"),
+		POBServerURL:        getEnvWithDefault("POB_SERVER_URL", "http://localhost:8080"),
+		NumberOfPoBReplicas: getEnvAsInt("POB_REPLICAS", 1),
 
 		// Other
 		KafkaBroker: getEnvWithDefault("KAFKA_BROKER", "localhost:9092"),
@@ -105,6 +107,19 @@ func getEnv(key string) string {
 	value := os.Getenv(key)
 	if value == "" && IsProduction() {
 		panic(fmt.Sprintf("Required environment variable %s is not set", key))
+	}
+	return value
+}
+
+func getEnvAsInt(key string, defaultValue int) int {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return defaultValue
+	}
+	var value int
+	_, err := fmt.Sscanf(valueStr, "%d", &value)
+	if err != nil {
+		return defaultValue
 	}
 	return value
 }
