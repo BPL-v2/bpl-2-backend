@@ -1,6 +1,7 @@
 package scoring
 
 import (
+	"bpl/metrics"
 	"bpl/repository"
 	"bpl/utils"
 	"math"
@@ -10,7 +11,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type ScoreType string
@@ -67,16 +67,8 @@ func (s *Score) CanShowTo(teamId int) bool {
 	return (s.TeamId == teamId) || s.Finished() || !s.HideProgress
 }
 
-var scoreEvaluationDuration = promauto.NewHistogram(prometheus.HistogramOpts{
-	Name: "score_evaluation_duration_s",
-	Help: "Duration of Evaluation step during scoring",
-	Buckets: []float64{
-		0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10,
-	},
-})
-
 func EvaluateAggregations(objective *repository.Objective, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
-	timer := prometheus.NewTimer(scoreEvaluationDuration)
+	timer := prometheus.NewTimer(metrics.ScoreEvaluationDuration)
 	defer timer.ObserveDuration()
 	for _, childObjective := range objective.Children {
 		err := EvaluateAggregations(childObjective, aggregations, scoreMap)

@@ -2,6 +2,7 @@ package cron
 
 import (
 	"bpl/client"
+	"bpl/metrics"
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
@@ -11,9 +12,6 @@ import (
 	"log"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type EventChar struct {
@@ -24,26 +22,6 @@ type EventChar struct {
 var (
 	charQueue = make(chan EventChar, 2000)
 	statQueue = make(chan *repository.CharacterStat, 2000)
-)
-
-var pobQueueGauge = promauto.NewGauge(
-	prometheus.GaugeOpts{
-		Name: "bpl_pob_queue_size",
-		Help: "Current size of the character queue to be processed by the pob server",
-	},
-)
-
-var pobsCalculatedCounter = promauto.NewCounter(
-	prometheus.CounterOpts{
-		Name: "bpl_pobs_calculated",
-		Help: "Number of PoBs calculated",
-	},
-)
-var pobsSavedCounter = promauto.NewCounter(
-	prometheus.CounterOpts{
-		Name: "bpl_pobs_saved",
-		Help: "Number of PoBs saved to the database",
-	},
 )
 
 type PlayerFetchingService struct {
@@ -354,7 +332,7 @@ func updateStats(character *client.Character, eventId int, characterRepo *reposi
 		fmt.Printf("Error fetching PoB export for character %s: %v\n", character.Name, err)
 		return
 	}
-	pobsCalculatedCounter.Inc()
+	metrics.PobsCalculatedCounter.Inc()
 	stats := pob.Build.PlayerStats
 	newStats := &repository.CharacterStat{
 		Time:          time.Now(),
@@ -391,7 +369,7 @@ func updateStats(character *client.Character, eventId int, characterRepo *reposi
 	if err != nil {
 		log.Printf("Error saving PoB for character %s: %v", character.Name, err)
 	}
-	pobsSavedCounter.Inc()
+	metrics.PobsSavedCounter.Inc()
 	err = characterRepo.CreateCharacterStat(newStats)
 	if err != nil {
 		log.Printf("Error saving character stats for %s: %v", character.Name, err)
@@ -438,7 +416,7 @@ func PlayerStatsLoop(ctx context.Context) {
 			return
 		default:
 			eventCharacter, ok := <-charQueue
-			pobQueueGauge.Set(float64(len(charQueue)))
+			metrics.PobQueueGauge.Set(float64(len(charQueue)))
 			if !ok {
 				log.Println("PoB queue closed, stopping player stats loop")
 				return

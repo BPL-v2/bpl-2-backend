@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/metrics"
 	"bpl/utils"
 
 	"github.com/lib/pq"
@@ -71,7 +72,7 @@ func (r *TeamRepository) Delete(teamId int) error {
 }
 
 func (r *TeamRepository) GetTeamUsersForEvent(eventId int) ([]*TeamUser, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamUsersForEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetTeamUsersForEvent"))
 	defer timer.ObserveDuration()
 	teamUsers := make([]*TeamUser, 0)
 	query := `
@@ -88,7 +89,7 @@ func (r *TeamRepository) GetTeamUsersForEvent(eventId int) ([]*TeamUser, error) 
 }
 
 func (r *TeamRepository) GetTeamUsersForTeam(teamId int) ([]*TeamUser, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamUsersForTeam"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetTeamUsersForTeam"))
 	defer timer.ObserveDuration()
 	teamUsers := make([]*TeamUser, 0)
 	result := r.DB.Where("team_id = ?", teamId).Find(&teamUsers)
@@ -100,7 +101,7 @@ func (r *TeamRepository) GetTeamUsersForTeam(teamId int) ([]*TeamUser, error) {
 }
 
 func (r *TeamRepository) GetTeamLeadsForEvent(eventId int) ([]*TeamUser, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetTeamLeadsForEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetTeamLeadsForEvent"))
 	defer timer.ObserveDuration()
 	teamUsers := make([]*TeamUser, 0)
 	query := `

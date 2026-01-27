@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/metrics"
 	"bpl/utils"
 	"database/sql/driver"
 	"fmt"
@@ -138,7 +139,7 @@ type Streamer struct {
 }
 
 func (r *UserRepository) GetStreamersForEvent(eventId int) (streamers []*Streamer, err error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetStreamersForCurrentEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetStreamersForCurrentEvent"))
 	defer timer.ObserveDuration()
 	query := `
 		SELECT 
@@ -165,7 +166,7 @@ type UserTeam struct {
 }
 
 func LoadUsersIntoEvent(DB *gorm.DB, event *Event) error {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("LoadUsersIntoEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("LoadUsersIntoEvent"))
 	defer timer.ObserveDuration()
 	var users []*UserTeam
 	query := `
@@ -204,7 +205,7 @@ type TeamUserWithPoEToken struct {
 }
 
 func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetUsersForEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetUsersForEvent"))
 	defer timer.ObserveDuration()
 	var users []*TeamUserWithPoEToken
 	query := `

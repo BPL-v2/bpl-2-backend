@@ -2,6 +2,7 @@ package service
 
 import (
 	"bpl/client"
+	"bpl/metrics"
 	"bpl/parser"
 	"bpl/repository"
 	"fmt"
@@ -180,6 +181,7 @@ func (c *CharacterService) GetInfoForCharacter(characterId string) (*CharacterIn
 
 func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 	newExport, err := client.UpdatePoBExport(pob.Export.ToString())
+	metrics.PobsCalculatedCounter.Inc()
 	if err != nil {
 		return err
 	}

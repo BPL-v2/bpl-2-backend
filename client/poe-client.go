@@ -2,6 +2,7 @@ package client
 
 import (
 	"bpl/config"
+	"bpl/metrics"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type PoEClient struct {
@@ -44,21 +44,6 @@ func NewPoEClient(maxRequestsPerSecond float64, raiseForStatus bool, timeOutSeco
 	}
 }
 
-var poeRequestCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-	Name: "poe_request_total",
-	Help: "The total number of requests by endpoint to the PoE API",
-}, []string{"endpoint"})
-
-var responseCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-	Name: "poe_response_total",
-	Help: "The total number of responses by status code from the PoE API",
-}, []string{"status_code"})
-
-var requestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-	Name: "poe_request_duration_seconds",
-	Help: "Duration of requests to the PoE API",
-}, []string{"endpoint"})
-
 func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) (*T, *ClientError) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(client.TimeOutSeconds)*time.Second)
 	defer cancel()
@@ -84,7 +69,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 			Path:        args.Path,
 		}
 	}
-	responseCounter.WithLabelValues(fmt.Sprintf("%d", response.StatusCode)).Inc()
+	metrics.ResponseCounter.WithLabelValues(fmt.Sprintf("%d", response.StatusCode)).Inc()
 	defer response.Body.Close()
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -137,9 +122,9 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 }
 
 func (c *PoEClient) ListLeagues(token string, realm string, leagueType string, limit int, offset int) (*ListLeaguesResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListLeagues"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("ListLeagues"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("ListLeagues").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("ListLeagues").Inc()
 	return sendRequest[ListLeaguesResponse](c,
 		"ListLeagues",
 		RequestArgs{
@@ -158,9 +143,9 @@ func (c *PoEClient) ListLeagues(token string, realm string, leagueType string, l
 }
 
 func (c *PoEClient) GetLeague(token string, league string, realm string) (*GetLeagueResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeague"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetLeague"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetLeague").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetLeague").Inc()
 	return sendRequest[GetLeagueResponse](c,
 		"GetLeague",
 		RequestArgs{
@@ -176,9 +161,9 @@ func (c *PoEClient) GetLeague(token string, league string, realm string) (*GetLe
 }
 
 func (c *PoEClient) GetLeagueLadder(token string, league string, realm string, sort string, limit int, offset int) (*GetLeagueLadderResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeagueLadder"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetLeagueLadder"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetLeagueLadder").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetLeagueLadder").Inc()
 	return sendRequest[GetLeagueLadderResponse](c,
 		"GetLeagueLadder",
 		RequestArgs{
@@ -219,9 +204,9 @@ func (c *PoEClient) GetFullLadder(token string, league string) (*GetLeagueLadder
 }
 
 func (c *PoEClient) GetPoE2Ladder(league string) (*GetLeagueLadderResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPoE2Ladder"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetPoE2Ladder"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetPoE2Ladder").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetPoE2Ladder").Inc()
 	resp, err := sendRequest[GetPoE2LadderResponse](c,
 		"GetPoE2Ladder",
 		RequestArgs{
@@ -238,9 +223,9 @@ func (c *PoEClient) GetPoE2Ladder(league string) (*GetLeagueLadderResponse, *Cli
 }
 
 func (c *PoEClient) GetLeagueEventLadder(token string, league string, realm string, limit int, offset int) (*GetLeagueEventLadderResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeagueEventLadder"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetLeagueEventLadder"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetLeagueEventLadder").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetLeagueEventLadder").Inc()
 	return sendRequest[GetLeagueEventLadderResponse](c,
 		"GetLeagueEventLadder",
 		RequestArgs{
@@ -258,9 +243,9 @@ func (c *PoEClient) GetLeagueEventLadder(token string, league string, realm stri
 }
 
 func (c *PoEClient) GetPvPMatches(token string, realm string, matchType string) (*GetPvPMatchesResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPvPMatches"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetPvPMatches"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetPvPMatches").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetPvPMatches").Inc()
 	return sendRequest[GetPvPMatchesResponse](c,
 		"GetPvPMatches",
 		RequestArgs{
@@ -276,9 +261,9 @@ func (c *PoEClient) GetPvPMatches(token string, realm string, matchType string) 
 }
 
 func (c *PoEClient) GetPvPMatch(token string, match string, realm string) (*GetPvPMatchResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPvPMatch"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetPvPMatch"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetPvPMatch").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetPvPMatch").Inc()
 	return sendRequest[GetPvPMatchResponse](c,
 		"GetPvPMatch",
 		RequestArgs{
@@ -294,9 +279,9 @@ func (c *PoEClient) GetPvPMatch(token string, match string, realm string) (*GetP
 }
 
 func (c *PoEClient) GetPvPMatchLadder(token string, match string, realm string, limit int, offset int) (*GetPvPMatchLadderResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPvPMatchLadder"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetPvPMatchLadder"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetPvPMatchLadder").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetPvPMatchLadder").Inc()
 	return sendRequest[GetPvPMatchLadderResponse](c,
 		"GetPvPMatchLadder",
 		RequestArgs{
@@ -314,9 +299,9 @@ func (c *PoEClient) GetPvPMatchLadder(token string, match string, realm string, 
 }
 
 func (c *PoEClient) GetAccountProfile(token string) (*GetAccountProfileResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetAccountProfile"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetAccountProfile"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetAccountProfile").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetAccountProfile").Inc()
 	return sendRequest[GetAccountProfileResponse](c,
 		"GetAccountProfile",
 		RequestArgs{
@@ -328,9 +313,9 @@ func (c *PoEClient) GetAccountProfile(token string) (*GetAccountProfileResponse,
 }
 
 func (c *PoEClient) GetAccountLeagues(token string) (*ListLeaguesResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetAccountLeagues"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetAccountLeagues"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetAccountLeagues").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetAccountLeagues").Inc()
 	return sendRequest[ListLeaguesResponse](c,
 		"GetAccountLeagues",
 		RequestArgs{
@@ -342,9 +327,9 @@ func (c *PoEClient) GetAccountLeagues(token string) (*ListLeaguesResponse, *Clie
 }
 
 func (c *PoEClient) ListCharacters(token string, realm *Realm) (*ListCharactersResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListCharacters"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("ListCharacters"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("ListCharacters").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("ListCharacters").Inc()
 	endpoint := "character"
 	if realm != nil {
 		endpoint += fmt.Sprintf("/%s", *realm)
@@ -360,13 +345,13 @@ func (c *PoEClient) ListCharacters(token string, realm *Realm) (*ListCharactersR
 }
 
 func (c *PoEClient) GetCharacter(token string, character string, realm *Realm) (*GetCharacterResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetCharacter"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetCharacter"))
 	defer timer.ObserveDuration()
 	endpoint := "character"
 	if realm != nil {
 		endpoint += fmt.Sprintf("/%s", *realm)
 	}
-	poeRequestCounter.WithLabelValues("GetCharacter").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetCharacter").Inc()
 	return sendRequest[GetCharacterResponse](c,
 		"GetCharacter",
 		RequestArgs{
@@ -379,9 +364,9 @@ func (c *PoEClient) GetCharacter(token string, character string, realm *Realm) (
 }
 
 func (c *PoEClient) ListAccountStashes(token string, league string) (*ListAccountStashesResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListAccountStashes"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("ListAccountStashes"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("ListAccountStashes").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("ListAccountStashes").Inc()
 	return sendRequest[ListAccountStashesResponse](c,
 		"ListAccountStashes",
 		RequestArgs{
@@ -394,9 +379,9 @@ func (c *PoEClient) ListAccountStashes(token string, league string) (*ListAccoun
 }
 
 func (c *PoEClient) GetAccountStash(token string, league string, stashId string, substashId *string) (*GetAccountStashResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetAccountStash"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetAccountStash"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetAccountStash").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetAccountStash").Inc()
 	endpoint := fmt.Sprintf("stash/%s/%s", league, stashId)
 	if substashId != nil {
 		endpoint += fmt.Sprintf("/%s", *substashId)
@@ -412,9 +397,9 @@ func (c *PoEClient) GetAccountStash(token string, league string, stashId string,
 }
 
 func (c *PoEClient) ListItemFilters(token string) (*ListItemFiltersResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListItemFilters"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("ListItemFilters"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("ListItemFilters").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("ListItemFilters").Inc()
 	return sendRequest[ListItemFiltersResponse](c,
 		"ListItemFilters",
 		RequestArgs{
@@ -426,9 +411,9 @@ func (c *PoEClient) ListItemFilters(token string) (*ListItemFiltersResponse, *Cl
 }
 
 func (c *PoEClient) GetItemFilter(token string, filterId string) (*GetItemFilterResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetItemFilter"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetItemFilter"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetItemFilter").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetItemFilter").Inc()
 	return sendRequest[GetItemFilterResponse](c,
 		"GetItemFilter",
 		RequestArgs{
@@ -441,9 +426,9 @@ func (c *PoEClient) GetItemFilter(token string, filterId string) (*GetItemFilter
 }
 
 func (c *PoEClient) CreateItemFilter(token string, body CreateFilterBody, validate string) (*CreateItemFilterResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("CreateItemFilter"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("CreateItemFilter"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("CreateItemFilter").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("CreateItemFilter").Inc()
 	return sendRequest[CreateItemFilterResponse](c,
 		"CreateItemFilter",
 		RequestArgs{
@@ -459,9 +444,9 @@ func (c *PoEClient) CreateItemFilter(token string, body CreateFilterBody, valida
 }
 
 func (c *PoEClient) UpdateItemFilter(token string, filterId string, body UpdateFilterBody, validate string) (*UpdateItemFilterResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("UpdateItemFilter"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("UpdateItemFilter"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("UpdateItemFilter").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("UpdateItemFilter").Inc()
 	return sendRequest[UpdateItemFilterResponse](c,
 		"UpdateItemFilter",
 		RequestArgs{
@@ -478,9 +463,9 @@ func (c *PoEClient) UpdateItemFilter(token string, filterId string, body UpdateF
 }
 
 func (c *PoEClient) GetLeagueAccount(token string, league string) (*GetLeagueAccountResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetLeagueAccount"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetLeagueAccount"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetLeagueAccount").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetLeagueAccount").Inc()
 	return sendRequest[GetLeagueAccountResponse](c,
 		"GetLeagueAccount",
 		RequestArgs{
@@ -493,9 +478,9 @@ func (c *PoEClient) GetLeagueAccount(token string, league string) (*GetLeagueAcc
 }
 
 func (c *PoEClient) ListGuildStashes(token string, league string) (*ListGuildStashesResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("ListGuildStashes"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("ListGuildStashes"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("ListGuildStashes").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("ListGuildStashes").Inc()
 	return sendRequest[ListGuildStashesResponse](c,
 		"ListGuildStashes",
 		RequestArgs{
@@ -508,9 +493,9 @@ func (c *PoEClient) ListGuildStashes(token string, league string) (*ListGuildSta
 }
 
 func (c *PoEClient) GetGuildStash(token string, league string, stashId string, parentId *string) (*GetGuildStashResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetGuildStash"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetGuildStash"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetGuildStash").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetGuildStash").Inc()
 	endpoint := "guild/stash/%s/%s"
 	pathParams := []string{league}
 	if parentId != nil {
@@ -530,9 +515,9 @@ func (c *PoEClient) GetGuildStash(token string, league string, stashId string, p
 }
 
 func (c *PoEClient) GetPublicStashes(token string, realm string, id string) (*GetPublicStashTabsResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetPublicStashes"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetPublicStashes"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetPublicStashes").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetPublicStashes").Inc()
 	url := "public-stash-tabs"
 	params := map[string]string{}
 	if realm != "pc" {
@@ -553,9 +538,9 @@ func (c *PoEClient) GetPublicStashes(token string, realm string, id string) (*Ge
 }
 
 func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string) (*ClientCredentialsGrantResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetClientCredentials"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetClientCredentials"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetClientCredentials").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetClientCredentials").Inc()
 	form := url.Values{
 		"grant_type":    {"client_credentials"},
 		"client_id":     {clientId},
@@ -578,9 +563,9 @@ func (c *PoEClient) GetClientCredentials(clientId string, clientSecret string) (
 }
 
 func (c *PoEClient) GetAccessToken(clientId string, clientSecret string, code string, code_verifier string, scopes []string, redirect_uri string) (*AccessTokenGrantResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("GetAccessToken"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("GetAccessToken"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("GetAccessToken").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("GetAccessToken").Inc()
 	form := url.Values{
 		"grant_type":    {"authorization_code"},
 		"client_id":     {clientId},
@@ -604,9 +589,9 @@ func (c *PoEClient) GetAccessToken(clientId string, clientSecret string, code st
 	)
 }
 func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, refreshToken string) (*AccessTokenGrantResponse, *ClientError) {
-	timer := prometheus.NewTimer(requestDuration.WithLabelValues("RefreshAccessToken"))
+	timer := prometheus.NewTimer(metrics.RequestDuration.WithLabelValues("RefreshAccessToken"))
 	defer timer.ObserveDuration()
-	poeRequestCounter.WithLabelValues("RefreshAccessToken").Inc()
+	metrics.PoeRequestCounter.WithLabelValues("RefreshAccessToken").Inc()
 	form := url.Values{
 		"grant_type":    {"refresh_token"},
 		"client_id":     {clientId},

@@ -3,6 +3,7 @@ package cron
 import (
 	"bpl/client"
 	"bpl/config"
+	"bpl/metrics"
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
@@ -17,30 +18,8 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/segmentio/kafka-go"
 )
-
-var stashCounterTotal = promauto.NewCounter(prometheus.CounterOpts{
-	Name: "stash_counter_total",
-	Help: "The total number of stashes processed",
-})
-
-var stashCounterFiltered = promauto.NewCounter(prometheus.CounterOpts{
-	Name: "stash_counter_filtered",
-	Help: "The total number of stashes filtered",
-})
-
-var changeIdGauge = promauto.NewGauge(prometheus.GaugeOpts{
-	Name: "change_id",
-	Help: "The current change id",
-})
-
-var ninjaChangeIdGauge = promauto.NewGauge(prometheus.GaugeOpts{
-	Name: "ninja_change_id",
-	Help: "The current change id from the poe.ninja api",
-})
 
 type FetchingService struct {
 	ctx                  context.Context
@@ -130,11 +109,11 @@ func (f *FetchingService) FetchStashChanges() error {
 			consecutiveErrors = 0
 			f.stashChannel <- repository.StashChangeMessage{ChangeId: changeId, NextChangeId: response.NextChangeId, Stashes: response.Stashes}
 			changeId = response.NextChangeId
-			changeIdGauge.Set(float64(service.ChangeIdToInt(changeId)))
+			metrics.ChangeIdGauge.Set(float64(service.ChangeIdToInt(changeId)))
 			if count%20 == 0 {
 				ninjaId, err := service.GetNinjaChangeId()
 				if err == nil {
-					ninjaChangeIdGauge.Set(float64(service.ChangeIdToInt(ninjaId)))
+					metrics.NinjaChangeIdGauge.Set(float64(service.ChangeIdToInt(ninjaId)))
 				}
 			}
 			count++
@@ -230,10 +209,10 @@ func (f *FetchingService) FilterStashChanges() error {
 			stashes := make([]client.PublicStashChange, 0)
 			now := time.Now()
 			for _, stash := range stashChange.Stashes {
-				stashCounterTotal.Inc()
+				metrics.StashCounterTotal.Inc()
 				if stash.League != nil && *stash.League == f.event.Name {
 					stashes = append(stashes, stash)
-					stashCounterFiltered.Inc()
+					metrics.StashCounterFiltered.Inc()
 					if stash.AccountName != nil && userMap[*stash.AccountName] != 0 {
 						err = f.activityRepository.SaveActivity(&repository.Activity{
 							Time:    now.Add(-5 * time.Minute),

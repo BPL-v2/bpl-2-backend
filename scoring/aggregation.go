@@ -1,6 +1,7 @@
 package scoring
 
 import (
+	"bpl/metrics"
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
@@ -8,8 +9,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"gorm.io/gorm"
 )
 
@@ -52,10 +51,6 @@ var aggregationMap = map[repository.AggregationType]AggregationHandler{
 	repository.AggregationTypeMinimum:           handleMinimum,
 	repository.AggregationTypeDifferenceBetween: handleDifferenceBetween,
 }
-var scoreAggregationDuration = promauto.NewGaugeVec(prometheus.GaugeOpts{
-	Name: "score_aggregation_duration_s",
-	Help: "Duration of Aggregation step during scoring",
-}, []string{"aggregation-step"})
 
 func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) ObjectiveTeamMatches {
 	totalTime := time.Now()
@@ -93,10 +88,10 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 				}
 				aggregations[match.ObjectiveId][match.TeamId] = match
 			}
-			scoreAggregationDuration.WithLabelValues(string(aggregation)).Set(time.Since(t).Seconds())
+			metrics.ScoreAggregationDuration.WithLabelValues(string(aggregation)).Set(time.Since(t).Seconds())
 		}
 	}
-	scoreAggregationDuration.WithLabelValues("total").Set(time.Since(totalTime).Seconds())
+	metrics.ScoreAggregationDuration.WithLabelValues("total").Set(time.Since(totalTime).Seconds())
 	return aggregations
 }
 
@@ -262,7 +257,7 @@ func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 	if err != nil {
 		return nil, err
 	}
-	scoreAggregationDuration.WithLabelValues("handleMaximum").Set(time.Since(t).Seconds())
+	metrics.ScoreAggregationDuration.WithLabelValues("handleMaximum").Set(time.Since(t).Seconds())
 	return matches, nil
 }
 
@@ -379,7 +374,7 @@ func getFreshMatches(db *gorm.DB, objectives []*repository.Objective, teamIds []
 	for _, id := range matchList {
 		freshMatches[id] = true
 	}
-	scoreAggregationDuration.WithLabelValues("getFreshMatches").Set(time.Since(t).Seconds())
+	metrics.ScoreAggregationDuration.WithLabelValues("getFreshMatches").Set(time.Since(t).Seconds())
 	return freshMatches, nil
 }
 

@@ -3,6 +3,7 @@ package cron
 import (
 	"bpl/client"
 	"bpl/config"
+	"bpl/metrics"
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
@@ -15,8 +16,6 @@ import (
 
 	"runtime"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -28,11 +27,6 @@ type MatchingService struct {
 	lastTimestamp         *time.Time
 	event                 *repository.Event
 }
-
-var teamMatchesTotal = promauto.NewCounterVec(prometheus.CounterOpts{
-	Name: "team_matches_total",
-	Help: "The number of matches for each team",
-}, []string{"team"})
 
 func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
 	objectiveMatchService := service.NewObjectiveMatchService()
@@ -142,7 +136,7 @@ func (m *MatchingService) getItemMatches(
 			log.Printf("DEBUG: stash %s has no AccountName; teamId=%d", stash.Id, teamId)
 		}
 
-		teamMatchesTotal.WithLabelValues(teamLabel).Add(float64(len(completions)))
+		metrics.TeamMatchesTotal.WithLabelValues(teamLabel).Add(float64(len(completions)))
 
 		sc := &repository.StashChange{
 			StashId:   stash.Id,

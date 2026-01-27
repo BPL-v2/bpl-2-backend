@@ -2,6 +2,7 @@ package repository
 
 import (
 	"bpl/config"
+	"bpl/metrics"
 	"strings"
 	"time"
 
@@ -74,7 +75,7 @@ func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, e
 }
 
 func (r *SignupRepository) GetSignupsForEvent(eventId int) ([]*Signup, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetSignupsForEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetSignupsForEvent"))
 	defer timer.ObserveDuration()
 	signups := make([]*Signup, 0)
 	result := r.DB.Preload("User").Preload("User.OauthAccounts").Order("timestamp ASC").Find(&signups, &Signup{EventId: eventId})

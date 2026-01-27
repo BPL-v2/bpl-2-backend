@@ -3,6 +3,7 @@ package repository
 import (
 	"bpl/client"
 	"bpl/config"
+	"bpl/metrics"
 	"bpl/utils"
 	"bytes"
 	"compress/zlib"
@@ -269,7 +270,7 @@ func (r *CharacterRepository) Save(character *Character) error {
 }
 
 func (r *CharacterRepository) GetCharactersForEvent(eventId int) ([]*Character, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharactersForEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharactersForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
 	err := r.DB.Find(&charData, Character{EventId: eventId}).Error
@@ -279,7 +280,7 @@ func (r *CharacterRepository) GetCharactersForEvent(eventId int) ([]*Character, 
 	return charData, nil
 }
 func (r *CharacterRepository) GetCharactersForUser(user *User) ([]*Character, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharactersForUser"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharactersForUser"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
 	accountName := ""
@@ -293,7 +294,7 @@ func (r *CharacterRepository) GetCharactersForUser(user *User) ([]*Character, er
 	return charData, nil
 }
 func (r *CharacterRepository) GetCharacterById(characterId string) (*Character, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharacterById"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharacterById"))
 	defer timer.ObserveDuration()
 	character := &Character{}
 	err := r.DB.Where("id = ?", characterId).First(character).Error
@@ -304,7 +305,7 @@ func (r *CharacterRepository) GetCharacterById(characterId string) (*Character, 
 }
 
 func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*CharacterPob, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetCharacterHistory"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharacterHistory"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
 	err := r.DB.
@@ -318,7 +319,7 @@ func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*Charac
 }
 
 func (r *CharacterRepository) GetLatestCharacterStats(characterId string) (*CharacterStat, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharacterStats"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestCharacterStats"))
 	defer timer.ObserveDuration()
 	charData := &CharacterStat{}
 	err := r.DB.Where("character_id = ?", characterId).Order("time DESC").First(charData).Error
@@ -329,7 +330,7 @@ func (r *CharacterRepository) GetLatestCharacterStats(characterId string) (*Char
 }
 
 func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[string]*CharacterPob, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestCharacterStatsForEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestCharacterStatsForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
 	query := `SELECT DISTINCT ON (character_id) 
@@ -378,7 +379,7 @@ func (r *CharacterRepository) GetLatestStatsForEvent(eventId int) ([]*CharacterS
 }
 
 func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPob, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetLatestPoBsForEvent"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestPoBsForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
 	query := `SELECT DISTINCT ON (character_id) pobs.* from character_pobs as pobs
@@ -393,7 +394,7 @@ func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPo
 }
 
 func (r *CharacterRepository) GetAllHighestLevelCharactersForEachEventAndUser() ([]*Character, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetAllHighestLevelCharactersForEachEventAndUser"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetAllHighestLevelCharactersForEachEventAndUser"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
 	query := `SELECT c.* FROM characters c
@@ -413,7 +414,7 @@ func (r *CharacterRepository) GetAllHighestLevelCharactersForEachEventAndUser() 
 }
 
 func (r *CharacterRepository) GetPobsFromIdWithLimit(startId int, limit int) ([]*CharacterPob, error) {
-	timer := prometheus.NewTimer(queryDuration.WithLabelValues("GetPobsFromIdWithLimit"))
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetPobsFromIdWithLimit"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
 	err := r.DB.Where("id >= ?", startId).Order("id ASC").Limit(limit).Find(&charData).Error
