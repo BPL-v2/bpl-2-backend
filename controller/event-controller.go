@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -63,7 +64,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 			return
 		}
 		roles := getUserRoles(c)
-		if !utils.Contains(roles, repository.PermissionAdmin) {
+		if !slices.Contains(roles, repository.PermissionAdmin) {
 			events = utils.Filter(events, func(event *repository.Event) bool {
 				return event.Public
 			})
@@ -96,7 +97,7 @@ func (e *EventController) getEvent() gin.HandlerFunc {
 			return
 		}
 		roles := getUserRoles(c)
-		if !utils.Contains(roles, repository.PermissionAdmin) && !event.Public {
+		if !slices.Contains(roles, repository.PermissionAdmin) && !event.Public {
 			c.JSON(403, gin.H{"error": "You are not allowed to view this event"})
 			return
 		}

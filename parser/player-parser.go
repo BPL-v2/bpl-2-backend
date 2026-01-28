@@ -5,6 +5,7 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -234,7 +235,7 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 			total := 0
 			for _, tree := range p.AtlasPassiveTrees {
 				points := len(tree.Hashes)
-				if utils.Contains(tree.Hashes, 65225) {
+				if slices.Contains(tree.Hashes, 65225) {
 					points -= 20
 				}
 				total = utils.Max(total, points)

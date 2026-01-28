@@ -118,7 +118,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	}
 	player.SuccessiveErrors = 0
 	player.New.Character = characterResponse.Character
-	if player.Old.Character == nil || (player.New.Character.EquipmentHash() != player.Old.Character.EquipmentHash()) {
+	if !player.New.Character.HasSameEquipment(player.Old.Character) {
 		log.Printf("Character equipment changed for player %d, queuing for PoB processing", player.UserId)
 		charQueue <- characterResponse.Character
 		player.LastUpdateTimes.PoB = time.Now()

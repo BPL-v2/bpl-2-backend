@@ -5,6 +5,7 @@ import (
 	"bpl/config"
 	"bpl/utils"
 	"fmt"
+	"slices"
 	"time"
 
 	"gorm.io/gorm"
@@ -72,7 +73,7 @@ func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
 	if result.Error != nil {
 		return nil, fmt.Errorf("no current event found: %v", result.Error)
 	}
-	if len(preloads) > 0 && utils.Contains(preloads, "Teams.Users") {
+	if len(preloads) > 0 && slices.Contains(preloads, "Teams.Users") {
 		err := LoadUsersIntoEvent(r.DB, event)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load users into event: %v", err)
@@ -94,7 +95,7 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to find event: %v", result.Error)
 	}
-	if len(preloads) > 0 && utils.Contains(preloads, "Teams.Users") {
+	if len(preloads) > 0 && slices.Contains(preloads, "Teams.Users") {
 		err := LoadUsersIntoEvent(r.DB, event)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load users into event: %v", err)

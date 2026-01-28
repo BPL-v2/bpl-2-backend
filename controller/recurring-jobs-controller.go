@@ -4,8 +4,8 @@ import (
 	"bpl/client"
 	"bpl/cron"
 	"bpl/repository"
-	"bpl/utils"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +24,7 @@ type JobCreate struct {
 }
 
 func (j *JobCreate) toJob() (*cron.RecurringJob, error) {
-	if !utils.Contains(jobList, j.JobType) {
+	if !slices.Contains(jobList, j.JobType) {
 		return nil, fmt.Errorf("job type does not exist")
 	}
 	if j.DurationInSeconds != nil && j.EndDate != nil {

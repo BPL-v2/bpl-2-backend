@@ -3,9 +3,9 @@ package service
 import (
 	"bpl/auth"
 	"bpl/repository"
-	"bpl/utils"
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -51,7 +51,7 @@ func (s *UserService) GetAllUsers(preloads ...string) ([]*repository.User, error
 	if err != nil {
 		return nil, err
 	}
-	if len(preloads) > 0 && utils.Contains(preloads, "OauthAccounts") {
+	if len(preloads) > 0 && slices.Contains(preloads, "OauthAccounts") {
 		oauths, err := s.oauthRepository.GetAllOauths()
 		if err != nil {
 			return nil, err
@@ -130,7 +130,7 @@ func (s *UserService) DiscordServerCheck(user *repository.User) error {
 	// for _, oauth := range user.OauthAccounts {
 	// 	if oauth.Provider == repository.ProviderDiscord {
 	// 		memberIds, err := client.NewLocalDiscordClient().GetServerMemberIds()
-	// 		if err != nil || utils.Contains(memberIds, oauth.AccountId) {
+	// 		if err != nil || slices.Contains(memberIds, oauth.AccountId) {
 	// 			return nil
 	// 		} else {
 	// 			return fmt.Errorf("you have not joined the discord server")

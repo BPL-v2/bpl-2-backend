@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"log"
+	"slices"
 	"strings"
 	"time"
 
@@ -59,7 +60,7 @@ type User struct {
 
 func (u *User) HasOneOfPermissions(perms ...Permission) bool {
 	for _, perm := range perms {
-		if utils.Contains(u.Permissions, perm) {
+		if slices.Contains(u.Permissions, perm) {
 			return true
 		}
 	}

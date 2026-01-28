@@ -29,7 +29,7 @@ func NewCharacterController(poeClient *client.PoEClient) *CharacterController {
 
 func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
 	e := NewCharacterController(poeClient)
-	go e.characterService.UpdateLatestPoBs()
+	go e.characterService.UpdatePoBStats()
 	basePath := "users/:user_id/characters"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getUserCharactersHandler()},

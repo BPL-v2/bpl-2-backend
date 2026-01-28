@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -153,7 +154,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		}
 		roles := getUserRoles(c)
 		public := true
-		if utils.Contains(roles, repository.PermissionAdmin) || utils.Contains(roles, repository.PermissionObjectiveDesigner) {
+		if slices.Contains(roles, repository.PermissionAdmin) || slices.Contains(roles, repository.PermissionObjectiveDesigner) {
 			public = false
 		}
 		c.JSON(200, toObjectiveResponse(rootObjective, public))

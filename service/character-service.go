@@ -191,6 +191,12 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 	p.FromString(newExport)
 	pob.Export = p
 	pob.UpdatedAt = time.Now()
+	pobDecoded, err := pob.Export.Decode()
+	if err == nil {
+		pob.UpdateStats(pobDecoded)
+	} else {
+		fmt.Printf("Error decoding updated PoB for character %s: %v\n", pob.CharacterId, err)
+	}
 	return c.characterRepository.SavePoB(pob)
 }
 

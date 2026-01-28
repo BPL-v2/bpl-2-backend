@@ -1,12 +1,12 @@
 package client
 
 import (
+	"bpl/utils"
 	"crypto/sha256"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 )
 
 type Realm string
@@ -453,7 +453,29 @@ type Item struct {
 	// Requirements           *[]ItemProperty     `json:"requirements,omitempty"`
 }
 
-func (i *Item) Scan(value interface{}) error {
+func (i *Item) GetPositionIndex() string {
+	return fmt.Sprintf("%s-%d-%d", utils.Deref(i.InventoryId), utils.Deref(i.X), utils.Deref(i.Y))
+}
+
+func (i *Item) Equals(other Item) bool {
+	if i.Name != other.Name || i.TypeLine != other.TypeLine || i.BaseType != other.BaseType {
+		return false
+	}
+	return modsEqual(i.ImplicitMods, other.ImplicitMods) &&
+		modsEqual(i.ExplicitMods, other.ExplicitMods) &&
+		modsEqual(i.CraftedMods, other.CraftedMods) &&
+		modsEqual(i.EnchantMods, other.EnchantMods) &&
+		modsEqual(i.FracturedMods, other.FracturedMods)
+}
+
+func modsEqual(a, b *[]string) bool {
+	if (a != nil && b == nil) || (a == nil && b != nil) {
+		return false
+	}
+	return (a == nil && b == nil) || utils.ArrayEqualsUnordered(*a, *b)
+}
+
+func (i *Item) Scan(value any) error {
 	if value == nil {
 		return nil
 	}
@@ -680,20 +702,52 @@ type Character struct {
 	Metadata   Metadata `json:"metadata"`
 }
 
-func (c *Character) EquipmentHash() [32]byte {
-	if c.Equipment == nil {
-		return sha256.Sum256([]byte{})
+func (c *Character) HasSameEquipment(other *Character) bool {
+	if other == nil {
+		return false
 	}
-	equipCopy := make([]Item, len(*c.Equipment))
-	copy(equipCopy, *c.Equipment)
-	sort.Slice(equipCopy, func(i, j int) bool {
-		return equipCopy[i].Id < equipCopy[j].Id
-	})
-	idAggregate := ""
-	for _, item := range equipCopy {
-		idAggregate += item.Id
+	itemMap := make(map[string]Item)
+	if c.Equipment != nil {
+		for _, item := range utils.Deref(c.Equipment) {
+			itemMap[item.GetPositionIndex()] = item
+		}
+		for _, item := range utils.Deref(c.Jewels) {
+			itemMap[item.GetPositionIndex()] = item
+		}
 	}
-	return sha256.Sum256([]byte(idAggregate))
+	for _, item := range utils.Deref(other.Equipment) {
+		otherItem, exists := itemMap[item.GetPositionIndex()]
+		if !exists || !item.Equals(otherItem) {
+			return false
+		}
+	}
+	for _, item := range utils.Deref(other.Jewels) {
+		otherItem, exists := itemMap[item.GetPositionIndex()]
+		if !exists || !item.Equals(otherItem) {
+			return false
+		}
+	}
+	return c.HasSameGems(other)
+}
+
+func (c *Character) HasSameGems(other *Character) bool {
+	if other == nil {
+		return false
+	}
+	gemMap := make(map[string]bool)
+	for _, item := range utils.Deref(c.Equipment) {
+		for _, socketedItem := range utils.Deref(item.SocketedItems) {
+			gemMap[socketedItem.BaseType] = true
+		}
+	}
+	for _, item := range utils.Deref(other.Equipment) {
+		for _, socketedItem := range utils.Deref(item.SocketedItems) {
+			if !gemMap[socketedItem.BaseType] {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 type MinimalCharacter struct {

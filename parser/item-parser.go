@@ -202,7 +202,7 @@ func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Ite
 			mods := make([]string, 0)
 			if item.Properties != nil {
 				for _, property := range *item.Properties {
-					if utils.Contains([]string{"Minor Afflictions", "Major Afflictions", "Minor Boons", "Major Boons"}, property.Name) {
+					if slices.Contains([]string{"Minor Afflictions", "Major Afflictions", "Minor Boons", "Major Boons"}, property.Name) {
 						for _, value := range property.Values {
 							mods = append(mods, value.Name())
 						}
@@ -497,13 +497,13 @@ func IntComparator(condition *dbModel.Condition) (itemChecker, error) {
 		}, nil
 	case dbModel.IN:
 		return func(item *clientModel.Item) bool {
-			fiedValue := getter(item)
-			return slices.Contains(intValues, fiedValue)
+			fieldValue := getter(item)
+			return slices.Contains(intValues, fieldValue)
 		}, nil
 	case dbModel.NOT_IN:
 		return func(item *clientModel.Item) bool {
-			fiedValue := getter(item)
-			return !slices.Contains(intValues, fiedValue)
+			fieldValue := getter(item)
+			return !slices.Contains(intValues, fieldValue)
 		}, nil
 	default:
 		return nil, fmt.Errorf("%s is an invalid operator for integer field %s", condition.Operator, condition.Field)
@@ -528,14 +528,14 @@ func StringComparator(condition *dbModel.Condition) (itemChecker, error) {
 	case dbModel.IN:
 		var values = strings.Split(condition.Value, ",")
 		return func(item *clientModel.Item) bool {
-			fiedValue := getter(item)
-			return slices.Contains(values, fiedValue)
+			fieldValue := getter(item)
+			return slices.Contains(values, fieldValue)
 		}, nil
 	case dbModel.NOT_IN:
 		var values = strings.Split(condition.Value, ",")
 		return func(item *clientModel.Item) bool {
-			fiedValue := getter(item)
-			return !slices.Contains(values, fiedValue)
+			fieldValue := getter(item)
+			return !slices.Contains(values, fieldValue)
 		}, nil
 	case dbModel.MATCHES:
 		expression, err := regexp.Compile(condition.Value)

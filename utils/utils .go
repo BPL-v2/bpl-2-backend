@@ -54,15 +54,6 @@ func Filter[A any](input []A, filter func(A) bool) []A {
 	return output
 }
 
-func Contains[A comparable](input []A, item A) bool {
-	for _, i := range input {
-		if i == item {
-			return true
-		}
-	}
-	return false
-}
-
 func Keys[A comparable, B any](input map[A]B) []A {
 	keys := make([]A, 0, len(input))
 	for key := range input {
@@ -185,4 +176,42 @@ func ConvertIntSlice(slice []int) pq.Int32Array {
 		arr = append(arr, int32(integer))
 	}
 	return arr
+}
+
+func Deref[T any](value *T) T {
+	var zero T
+	if value == nil {
+		return zero
+	}
+	return *value
+}
+
+func ArrayEquals[T comparable](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func ArrayEqualsUnordered[T comparable](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	counts := make(map[T]int)
+	for _, item := range a {
+		counts[item]++
+	}
+	for _, item := range b {
+		count, exists := counts[item]
+		if !exists || count == 0 {
+			return false
+		}
+		counts[item]--
+	}
+	return true
 }

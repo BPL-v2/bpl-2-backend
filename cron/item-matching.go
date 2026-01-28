@@ -7,11 +7,11 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
-	"bpl/utils"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"slices"
 	"time"
 
 	"runtime"
@@ -118,7 +118,7 @@ func (m *MatchingService) getItemMatches(
 		if stash.Items != nil {
 			for _, item := range stash.Items {
 				for _, result := range itemChecker.CheckForCompletions(&item) {
-					if syncFinished || utils.Contains(desyncedObjectiveIds, result.ObjectiveId) {
+					if syncFinished || slices.Contains(desyncedObjectiveIds, result.ObjectiveId) {
 						completions[result.ObjectiveId] += result.Number
 					}
 				}
