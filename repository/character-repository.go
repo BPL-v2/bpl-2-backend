@@ -353,7 +353,7 @@ func (r *CharacterRepository) GetPobsFromIdWithLimit(startId int, limit int) ([]
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetPobsFromIdWithLimit"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
-	err := r.DB.Where("id >= ?", startId).Order("id ASC").Limit(limit).Find(&charData).Error
+	err := r.DB.Where("id >= ? and ehp >= ?", startId, 50000).Order("id ASC").Limit(limit).Find(&charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting PoBs starting from id %d with limit %d: %w", startId, limit, err)
 	}
