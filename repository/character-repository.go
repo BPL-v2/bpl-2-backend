@@ -277,7 +277,7 @@ func (r *CharacterRepository) GetLatestCharacterPoB(characterId string) (*Charac
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestCharacterPoB"))
 	defer timer.ObserveDuration()
 	charData := &CharacterPob{}
-	err := r.DB.Where("character_id = ?", characterId).Order("time DESC").First(charData).Error
+	err := r.DB.Where("character_id = ?", characterId).Order("created_at DESC").First(charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting latest character stats for character %s: %w", characterId, err)
 	}
@@ -302,7 +302,8 @@ func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[
 					p.evasion,
 					p.xp,
 					p.movement_speed,
-					p.main_skill
+					p.main_skill,
+					p.items
 				FROM character_pobs as p
 				JOIN characters ON p.character_id = characters.id
 				WHERE characters.event_id = ?
