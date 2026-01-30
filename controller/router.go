@@ -45,6 +45,7 @@ func SetRoutes(r *gin.Engine) {
 	routes = append(routes, setupActivityController()...)
 	routes = append(routes, setupTimingController()...)
 	routes = append(routes, setupItemWishController()...)
+	routes = append(routes, setupItemController()...)
 	routes = append(routes, setupEngagementController()...)
 	routes = append(routes, setupAchievementController()...)
 	for _, route := range routes {

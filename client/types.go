@@ -706,22 +706,32 @@ func (c *Character) HasSameEquipment(other *Character) bool {
 	if other == nil {
 		return false
 	}
-	itemMap := make(map[string]Item)
-	if c.Equipment != nil {
-		for _, item := range utils.Deref(c.Equipment) {
-			itemMap[item.GetPositionIndex()] = item
-		}
-		for _, item := range utils.Deref(c.Jewels) {
-			itemMap[item.GetPositionIndex()] = item
-		}
+	if (c.Equipment == nil && other.Equipment == nil) && (c.Jewels == nil && other.Jewels == nil) {
+		return true
 	}
-	for _, item := range utils.Deref(other.Equipment) {
+	if (c.Equipment == nil && other.Equipment != nil) || (c.Equipment != nil && other.Equipment == nil) {
+		return false
+	}
+	if (c.Jewels == nil && other.Jewels != nil) || (c.Jewels != nil && other.Jewels == nil) {
+		return false
+	}
+	if len(*c.Equipment) != len(*other.Equipment) || len(*c.Jewels) != len(*other.Jewels) {
+		return false
+	}
+	itemMap := make(map[string]Item)
+	for _, item := range *c.Equipment {
+		itemMap[item.GetPositionIndex()] = item
+	}
+	for _, item := range *c.Jewels {
+		itemMap[item.GetPositionIndex()] = item
+	}
+	for _, item := range *other.Equipment {
 		otherItem, exists := itemMap[item.GetPositionIndex()]
 		if !exists || !item.Equals(otherItem) {
 			return false
 		}
 	}
-	for _, item := range utils.Deref(other.Jewels) {
+	for _, item := range *other.Jewels {
 		otherItem, exists := itemMap[item.GetPositionIndex()]
 		if !exists || !item.Equals(otherItem) {
 			return false
@@ -734,20 +744,19 @@ func (c *Character) HasSameGems(other *Character) bool {
 	if other == nil {
 		return false
 	}
-	gemMap := make(map[string]bool)
+	gems := utils.Set[string]{}
 	for _, item := range utils.Deref(c.Equipment) {
 		for _, socketedItem := range utils.Deref(item.SocketedItems) {
-			gemMap[socketedItem.BaseType] = true
+			gems[socketedItem.TypeLine] = true
 		}
 	}
+	otherGems := utils.Set[string]{}
 	for _, item := range utils.Deref(other.Equipment) {
 		for _, socketedItem := range utils.Deref(item.SocketedItems) {
-			if !gemMap[socketedItem.BaseType] {
-				return false
-			}
+			otherGems[socketedItem.TypeLine] = true
 		}
 	}
-	return true
+	return len(gems.Difference(otherGems)) == 0
 }
 
 type MinimalCharacter struct {
