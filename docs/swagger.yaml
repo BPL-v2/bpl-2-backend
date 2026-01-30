@@ -4021,6 +4021,11 @@ paths:
       description: Creates multiple items
       operationId: CreateItems
       parameters:
+      - description: Item type
+        in: query
+        name: item_type
+        required: true
+        type: string
       - description: Item names
         in: body
         name: body
@@ -4036,7 +4041,9 @@ paths:
           description: Created
           schema:
             additionalProperties:
-              type: integer
+              additionalProperties:
+                type: integer
+              type: object
             type: object
       security:
       - BearerAuth: []
@@ -4044,7 +4051,7 @@ paths:
       - items
   /items/map:
     get:
-      description: Returns a map of item names to item IDs
+      description: Returns a map of item types to item-name-to-ID maps
       operationId: GetItemMap
       produces:
       - application/json
@@ -4053,7 +4060,9 @@ paths:
           description: OK
           schema:
             additionalProperties:
-              type: integer
+              additionalProperties:
+                type: integer
+              type: object
             type: object
       tags:
       - items

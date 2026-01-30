@@ -31,10 +31,10 @@ func setupItemController() []RouteInfo {
 }
 
 // @id GetItemMap
-// @Description Returns a map of item names to item IDs
+// @Description Returns a map of item types to item-name-to-ID maps
 // @Tags items
 // @Produce json
-// @Success 200 {object} map[string]int
+// @Success 200 {object} map[string]map[string]int
 // @Router /items/map [get]
 func (e *ItemController) getItemMapHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -53,17 +53,23 @@ func (e *ItemController) getItemMapHandler() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param item_type query string true "Item type"
 // @Param body body []string true "Item names"
-// @Success 201 {object} map[string]int
+// @Success 201 {object} map[string]map[string]int
 // @Router /items/bulk [post]
 func (e *ItemController) createItemsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		itemType := c.Query("item_type")
+		if itemType == "" {
+			c.JSON(400, gin.H{"error": "item_type is required"})
+			return
+		}
 		var itemNames []string
 		if err := c.ShouldBindJSON(&itemNames); err != nil {
 			c.JSON(400, gin.H{"error": "Invalid request body"})
 			return
 		}
-		if err := e.itemService.SaveItems(itemNames); err != nil {
+		if err := e.itemService.SaveItems(itemNames, itemType); err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}

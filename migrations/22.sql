@@ -1,0 +1,2 @@
+ALTER TABLE items
+ADD COLUMN item_type TEXT NOT NULL DEFAULT '';

@@ -2044,6 +2044,13 @@ const docTemplate = `{
                 "operationId": "CreateItems",
                 "parameters": [
                     {
+                        "type": "string",
+                        "description": "Item type",
+                        "name": "item_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
                         "description": "Item names",
                         "name": "body",
                         "in": "body",
@@ -2062,7 +2069,10 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
-                                "type": "integer"
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "integer"
+                                }
                             }
                         }
                     }
@@ -2071,7 +2081,7 @@ const docTemplate = `{
         },
         "/items/map": {
             "get": {
-                "description": "Returns a map of item names to item IDs",
+                "description": "Returns a map of item types to item-name-to-ID maps",
                 "produces": [
                     "application/json"
                 ],
@@ -2085,7 +2095,10 @@ const docTemplate = `{
                         "schema": {
                             "type": "object",
                             "additionalProperties": {
-                                "type": "integer"
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "integer"
+                                }
                             }
                         }
                     }
