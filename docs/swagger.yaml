@@ -4014,6 +4014,49 @@ paths:
             type: array
       tags:
       - user
+  /items/bulk:
+    post:
+      consumes:
+      - application/json
+      description: Creates multiple items
+      operationId: CreateItems
+      parameters:
+      - description: Item names
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            type: string
+          type: array
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      security:
+      - BearerAuth: []
+      tags:
+      - items
+  /items/map:
+    get:
+      description: Returns a map of item names to item IDs
+      operationId: GetItemMap
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: integer
+            type: object
+      tags:
+      - items
   /jobs:
     get:
       consumes:
