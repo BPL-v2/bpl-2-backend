@@ -2024,61 +2024,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/items/bulk": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates multiple items",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "items"
-                ],
-                "operationId": "CreateItems",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Item type",
-                        "name": "item_type",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "description": "Item names",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "object",
-                                "additionalProperties": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/items/map": {
             "get": {
                 "description": "Returns a map of item types to item-name-to-ID maps",
@@ -4665,6 +4610,7 @@ const docTemplate = `{
                 "es",
                 "evasion",
                 "hp",
+                "item_indexes",
                 "main_skill",
                 "mana",
                 "movement_speed",
@@ -4693,6 +4639,12 @@ const docTemplate = `{
                 },
                 "hp": {
                     "type": "integer"
+                },
+                "item_indexes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "main_skill": {
                     "type": "string"
