@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"gorm.io/gorm"
 )
@@ -97,14 +98,15 @@ func (p PoBExport) Value() (driver.Value, error) {
 }
 
 type CharacterPob struct {
-	Id          int       `gorm:"not null;primaryKey"`
-	CharacterId string    `gorm:"not null;index"`
-	Level       int       `gorm:"not null"`
-	MainSkill   string    `gorm:"not null"`
-	Ascendancy  string    `gorm:"not null"`
-	Export      PoBExport `gorm:"not null;type:bytea"`
-	CreatedAt   time.Time `gorm:"not null;index"`
-	UpdatedAt   time.Time `gorm:"not null"`
+	Id          int           `gorm:"not null;primaryKey"`
+	CharacterId string        `gorm:"not null;index"`
+	Level       int           `gorm:"not null"`
+	MainSkill   string        `gorm:"not null"`
+	Ascendancy  string        `gorm:"not null"`
+	Export      PoBExport     `gorm:"not null;type:bytea"`
+	CreatedAt   time.Time     `gorm:"not null;index"`
+	UpdatedAt   time.Time     `gorm:"not null"`
+	Items       pq.Int32Array `gorm:"not null;type:int2[]"`
 
 	DPS           int64 `gorm:"not null"`
 	EHP           int32 `gorm:"not null"`
@@ -210,6 +212,9 @@ func (r *CharacterRepository) SaveCharacters(characters []*Character) error {
 
 func (r *CharacterRepository) SavePoB(characterPoB *CharacterPob) error {
 	return r.DB.Save(&characterPoB).Error
+}
+func (r *CharacterRepository) SavePoBs(characterPobs []*CharacterPob) error {
+	return r.DB.Save(&characterPobs).Error
 }
 
 func (r *CharacterRepository) Save(character *Character) error {
@@ -353,7 +358,7 @@ func (r *CharacterRepository) GetPobsFromIdWithLimit(startId int, limit int) ([]
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetPobsFromIdWithLimit"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
-	err := r.DB.Where("id >= ? and ehp >= ?", startId, 50000).Order("id ASC").Limit(limit).Find(&charData).Error
+	err := r.DB.Where("id >= ?", startId).Order("id ASC").Limit(limit).Find(&charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting PoBs starting from id %d with limit %d: %w", startId, limit, err)
 	}

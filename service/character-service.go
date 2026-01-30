@@ -7,6 +7,7 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 )
@@ -18,6 +19,7 @@ type CharacterService struct {
 	userRepository      *repository.UserRepository
 	activityRepository  *repository.ActivityRepository
 	atlasService        *AtlasService
+	itemService         *ItemService
 	poeClient           *client.PoEClient
 }
 
@@ -29,6 +31,7 @@ func NewCharacterService(poeClient *client.PoEClient) *CharacterService {
 		userRepository:      repository.NewUserRepository(),
 		activityRepository:  repository.NewActivityRepository(),
 		atlasService:        NewAtlasService(),
+		itemService:         NewItemService(),
 		poeClient:           poeClient,
 	}
 }
@@ -237,8 +240,13 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 
 func (c *CharacterService) UpdatePoBStats() error {
 	startId := 0
+	itemMap, err := c.itemService.GetItemMap()
+	if err != nil {
+		return err
+	}
+
 	for {
-		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 100)
+		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 1000)
 
 		if err != nil {
 			fmt.Printf("Error getting PoBs from id %d: %v\n", startId, err)
@@ -249,18 +257,63 @@ func (c *CharacterService) UpdatePoBStats() error {
 		}
 		for _, characterPob := range pobs {
 			startId = characterPob.Id
-			fmt.Printf("Updating stats for PoB ID %d\n", characterPob.Id)
 			pob, err := characterPob.Export.Decode()
 			if err != nil {
 				fmt.Printf("Error decoding PoB for character %s: %v\n", characterPob.CharacterId, err)
 				continue
 			}
-			characterPob.UpdateStats(pob)
-			err = c.characterRepository.SavePoB(characterPob)
-			if err != nil {
-				fmt.Printf("Error saving PoB for character %s: %v\n", characterPob.CharacterId, err)
+			itemIndexes := make(map[int]bool)
+			for _, item := range pob.Items {
+				if item.Rarity == "UNIQUE" {
+					itemId, ok := itemMap["unique"][item.Name]
+					if ok {
+						itemIndexes[itemId] = true
+					} else {
+						savedItem, err := c.itemService.SaveItem(item.Name, "unique")
+						if err != nil {
+							fmt.Printf("Error saving unique item %s: %v\n", item.Name, err)
+						} else {
+							itemMap["unique"][item.Name] = savedItem.Id
+							itemIndexes[savedItem.Id] = true
+						}
+					}
+				}
+			}
+			for _, skillset := range pob.Skills.SkillSets {
+				for _, skill := range skillset.Skills {
+					for _, gem := range skill.Gems {
+						name := gem.NameSpec
+						if strings.Contains(gem.GemID, "Support") {
+							name += " Support"
+						}
+						itemId, ok := itemMap["gem"][name]
+						if ok {
+							itemIndexes[itemId] = true
+						} else {
+							savedItem, err := c.itemService.SaveItem(name, "gem")
+							if err != nil {
+								fmt.Printf("Error saving gem item %s: %v\n", name, err)
+							} else {
+								itemMap["gem"][name] = savedItem.Id
+								itemIndexes[savedItem.Id] = true
+							}
+						}
+					}
+				}
+			}
+			if len(itemIndexes) == 0 {
+				continue
+			}
+			characterPob.Items = make([]int32, 0, len(itemIndexes))
+			for itemId := range itemIndexes {
+				characterPob.Items = append(characterPob.Items, int32(itemId))
 			}
 		}
+		err = c.characterRepository.SavePoBs(pobs)
+		if err != nil {
+			fmt.Printf("Error saving PoBs: %v\n", err)
+		}
+		fmt.Printf("Updated PoBs up to ID %d\n", startId)
 	}
 	return nil
 }

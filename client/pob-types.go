@@ -12,10 +12,65 @@ import (
 	"strings"
 )
 
+type PoBItem struct {
+	Rarity   string `xml:"-"`
+	Name     string `xml:"-"`
+	BaseType string `xml:"-"`
+}
+
+type pobItemXML struct {
+	ID   int    `xml:"id,attr"`
+	Text string `xml:",chardata"`
+}
+
+func (p *PoBItem) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var aux pobItemXML
+	if err := d.DecodeElement(&aux, &start); err != nil {
+		return err
+	}
+	lines := strings.Split(aux.Text, "\n")
+	cleaned := make([]string, 0, len(lines))
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		cleaned = append(cleaned, trimmed)
+	}
+	if len(cleaned) > 0 {
+		if strings.HasPrefix(cleaned[0], "Rarity:") {
+			p.Rarity = strings.TrimSpace(strings.TrimPrefix(cleaned[0], "Rarity:"))
+		} else {
+			p.Rarity = cleaned[0]
+		}
+	}
+	switch strings.ToUpper(p.Rarity) {
+	case "NORMAL":
+		if len(cleaned) > 1 {
+			p.BaseType = cleaned[1]
+		}
+		p.Name = ""
+	case "MAGIC":
+		if len(cleaned) > 1 {
+			p.Name = cleaned[1]
+		}
+		p.BaseType = ""
+	default:
+		if len(cleaned) > 1 {
+			p.Name = cleaned[1]
+		}
+		if len(cleaned) > 2 {
+			p.BaseType = cleaned[2]
+		}
+	}
+	return nil
+}
+
 type PathOfBuilding struct {
-	Build  Build  `xml:"Build"`
-	Skills Skills `xml:"Skills"`
-	Tree   Tree   `xml:"Tree"`
+	Build  Build     `xml:"Build"`
+	Skills Skills    `xml:"Skills"`
+	Tree   Tree      `xml:"Tree"`
+	Items  []PoBItem `xml:"Items>Item"`
 }
 
 func (p *PathOfBuilding) GetPassives() []int {

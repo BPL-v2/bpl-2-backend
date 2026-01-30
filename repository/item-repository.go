@@ -21,8 +21,11 @@ func NewItemRepository() *ItemRepository {
 	return &ItemRepository{DB: config.DatabaseConnection()}
 }
 
-func (r *ItemRepository) SaveItem(item *Item) error {
-	return r.DB.Create(&item).Error
+func (r *ItemRepository) SaveItem(item *Item) (*Item, error) {
+	if err := r.DB.Create(&item).Error; err != nil {
+		return nil, err
+	}
+	return item, nil
 }
 
 func (r *ItemRepository) SaveItems(items []*Item) error {

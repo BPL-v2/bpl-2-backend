@@ -20,7 +20,7 @@ func (s *ItemService) SaveItems(itemNames []string, itemType string) error {
 	return s.itemRepository.SaveItems(items)
 }
 
-func (s *ItemService) SaveItem(itemName string, itemType string) error {
+func (s *ItemService) SaveItem(itemName string, itemType string) (*repository.Item, error) {
 	item := &repository.Item{Name: itemName, ItemType: itemType}
 	return s.itemRepository.SaveItem(item)
 }
