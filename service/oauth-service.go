@@ -181,19 +181,25 @@ func (e *OauthService) addAccountToUser(authState *OauthState, referrer *string,
 	} else {
 		fmt.Printf("Adding %s account %s to user %s\n", provider, accountName, authState.User.DisplayName)
 	}
+	newAccount := &repository.Oauth{
+		UserId:        authState.User.Id,
+		Provider:      provider,
+		AccessToken:   token.AccessToken,
+		RefreshToken:  token.RefreshToken,
+		AccountId:     accountId,
+		Name:          accountName,
+		Expiry:        token.Expiry,
+		RefreshExpiry: token.Expiry,
+	}
+	if provider == repository.ProviderPoE {
+		// PoE refresh tokens are valid for 90 days after fetching a new access token
+		newAccount.RefreshExpiry = time.Now().Add(90 * 24 * time.Hour)
+	}
 	authState.User.OauthAccounts = append(
 		utils.Filter(authState.User.OauthAccounts, func(oauthAccount *repository.Oauth) bool {
 			return oauthAccount.Provider != provider
 		}),
-		&repository.Oauth{
-			UserId:       authState.User.Id,
-			Provider:     provider,
-			AccessToken:  token.AccessToken,
-			RefreshToken: token.RefreshToken,
-			AccountId:    accountId,
-			Name:         accountName,
-			Expiry:       token.Expiry,
-		},
+		newAccount,
 	)
 	e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
 	_, err = e.userService.SaveUser(authState.User)
@@ -375,11 +381,18 @@ func (e *OauthService) RefreshOnePoEToken() error {
 	}
 	oauth.AccessToken = resp.AccessToken
 	oauth.RefreshToken = resp.RefreshToken
-	oauth.Expiry = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	newExpiry := time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+	oauth.Expiry = newExpiry
 	oauth.AccountId = resp.Sub
 	oauth.Name = resp.Username
+	// if access token is valid for less than 27 days this means that the refresh token cannot be used to extend it anymore
+	if time.Duration(resp.ExpiresIn)*time.Second < time.Duration(27*24*time.Hour) {
+		oauth.RefreshExpiry = newExpiry
+	}
 	_, err = e.oauthRepository.SaveOauth(oauth)
-	fmt.Printf("Refreshed PoE token for user %s\n", oauth.Name)
+	if err == nil {
+		fmt.Printf("Refreshed PoE token for user %s\n", oauth.Name)
+	}
 	return err
 }
 

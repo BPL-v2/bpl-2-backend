@@ -17,13 +17,14 @@ const (
 )
 
 type Oauth struct {
-	UserId       int       `gorm:"primaryKey;references:user(id);constraint:OnDelete:CASCADE"`
-	Provider     Provider  `gorm:"primaryKey"`
-	AccessToken  string    `gorm:"not null"`
-	RefreshToken string    `gorm:"null"`
-	Expiry       time.Time `gorm:"not null"`
-	Name         string    `gorm:"not null"`
-	AccountId    string    `gorm:"not null"`
+	UserId        int       `gorm:"primaryKey;references:user(id);constraint:OnDelete:CASCADE"`
+	Provider      Provider  `gorm:"primaryKey"`
+	AccessToken   string    `gorm:"not null"`
+	RefreshToken  string    `gorm:"null"`
+	Expiry        time.Time `gorm:"not null"`
+	RefreshExpiry time.Time `gorm:"not null"`
+	Name          string    `gorm:"not null"`
+	AccountId     string    `gorm:"not null"`
 
 	User *User `gorm:"foreignKey:UserId"`
 }
@@ -74,7 +75,12 @@ func (r *OauthRepository) DeleteOauthsByUserIdAndProvider(userId int, provider P
 
 func (r *OauthRepository) GetOauthForTokenRefresh(provider Provider) (*Oauth, error) {
 	var oauth *Oauth
-	result := r.DB.Preload("User").Where("provider = ? AND refresh_token != '' AND expiry > NOW()", provider).Order("expiry ASC").First(&oauth)
+	result := r.DB.Preload("User").Where(`
+		provider = ? AND
+		refresh_token != '' AND
+		refresh_expiry > NOW() AND
+		ABS(EXTRACT(EPOCH FROM (refresh_expiry - expiry))) > 1
+	`, provider).Order("expiry ASC").First(&oauth)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to get user for token refresh: %v", result.Error)
 	}
