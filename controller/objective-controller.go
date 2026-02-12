@@ -7,8 +7,6 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"context"
-	"crypto/sha256"
-	"fmt"
 	"slices"
 	"strconv"
 	"time"
@@ -357,16 +355,12 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 	}
 	if public && objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &Objective{
-			Name:                   fmt.Sprintf("%x", sha256.Sum256([]byte(objective.Name))),
-			ParentId:               objective.ParentId,
-			ValidFrom:              objective.ValidFrom,
-			ValidTo:                objective.ValidTo,
-			ScoringPresets:         utils.Map(objective.ScoringPresets, toScoringPresetResponse),
-			HideProgress:           objective.HideProgress,
-			Children:               make([]*Objective, 0),
-			Conditions:             make([]*Condition, 0),
-			NumberField:            objective.NumberField,
-			NumberFieldExplanation: objective.NumberFieldExplanation,
+			Id:             objective.Id,
+			ParentId:       objective.ParentId,
+			ValidFrom:      objective.ValidFrom,
+			ValidTo:        objective.ValidTo,
+			ScoringPresets: utils.Map(objective.ScoringPresets, toScoringPresetResponse),
+			HideProgress:   objective.HideProgress,
 		}
 	}
 
