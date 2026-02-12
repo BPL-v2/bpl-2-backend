@@ -361,6 +361,8 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 			ValidTo:        objective.ValidTo,
 			ScoringPresets: utils.Map(objective.ScoringPresets, toScoringPresetResponse),
 			HideProgress:   objective.HideProgress,
+			Children:       make([]*Objective, 0),
+			Conditions:     make([]*Condition, 0),
 		}
 	}
 
