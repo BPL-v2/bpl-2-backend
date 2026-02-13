@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bpl/utils"
 	"fmt"
 	"net"
 	"strconv"
@@ -19,7 +20,7 @@ func CreateTopic(eventId int) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer utils.Closer(conn)()
 
 	controller, err := conn.Controller()
 	if err != nil {
@@ -29,7 +30,7 @@ func CreateTopic(eventId int) error {
 	if err != nil {
 		return err
 	}
-	defer controllerConn.Close()
+	defer utils.Closer(controllerConn)()
 
 	topicConfig := kafka.TopicConfig{
 		Topic:             topic,

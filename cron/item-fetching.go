@@ -198,7 +198,7 @@ func (f *FetchingService) FilterStashChanges() error {
 		return fmt.Errorf("failed to get kafka writer: %w", err)
 
 	}
-	defer writer.Close()
+	defer utils.Closer(writer)()
 
 	for stashChange := range f.stashChannel {
 		select {
@@ -411,7 +411,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 		return fmt.Errorf("failed to initialize guild stash fetching: %w", err)
 	}
 
-	defer kafkaWriter.Close()
+	defer utils.Closer(kafkaWriter)()
 
 	for {
 		fmt.Printf("Fetching guild stashes for event %d\n", f.event.Id)

@@ -7,6 +7,7 @@ import (
 	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
+	"bpl/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -100,7 +101,6 @@ func (m *MatchingService) getItemMatches(
 		}
 
 		userId := new(int)
-		userId = nil
 		teamId := stash.TeamId
 
 		if accountName != "" {
@@ -201,7 +201,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		log.Fatal(err)
 		return
 	}
-	defer reader.Close()
+	defer utils.Closer(reader)()
 
 	syncing := len(desyncedObjectiveIds) > 0
 	matches := make([]*repository.ObjectiveMatch, 0)

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bpl/utils"
 	"bytes"
 	"compress/zlib"
 	"encoding/base64"
@@ -539,7 +540,7 @@ func DecodePoBExport(input string) (*PathOfBuilding, error) {
 	if err != nil {
 		return nil, fmt.Errorf("zlib decompress error: %w", err)
 	}
-	defer z.Close()
+	defer utils.Closer(z)()
 	var pob PathOfBuilding
 	if err := xml.NewDecoder(z).Decode(&pob); err != nil {
 		return nil, fmt.Errorf("xml decode error: %w", err)

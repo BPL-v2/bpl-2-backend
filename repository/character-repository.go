@@ -143,7 +143,7 @@ func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {
 	if err != nil {
 		return nil, fmt.Errorf("zlib decompress error: %w", err)
 	}
-	defer z.Close()
+	defer utils.Closer(z)()
 	var pob client.PathOfBuilding
 	if err := xml.NewDecoder(z).Decode(&pob); err != nil {
 		return nil, fmt.Errorf("xml decode error: %w", err)
@@ -151,7 +151,7 @@ func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {
 	return &pob, nil
 }
 
-func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) error {
+func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) {
 	p.DPS = float2Int64(utils.Max(pob.Build.PlayerStats.CombinedDPS, pob.Build.PlayerStats.CullingDPS, pob.Build.PlayerStats.FullDPS, pob.Build.PlayerStats.FullDotDPS, pob.Build.PlayerStats.PoisonDPS, pob.Build.PlayerStats.ReservationDPS, pob.Build.PlayerStats.TotalDPS, pob.Build.PlayerStats.TotalDotDPS, pob.Build.PlayerStats.WithBleedDPS, pob.Build.PlayerStats.WithIgniteDPS, pob.Build.PlayerStats.WithPoisonDPS))
 	p.EHP = float2Int32(pob.Build.PlayerStats.TotalEHP)
 	p.PhysMaxHit = float2Int32(pob.Build.PlayerStats.PhysicalMaximumHitTaken)
@@ -173,7 +173,6 @@ func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) error {
 			}
 		}
 	}
-	return nil
 }
 
 type CharacterRepository struct {

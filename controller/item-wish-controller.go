@@ -191,6 +191,10 @@ func (e *ItemWishController) deleteItemWishHandler() gin.HandlerFunc {
 			return
 		}
 		err = e.itemWishService.DeleteItemWish(wishId)
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Failed to delete item wish"})
+			return
+		}
 		c.Status(204)
 	}
 }

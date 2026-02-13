@@ -32,6 +32,10 @@ func (r *ItemWishRepository) SaveItemWish(itemWish *ItemWish) (*ItemWish, error)
 	err := r.DB.Save(itemWish).Error
 	return itemWish, err
 }
+func (r *ItemWishRepository) SaveItemWishes(itemWishes []*ItemWish) ([]*ItemWish, error) {
+	err := r.DB.Save(itemWishes).Error
+	return itemWishes, err
+}
 
 func (r *ItemWishRepository) GetItemWishesForTeamAndUser(teamId int, userId int) (itemWishes []*ItemWish, err error) {
 	err = r.DB.Where("team_id = ? AND user_id = ?", teamId, userId).Find(&itemWishes).Error

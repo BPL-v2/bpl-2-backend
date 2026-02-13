@@ -2,6 +2,7 @@ package service
 
 import (
 	"bpl/repository"
+	"bpl/utils"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -63,7 +64,7 @@ func GetNinjaChangeId() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch ninja change id: %s", err)
 	}
-	defer response.Body.Close()
+	defer utils.Closer(response.Body)()
 	var ninjaResponse NinjaResponse
 	err = json.NewDecoder(response.Body).Decode(&ninjaResponse)
 	if err != nil {

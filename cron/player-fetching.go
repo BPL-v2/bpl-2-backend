@@ -136,7 +136,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	}
 	err = s.characterRepository.Save(character)
 	if err != nil {
-		return nil, fmt.Errorf("Error saving character %s (%s) for user %d: %v\n", character.Name, character.Id, player.UserId, err)
+		return nil, fmt.Errorf("error saving character %s (%s) for user %d: %v", character.Name, character.Id, player.UserId, err)
 	}
 	return characterResponse.Character, nil
 }
@@ -304,7 +304,11 @@ func updateStats(character *client.Character, characterRepo *repository.Characte
 	}
 	metrics.PobsCalculatedCounter.Inc()
 	p := repository.PoBExport{}
-	p.FromString(export)
+	err = p.FromString(export)
+	if err != nil {
+		fmt.Printf("Error parsing PoB export for character %s: %v\n", character.Name, err)
+		return
+	}
 	pobEntity := &repository.CharacterPob{
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),

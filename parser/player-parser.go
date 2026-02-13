@@ -70,7 +70,7 @@ func (p *PlayerUpdate) ShouldUpdateCharacter(timings map[repository.TimingKey]ti
 	if p.New.Character.Level > 40 && !p.New.Character.HasPantheon() {
 		return time.Since(p.LastUpdateTimes.Character) > timings[repository.CharacterRefetchDelayImportant]
 	}
-	if p.New.Character.Level > 68 && !(p.New.Character.GetAscendancyPoints() >= 8) {
+	if p.New.Character.Level > 68 && p.New.Character.GetAscendancyPoints() < 8 {
 		return time.Since(p.LastUpdateTimes.Character) > timings[repository.CharacterRefetchDelayImportant]
 	}
 	return time.Since(p.LastUpdateTimes.Character) > timings[repository.CharacterRefetchDelay]
@@ -84,7 +84,7 @@ func (p *PlayerUpdate) ShouldUpdateLeagueAccount(timings map[repository.TimingKe
 		return false
 	}
 	if p.LastActive.Before(time.Now().Add(-timings[repository.InactivityDuration])) {
-		return time.Since(p.LastUpdateTimes.Character) > timings[repository.LeagueAccountRefetchDelayInactive]
+		return time.Since(p.LastUpdateTimes.LeagueAccount) > timings[repository.LeagueAccountRefetchDelayInactive]
 	}
 
 	if p.New.MaxAtlasTreeNodes() < 100 {

@@ -2,6 +2,7 @@ package client
 
 import (
 	"bpl/config"
+	"bpl/utils"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -33,7 +34,7 @@ func (c *LocalDiscordClient) GetServerMembers() ([]*discordgo.Member, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer utils.Closer(resp.Body)()
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

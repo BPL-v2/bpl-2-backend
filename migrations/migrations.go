@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bpl/utils"
 	"database/sql"
 	"fmt"
 	"log"
@@ -27,7 +28,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer utils.Closer(db)()
 	version, err := getMigrationVersion(db)
 	if err != nil {
 		log.Fatal(err)
@@ -63,7 +64,10 @@ func migrateUp(db *sql.DB, version int) error {
 }
 
 func getMigrationVersion(db *sql.DB) (version int, err error) {
-	db.Exec("CREATE SCHEMA IF NOT EXISTS bpl2;")
+	_, err = db.Exec("CREATE SCHEMA IF NOT EXISTS bpl2;")
+	if err != nil {
+		return 0, err
+	}
 	err = db.QueryRow("SELECT version FROM migrations").Scan(&version)
 	if err != nil {
 		err := generateMigrationTable(db)

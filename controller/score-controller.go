@@ -80,7 +80,7 @@ func (e *ScoreController) WebSocketHandler(c *gin.Context) {
 		http.NotFound(c.Writer, c.Request)
 		return
 	}
-	defer conn.Close()
+	defer utils.Closer(conn)()
 
 	teamId := 0
 	teamUser, _, err := e.userService.GetTeamForUser(c, event)
@@ -133,7 +133,7 @@ func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 		http.NotFound(c.Writer, c.Request)
 		return
 	}
-	defer conn.Close()
+	defer utils.Closer(conn)()
 
 	serialized, err := json.Marshal(e.scoreService.LatestScores[event.Id].GetSimpleScore())
 	if err != nil {
@@ -208,13 +208,19 @@ func (e *ScoreController) StartScoreUpdater() {
 						continue
 					}
 					if err := conn.WriteMessage(websocket.TextMessage, serializedDiff); err != nil {
-						conn.Close()
+						err := conn.Close()
+						if err != nil {
+							log.Printf("Error closing websocket connection: %v", err)
+						}
 						delete(e.connections[eventId], conn)
 					}
 				}
 				for conn := range e.simpleConnections[eventId] {
 					if err := conn.WriteMessage(websocket.TextMessage, simpleScore); err != nil {
-						conn.Close()
+						err := conn.Close()
+						if err != nil {
+							log.Printf("Error closing websocket connection: %v", err)
+						}
 						delete(e.simpleConnections[eventId], conn)
 					}
 				}

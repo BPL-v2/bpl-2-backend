@@ -116,7 +116,7 @@ func (t *TwitchClient) GetStreams(userIds []string, cursor *string, limit int) [
 	if err != nil {
 		return make([]*TwitchStream, 0)
 	}
-	defer resp.Body.Close()
+	defer utils.Closer(resp.Body)()
 	streams := &StreamResponse{}
 	err = json.NewDecoder(resp.Body).Decode(&streams)
 	if err != nil {

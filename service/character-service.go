@@ -191,7 +191,10 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 	}
 	metrics.PobsCalculatedCounter.Inc()
 	p := repository.PoBExport{}
-	p.FromString(newExport)
+	err = p.FromString(newExport)
+	if err != nil {
+		return err
+	}
 	pob.Export = p
 	pob.UpdatedAt = time.Now()
 	pobDecoded, err := pob.Export.Decode()

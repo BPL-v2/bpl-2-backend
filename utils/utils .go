@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"log"
+
 	"github.com/lib/pq"
 )
 
@@ -214,4 +216,16 @@ func ArrayEqualsUnordered[T comparable](a, b []T) bool {
 		counts[item]--
 	}
 	return true
+}
+
+type Closable interface {
+	Close() error
+}
+
+func Closer(c Closable) func() {
+	return func() {
+		if err := c.Close(); err != nil {
+			log.Printf("Error closing resource: %v\n", err)
+		}
+	}
 }

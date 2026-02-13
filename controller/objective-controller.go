@@ -151,10 +151,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 			return
 		}
 		roles := getUserRoles(c)
-		public := true
-		if slices.Contains(roles, repository.PermissionAdmin) || slices.Contains(roles, repository.PermissionObjectiveDesigner) {
-			public = false
-		}
+		public := !slices.Contains(roles, repository.PermissionAdmin) || slices.Contains(roles, repository.PermissionObjectiveDesigner)
 		c.JSON(200, toObjectiveResponse(rootObjective, public))
 	}
 }

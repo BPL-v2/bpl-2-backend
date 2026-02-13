@@ -2,6 +2,7 @@ package client
 
 import (
 	"bpl/config"
+	"bpl/utils"
 	"bytes"
 	"encoding/json"
 	"io"
@@ -33,7 +34,7 @@ func GetPoBExport(characterData *Character) (*PathOfBuilding, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	defer response.Body.Close()
+	defer utils.Closer(response.Body)()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, "", err
@@ -56,7 +57,7 @@ func UpdatePoBExport(pobString string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer response.Body.Close()
+	defer utils.Closer(response.Body)()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return "", err

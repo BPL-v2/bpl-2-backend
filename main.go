@@ -46,7 +46,10 @@ func main() {
 	// autoMigrate(db)
 	r := gin.New()
 	r.Use(gin.Recovery())
-	r.SetTrustedProxies(nil)
+	err = r.SetTrustedProxies(nil)
+	if err != nil {
+		log.Fatalf("Failed to set trusted proxies: %v", err)
+	}
 	addLogger(r)
 	addMetrics(r)
 	addDocs(r)

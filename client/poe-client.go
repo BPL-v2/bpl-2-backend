@@ -3,6 +3,7 @@ package client
 import (
 	"bpl/config"
 	"bpl/metrics"
+	"bpl/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -70,7 +71,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 		}
 	}
 	metrics.ResponseCounter.WithLabelValues(fmt.Sprintf("%d", response.StatusCode)).Inc()
-	defer response.Body.Close()
+	defer utils.Closer(response.Body)()
 	respBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, &ClientError{

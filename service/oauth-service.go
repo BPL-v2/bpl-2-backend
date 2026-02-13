@@ -201,7 +201,10 @@ func (e *OauthService) addAccountToUser(authState *OauthState, referrer *string,
 		}),
 		newAccount,
 	)
-	e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
+	err = e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
+	if err != nil {
+		fmt.Printf("Failed to delete old oauth accounts: %v\n", err)
+	}
 	_, err = e.userService.SaveUser(authState.User)
 	if err != nil {
 		fmt.Printf("Failed to save user: %v\n", err)
@@ -235,7 +238,7 @@ func (e *OauthService) VerifyDiscord(state string, code string, referrer *string
 		fmt.Printf("Failed to get discord user: %v\n", err)
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer utils.Closer(response.Body)()
 	discordUser := &DiscordUserResponse{}
 	err = json.NewDecoder(response.Body).Decode(discordUser)
 	if err != nil {
@@ -256,7 +259,7 @@ func (e *OauthService) VerifyTwitch(state string, code string, referrer *string,
 	}
 	twitchUser := &TwitchUserResponse{}
 	err = json.NewDecoder(response.Body).Decode(twitchUser)
-	response.Body.Close()
+	_ = response.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode twitch user response: %v", err)
 	}
@@ -281,7 +284,7 @@ func (e *OauthService) VerifyTwitch(state string, code string, referrer *string,
 	}
 	twitchExtendedUser := &TwitchExtendedUserResponse{}
 	err = json.NewDecoder(response.Body).Decode(twitchExtendedUser)
-	response.Body.Close()
+	_ = response.Body.Close()
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode twitch extended user response: %v", err)
 	}
@@ -376,7 +379,7 @@ func (e *OauthService) RefreshOnePoEToken() error {
 	resp, clientError := poeClient.RefreshAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, oauth.RefreshToken)
 	if clientError != nil {
 		oauth.RefreshToken = ""
-		e.oauthRepository.SaveOauth(oauth)
+		_, _ = e.oauthRepository.SaveOauth(oauth)
 		return fmt.Errorf("failed to refresh access token: %v", clientError)
 	}
 	oauth.AccessToken = resp.AccessToken

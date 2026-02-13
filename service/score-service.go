@@ -181,6 +181,7 @@ func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
 
 	// Create a channel to communicate the result to other waiting goroutines
 	resultChan := make(chan ScoreMap, 1)
+	defer close(resultChan)
 	s.calculating[eventId] = resultChan
 	s.calculationMutex.Unlock()
 
@@ -194,7 +195,6 @@ func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
 	newScores, err := s.calcScores(eventId)
 	if err != nil {
 		// Send empty result to notify waiting goroutines of the error
-		close(resultChan)
 		return nil, err
 	}
 
@@ -204,22 +204,21 @@ func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
 
 	if len(diff) == 0 {
 		// Send empty result to notify waiting goroutines
-		close(resultChan)
 		return nil, fmt.Errorf("no changes in scores")
 	}
 
 	byteData, err := json.Marshal(newScoreMap)
 	if err != nil {
-		close(resultChan)
 		return nil, err
 	}
 
-	s.cachedDataService.SaveScore(eventId, byteData)
+	err = s.cachedDataService.SaveScore(eventId, byteData)
+	if err != nil {
+		return nil, err
+	}
 
 	// Send the result to all waiting goroutines
 	resultChan <- diff
-	close(resultChan)
-
 	return diff, nil
 }
 

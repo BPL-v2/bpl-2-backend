@@ -9,7 +9,6 @@ import (
 
 type ItemWishService struct {
 	itemWishRepository *repository.ItemWishRepository
-	teamRepository     *repository.TeamRepository
 }
 
 func NewItemWishService() *ItemWishService {
@@ -43,7 +42,10 @@ func (s *ItemWishService) UpdateItemWish(itemWish *repository.ItemWish, teamId i
 		for _, iw := range itemWishes {
 			if iw.Priority == priority {
 				iw.Priority = itemWish.Priority
-				s.itemWishRepository.SaveItemWish(iw)
+				_, err = s.itemWishRepository.SaveItemWish(iw)
+				if err != nil {
+					return nil, err
+				}
 				break
 			}
 		}
@@ -73,6 +75,7 @@ func (s *ItemWishService) UpdateItemWishFulfillment(teamId int, userId int, char
 	if err != nil {
 		return err
 	}
+	toSave := make([]*repository.ItemWish, 0)
 	for _, itemWish := range itemWishes {
 		if itemWish.Fulfilled {
 			continue
@@ -84,16 +87,22 @@ func (s *ItemWishService) UpdateItemWishFulfillment(teamId int, userId int, char
 			case repository.BASE_TYPE:
 				if item.BaseType == itemWish.Value {
 					itemWish.Fulfilled = true
-					s.itemWishRepository.SaveItemWish(itemWish)
+					toSave = append(toSave, itemWish)
 				}
 			case repository.NAME:
 				if item.Name == itemWish.Value {
 					itemWish.Fulfilled = true
-					s.itemWishRepository.SaveItemWish(itemWish)
+					toSave = append(toSave, itemWish)
 				}
 			default:
 				continue
 			}
+		}
+	}
+	if len(toSave) > 0 {
+		_, err = s.itemWishRepository.SaveItemWishes(toSave)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
