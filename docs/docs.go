@@ -4873,6 +4873,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "expected_playtime",
+                "highest_character_levels",
+                "playtimes_in_last_events_per_day_in_hours",
                 "team_lead",
                 "timestamp",
                 "user"
@@ -4902,7 +4904,7 @@ const docTemplate = `{
                 "partner_id": {
                     "type": "integer"
                 },
-                "playtimes_in_last_events_in_hours": {
+                "playtimes_in_last_events_per_day_in_hours": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "number",

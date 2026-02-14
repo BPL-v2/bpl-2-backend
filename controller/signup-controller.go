@@ -15,6 +15,7 @@ type SignupController struct {
 	signupService *service.SignupService
 	userService   *service.UserService
 	teamService   *service.TeamService
+	eventService  *service.EventService
 }
 
 func NewSignupController() *SignupController {
@@ -22,6 +23,7 @@ func NewSignupController() *SignupController {
 		signupService: service.NewSignupService(),
 		userService:   service.NewUserService(),
 		teamService:   service.NewTeamService(),
+		eventService:  service.NewEventService(),
 	}
 }
 
@@ -32,7 +34,7 @@ func setupSignupController() []RouteInfo {
 		{Method: "GET", Path: "", HandlerFunc: e.getSignupsForEvent(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
-		{Method: "DELETE", Path: "/:user_id", HandlerFunc: e.deleteSignupHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
+		{Method: "DELETE", Path: "/:user_id", HandlerFunc: e.deleteSignupHandler(), Authenticated: true},
 		{Method: "GET", Path: "/discord", HandlerFunc: getDiscordMembersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 	}
 	for i, route := range routes {
@@ -210,6 +212,15 @@ func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
+		events, err := e.eventService.GetAllEvents()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		eventDurations := make(map[int]float64)
+		for _, ev := range events {
+			eventDurations[ev.Id] = ev.EventEndTime.Sub(ev.EventStartTime).Hours() / 24
+		}
 		signups, userEventActivityCount, highestCharacterLevels, err := e.signupService.GetExtendedSignupsForEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -230,17 +241,17 @@ func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 		for _, signup := range signups {
 			playtimes := make(map[int]float64)
 			for eventId, duration := range userEventActivityCount[signup.UserId] {
-				playtimes[eventId] = duration.Hours()
+				playtimes[eventId] = duration.Hours() / eventDurations[eventId]
 			}
 			resp := &ExtendedSignup{
-				User:                         toNonSensitiveUserResponse(signup.User),
-				Timestamp:                    signup.Timestamp,
-				ExpectedPlaytime:             signup.ExpectedPlayTime,
-				NeedsHelp:                    signup.NeedsHelp,
-				WantsToHelp:                  signup.WantsToHelp,
-				Extra:                        signup.Extra,
-				PlaytimesInLastEventsInHours: playtimes,
-				HighestCharacterLevels:       highestCharacterLevels[signup.UserId],
+				User:                               toNonSensitiveUserResponse(signup.User),
+				Timestamp:                          signup.Timestamp,
+				ExpectedPlaytime:                   signup.ExpectedPlayTime,
+				NeedsHelp:                          signup.NeedsHelp,
+				WantsToHelp:                        signup.WantsToHelp,
+				Extra:                              signup.Extra,
+				PlaytimesInLastEventsPerDayInHours: playtimes,
+				HighestCharacterLevels:             highestCharacterLevels[signup.UserId],
 			}
 			partnerSignup := partnerMap[signup.UserId]
 			if partnerSignup != nil && partnerMap[partnerSignup.User.Id] != nil && partnerMap[partnerSignup.User.Id].UserId == signup.UserId {
@@ -284,8 +295,8 @@ type ExtendedSignup struct {
 	WantsToHelp      bool              `json:"wants_to_help"`
 	Extra            *string           `json:"extra"`
 
-	PlaytimesInLastEventsInHours map[int]float64 `json:"playtimes_in_last_events_in_hours"`
-	HighestCharacterLevels       map[int]int     `json:"highest_character_levels"`
+	PlaytimesInLastEventsPerDayInHours map[int]float64 `json:"playtimes_in_last_events_per_day_in_hours" binding:"required"`
+	HighestCharacterLevels             map[int]int     `json:"highest_character_levels" binding:"required"`
 }
 
 type SignupCreate struct {

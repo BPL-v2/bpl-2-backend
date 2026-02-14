@@ -1263,7 +1263,7 @@ definitions:
         type: integer
       partnerWish:
         type: string
-      playtimes_in_last_events_in_hours:
+      playtimes_in_last_events_per_day_in_hours:
         additionalProperties:
           format: float64
           type: number
@@ -1280,6 +1280,8 @@ definitions:
         type: boolean
     required:
     - expected_playtime
+    - highest_character_levels
+    - playtimes_in_last_events_per_day_in_hours
     - team_lead
     - timestamp
     - user
