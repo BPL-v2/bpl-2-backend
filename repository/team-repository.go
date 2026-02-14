@@ -180,3 +180,27 @@ func (r *TeamRepository) GetAllTeamUsers() ([]*TeamUser, error) {
 	}
 	return teamUsers, nil
 }
+
+func (r *TeamRepository) GetNumbersOfPastEventsParticipatedByUsers(userIds []int) (map[int]int, error) {
+	type Result struct {
+		UserId         int
+		NumberOfEvents int
+	}
+	results := make([]*Result, 0)
+	query := `
+		SELECT user_id, COUNT(DISTINCT team_id) AS number_of_events FROM team_users
+		JOIN teams ON team_users.team_id = teams.id
+		JOIN events ON teams.event_id = events.id
+		WHERE user_id IN (?) AND events.is_current = false
+		GROUP BY user_id
+	`
+	err := r.DB.Raw(query, userIds).Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+	resultMap := make(map[int]int, 0)
+	for _, result := range results {
+		resultMap[result.UserId] = result.NumberOfEvents
+	}
+	return resultMap, nil
+}

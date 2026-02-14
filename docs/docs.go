@@ -1003,7 +1003,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/Signup"
+                                "$ref": "#/definitions/ExtendedSignup"
                             }
                         }
                     }
@@ -1081,52 +1081,6 @@ const docTemplate = `{
                 "responses": {
                     "201": {
                         "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/Signup"
-                        }
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/signups/self/actual-playtime": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Reports the actual playtime for the authenticated user",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "signup"
-                ],
-                "operationId": "ReportPlaytime",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Actual Playtime",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ReportPlaytimeRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/Signup"
                         }
@@ -4915,6 +4869,63 @@ const docTemplate = `{
                 }
             }
         },
+        "ExtendedSignup": {
+            "type": "object",
+            "required": [
+                "expected_playtime",
+                "team_lead",
+                "timestamp",
+                "user"
+            ],
+            "properties": {
+                "expected_playtime": {
+                    "type": "integer"
+                },
+                "extra": {
+                    "type": "string"
+                },
+                "highest_character_levels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "needs_help": {
+                    "type": "boolean"
+                },
+                "partner": {
+                    "$ref": "#/definitions/NonSensitiveUser"
+                },
+                "partnerWish": {
+                    "type": "string"
+                },
+                "partner_id": {
+                    "type": "integer"
+                },
+                "playtimes_in_last_events_in_hours": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float64"
+                    }
+                },
+                "team_id": {
+                    "type": "integer"
+                },
+                "team_lead": {
+                    "type": "boolean"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/NonSensitiveUser"
+                },
+                "wants_to_help": {
+                    "type": "boolean"
+                }
+            }
+        },
         "Guild": {
             "type": "object",
             "required": [
@@ -5464,17 +5475,6 @@ const docTemplate = `{
                 }
             }
         },
-        "ReportPlaytimeRequest": {
-            "type": "object",
-            "required": [
-                "actual_playtime"
-            ],
-            "properties": {
-                "actual_playtime": {
-                    "type": "integer"
-                }
-            }
-        },
         "Score": {
             "type": "object",
             "required": [
@@ -5602,16 +5602,12 @@ const docTemplate = `{
         "Signup": {
             "type": "object",
             "required": [
-                "actual_playtime",
                 "expected_playtime",
                 "team_lead",
                 "timestamp",
                 "user"
             ],
             "properties": {
-                "actual_playtime": {
-                    "type": "integer"
-                },
                 "expected_playtime": {
                     "type": "integer"
                 },

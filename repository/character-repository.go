@@ -364,3 +364,29 @@ func (r *CharacterRepository) GetPobsFromIdWithLimit(startId int, limit int) ([]
 	}
 	return charData, nil
 }
+
+func (r *CharacterRepository) GetHighestCharacterLevelForEventsForUsers(userIds []int) (map[int]map[int]int, error) {
+	type Result struct {
+		EventId int
+		UserId  int
+		Level   int
+	}
+	results := []Result{}
+	err := r.DB.Raw(`
+		SELECT event_id, user_id, MAX(level) as level
+		FROM characters
+		WHERE user_id IN ?
+		GROUP BY event_id, user_id
+	`, userIds).Scan(&results).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting highest character level for events for users: %w", err)
+	}
+	resultMap := make(map[int]map[int]int)
+	for _, r := range results {
+		if _, ok := resultMap[r.UserId]; !ok {
+			resultMap[r.UserId] = make(map[int]int)
+		}
+		resultMap[r.UserId][r.EventId] = r.Level
+	}
+	return resultMap, nil
+}

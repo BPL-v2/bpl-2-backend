@@ -2,6 +2,7 @@ package service
 
 import (
 	"bpl/repository"
+	"slices"
 	"time"
 )
 
@@ -29,6 +30,9 @@ func (s *ActivityService) CalculateActiveTime(userId int, event *repository.Even
 }
 
 func determineActiveTime(activities []*repository.Activity, threshold time.Duration) time.Duration {
+	slices.SortFunc(activities, func(a, b *repository.Activity) int {
+		return a.Time.Compare(b.Time)
+	})
 	var totalDuration time.Duration
 	var sessions []ActivitySession
 	sessionStart := activities[0].Time
@@ -75,4 +79,19 @@ func (s *ActivityService) RecordActivity(userId int, eventId int, timestamp time
 
 func (s *ActivityService) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {
 	return s.activityRepository.GetLatestActiveTimestampsForEvent(eventId)
+}
+
+func (s *ActivityService) CalculateActiveTimesForUsers(userIds []int) (map[int]map[int]time.Duration, error) {
+	activities, err := s.activityRepository.GetActivityHistoryForUsers(userIds)
+	if err != nil {
+		return nil, err
+	}
+	activeTimes := make(map[int]map[int]time.Duration)
+	for userId, eventActivity := range activities {
+		activeTimes[userId] = make(map[int]time.Duration)
+		for eventId, activities := range eventActivity {
+			activeTimes[userId][eventId] = determineActiveTime(activities, 5*time.Minute)
+		}
+	}
+	return activeTimes, nil
 }

@@ -29,11 +29,10 @@ func setupSignupController() []RouteInfo {
 	e := NewSignupController()
 	basePath := "/events/:event_id/signups"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getEventSignupsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
+		{Method: "GET", Path: "", HandlerFunc: e.getSignupsForEvent(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/:user_id", HandlerFunc: e.deleteSignupHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
-		{Method: "PUT", Path: "/self/actual-playtime", HandlerFunc: e.reportPlaytime(), Authenticated: true},
 		{Method: "GET", Path: "/discord", HandlerFunc: getDiscordMembersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 	}
 	for i, route := range routes {
@@ -60,42 +59,6 @@ func getDiscordMembersHandler() gin.HandlerFunc {
 
 type ReportPlaytimeRequest struct {
 	ActualPlaytime int `json:"actual_playtime" binding:"required"`
-}
-
-// @id ReportPlaytime
-// @Description Reports the actual playtime for the authenticated user
-// @Tags signup
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Success 200 {object} Signup
-// @Param event_id path int true "Event Id"
-// @Param body body ReportPlaytimeRequest true "Actual Playtime"
-// @Router /events/{event_id}/signups/self/actual-playtime [put]
-func (e *SignupController) reportPlaytime() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
-		user, err := e.userService.GetUserFromAuthHeader(c)
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Not authenticated"})
-			return
-		}
-		actualPlaytimeRequest := ReportPlaytimeRequest{}
-		if err := c.BindJSON(&actualPlaytimeRequest); err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
-			return
-		}
-
-		signup, err := e.signupService.ReportPlaytime(user.Id, event.Id, actualPlaytimeRequest.ActualPlaytime)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(200, toSignupResponse(signup))
-	}
 }
 
 // @id GetPersonalSignup
@@ -238,16 +201,16 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 // @Tags signup
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} []Signup
+// @Success 200 {object} []ExtendedSignup
 // @Param event_id path int true "Event Id"
 // @Router /events/{event_id}/signups [get]
-func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
+func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
 			return
 		}
-		signups, err := e.signupService.GetSignupsForEvent(event)
+		signups, userEventActivityCount, highestCharacterLevels, err := e.signupService.GetExtendedSignupsForEvent(event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -262,17 +225,22 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 		for _, teamUser := range teamUsers {
 			teamUsersMap[teamUser.UserId] = teamUser
 		}
-		signupsWithUsers := make([]*Signup, 0)
+		signupsWithUsers := make([]*ExtendedSignup, 0)
 		partnerMap := repository.GetSignupPartners(signups)
 		for _, signup := range signups {
-			resp := &Signup{
-				User:             toNonSensitiveUserResponse(signup.User),
-				Timestamp:        signup.Timestamp,
-				ExpectedPlaytime: signup.ExpectedPlayTime,
-				NeedsHelp:        signup.NeedsHelp,
-				WantsToHelp:      signup.WantsToHelp,
-				ActualPlaytime:   signup.ActualPlayTime,
-				Extra:            signup.Extra,
+			playtimes := make(map[int]float64)
+			for eventId, duration := range userEventActivityCount[signup.UserId] {
+				playtimes[eventId] = duration.Hours()
+			}
+			resp := &ExtendedSignup{
+				User:                         toNonSensitiveUserResponse(signup.User),
+				Timestamp:                    signup.Timestamp,
+				ExpectedPlaytime:             signup.ExpectedPlayTime,
+				NeedsHelp:                    signup.NeedsHelp,
+				WantsToHelp:                  signup.WantsToHelp,
+				Extra:                        signup.Extra,
+				PlaytimesInLastEventsInHours: playtimes,
+				HighestCharacterLevels:       highestCharacterLevels[signup.UserId],
 			}
 			partnerSignup := partnerMap[signup.UserId]
 			if partnerSignup != nil && partnerMap[partnerSignup.User.Id] != nil && partnerMap[partnerSignup.User.Id].UserId == signup.UserId {
@@ -286,7 +254,6 @@ func (e *SignupController) getEventSignupsHandler() gin.HandlerFunc {
 			signupsWithUsers = append(signupsWithUsers, resp)
 		}
 		c.JSON(200, signupsWithUsers)
-
 	}
 }
 
@@ -297,12 +264,28 @@ type Signup struct {
 	PartnerId        *int              `json:"partner_id"`
 	Timestamp        time.Time         `json:"timestamp" binding:"required"`
 	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
-	ActualPlaytime   int               `json:"actual_playtime" binding:"required"`
 	TeamId           *int              `json:"team_id"`
 	IsTeamLead       bool              `json:"team_lead" binding:"required"`
 	NeedsHelp        bool              `json:"needs_help"`
 	WantsToHelp      bool              `json:"wants_to_help"`
 	Extra            *string           `json:"extra"`
+}
+
+type ExtendedSignup struct {
+	User             *NonSensitiveUser `json:"user" binding:"required"`
+	PartnerWish      *string
+	Partner          *NonSensitiveUser `json:"partner"`
+	PartnerId        *int              `json:"partner_id"`
+	Timestamp        time.Time         `json:"timestamp" binding:"required"`
+	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
+	TeamId           *int              `json:"team_id"`
+	IsTeamLead       bool              `json:"team_lead" binding:"required"`
+	NeedsHelp        bool              `json:"needs_help"`
+	WantsToHelp      bool              `json:"wants_to_help"`
+	Extra            *string           `json:"extra"`
+
+	PlaytimesInLastEventsInHours map[int]float64 `json:"playtimes_in_last_events_in_hours"`
+	HighestCharacterLevels       map[int]int     `json:"highest_character_levels"`
 }
 
 type SignupCreate struct {
@@ -323,7 +306,6 @@ func toSignupResponse(signup *repository.Signup) *Signup {
 		PartnerWish:      signup.PartnerWish,
 		Timestamp:        signup.Timestamp,
 		ExpectedPlaytime: signup.ExpectedPlayTime,
-		ActualPlaytime:   signup.ActualPlayTime,
 		NeedsHelp:        signup.NeedsHelp,
 		WantsToHelp:      signup.WantsToHelp,
 		Extra:            signup.Extra,

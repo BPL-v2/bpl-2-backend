@@ -71,3 +71,19 @@ func (r *ActivityRepository) GetLatestActiveTimestampsForEvent(eventId int) (map
 	}
 	return resultMap, nil
 }
+
+func (r *ActivityRepository) GetActivityHistoryForUsers(userIds []int) (map[int]map[int][]*Activity, error) {
+	activities := []*Activity{}
+	err := r.DB.Where("user_id IN ?", userIds).Find(&activities).Error
+	if err != nil {
+		return nil, fmt.Errorf("error fetching activity history for users %v: %w", userIds, err)
+	}
+	resultMap := make(map[int]map[int][]*Activity)
+	for _, activity := range activities {
+		if _, ok := resultMap[activity.UserId]; !ok {
+			resultMap[activity.UserId] = make(map[int][]*Activity)
+		}
+		resultMap[activity.UserId][activity.EventId] = append(resultMap[activity.UserId][activity.EventId], activity)
+	}
+	return resultMap, nil
+}

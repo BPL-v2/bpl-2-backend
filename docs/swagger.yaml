@@ -1245,6 +1245,45 @@ definitions:
     - name
     - waitlist_size
     type: object
+  ExtendedSignup:
+    properties:
+      expected_playtime:
+        type: integer
+      extra:
+        type: string
+      highest_character_levels:
+        additionalProperties:
+          type: integer
+        type: object
+      needs_help:
+        type: boolean
+      partner:
+        $ref: '#/definitions/NonSensitiveUser'
+      partner_id:
+        type: integer
+      partnerWish:
+        type: string
+      playtimes_in_last_events_in_hours:
+        additionalProperties:
+          format: float64
+          type: number
+        type: object
+      team_id:
+        type: integer
+      team_lead:
+        type: boolean
+      timestamp:
+        type: string
+      user:
+        $ref: '#/definitions/NonSensitiveUser'
+      wants_to_help:
+        type: boolean
+    required:
+    - expected_playtime
+    - team_lead
+    - timestamp
+    - user
+    type: object
   Guild:
     properties:
       id:
@@ -1626,13 +1665,6 @@ definitions:
     - timestamp
     - xp
     type: object
-  ReportPlaytimeRequest:
-    properties:
-      actual_playtime:
-        type: integer
-    required:
-    - actual_playtime
-    type: object
   Score:
     properties:
       bonus_points:
@@ -1720,8 +1752,6 @@ definitions:
     type: object
   Signup:
     properties:
-      actual_playtime:
-        type: integer
       expected_playtime:
         type: integer
       extra:
@@ -1745,7 +1775,6 @@ definitions:
       wants_to_help:
         type: boolean
     required:
-    - actual_playtime
     - expected_playtime
     - team_lead
     - timestamp
@@ -3358,7 +3387,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/Signup'
+              $ref: '#/definitions/ExtendedSignup'
             type: array
       security:
       - BearerAuth: []
@@ -3431,35 +3460,6 @@ paths:
       responses:
         "201":
           description: Created
-          schema:
-            $ref: '#/definitions/Signup'
-      security:
-      - BearerAuth: []
-      tags:
-      - signup
-  /events/{event_id}/signups/self/actual-playtime:
-    put:
-      consumes:
-      - application/json
-      description: Reports the actual playtime for the authenticated user
-      operationId: ReportPlaytime
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Actual Playtime
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/ReportPlaytimeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
           schema:
             $ref: '#/definitions/Signup'
       security:
