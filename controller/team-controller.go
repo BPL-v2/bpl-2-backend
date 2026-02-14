@@ -32,6 +32,7 @@ func toTeamResponse(team *repository.Team) *Team {
 		AllowedClasses: team.AllowedClasses,
 		EventId:        team.EventId,
 		Color:          team.Color,
+		DiscordRoleId:  team.DiscordRoleId,
 	}
 }
 
