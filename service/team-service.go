@@ -2,15 +2,18 @@ package service
 
 import (
 	"bpl/repository"
+	"bpl/utils"
 )
 
 type TeamService struct {
 	teamRepository *repository.TeamRepository
+	userRepository *repository.UserRepository
 }
 
 func NewTeamService() *TeamService {
 	return &TeamService{
 		teamRepository: repository.NewTeamRepository(),
+		userRepository: repository.NewUserRepository(),
 	}
 }
 
@@ -42,12 +45,12 @@ func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser, event *r
 	return e.teamRepository.AddUsersToTeams(teamUsers)
 }
 
-func (e *TeamService) GetTeamUsersForEvent(event *repository.Event) ([]*repository.TeamUser, error) {
-	return e.teamRepository.GetTeamUsersForEvent(event.Id)
+func (e *TeamService) GetTeamUsersForEvent(eventId int) ([]*repository.TeamUser, error) {
+	return e.teamRepository.GetTeamUsersForEvent(eventId)
 }
 
 func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error) {
-	teamUsers, err := e.GetTeamUsersForEvent(event)
+	teamUsers, err := e.GetTeamUsersForEvent(event.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -75,4 +78,53 @@ func (e *TeamService) GetTeamLeadsForEvent(eventId int) (map[int][]*repository.T
 		teamLeads[teamLead.TeamId] = append(teamLeads[teamLead.TeamId], teamLead)
 	}
 	return teamLeads, nil
+}
+
+type SortedUser struct {
+	UserId      int    `json:"user_id" binding:"required"`
+	DisplayName string `json:"display_name" binding:"required"`
+	PoEName     string `json:"poe_name" binding:"required"`
+	DiscordName string `json:"discord_name" binding:"required"`
+	DiscordId   string `json:"discord_id" binding:"required"`
+	TeamId      int    `json:"team_id" binding:"required"`
+	IsTeamLead  bool   `json:"is_team_lead" binding:"required"`
+}
+
+func (e *TeamService) GetSortedUsersForEvent(eventId int) ([]*SortedUser, error) {
+	teamUsers, err := e.GetTeamUsersForEvent(eventId)
+	if err != nil {
+		return nil, err
+	}
+	userIds := utils.Map(teamUsers, func(teamUser *repository.TeamUser) int {
+		return teamUser.UserId
+	})
+	users, err := e.userRepository.GetUsersByIds(userIds, "OauthAccounts")
+	if err != nil {
+		return nil, err
+	}
+	userMap := make(map[int]*repository.User)
+	for _, user := range users {
+		userMap[user.Id] = user
+	}
+	sortedUsers := make([]*SortedUser, 0)
+	for _, teamUser := range teamUsers {
+		if user, ok := userMap[teamUser.UserId]; ok {
+			sortedUser := &SortedUser{
+				UserId:      user.Id,
+				DisplayName: user.DisplayName,
+				TeamId:      teamUser.TeamId,
+				IsTeamLead:  teamUser.IsTeamLead,
+			}
+			for _, account := range user.OauthAccounts {
+				if account.Provider == repository.ProviderPoE {
+					sortedUser.PoEName = account.Name
+				} else if account.Provider == repository.ProviderDiscord {
+					sortedUser.DiscordName = account.Name
+					sortedUser.DiscordId = account.AccountId
+				}
+			}
+			sortedUsers = append(sortedUsers, sortedUser)
+		}
+	}
+	return sortedUsers, nil
 }

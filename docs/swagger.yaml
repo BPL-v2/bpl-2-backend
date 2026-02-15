@@ -2477,6 +2477,31 @@ definitions:
     - number_of_signups
     - number_of_signups_before
     type: object
+  SortedUser:
+    properties:
+      discord_id:
+        type: string
+      discord_name:
+        type: string
+      display_name:
+        type: string
+      is_team_lead:
+        type: boolean
+      poe_name:
+        type: string
+      team_id:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - discord_id
+    - discord_name
+    - display_name
+    - is_team_lead
+    - poe_name
+    - team_id
+    - user_id
+    type: object
 info:
   contact:
     email: Liberatorist@gmail.com
@@ -3943,6 +3968,27 @@ paths:
       tags:
       - item_wishes
   /events/{event_id}/teams/users:
+    get:
+      description: Fetches all users of an event sorted by team and role
+      operationId: GetSortedUsers
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/SortedUser'
+            type: array
+      tags:
+      - team
+      - user
     put:
       consumes:
       - application/json

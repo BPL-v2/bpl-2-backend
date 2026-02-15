@@ -1603,6 +1603,37 @@
             }
         },
         "/events/{event_id}/teams/users": {
+            "get": {
+                "description": "Fetches all users of an event sorted by team and role",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team",
+                    "user"
+                ],
+                "operationId": "GetSortedUsers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/SortedUser"
+                            }
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -6508,6 +6539,41 @@
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "SortedUser": {
+            "type": "object",
+            "required": [
+                "discord_id",
+                "discord_name",
+                "display_name",
+                "is_team_lead",
+                "poe_name",
+                "team_id",
+                "user_id"
+            ],
+            "properties": {
+                "discord_id": {
+                    "type": "string"
+                },
+                "discord_name": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "is_team_lead": {
+                    "type": "boolean"
+                },
+                "poe_name": {
+                    "type": "string"
+                },
+                "team_id": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         }

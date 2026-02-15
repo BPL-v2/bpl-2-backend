@@ -42,6 +42,7 @@ func setupTeamController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamsHandler()},
 		{Method: "PUT", Path: "", HandlerFunc: e.createTeamHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
+		{Method: "GET", Path: "/users", HandlerFunc: e.getSortedUsersHandler()},
 		{Method: "PUT", Path: "/users", HandlerFunc: e.addUsersToTeamsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/:team_id", HandlerFunc: e.getTeamHandler()},
 		{Method: "DELETE", Path: "/:team_id", HandlerFunc: e.deleteTeamHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
@@ -166,6 +167,28 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 			return
 		}
 		c.Status(204)
+	}
+}
+
+// @id GetSortedUsers
+// @Description Fetches all users of an event sorted by team and role
+// @Tags team, user
+// @Produce json
+// @Param event_id path int true "Event Id"
+// @Success 200 {array} service.SortedUser
+// @Router /events/{event_id}/teams/users [get]
+func (e *TeamController) getSortedUsersHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		users, err := e.teamService.GetSortedUsersForEvent(event.Id)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, users)
 	}
 }
 

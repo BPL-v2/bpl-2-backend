@@ -116,6 +116,18 @@ func (r *UserRepository) GetUserById(userId int, preloads ...string) (*User, err
 	}
 	return &user, nil
 }
+func (r *UserRepository) GetUsersByIds(userIds []int, preloads ...string) ([]*User, error) {
+	var users []*User
+	query := r.DB
+	for _, preload := range preloads {
+		query = query.Preload(preload)
+	}
+	result := query.Find(&users, userIds)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get users by ids: %v", result.Error)
+	}
+	return users, nil
+}
 
 func (r *UserRepository) SaveUser(user *User) (*User, error) {
 	result := r.DB.Save(user)
