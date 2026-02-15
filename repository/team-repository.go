@@ -80,6 +80,7 @@ func (r *TeamRepository) GetTeamUsersForEvent(eventId int) ([]*TeamUser, error) 
 		FROM team_users
 		JOIN teams ON team_users.team_id = teams.id
 		WHERE teams.event_id = ?
+		ORDER BY teams.id ASC
 	`
 	result := r.DB.Raw(query, eventId).Scan(&teamUsers)
 	if result.Error != nil {
