@@ -110,6 +110,10 @@ func getEvent(c *gin.Context) *repository.Event {
 
 func AuthenticationMiddleware() gin.HandlerFunc {
 	return func(r *gin.Context) {
+		if !isAuthenticated(r) {
+			r.AbortWithStatus(401)
+			return
+		}
 		userRoles := getUserRoles(r)
 		r.Set("userRoles", userRoles)
 	}
@@ -154,4 +158,16 @@ func getUserRoles(r *gin.Context) (permissions []repository.Permission) {
 	return utils.Map(claims.Permissions, func(perm string) repository.Permission {
 		return repository.Permission(perm)
 	})
+}
+
+func isAuthenticated(r *gin.Context) bool {
+	authHeader := r.Request.Header.Get("Authorization")
+	if len(authHeader) < 7 || authHeader[:7] != "Bearer " {
+		return false
+	}
+	token, err := auth.ParseToken(authHeader[7:])
+	if err != nil {
+		return false
+	}
+	return token.Valid
 }
