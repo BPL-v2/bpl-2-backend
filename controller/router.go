@@ -50,7 +50,9 @@ func SetRoutes(r *gin.Engine) {
 	routes = append(routes, setupAchievementController()...)
 	for _, route := range routes {
 		handlerfuncs := make([]gin.HandlerFunc, 0)
-		handlerfuncs = append(handlerfuncs, AuthenticationMiddleware())
+		if route.Authenticated {
+			handlerfuncs = append(handlerfuncs, AuthenticationMiddleware())
+		}
 		if len(route.RequiredRoles) > 0 {
 			handlerfuncs = append(handlerfuncs, AuthorizationMiddleware(route.RequiredRoles))
 		}
