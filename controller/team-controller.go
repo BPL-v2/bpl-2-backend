@@ -42,7 +42,7 @@ func setupTeamController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getTeamsHandler()},
 		{Method: "PUT", Path: "", HandlerFunc: e.createTeamHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/users", HandlerFunc: e.getSortedUsersHandler()},
+		{Method: "GET", Path: "/users", HandlerFunc: e.getSortedUsersHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/users", HandlerFunc: e.addUsersToTeamsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/:team_id", HandlerFunc: e.getTeamHandler()},
 		{Method: "DELETE", Path: "/:team_id", HandlerFunc: e.deleteTeamHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
