@@ -134,10 +134,17 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 		}, nil
 	case repository.NumberFieldPantheon:
 		return func(p *Player) int {
-			if p.Character == nil || !p.Character.HasPantheon() {
-				return 0
+			count := 0
+			if p.Character == nil {
+				return count
 			}
-			return 1
+			if p.Character.Passives.PantheonMajor != nil {
+				count++
+			}
+			if p.Character.Passives.PantheonMinor != nil {
+				count++
+			}
+			return count
 		}, nil
 	case repository.NumberFieldAscendancy:
 		return func(p *Player) int {
