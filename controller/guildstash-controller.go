@@ -102,18 +102,16 @@ func (e *GuildStashController) saveGuild() gin.HandlerFunc {
 			return
 		}
 		existingGuild, err := e.guildStashService.GetGuildById(guildId, event.Id)
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
+
 		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err == nil || (existingGuild != nil && existingGuild.TeamId != teamUser.TeamId) || !teamUser.IsTeamLead {
+		if err != nil || (existingGuild != nil && existingGuild.TeamId != teamUser.TeamId) || !teamUser.IsTeamLead {
 			c.JSON(403, gin.H{"message": "Only team leads can modify guilds for their team"})
 			return
 		}
 
 		var guild Guild
 		if err := c.ShouldBindJSON(&guild); err != nil {
+			fmt.Println("Error binding JSON:", err)
 			c.JSON(400, gin.H{"error": "invalid request"})
 			return
 		}
@@ -596,8 +594,8 @@ type GuildStashChangelog struct {
 
 type Guild struct {
 	Id      int    `json:"id" binding:"required"`
-	TeamId  int    `json:"team_id" binding:"required"`
-	EventId int    `json:"event_id" binding:"required"`
+	TeamId  int    `json:"team_id"`
+	EventId int    `json:"event_id"`
 	Name    string `json:"name" binding:"required"`
 	Tag     string `json:"tag" binding:"required"`
 }
