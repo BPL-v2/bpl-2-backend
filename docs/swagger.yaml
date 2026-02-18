@@ -1288,6 +1288,8 @@ definitions:
     type: object
   Guild:
     properties:
+      event_id:
+        type: integer
       id:
         type: integer
       name:
@@ -1437,38 +1439,95 @@ definitions:
     type: object
   LadderEntry:
     properties:
-      account_name:
+      armour:
+        type: integer
+      ascendancy:
         type: string
-      character:
-        $ref: '#/definitions/Character'
-      character_class:
+      ascendancy_points:
+        type: integer
+      atlas_points:
+        type: integer
+      character_id:
         type: string
       character_name:
         type: string
-      delve:
+      delve_depth:
         type: integer
-      experience:
+      discord_id:
+        type: string
+      discord_name:
+        type: string
+      dps:
         type: integer
+      ehp:
+        type: integer
+      ele_max_hit:
+        type: integer
+      es:
+        type: integer
+      evasion:
+        type: integer
+      hp:
+        type: integer
+      item_indexes:
+        items:
+          type: integer
+        type: array
       last_active:
         type: integer
       level:
         type: integer
+      main_skill:
+        type: string
+      mana:
+        type: integer
+      movement_speed:
+        type: integer
+      pantheon:
+        type: boolean
+      phys_max_hit:
+        type: integer
+      poe_account:
+        type: string
       rank:
         type: integer
-      stats:
-        $ref: '#/definitions/CharacterStat'
-      twitch_account:
+      team_id:
+        type: integer
+      twitch_name:
         type: string
       user_id:
         type: integer
+      xp:
+        type: integer
     required:
-    - account_name
-    - character_class
+    - armour
+    - ascendancy
+    - ascendancy_points
+    - atlas_points
+    - character_id
     - character_name
-    - delve
-    - experience
+    - delve_depth
+    - discord_id
+    - discord_name
+    - dps
+    - ehp
+    - ele_max_hit
+    - es
+    - evasion
+    - hp
+    - item_indexes
+    - last_active
     - level
+    - main_skill
+    - mana
+    - movement_speed
+    - pantheon
+    - phys_max_hit
+    - poe_account
     - rank
+    - team_id
+    - user_id
+    - xp
     type: object
   MinimalUser:
     properties:
@@ -3085,6 +3144,10 @@ paths:
         in: path
         name: event_id
         required: true
+        type: integer
+      - description: only show ladder entries from this timestamp after event start
+        in: query
+        name: hours_after_event_start
         type: integer
       produces:
       - application/json

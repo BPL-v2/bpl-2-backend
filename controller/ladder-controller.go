@@ -14,6 +14,7 @@ type LadderController struct {
 	ladderService    *service.LadderService
 	characterService *service.CharacterService
 	userService      *service.UserService
+	teamService      *service.TeamService
 	signupService    *service.SignupService
 	activityService  *service.ActivityService
 }
@@ -23,6 +24,7 @@ func NewLadderController(poeClient *client.PoEClient) *LadderController {
 		ladderService:    service.NewLadderService(),
 		characterService: service.NewCharacterService(poeClient),
 		userService:      service.NewUserService(),
+		teamService:      service.NewTeamService(),
 		signupService:    service.NewSignupService(),
 		activityService:  service.NewActivityService(),
 	}
@@ -48,6 +50,7 @@ func setupLadderController(poeClient *client.PoEClient) []RouteInfo {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
+// @Param hours_after_event_start query int false "only show ladder entries from this timestamp after event start"
 // @Success 200 {array} LadderEntry
 // @Router /events/{event_id}/ladder [get]
 func (c *LadderController) getLadderHandler() gin.HandlerFunc {
@@ -61,12 +64,27 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
+		hours_after_event_start := ctx.Query("hours_after_event_start")
+		cutoff := event.EventEndTime
+		if hours_after_event_start != "" {
+			hours, err := time.ParseDuration(hours_after_event_start + "h")
+			if err != nil {
+				ctx.JSON(400, gin.H{"error": "Invalid hours_after_event_start"})
+				return
+			}
+			cutoff = event.EventStartTime.Add(hours)
+		}
 		characters, err := c.characterService.GetCharactersForEvent(event.Id)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		characterStats, err := c.characterService.GetLatestCharacterStatsForEvent(event.Id)
+		usersWithTeam, err := c.userService.GetUsersWithTeamForEvent(event.Id)
+		if err != nil {
+			ctx.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		characterStats, err := c.characterService.GetCharacterStatsForEvent(event.Id, cutoff)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -76,7 +94,7 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		ctx.JSON(200, toLadderResponse(ladder, characters, characterStats, lastActivities))
+		ctx.JSON(200, toLadderResponse(usersWithTeam, ladder, characters, characterStats, lastActivities))
 	}
 }
 
@@ -135,18 +153,39 @@ func (c *LadderController) getAtlasesForEvent() gin.HandlerFunc {
 }
 
 type LadderEntry struct {
-	UserId        *int           `json:"user_id"`
-	CharacterName string         `json:"character_name" binding:"required"`
-	AccountName   string         `json:"account_name" binding:"required"`
-	Level         int            `json:"level" binding:"required"`
-	Class         string         `json:"character_class" binding:"required"`
-	Experience    int            `json:"experience" binding:"required"`
-	Delve         int            `json:"delve" binding:"required"`
-	Rank          int            `json:"rank" binding:"required"`
-	Character     *Character     `json:"character"`
-	Stats         *CharacterStat `json:"stats"`
-	TwitchAccount *string        `json:"twitch_account"`
-	LastActive    *int64         `json:"last_active"`
+	UserId      int     `json:"user_id" binding:"required"`
+	PoEAccount  string  `json:"poe_account" binding:"required"`
+	DiscordName string  `json:"discord_name" binding:"required"`
+	DiscordId   string  `json:"discord_id" binding:"required"`
+	TwitchName  *string `json:"twitch_name" omitempty:"true"`
+	TeamId      int     `json:"team_id" binding:"required"`
+
+	CharacterName    string  `json:"character_name" binding:"required"`
+	CharacterId      string  `json:"character_id" binding:"required"`
+	Pantheon         bool    `json:"pantheon" binding:"required"`
+	AtlasPoints      int     `json:"atlas_points" binding:"required"`
+	AscendancyPoints int     `json:"ascendancy_points" binding:"required"`
+	ItemIndexes      []int32 `json:"item_indexes" binding:"required"`
+
+	Level         int    `json:"level" binding:"required"`
+	XP            int64  `json:"xp" binding:"required"`
+	Ascendancy    string `json:"ascendancy" binding:"required"`
+	Mainskill     string `json:"main_skill" binding:"required"`
+	DPS           int64  `json:"dps" binding:"required"`
+	EHP           int32  `json:"ehp" binding:"required"`
+	PhysMaxHit    int32  `json:"phys_max_hit" binding:"required"`
+	EleMaxHit     int32  `json:"ele_max_hit" binding:"required"`
+	HP            int32  `json:"hp" binding:"required"`
+	Mana          int32  `json:"mana" binding:"required"`
+	ES            int32  `json:"es" binding:"required"`
+	Armour        int32  `json:"armour" binding:"required"`
+	Evasion       int32  `json:"evasion" binding:"required"`
+	MovementSpeed int32  `json:"movement_speed" binding:"required"`
+
+	LastActive int64 `json:"last_active" binding:"required"`
+
+	DelveDepth int `json:"delve_depth" binding:"required"`
+	Rank       int `json:"rank" binding:"required"`
 }
 
 type Atlas struct {
@@ -187,57 +226,58 @@ func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
 	return mappedAtlases
 }
 
-func toLadderResponse(entries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterPob, lastActivities map[int]time.Time) []*LadderEntry {
-	response := make([]*LadderEntry, 0, len(entries))
-	characterMap := make(map[string]*repository.Character)
+func toLadderResponse(usersWithTeam map[int]*repository.UserWithTeam, ladderEntries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterPob, lastActivities map[int]time.Time) []*LadderEntry {
+	response := make([]*LadderEntry, 0, len(ladderEntries))
+	ladderMap := make(map[string]*repository.LadderEntry)
 	statsMap := make(map[string]*repository.CharacterPob)
-	inLadder := make(map[string]bool)
+	for _, stat := range stats {
+		statsMap[stat.CharacterId] = stat
+	}
+
 	for _, character := range characters {
-		characterMap[character.Name] = character
-		statsMap[character.Name] = stats[character.Id]
-	}
-	for _, entry := range entries {
-		inLadder[entry.Character] = true
-		responseEntry := &LadderEntry{
-			UserId:        entry.UserId,
-			CharacterName: entry.Character,
-			AccountName:   entry.Account,
-			Level:         entry.Level,
-			Class:         entry.Class,
-			Experience:    entry.Experience,
-			Delve:         entry.Delve,
-			Rank:          entry.Rank,
-			TwitchAccount: entry.TwitchAccount,
-			Character:     toCharacterResponse(characterMap[entry.Character]),
-			Stats:         toCharacterStatResponse(statsMap[entry.Character]),
+		stats := statsMap[character.Id]
+		if stats == nil || character.UserId == nil {
+			continue
 		}
-		if entry.UserId != nil && lastActivities[*entry.UserId] != (time.Time{}) {
-			timestamp := lastActivities[*entry.UserId].Unix()
-			responseEntry.LastActive = &timestamp
+		user := usersWithTeam[*character.UserId]
+		if user == nil {
+			continue
 		}
-		response = append(response, responseEntry)
+		resp := &LadderEntry{
+			CharacterName:    character.Name,
+			CharacterId:      character.Id,
+			Ascendancy:       character.Ascendancy,
+			Pantheon:         character.Pantheon,
+			AtlasPoints:      character.AtlasPoints,
+			AscendancyPoints: character.AscendancyPoints,
+			Level:            stats.Level,
+			XP:               stats.XP,
+			Mainskill:        stats.MainSkill,
+			DPS:              stats.DPS,
+			EHP:              stats.EHP,
+			PhysMaxHit:       stats.PhysMaxHit,
+			EleMaxHit:        stats.EleMaxHit,
+			HP:               stats.HP,
+			Mana:             stats.Mana,
+			ES:               stats.ES,
+			Armour:           stats.Armour,
+			Evasion:          stats.Evasion,
+			MovementSpeed:    stats.MovementSpeed,
+			ItemIndexes:      stats.Items,
+			UserId:           *character.UserId,
+			PoEAccount:       user.PoEAccount,
+			DiscordName:      user.DiscordName,
+			DiscordId:        user.DiscordId,
+			TwitchName:       &user.TwitchName,
+			TeamId:           user.TeamId,
+		}
+		if lastActive, ok := lastActivities[*character.UserId]; ok {
+			resp.LastActive = lastActive.Unix()
+		}
+		if ladderEntry, ok := ladderMap[character.Name]; ok {
+			resp.DelveDepth = ladderEntry.Delve
+		}
+		response = append(response, resp)
 	}
-
-	// for name, character := range characterMap {
-	// 	if !inLadder[name] {
-	// 		stats := statsMap[name]
-	// 		responseEntry := &LadderEntry{
-	// 			CharacterName: name,
-	// 			AccountName:   "",
-	// 			Level:         character.Level,
-	// 			Class:         character.Ascendancy,
-	// 			Delve:         0,
-	// 			Rank:          0,
-	// 			TwitchAccount: nil,
-	// 			Character:     toCharacterResponse(character),
-	// 			Stats:         toCharacterStatResponse(stats),
-	// 		}
-	// 		if stats != nil {
-	// 			responseEntry.Experience = int(stats.XP)
-	// 		}
-	// 		response = append(response, responseEntry)
-	// 	}
-	// }
-
 	return response
 }

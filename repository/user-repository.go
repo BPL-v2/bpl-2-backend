@@ -240,3 +240,56 @@ func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEToken,
 	}
 	return users, nil
 }
+
+type UserWithTeam struct {
+	UserId      int
+	PoEAccount  string
+	DiscordName string
+	DiscordId   string
+	TwitchName  string
+	TeamId      int
+}
+
+func (r *UserRepository) GetUsersWithTeamForEvent(eventId int) (map[int]*UserWithTeam, error) {
+	query := `
+		SELECT
+			users.id as user_id,
+			oauths.provider as provider,
+			oauths.name as account_name,
+			oauths.account_id as account_id,
+			team_users.team_id as team_id
+		FROM users
+	JOIN oauths ON oauths.user_id = users.id
+	JOIN team_users ON team_users.user_id = users.id
+	JOIN teams ON teams.id = team_users.team_id
+	WHERE teams.event_id = ?
+	`
+	type Result struct {
+		UserId      int
+		Provider    Provider
+		AccountName string
+		AccountId   string
+		TeamId      int
+	}
+	var users []*Result
+	result := r.DB.Raw(query, eventId).Scan(&users)
+	if result.Error != nil {
+		return nil, fmt.Errorf("failed to get users with team for event: %v", result.Error)
+	}
+	mapped := make(map[int]*UserWithTeam)
+	for _, user := range users {
+		if _, ok := mapped[user.UserId]; !ok {
+			mapped[user.UserId] = &UserWithTeam{UserId: user.UserId, TeamId: user.TeamId}
+		}
+		switch user.Provider {
+		case ProviderPoE:
+			mapped[user.UserId].PoEAccount = user.AccountName
+		case ProviderDiscord:
+			mapped[user.UserId].DiscordName = user.AccountName
+			mapped[user.UserId].DiscordId = user.AccountId
+		case ProviderTwitch:
+			mapped[user.UserId].TwitchName = user.AccountName
+		}
+	}
+	return mapped, nil
+}

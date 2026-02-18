@@ -490,6 +490,12 @@ const docTemplate = `{
                         "name": "event_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "only show ladder entries from this timestamp after event start",
+                        "name": "hours_after_event_start",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -4967,6 +4973,9 @@ const docTemplate = `{
                 "tag"
             ],
             "properties": {
+                "event_id": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -5181,32 +5190,86 @@ const docTemplate = `{
         "LadderEntry": {
             "type": "object",
             "required": [
-                "account_name",
-                "character_class",
+                "armour",
+                "ascendancy",
+                "ascendancy_points",
+                "atlas_points",
+                "character_id",
                 "character_name",
-                "delve",
-                "experience",
+                "delve_depth",
+                "discord_id",
+                "discord_name",
+                "dps",
+                "ehp",
+                "ele_max_hit",
+                "es",
+                "evasion",
+                "hp",
+                "item_indexes",
+                "last_active",
                 "level",
-                "rank"
+                "main_skill",
+                "mana",
+                "movement_speed",
+                "pantheon",
+                "phys_max_hit",
+                "poe_account",
+                "rank",
+                "team_id",
+                "user_id",
+                "xp"
             ],
             "properties": {
-                "account_name": {
+                "armour": {
+                    "type": "integer"
+                },
+                "ascendancy": {
                     "type": "string"
                 },
-                "character": {
-                    "$ref": "#/definitions/Character"
+                "ascendancy_points": {
+                    "type": "integer"
                 },
-                "character_class": {
+                "atlas_points": {
+                    "type": "integer"
+                },
+                "character_id": {
                     "type": "string"
                 },
                 "character_name": {
                     "type": "string"
                 },
-                "delve": {
+                "delve_depth": {
                     "type": "integer"
                 },
-                "experience": {
+                "discord_id": {
+                    "type": "string"
+                },
+                "discord_name": {
+                    "type": "string"
+                },
+                "dps": {
                     "type": "integer"
+                },
+                "ehp": {
+                    "type": "integer"
+                },
+                "ele_max_hit": {
+                    "type": "integer"
+                },
+                "es": {
+                    "type": "integer"
+                },
+                "evasion": {
+                    "type": "integer"
+                },
+                "hp": {
+                    "type": "integer"
+                },
+                "item_indexes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "last_active": {
                     "type": "integer"
@@ -5214,16 +5277,37 @@ const docTemplate = `{
                 "level": {
                     "type": "integer"
                 },
+                "main_skill": {
+                    "type": "string"
+                },
+                "mana": {
+                    "type": "integer"
+                },
+                "movement_speed": {
+                    "type": "integer"
+                },
+                "pantheon": {
+                    "type": "boolean"
+                },
+                "phys_max_hit": {
+                    "type": "integer"
+                },
+                "poe_account": {
+                    "type": "string"
+                },
                 "rank": {
                     "type": "integer"
                 },
-                "stats": {
-                    "$ref": "#/definitions/CharacterStat"
+                "team_id": {
+                    "type": "integer"
                 },
-                "twitch_account": {
+                "twitch_name": {
                     "type": "string"
                 },
                 "user_id": {
+                    "type": "integer"
+                },
+                "xp": {
                     "type": "integer"
                 }
             }

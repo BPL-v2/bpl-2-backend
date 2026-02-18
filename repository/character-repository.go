@@ -263,7 +263,7 @@ func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*Charac
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
 	err := r.DB.
-		Select("created_at", "dps", "ehp", "phys_max_hit", "ele_max_hit", "hp", "mana", "es", "armour", "evasion", "xp", "movement_speed", "main_skill").
+		Select("created_at", "dps", "ehp", "phys_max_hit", "ele_max_hit", "hp", "mana", "es", "armour", "evasion", "xp", "level", "movement_speed", "main_skill").
 		Where(CharacterPob{CharacterId: characterId}).
 		Find(&charData).Error
 	if err != nil {
@@ -283,8 +283,8 @@ func (r *CharacterRepository) GetLatestCharacterPoB(characterId string) (*Charac
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[string]*CharacterPob, error) {
-	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestCharacterStatsForEvent"))
+func (r *CharacterRepository) GetCharacterStatsForEvent(eventId int, cutoff time.Time) (map[string]*CharacterPob, error) {
+	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharacterStatsForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
 	query := `SELECT DISTINCT ON (character_id) 
@@ -300,15 +300,16 @@ func (r *CharacterRepository) GetLatestCharacterStatsForEvent(eventId int) (map[
 					p.armour,
 					p.evasion,
 					p.xp,
+					p.level,
 					p.movement_speed,
 					p.main_skill,
 					p.items
 				FROM character_pobs as p
 				JOIN characters ON p.character_id = characters.id
-				WHERE characters.event_id = ?
+				WHERE characters.event_id = ? AND p.created_at < ?
 				ORDER BY character_id, created_at DESC
 	`
-	err := r.DB.Raw(query, eventId).Scan(&charData).Error
+	err := r.DB.Raw(query, eventId, cutoff).Scan(&charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting latest character stats for event %d: %w", eventId, err)
 	}

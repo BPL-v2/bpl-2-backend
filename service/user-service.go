@@ -183,3 +183,7 @@ func (s *UserService) GetTeamForUser(c *gin.Context, event *repository.Event) (*
 	}
 	return team, user, nil
 }
+
+func (s *UserService) GetUsersWithTeamForEvent(eventId int) (map[int]*repository.UserWithTeam, error) {
+	return s.userRepository.GetUsersWithTeamForEvent(eventId)
+}
