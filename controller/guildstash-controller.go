@@ -119,6 +119,7 @@ func (e *GuildStashController) saveGuild() gin.HandlerFunc {
 		}
 		guild.Id = guildId
 		guild.TeamId = teamUser.TeamId
+		guild.EventId = event.Id
 		model := guild.toModel()
 		if err := e.guildStashService.SaveGuild(model); err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
@@ -594,10 +595,11 @@ type GuildStashChangelog struct {
 }
 
 type Guild struct {
-	Id     int    `json:"id" binding:"required"`
-	TeamId int    `json:"team_id"`
-	Name   string `json:"name" binding:"required"`
-	Tag    string `json:"tag" binding:"required"`
+	Id      int    `json:"id" binding:"required"`
+	TeamId  int    `json:"team_id" binding:"required"`
+	EventId int    `json:"event_id" binding:"required"`
+	Name    string `json:"name" binding:"required"`
+	Tag     string `json:"tag" binding:"required"`
 }
 
 func (t *Guild) toModel() *repository.Guild {
@@ -605,10 +607,11 @@ func (t *Guild) toModel() *repository.Guild {
 		return nil
 	}
 	return &repository.Guild{
-		TeamId: t.TeamId,
-		Id:     t.Id,
-		Name:   t.Name,
-		Tag:    t.Tag,
+		TeamId:  t.TeamId,
+		Id:      t.Id,
+		Name:    t.Name,
+		Tag:     t.Tag,
+		EventId: t.EventId,
 	}
 }
 
@@ -617,10 +620,11 @@ func toGuild(model *repository.Guild) *Guild {
 		return nil
 	}
 	return &Guild{
-		Id:     model.Id,
-		TeamId: model.TeamId,
-		Name:   model.Name,
-		Tag:    model.Tag,
+		Id:      model.Id,
+		TeamId:  model.TeamId,
+		EventId: model.EventId,
+		Name:    model.Name,
+		Tag:     model.Tag,
 	}
 }
 
