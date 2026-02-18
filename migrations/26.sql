@@ -1,0 +1,3 @@
+ALTER TABLE guilds
+ADD COLUMN event_id INT NOT NULL,
+ADD CONSTRAINT fk_guilds_event_id FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE;

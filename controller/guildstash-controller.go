@@ -101,13 +101,13 @@ func (e *GuildStashController) saveGuild() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "invalid guild id"})
 			return
 		}
-		// existingGuild, err := e.guildStashService.GetGuildById(guildId)
-		// if err != nil {
-		// 	c.JSON(500, gin.H{"error": err.Error()})
-		// 	return
-		// }
+		existingGuild, err := e.guildStashService.GetGuildById(guildId, event.Id)
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
 		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err == nil || !teamUser.IsTeamLead {
+		if err == nil || (existingGuild != nil && existingGuild.TeamId != teamUser.TeamId) || !teamUser.IsTeamLead {
 			c.JSON(403, gin.H{"message": "Only team leads can modify guilds for their team"})
 			return
 		}
@@ -179,7 +179,7 @@ func (e *GuildStashController) addHistory() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "invalid guild id"})
 			return
 		}
-		existingGuild, err := e.guildStashService.GetGuildById(guildId)
+		existingGuild, err := e.guildStashService.GetGuildById(guildId, event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -236,7 +236,7 @@ func (e *GuildStashController) getLogEntriesForGuild() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": "invalid guild id"})
 			return
 		}
-		existingGuild, err := e.guildStashService.GetGuildById(guildId)
+		existingGuild, err := e.guildStashService.GetGuildById(guildId, event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

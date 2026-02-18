@@ -47,10 +47,11 @@ type GuildStashChangelog struct {
 }
 
 type Guild struct {
-	Id     int `gorm:"primaryKey"`
-	TeamId int `gorm:"primaryKey"`
-	Name   string
-	Tag    string
+	Id      int `gorm:"primaryKey"`
+	TeamId  int `gorm:"primaryKey"`
+	EventId int
+	Name    string
+	Tag     string
 }
 
 type Action int
@@ -281,9 +282,9 @@ func (r *GuildStashRepository) GetEarliestDeposits(event *Event) ([]*PlayerCompl
 	return results, nil
 }
 
-func (r *GuildStashRepository) GetGuildById(guildId int) (*Guild, error) {
+func (r *GuildStashRepository) GetGuildById(guildId int, eventId int) (*Guild, error) {
 	var guild Guild
-	err := r.db.Where("id = ?", guildId).First(&guild).Error
+	err := r.db.Where("id = ? AND event_id = ?", guildId, eventId).First(&guild).Error
 	if err != nil {
 		return nil, err
 	}
