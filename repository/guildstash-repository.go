@@ -49,7 +49,7 @@ type GuildStashChangelog struct {
 type Guild struct {
 	Id      int `gorm:"primaryKey"`
 	TeamId  int `gorm:"primaryKey"`
-	EventId int
+	EventId int `gorm:"primaryKey"`
 	Name    string
 	Tag     string
 }
