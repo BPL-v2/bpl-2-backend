@@ -299,6 +299,10 @@ func (f *FetchingService) FetchGuildStashTab(tab *repository.GuildStashTab) erro
 
 func (f *FetchingService) AccessDeterminationLoop() {
 	for {
+		if time.Now().Before(f.event.EventStartTime.Add(5 * time.Minute)) {
+			time.Sleep(10 * time.Second)
+			continue
+		}
 		err := f.DetermineStashAccess()
 		if err != nil {
 			fmt.Printf("Failed to determine stash access: %v\n", err)
@@ -414,6 +418,10 @@ func (f *FetchingService) FetchGuildStashes() error {
 	defer utils.Closer(kafkaWriter)()
 
 	for {
+		if time.Now().Before(f.event.EventStartTime.Add(5 * time.Minute)) {
+			time.Sleep(10 * time.Second)
+			continue
+		}
 		fmt.Printf("Fetching guild stashes for event %d\n", f.event.Id)
 		timings, err := f.GetTimings()
 		if err != nil {

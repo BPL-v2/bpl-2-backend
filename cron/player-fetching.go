@@ -395,15 +395,16 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 		case <-ctx.Done():
 			return
 		default:
+			if time.Now().Before(event.EventStartTime.Add(5 * time.Minute)) {
+				time.Sleep(10 * time.Second)
+				continue
+			}
 			err := service.ReloadTimings()
 			if err != nil {
 				log.Print(err)
 				return
 			}
-			if time.Now().Before(event.EventStartTime) {
-				time.Sleep(10 * time.Second)
-				continue
-			}
+
 			wg := sync.WaitGroup{}
 			for _, player := range players {
 				if player.ShouldUpdateCharacterName(service.timings) {
