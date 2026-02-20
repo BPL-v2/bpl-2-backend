@@ -112,10 +112,10 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		}
 		return nil, fmt.Errorf("error fetching character for player %d: %v", player.UserId, clientError)
 	}
-	err := s.itemWishService.UpdateItemWishFulfillment(player.TeamId, player.UserId, characterResponse.Character)
-	if err != nil {
-		log.Printf("Error updating item wish fulfillment for player %d: %v", player.UserId, err)
-	}
+	// err := s.itemWishService.UpdateItemWishFulfillment(player.TeamId, player.UserId, characterResponse.Character)
+	// if err != nil {
+	// 	log.Printf("Error updating item wish fulfillment for player %d: %v", player.UserId, err)
+	// }
 	player.SuccessiveErrors = 0
 	player.New.Character = characterResponse.Character
 	if !player.New.Character.HasSameEquipment(player.Old.Character) {
@@ -134,7 +134,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		AscendancyPoints: player.New.Character.GetAscendancyPoints(),
 		AtlasPoints:      player.New.MaxAtlasTreeNodes(),
 	}
-	err = s.characterRepository.Save(character)
+	err := s.characterRepository.Save(character)
 	if err != nil {
 		return nil, fmt.Errorf("error saving character %s (%s) for user %d: %v", character.Name, character.Id, player.UserId, err)
 	}
