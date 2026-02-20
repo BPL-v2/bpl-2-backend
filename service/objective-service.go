@@ -44,7 +44,6 @@ func (e *ObjectiveService) GetParser(eventId int) (*parser.ItemChecker, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return parser.NewItemChecker(objectives, false)
 }
 

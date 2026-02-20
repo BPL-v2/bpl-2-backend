@@ -41,7 +41,7 @@ func setupObjectiveController(poeClient *client.PoEClient) []RouteInfo {
 		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		// todo: move this somewhere else
-		{Method: "GET", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "POST", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "POST", Path: "/validations", HandlerFunc: e.validateObjectivesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "GET", Path: "/validations", HandlerFunc: e.getObjectiveValidationsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
@@ -265,12 +265,11 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 
 func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		currentEvent, err := e.eventService.GetCurrentEvent()
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+		event := getEvent(c)
+		if event == nil {
 			return
 		}
-		parser, err := e.objectiveService.GetParser(currentEvent.Id)
+		parser, err := e.objectiveService.GetParser(event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

@@ -491,13 +491,11 @@ func (f *FetchingService) fetchGuildStash(stash repository.GuildStashTab, fetche
 	stash.Color = response.Stash.Metadata.Colour
 	if response.Stash.Items != nil {
 		stashChanges = append(stashChanges, &client.PublicStashChange{
-			Id:     stash.Id,
-			Public: true,
-			League: &f.event.Name,
-			TeamId: stash.TeamId,
-			Items: utils.Map(
-				*response.Stash.Items,
-				func(item client.DisplayItem) client.Item { return *item.Item }),
+			Id:        stash.Id,
+			Public:    true,
+			League:    &f.event.Name,
+			TeamId:    stash.TeamId,
+			Items:     *response.Stash.Items,
 			StashType: stash.Type,
 		})
 		if response.Stash.Type == "UniqueStash" && len(*response.Stash.Items) > 0 {

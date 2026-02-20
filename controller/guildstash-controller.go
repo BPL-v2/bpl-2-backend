@@ -481,12 +481,12 @@ func toGGGModel(tab *repository.GuildStashTab, parser *parser.ItemChecker) *clie
 
 	model.Name = tab.Name
 	if model.Items != nil {
-		items := make([]client.DisplayItem, 0, len(*model.Items))
+		items := make([]client.Item, 0, len(*model.Items))
 		for _, item := range *model.Items {
-			completions := parser.CheckForCompletions(item.Item)
-			if len(completions) > 0 {
-				item.ObjectiveId = completions[0].ObjectiveId
-			}
+			// completions := parser.CheckForCompletions(&item)
+			// if len(completions) > 0 {
+			// 	item.ObjectiveId = completions[0].ObjectiveId
+			// }
 			items = append(items, item)
 		}
 		model.Items = &items

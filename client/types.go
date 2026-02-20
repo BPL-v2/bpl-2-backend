@@ -344,15 +344,6 @@ const (
 	W GemSocket = "W"
 )
 
-type DisplayItem struct {
-	*Item
-	SocketedItems *[]DisplayItem `json:"socketedItems,omitempty"`
-	W             int            `json:"w"`
-	H             int            `json:"h"`
-	// field added by our backend
-	ObjectiveId int `json:"objectiveId,omitempty"`
-}
-
 type Item struct {
 	Support                *bool               `json:"support,omitempty"`
 	StackSize              *int                `json:"stackSize,omitempty"`
@@ -422,6 +413,8 @@ type Item struct {
 	Desecrated             *bool               `json:"desecrated,omitempty"`      // PoE2 only
 	DesecratedMods         *[]string           `json:"desecratedMods,omitempty"`  // PoE2 only
 	RuneMods               *[]string           `json:"runeMods,omitempty"`        // PoE2 only
+	W                      int                 `json:"w,omitempty"`
+	H                      int                 `json:"h,omitempty"`
 
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only
@@ -570,7 +563,7 @@ type StashTab struct {
 
 type GuildStashTabGGG struct {
 	*StashTab
-	Items    *[]DisplayItem      `json:"items,omitempty"`
+	Items    *[]Item             `json:"items,omitempty"`
 	Children *[]GuildStashTabGGG `json:"children,omitempty"`
 }
 

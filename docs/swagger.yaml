@@ -49,7 +49,36 @@ definitions:
           $ref: '#/definitions/Item'
         type: array
     type: object
-  DisplayItem:
+  GemSocket:
+    enum:
+    - W
+    type: string
+    x-enum-varnames:
+    - W
+  GuildStashTabGGG:
+    properties:
+      children:
+        items:
+          $ref: '#/definitions/GuildStashTabGGG'
+        type: array
+      id:
+        type: string
+      index:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/Item'
+        type: array
+      metadata:
+        $ref: '#/definitions/StashTabMetadata'
+      name:
+        type: string
+      parent:
+        type: string
+      type:
+        type: string
+    type: object
+  Item:
     properties:
       abyssJewel:
         type: boolean
@@ -170,239 +199,6 @@ definitions:
         items:
           $ref: '#/definitions/ItemProperty'
         type: array
-      objectiveId:
-        description: field added by our backend
-        type: integer
-      properties:
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      rarity:
-        type: string
-      rewards:
-        items:
-          $ref: '#/definitions/ItemReward'
-        type: array
-      runeMods:
-        description: PoE2 only
-        items:
-          type: string
-        type: array
-      ruthless:
-        type: boolean
-      scourgeMods:
-        items:
-          type: string
-        type: array
-      searing:
-        type: boolean
-      shaper:
-        type: boolean
-      socket:
-        type: integer
-      socketedItems:
-        items:
-          $ref: '#/definitions/DisplayItem'
-        type: array
-      sockets:
-        items:
-          $ref: '#/definitions/ItemSocket'
-        type: array
-      split:
-        type: boolean
-      stackSize:
-        type: integer
-      support:
-        type: boolean
-      supportGemRequirements:
-        description: PoE2 only
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      synthesised:
-        type: boolean
-      talismanTier:
-        type: integer
-      tangled:
-        type: boolean
-      typeLine:
-        type: string
-      ultimatumMods:
-        items:
-          $ref: '#/definitions/ItemUltimatumMod'
-        type: array
-      unmodifiable:
-        type: boolean
-      utilityMods:
-        items:
-          type: string
-        type: array
-      veiled:
-        type: boolean
-      veiledMods:
-        items:
-          type: string
-        type: array
-      w:
-        type: integer
-      weaponRequirements:
-        description: PoE2 only
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      x:
-        type: integer
-      "y":
-        type: integer
-    type: object
-  GemSocket:
-    enum:
-    - W
-    type: string
-    x-enum-varnames:
-    - W
-  GuildStashTabGGG:
-    properties:
-      children:
-        items:
-          $ref: '#/definitions/GuildStashTabGGG'
-        type: array
-      id:
-        type: string
-      index:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/DisplayItem'
-        type: array
-      metadata:
-        $ref: '#/definitions/StashTabMetadata'
-      name:
-        type: string
-      parent:
-        type: string
-      type:
-        type: string
-    type: object
-  Item:
-    properties:
-      abyssJewel:
-        type: boolean
-      additionalProperties:
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      baseType:
-        type: string
-      bondedMods:
-        description: PoE2 only
-        items:
-          type: string
-        type: array
-      colour:
-        type: string
-      corrupted:
-        type: boolean
-      cosmeticMods:
-        items:
-          type: string
-        type: array
-      craftedMods:
-        items:
-          type: string
-        type: array
-      delve:
-        type: boolean
-      desecrated:
-        description: PoE2 only
-        type: boolean
-      desecratedMods:
-        description: PoE2 only
-        items:
-          type: string
-        type: array
-      doubleCorrupted:
-        description: PoE2 only
-        type: boolean
-      duplicated:
-        type: boolean
-      elder:
-        type: boolean
-      enchantMods:
-        items:
-          type: string
-        type: array
-      explicitMods:
-        items:
-          type: string
-        type: array
-      extended:
-        $ref: '#/definitions/ItemExtended'
-      foilVariation:
-        type: integer
-      foreseeing:
-        type: boolean
-      fractured:
-        type: boolean
-      fracturedMods:
-        items:
-          type: string
-        type: array
-      frameType:
-        type: integer
-      gemSockets:
-        items:
-          $ref: '#/definitions/GemSocket'
-        type: array
-      grantedSkills:
-        description: PoE2 only
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      hybrid:
-        $ref: '#/definitions/ItemHybrid'
-      icon:
-        type: string
-      id:
-        type: string
-      identified:
-        type: boolean
-      ilvl:
-        type: integer
-      implicitMods:
-        items:
-          type: string
-        type: array
-      incubatedItem:
-        $ref: '#/definitions/ItemIncubatedItem'
-      influences:
-        additionalProperties:
-          type: boolean
-        type: object
-      inventoryId:
-        type: string
-      isRelic:
-        type: boolean
-      itemLevel:
-        type: integer
-      logbookMods:
-        items:
-          $ref: '#/definitions/ItemLogbookMod'
-        type: array
-      memoryItem:
-        type: boolean
-      mutated:
-        type: boolean
-      mutatedMods:
-        items:
-          type: string
-        type: array
-      name:
-        type: string
-      notableProperties:
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
       properties:
         items:
           $ref: '#/definitions/ItemProperty'
@@ -473,6 +269,8 @@ definitions:
         items:
           type: string
         type: array
+      w:
+        type: integer
       weaponRequirements:
         description: PoE2 only
         items:

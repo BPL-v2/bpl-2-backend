@@ -3131,7 +3131,51 @@
                 }
             }
         },
-        "DisplayItem": {
+        "GemSocket": {
+            "type": "string",
+            "enum": [
+                "W"
+            ],
+            "x-enum-varnames": [
+                "W"
+            ]
+        },
+        "GuildStashTabGGG": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/GuildStashTabGGG"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "index": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Item"
+                    }
+                },
+                "metadata": {
+                    "$ref": "#/definitions/StashTabMetadata"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parent": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "Item": {
             "type": "object",
             "properties": {
                 "abyssJewel": {
@@ -3310,352 +3354,6 @@
                         "$ref": "#/definitions/ItemProperty"
                     }
                 },
-                "objectiveId": {
-                    "description": "field added by our backend",
-                    "type": "integer"
-                },
-                "properties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemProperty"
-                    }
-                },
-                "rarity": {
-                    "type": "string"
-                },
-                "rewards": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemReward"
-                    }
-                },
-                "runeMods": {
-                    "description": "PoE2 only",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "ruthless": {
-                    "type": "boolean"
-                },
-                "scourgeMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "searing": {
-                    "type": "boolean"
-                },
-                "shaper": {
-                    "type": "boolean"
-                },
-                "socket": {
-                    "type": "integer"
-                },
-                "socketedItems": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/DisplayItem"
-                    }
-                },
-                "sockets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemSocket"
-                    }
-                },
-                "split": {
-                    "type": "boolean"
-                },
-                "stackSize": {
-                    "type": "integer"
-                },
-                "support": {
-                    "type": "boolean"
-                },
-                "supportGemRequirements": {
-                    "description": "PoE2 only",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemProperty"
-                    }
-                },
-                "synthesised": {
-                    "type": "boolean"
-                },
-                "talismanTier": {
-                    "type": "integer"
-                },
-                "tangled": {
-                    "type": "boolean"
-                },
-                "typeLine": {
-                    "type": "string"
-                },
-                "ultimatumMods": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemUltimatumMod"
-                    }
-                },
-                "unmodifiable": {
-                    "type": "boolean"
-                },
-                "utilityMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "veiled": {
-                    "type": "boolean"
-                },
-                "veiledMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "w": {
-                    "type": "integer"
-                },
-                "weaponRequirements": {
-                    "description": "PoE2 only",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemProperty"
-                    }
-                },
-                "x": {
-                    "type": "integer"
-                },
-                "y": {
-                    "type": "integer"
-                }
-            }
-        },
-        "GemSocket": {
-            "type": "string",
-            "enum": [
-                "W"
-            ],
-            "x-enum-varnames": [
-                "W"
-            ]
-        },
-        "GuildStashTabGGG": {
-            "type": "object",
-            "properties": {
-                "children": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/GuildStashTabGGG"
-                    }
-                },
-                "id": {
-                    "type": "string"
-                },
-                "index": {
-                    "type": "integer"
-                },
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/DisplayItem"
-                    }
-                },
-                "metadata": {
-                    "$ref": "#/definitions/StashTabMetadata"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parent": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "Item": {
-            "type": "object",
-            "properties": {
-                "abyssJewel": {
-                    "type": "boolean"
-                },
-                "additionalProperties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemProperty"
-                    }
-                },
-                "baseType": {
-                    "type": "string"
-                },
-                "bondedMods": {
-                    "description": "PoE2 only",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "colour": {
-                    "type": "string"
-                },
-                "corrupted": {
-                    "type": "boolean"
-                },
-                "cosmeticMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "craftedMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "delve": {
-                    "type": "boolean"
-                },
-                "desecrated": {
-                    "description": "PoE2 only",
-                    "type": "boolean"
-                },
-                "desecratedMods": {
-                    "description": "PoE2 only",
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "doubleCorrupted": {
-                    "description": "PoE2 only",
-                    "type": "boolean"
-                },
-                "duplicated": {
-                    "type": "boolean"
-                },
-                "elder": {
-                    "type": "boolean"
-                },
-                "enchantMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "explicitMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "extended": {
-                    "$ref": "#/definitions/ItemExtended"
-                },
-                "foilVariation": {
-                    "type": "integer"
-                },
-                "foreseeing": {
-                    "type": "boolean"
-                },
-                "fractured": {
-                    "type": "boolean"
-                },
-                "fracturedMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "frameType": {
-                    "type": "integer"
-                },
-                "gemSockets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/GemSocket"
-                    }
-                },
-                "grantedSkills": {
-                    "description": "PoE2 only",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemProperty"
-                    }
-                },
-                "hybrid": {
-                    "$ref": "#/definitions/ItemHybrid"
-                },
-                "icon": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "identified": {
-                    "type": "boolean"
-                },
-                "ilvl": {
-                    "type": "integer"
-                },
-                "implicitMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "incubatedItem": {
-                    "$ref": "#/definitions/ItemIncubatedItem"
-                },
-                "influences": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "boolean"
-                    }
-                },
-                "inventoryId": {
-                    "type": "string"
-                },
-                "isRelic": {
-                    "type": "boolean"
-                },
-                "itemLevel": {
-                    "type": "integer"
-                },
-                "logbookMods": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemLogbookMod"
-                    }
-                },
-                "memoryItem": {
-                    "type": "boolean"
-                },
-                "mutated": {
-                    "type": "boolean"
-                },
-                "mutatedMods": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "notableProperties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ItemProperty"
-                    }
-                },
                 "properties": {
                     "type": "array",
                     "items": {
@@ -3759,6 +3457,9 @@
                     "items": {
                         "type": "string"
                     }
+                },
+                "w": {
+                    "type": "integer"
                 },
                 "weaponRequirements": {
                     "description": "PoE2 only",
