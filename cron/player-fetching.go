@@ -13,6 +13,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 var (
@@ -317,6 +319,7 @@ func updateStats(character *client.Character, characterRepo *repository.Characte
 		Ascendancy:  character.Class,
 		Export:      p,
 		XP:          int64(character.Experience),
+		Items:       make(pq.Int32Array, 0),
 	}
 	pobEntity.UpdateStats(pob)
 	pobQueue <- pobEntity
