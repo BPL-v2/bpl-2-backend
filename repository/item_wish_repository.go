@@ -20,6 +20,7 @@ type ItemWish struct {
 	TeamID        int       `gorm:"not null;index:idx_user_team_item_wish"`
 	ItemField     ItemField `gorm:"not null"`
 	Value         string    `gorm:"not null"`
+	Extra         string    `gorm:"not null;default:''"`
 	Fulfilled     bool      `gorm:"not null;default:false"`
 	BuildEnabling bool      `gorm:"not null;default:false"`
 	Priority      int       `gorm:"not null;default:0"`

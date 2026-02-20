@@ -400,6 +400,10 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				log.Print(err)
 				return
 			}
+			if time.Now().Before(event.EventStartTime) {
+				time.Sleep(10 * time.Second)
+				continue
+			}
 			wg := sync.WaitGroup{}
 			for _, player := range players {
 				if player.ShouldUpdateCharacterName(service.timings) {

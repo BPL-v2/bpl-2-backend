@@ -1,0 +1,1 @@
+ALTER TABLE item_wishes ADD COLUMN extra TEXT NOT NULL DEFAULT '';
