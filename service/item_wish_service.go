@@ -77,11 +77,15 @@ func (s *ItemWishService) UpdateItemWishFulfillment(teamId int, userId int, char
 	}
 	toSave := make([]*repository.ItemWish, 0)
 	for _, itemWish := range itemWishes {
-		if itemWish.Fulfilled {
+		if itemWish.Fulfilled || character.Equipment == nil {
 			continue
 		}
 		for _, item := range utils.FlatMap(*character.Equipment, func(i client.Item) []client.Item {
-			return *i.SocketedItems
+			items := []client.Item{i}
+			if i.SocketedItems != nil {
+				items = append(items, *i.SocketedItems...)
+			}
+			return items
 		}) {
 			switch itemWish.ItemField {
 			case repository.BASE_TYPE:
