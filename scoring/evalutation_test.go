@@ -1153,12 +1153,13 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 	}{
 		{1, 1, now.Add(-24 * time.Hour), true},
 		{2, 1, now.Add(-20 * time.Hour), true}, // Team 1's latest
+		{3, 1, now.Add(-1 * time.Hour), true},  // later, but already has 2 completions so doesn't affect ranking
 		{1, 2, now.Add(-18 * time.Hour), true},
 		{2, 2, now.Add(-15 * time.Hour), true}, // Team 2's latest
 		{1, 3, now.Add(-14 * time.Hour), true},
-		{2, 3, now.Add(-12 * time.Hour), true},
+		{2, 3, now.Add(-12 * time.Hour), true}, // Team 3's latest
 		{3, 3, now.Add(-11 * time.Hour), true},
-		{4, 3, now.Add(-10 * time.Hour), true}, // Team 3's latest
+		{4, 3, now.Add(-10 * time.Hour), true},
 		{1, 4, now.Add(-22 * time.Hour), true}, // Team 4 only completes 1
 	}
 
@@ -1208,7 +1209,7 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 	assert.Equal(t, 3, scoreMap[3][objective.Id].PresetCompletions[presetId].Rank, "Team 3 should have rank 3")
 	assert.True(t, scoreMap[3][objective.Id].PresetCompletions[presetId].Finished, "Team 3 should be finished (4 >= 2)")
 
-	assert.Equal(t, 2, scoreMap[1][objective.Id].PresetCompletions[presetId].Number, "Team 1 should have 2 completions")
+	assert.Equal(t, 3, scoreMap[1][objective.Id].PresetCompletions[presetId].Number, "Team 1 should have 3 completions")
 	assert.Equal(t, 100, scoreMap[1][objective.Id].PresetCompletions[presetId].Points, "Team 1 should have 100 points (rank 1)")
 	assert.Equal(t, 1, scoreMap[1][objective.Id].PresetCompletions[presetId].Rank, "Team 1 should have rank 1")
 	assert.True(t, scoreMap[1][objective.Id].PresetCompletions[presetId].Finished, "Team 1 should be marked finished")

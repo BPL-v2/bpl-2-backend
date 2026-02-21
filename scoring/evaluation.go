@@ -456,6 +456,7 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 		}
 	}
 	teamCompletions := make(map[int]*TeamCompletion)
+	teamCompletionTimestamps := make(map[int][]int64)
 	for teamId := range scoreMap {
 		teamCompletions[teamId] = &TeamCompletion{TeamId: teamId}
 	}
@@ -465,10 +466,22 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 		for teamId, objectiveScores := range scoreMap {
 			childScore := objectiveScores[child.Id]
 			if childScore != nil && childScore.Finished() {
+				timestamp := childScore.Timestamp().UnixNano()
+				teamCompletionTimestamps[teamId] = append(teamCompletionTimestamps[teamId], timestamp)
 				teamCompletions[teamId].ObjectivesCompleted++
-				teamCompletions[teamId].LatestTimestamp = utils.Max(teamCompletions[teamId].LatestTimestamp, childScore.Timestamp().UnixNano())
+				teamCompletions[teamId].LatestTimestamp = utils.Max(teamCompletions[teamId].LatestTimestamp, timestamp)
 			}
 		}
+	}
+	for teamId, completion := range teamCompletions {
+		if completion.ObjectivesCompleted < requiredChildCompletions || requiredChildCompletions <= 0 {
+			continue
+		}
+		timestamps := teamCompletionTimestamps[teamId]
+		sort.Slice(timestamps, func(i, j int) bool {
+			return timestamps[i] < timestamps[j]
+		})
+		completion.LatestTimestamp = timestamps[requiredChildCompletions-1]
 	}
 	rankedTeams := utils.Values(teamCompletions)
 	sort.Slice(rankedTeams, func(i, j int) bool {
