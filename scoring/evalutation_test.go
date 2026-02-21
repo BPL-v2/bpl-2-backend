@@ -1141,14 +1141,15 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 	}
 
 	now := time.Now()
-	// Team 3: Completes 4 children, finishes at -10h (latest) -> rank 1 (sorted first: 4 > 2)
-	// Team 1: Completes 2 children, finishes at -20h (earliest of 2-completion teams) -> rank 2
-	// Team 2: Completes 2 children, finishes at -15h (latest of 2-completion teams) -> rank 3
+	// Team 1: Completes 2 children, finishes at -20h -> rank 1 (earliest among teams meeting threshold)
+	// Team 2: Completes 2 children, finishes at -15h -> rank 2
+	// Team 3: Completes 4 children, finishes at -10h -> rank 3 (more completions don't beat faster threshold completion)
 	// Team 4: Completes 1 child -> doesn't score (not enough completions)
 	childData := []struct {
-		objId, teamId int
-		timestamp     time.Time
-		finished      bool
+		objId     int
+		teamId    int
+		timestamp time.Time
+		finished  bool
 	}{
 		{1, 1, now.Add(-24 * time.Hour), true},
 		{2, 1, now.Add(-20 * time.Hour), true}, // Team 1's latest
@@ -1201,21 +1202,20 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletions(t *testing.T) {
 	assert.NoError(t, err, "handleChildRankingByTime should not return an error")
 
 	// Verify results - teams with at least 2 completions score
-	// Teams are sorted: Team 3 (4 completions), Team 1 (2 completions, earlier), Team 2 (2 completions, later), Team 4 (1 completion)
-	// Points are assigned based on position in sorted array
+	// Among finished teams, ranking is based on earlier completion time (latest child timestamp), not on total completion count.
 	assert.Equal(t, 4, scoreMap[3][objective.Id].PresetCompletions[presetId].Number, "Team 3 should have 4 completions")
-	assert.Equal(t, 100, scoreMap[3][objective.Id].PresetCompletions[presetId].Points, "Team 3 should have 100 points (position 1 in sorted array)")
-	assert.Equal(t, 1, scoreMap[3][objective.Id].PresetCompletions[presetId].Rank, "Team 3 should have rank 1")
+	assert.Equal(t, 50, scoreMap[3][objective.Id].PresetCompletions[presetId].Points, "Team 3 should have 50 points (rank 3)")
+	assert.Equal(t, 3, scoreMap[3][objective.Id].PresetCompletions[presetId].Rank, "Team 3 should have rank 3")
 	assert.True(t, scoreMap[3][objective.Id].PresetCompletions[presetId].Finished, "Team 3 should be finished (4 >= 2)")
 
 	assert.Equal(t, 2, scoreMap[1][objective.Id].PresetCompletions[presetId].Number, "Team 1 should have 2 completions")
-	assert.Equal(t, 75, scoreMap[1][objective.Id].PresetCompletions[presetId].Points, "Team 1 should have 75 points (position 2 in sorted array)")
-	assert.Equal(t, 2, scoreMap[1][objective.Id].PresetCompletions[presetId].Rank, "Team 1 should have rank 2 (position in sorted array)")
+	assert.Equal(t, 100, scoreMap[1][objective.Id].PresetCompletions[presetId].Points, "Team 1 should have 100 points (rank 1)")
+	assert.Equal(t, 1, scoreMap[1][objective.Id].PresetCompletions[presetId].Rank, "Team 1 should have rank 1")
 	assert.True(t, scoreMap[1][objective.Id].PresetCompletions[presetId].Finished, "Team 1 should be marked finished")
 
 	assert.Equal(t, 2, scoreMap[2][objective.Id].PresetCompletions[presetId].Number, "Team 2 should have 2 completions")
-	assert.Equal(t, 50, scoreMap[2][objective.Id].PresetCompletions[presetId].Points, "Team 2 should have 50 points (position 3 in sorted array)")
-	assert.Equal(t, 3, scoreMap[2][objective.Id].PresetCompletions[presetId].Rank, "Team 2 should have rank 3 (position in sorted array)")
+	assert.Equal(t, 75, scoreMap[2][objective.Id].PresetCompletions[presetId].Points, "Team 2 should have 75 points (rank 2)")
+	assert.Equal(t, 2, scoreMap[2][objective.Id].PresetCompletions[presetId].Rank, "Team 2 should have rank 2")
 	assert.True(t, scoreMap[2][objective.Id].PresetCompletions[presetId].Finished, "Team 2 should be marked finished")
 
 	assert.Equal(t, 1, scoreMap[4][objective.Id].PresetCompletions[presetId].Number, "Team 4 should have 1 completion")
@@ -1301,8 +1301,7 @@ func TestHandleChildRankingByTimeWithRequiredChildCompletionsPercent(t *testing.
 	assert.NoError(t, err, "handleChildRankingByTime should not return an error")
 
 	// Verify results - teams with at least 50% completions should be finished
-	// Teams are sorted: Team 1 (3 completions), Team 2 (2 completions), Team 3 (1 completion)
-	// Points are assigned based on position in sorted array
+	// Among finished teams, ranking is based on completion time (latest child timestamp), not highest completion count.
 	assert.Equal(t, 3, scoreMap[1][objective.Id].PresetCompletions[presetId].Number, "Team 1 should have 3 completions")
 	assert.Equal(t, 100, scoreMap[1][objective.Id].PresetCompletions[presetId].Points, "Team 1 should have 100 points (position 1 in sorted array)")
 	assert.Equal(t, 1, scoreMap[1][objective.Id].PresetCompletions[presetId].Rank, "Team 1 should have rank 1")
