@@ -472,6 +472,17 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 	}
 	rankedTeams := utils.Values(teamCompletions)
 	sort.Slice(rankedTeams, func(i, j int) bool {
+		ifinished := rankedTeams[i].ObjectivesCompleted >= requiredChildCompletions
+		jfinished := rankedTeams[j].ObjectivesCompleted >= requiredChildCompletions
+		if ifinished && jfinished {
+			return rankedTeams[i].LatestTimestamp < rankedTeams[j].LatestTimestamp
+		}
+		if ifinished && !jfinished {
+			return true
+		}
+		if !ifinished && jfinished {
+			return false
+		}
 		if rankedTeams[i].ObjectivesCompleted == rankedTeams[j].ObjectivesCompleted {
 			return rankedTeams[i].LatestTimestamp < rankedTeams[j].LatestTimestamp
 		}
