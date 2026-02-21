@@ -199,6 +199,9 @@ definitions:
         items:
           $ref: '#/definitions/ItemProperty'
         type: array
+      objectiveId:
+        description: filled by us and not ggg
+        type: integer
       properties:
         items:
           $ref: '#/definitions/ItemProperty'

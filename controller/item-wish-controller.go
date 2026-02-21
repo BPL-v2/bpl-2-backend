@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -154,7 +155,7 @@ func (e *ItemWishController) changeItemWishHandler() gin.HandlerFunc {
 
 		updatedItemWish, err := e.itemWishService.UpdateItemWish(itemWish, teamUser.TeamId, itemWishReq.Fulfilled, itemWishReq.BuildEnabling, itemWishReq.Priority)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to update item wish"})
+			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to update item wish %v", err)})
 			return
 		}
 		c.JSON(200, toItemWishModel(updatedItemWish))

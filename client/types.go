@@ -416,6 +416,8 @@ type Item struct {
 	W                      int                 `json:"w,omitempty"`
 	H                      int                 `json:"h,omitempty"`
 
+	ObjectiveId int `json:"objectiveId,omitempty"` // filled by us and not ggg
+
 	// commenting out unused fields to reduce storage requirements. Uncomment as needed.
 	// GemTabs               *[]GemTab       `json:"gemTabs,omitempty"` // PoE2 only
 	// GemBackground         *string         `json:"gemBackground,omitempty"` // PoE2 only

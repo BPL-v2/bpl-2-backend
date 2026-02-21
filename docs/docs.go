@@ -3362,6 +3362,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/ItemProperty"
                     }
                 },
+                "objectiveId": {
+                    "description": "filled by us and not ggg",
+                    "type": "integer"
+                },
                 "properties": {
                     "type": "array",
                     "items": {
