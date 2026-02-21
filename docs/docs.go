@@ -5958,6 +5958,7 @@ const docTemplate = `{
                 "IS_MIRRORED",
                 "SANCTUM_AFFLICTIONS",
                 "TEMPLE_ROOMS",
+                "TEMPLE_ROOMS_T3",
                 "RITUAL_VESSEL_BOSSES",
                 "RITUAL_VESSEL_MAP",
                 "FACETOR_LENS_EXP",
@@ -6011,6 +6012,7 @@ const docTemplate = `{
                 "",
                 "",
                 "",
+                "",
                 ""
             ],
             "x-enum-varnames": [
@@ -6047,6 +6049,7 @@ const docTemplate = `{
                 "IS_MIRRORED",
                 "SANCTUM_MODS",
                 "TEMPLE_ROOMS",
+                "TEMPLE_ROOMS_T3",
                 "RITUAL_BOSSES",
                 "RITUAL_MAP",
                 "FACETOR_LENS_EXP",

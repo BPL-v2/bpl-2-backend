@@ -226,6 +226,24 @@ func StringArrayFieldGetter(field dbModel.ItemField) (func(item *clientModel.Ite
 			}
 			return rooms
 		}, nil
+	case dbModel.TEMPLE_ROOMS_T3:
+		return func(item *clientModel.Item) []string {
+			rooms := make([]string, 0)
+			if item.AdditionalProperties != nil {
+				for _, property := range *item.AdditionalProperties {
+					if property.Type != nil && *property.Type == 49 {
+						// we can also only look for open rooms by requiring value.ID == 0
+						for _, value := range property.Values {
+							split := strings.Split(value.Name(), " (Tier ")
+							if len(split) == 2 && split[1][0] == '3' {
+								rooms = append(rooms, split[0])
+							}
+						}
+					}
+				}
+			}
+			return rooms
+		}, nil
 	case dbModel.RITUAL_BOSSES:
 		return func(item *clientModel.Item) []string {
 			if item.Properties != nil {

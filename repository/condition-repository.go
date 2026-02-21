@@ -43,6 +43,7 @@ const (
 	IS_MIRRORED             ItemField = "IS_MIRRORED"
 	SANCTUM_MODS            ItemField = "SANCTUM_AFFLICTIONS"
 	TEMPLE_ROOMS            ItemField = "TEMPLE_ROOMS"
+	TEMPLE_ROOMS_T3         ItemField = "TEMPLE_ROOMS_T3"
 	RITUAL_BOSSES           ItemField = "RITUAL_VESSEL_BOSSES"
 	RITUAL_MAP              ItemField = "RITUAL_VESSEL_MAP"
 	FACETOR_LENS_EXP        ItemField = "FACETOR_LENS_EXP"
@@ -97,6 +98,7 @@ var FieldToType = map[ItemField]FieldType{
 	IS_MIRRORED:             Bool,
 	SANCTUM_MODS:            StringArray,
 	TEMPLE_ROOMS:            StringArray,
+	TEMPLE_ROOMS_T3:         StringArray,
 	RITUAL_BOSSES:           StringArray,
 	RITUAL_MAP:              StringArray,
 	MEMORY_STRANDS:          Int,
