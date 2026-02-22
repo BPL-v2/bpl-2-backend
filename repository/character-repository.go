@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -32,6 +33,8 @@ type Character struct {
 	AtlasPoints      int     `gorm:"not null"`
 	OldAccountName   *string `gorm:"null;index"`
 }
+
+var fullDpsSkillMultiplierRegex = regexp.MustCompile(`^\(?\s*\d+x\s+(.+?)\s*\)?$`)
 
 func float2Int64(f float64) int64 {
 	if f < 0 {
@@ -169,7 +172,11 @@ func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) {
 			if skill.Source != "" {
 				p.MainSkill = skill.Source
 			} else {
-				p.MainSkill = skill.Stat
+				if matches := fullDpsSkillMultiplierRegex.FindStringSubmatch(skill.Stat); len(matches) == 2 {
+					p.MainSkill = matches[1]
+				} else {
+					p.MainSkill = skill.Stat
+				}
 			}
 		}
 	}
