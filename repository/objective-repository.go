@@ -107,6 +107,7 @@ var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
 		NumberFieldCorruptedItemsEquipped,
 		NumberFieldJewelsWithImplicitsEquipped,
 		NumberFieldHasRareAscendancyPast90,
+		NumberFieldEnchantedItemsEquipped,
 	},
 	ObjectiveTypeTeam: {
 		NumberFieldPlayerLevel,
@@ -137,6 +138,7 @@ var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
 		NumberFieldCorruptedItemsEquipped,
 		NumberFieldJewelsWithImplicitsEquipped,
 		NumberFieldHasRareAscendancyPast90,
+		NumberFieldEnchantedItemsEquipped,
 	},
 	ObjectiveTypeSubmission: {NumberFieldSubmissionValue},
 	ObjectiveTypeCategory:   {NumberFieldFinishedObjectives},
