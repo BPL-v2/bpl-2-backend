@@ -412,6 +412,7 @@ func GetTeamChecker(objective *repository.Objective) (TeamObjectiveChecker, erro
 	}
 	return func(p []*Player) int {
 		sum := 0
+		fmt.Println("Checking team objective", objective.Name, "for", len(p), "players")
 		for _, player := range p {
 			c := checker(player)
 			sum += c
