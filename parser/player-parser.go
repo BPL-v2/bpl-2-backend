@@ -261,6 +261,19 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 		return func(p *Player) int {
 			return quality(p.Character, "Flask")
 		}, nil
+	case repository.NumberFieldEnchantedItemsEquipped:
+		return func(p *Player) int {
+			sum := 0
+			if p.Character == nil {
+				return sum
+			}
+			for _, item := range p.Character.GetAllItems() {
+				if item.EnchantMods != nil && len(*item.EnchantMods) > 0 {
+					sum++
+				}
+			}
+			return sum
+		}, nil
 	case repository.NumberFieldEvasion:
 		return func(p *Player) int {
 			if p.PoB == nil {
@@ -377,7 +390,6 @@ func quality(character *client.Character, superclass string) int {
 		}
 	}
 	return totalQuality
-
 }
 
 func itemCount(character *client.Character, predicate func(item client.Item) bool) int {

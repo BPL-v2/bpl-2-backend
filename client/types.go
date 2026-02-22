@@ -697,6 +697,25 @@ type Character struct {
 	Metadata   Metadata `json:"metadata"`
 }
 
+func (c *Character) GetAllItems() []Item {
+	if c == nil {
+		return []Item{}
+	}
+	items := make([]Item, 0)
+	if c.Equipment != nil {
+		for _, item := range *c.Equipment {
+			items = append(items, item)
+			if item.SocketedItems != nil {
+				items = append(items, *item.SocketedItems...)
+			}
+		}
+	}
+	if c.Jewels != nil {
+		items = append(items, *c.Jewels...)
+	}
+	return items
+}
+
 func (c *Character) HasSameEquipment(other *Character) bool {
 	if other == nil {
 		return false
