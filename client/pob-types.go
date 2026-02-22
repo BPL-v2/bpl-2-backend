@@ -478,6 +478,13 @@ func (b *Build) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 				}
 				b.PlayerStats.SetStat(stat.Stat, stat.Value)
 			}
+			if se.Name.Local == "FullDPSSkill" {
+				var skill FullDpsSkill
+				if err := d.DecodeElement(&skill, &se); err != nil {
+					return err
+				}
+				b.FullDpsSkils = append(b.FullDpsSkils, skill)
+			}
 		}
 		if end, ok := t.(xml.EndElement); ok && end.Name.Local == start.Name.Local {
 			break
