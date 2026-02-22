@@ -173,6 +173,9 @@ func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) {
 			}
 		}
 	}
+	if p.MainSkill == "" {
+		fmt.Println("Warning: Main skill is empty for character", p.CharacterId)
+	}
 }
 
 type CharacterRepository struct {
