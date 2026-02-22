@@ -13,8 +13,6 @@ import (
 	"log"
 	"sync"
 	"time"
-
-	"github.com/lib/pq"
 )
 
 var (
@@ -297,7 +295,7 @@ func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.Playe
 	return players
 }
 
-func updateStats(character *client.Character, characterRepo *repository.CharacterRepository) {
+func updateStats(character *client.Character, characterRepo *repository.CharacterRepository, itemService *service.ItemService) {
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
 		metrics.PobsCalculatedErrorCounter.Inc()
@@ -311,6 +309,10 @@ func updateStats(character *client.Character, characterRepo *repository.Characte
 		fmt.Printf("Error parsing PoB export for character %s: %v\n", character.Name, err)
 		return
 	}
+	itemIds, err := itemService.GetItemIds(character)
+	if err != nil {
+		fmt.Printf("Error getting item ids for character %s: %v\n", character.Name, err)
+	}
 	pobEntity := &repository.CharacterPob{
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -319,7 +321,7 @@ func updateStats(character *client.Character, characterRepo *repository.Characte
 		Ascendancy:  character.Class,
 		Export:      p,
 		XP:          int64(character.Experience),
-		Items:       make(pq.Int32Array, 0),
+		Items:       itemIds,
 	}
 	pobEntity.UpdateStats(pob)
 	pobQueue <- pobEntity
@@ -337,6 +339,8 @@ func updateStats(character *client.Character, characterRepo *repository.Characte
 
 func PlayerStatsLoop(ctx context.Context) {
 	characterRepo := repository.NewCharacterRepository()
+	itemService := service.NewItemService()
+
 	// make sure that only 4 goroutines are running at the same time
 	semaphore := make(chan struct{}, config.Env().NumberOfPoBReplicas)
 	for {
@@ -353,7 +357,7 @@ func PlayerStatsLoop(ctx context.Context) {
 			semaphore <- struct{}{}
 			go func(character *client.Character) {
 				defer func() { <-semaphore }() // Release the slot when done
-				updateStats(character, characterRepo)
+				updateStats(character, characterRepo, itemService)
 			}(character)
 		}
 	}

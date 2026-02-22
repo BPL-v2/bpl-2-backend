@@ -243,7 +243,7 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 
 func (c *CharacterService) UpdatePoBStats() error {
 	startId := 0
-	itemMap, err := c.itemService.GetItemMap()
+	_, err := c.itemService.GetItemMap()
 	if err != nil {
 		return err
 	}
@@ -268,18 +268,12 @@ func (c *CharacterService) UpdatePoBStats() error {
 			itemIndexes := make(map[int]bool)
 			for _, item := range pob.Items {
 				if item.Rarity == "UNIQUE" {
-					itemId, ok := itemMap["unique"][item.Name]
-					if ok {
-						itemIndexes[itemId] = true
-					} else {
-						savedItem, err := c.itemService.SaveItem(item.Name, "unique")
-						if err != nil {
-							fmt.Printf("Error saving unique item %s: %v\n", item.Name, err)
-						} else {
-							itemMap["unique"][item.Name] = savedItem.Id
-							itemIndexes[savedItem.Id] = true
-						}
+					itemId, err := c.itemService.GetOrCreateId(item.Name, repository.ItemTypeUnique)
+					if err != nil {
+						fmt.Printf("Error getting unique item id %s: %v\n", item.Name, err)
+						continue
 					}
+					itemIndexes[itemId] = true
 				}
 			}
 			for _, skillset := range pob.Skills.SkillSets {
@@ -289,18 +283,12 @@ func (c *CharacterService) UpdatePoBStats() error {
 						if strings.Contains(gem.GemID, "Support") {
 							name += " Support"
 						}
-						itemId, ok := itemMap["gem"][name]
-						if ok {
-							itemIndexes[itemId] = true
-						} else {
-							savedItem, err := c.itemService.SaveItem(name, "gem")
-							if err != nil {
-								fmt.Printf("Error saving gem item %s: %v\n", name, err)
-							} else {
-								itemMap["gem"][name] = savedItem.Id
-								itemIndexes[savedItem.Id] = true
-							}
+						itemId, err := c.itemService.GetOrCreateId(name, repository.ItemTypeGem)
+						if err != nil {
+							fmt.Printf("Error getting gem item id %s: %v\n", name, err)
+							continue
 						}
+						itemIndexes[itemId] = true
 					}
 				}
 			}
