@@ -417,6 +417,7 @@ func GetTeamChecker(objective *repository.Objective) (TeamObjectiveChecker, erro
 			sum += c
 			fmt.Println("Checking player", player.Character.Name, "for team objective", objective.Name, "got", c)
 		}
+		fmt.Println("Total for team objective", objective.Name, "is", sum)
 		return sum
 	}, nil
 }
