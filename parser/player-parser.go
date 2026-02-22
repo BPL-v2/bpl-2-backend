@@ -413,7 +413,9 @@ func GetTeamChecker(objective *repository.Objective) (TeamObjectiveChecker, erro
 	return func(p []*Player) int {
 		sum := 0
 		for _, player := range p {
-			sum += checker(player)
+			c := checker(player)
+			sum += c
+			fmt.Println("Checking player", player.Character.Name, "for team objective", objective.Name, "got", c)
 		}
 		return sum
 	}, nil
@@ -476,6 +478,7 @@ func (tc *TeamChecker) CheckForCompletions(updates []*PlayerUpdate) []*CheckResu
 	}
 	for id, checker := range *tc {
 		new := checker(newTeam)
+		fmt.Println("Checking team objective", id, "old value", checker(oldTeam), "new value", new)
 		if new != checker(oldTeam) {
 			results = append(results, &CheckResult{
 				ObjectiveId: id,
