@@ -460,7 +460,9 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			pobMap := drainStatQueue()
 			for _, player := range players {
 				player.Mu.Lock()
-				player.New.PoB = pobMap[player.New.Character.Id]
+				if pob, ok := pobMap[player.New.Character.Id]; ok {
+					player.New.PoB = pob
+				}
 				if player.New.Character.Experience != player.Old.Character.Experience {
 					player.LastActive = time.Now()
 					err = service.activityRepository.SaveActivity(&repository.Activity{
