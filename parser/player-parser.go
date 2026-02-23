@@ -492,7 +492,6 @@ func (tc *TeamChecker) CheckForCompletions(updates []*PlayerUpdate) []*CheckResu
 	}
 	for id, checker := range *tc {
 		new := checker(newTeam)
-		fmt.Println("Checking team objective", id, "old value", checker(oldTeam), "new value", new)
 		if new != checker(oldTeam) {
 			results = append(results, &CheckResult{
 				ObjectiveId: id,
