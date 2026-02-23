@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"time"
 
@@ -39,11 +40,11 @@ func setupGuildStashController(PoEClient *client.PoEClient) []RouteInfo {
 	e := NewGuildStashController(PoEClient)
 	basePath := ""
 	routes := []RouteInfo{
-		{Method: "GET", Path: "/:event_id/guild-stash", HandlerFunc: e.getGuildStashForUser(), Authenticated: true},
-		{Method: "POST", Path: "/:event_id/guild-stash/update-access", HandlerFunc: e.updateAccess(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/:event_id/guild-stash/:stash_id", HandlerFunc: e.getGuildStashTab(), Authenticated: true},
-		{Method: "PATCH", Path: "/:event_id/guild-stash/:stash_id", HandlerFunc: e.switchStashFetch(), Authenticated: true},
-		{Method: "POST", Path: "/:event_id/guild-stash/:stash_id/update", HandlerFunc: e.updateStashTab(), Authenticated: true},
+
+		{Method: "GET", Path: "/:event_id/teams/:team_id/guild-stash", HandlerFunc: e.getGuildStashForUser(), Authenticated: true},
+		{Method: "GET", Path: "/:event_id/teams/:team_id/guild-stash/:stash_id", HandlerFunc: e.getGuildStashTab(), Authenticated: true},
+		{Method: "PATCH", Path: "/:event_id/teams/:team_id/guild-stash/:stash_id", HandlerFunc: e.switchStashFetch(), Authenticated: true},
+		{Method: "POST", Path: "/:event_id/teams/:team_id/guild-stash/:stash_id/update", HandlerFunc: e.updateStashTab(), Authenticated: true},
 
 		{Method: "GET", Path: "/:event_id/guilds", HandlerFunc: e.getGuilds()},
 		{Method: "PUT", Path: "/:event_id/guilds/:guildId", HandlerFunc: e.saveGuild(), Authenticated: true},
@@ -290,50 +291,35 @@ func getStringQueryParam(c *gin.Context, param string) *string {
 // @Produce json
 // @Security BearerAuth
 // @Param eventId path int true "Event Id"
+// @Param teamId path int true "Team Id"
 // @Success 200 {array} GuildStashTab
-// @Router /{eventId}/guild-stash [get]
+// @Router /{eventId}/teams/{teamId}/guild-stash [get]
 func (e *GuildStashController) getGuildStashForUser() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
 			return
 		}
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
+		teamUser, user, err := e.userService.GetTeamForUser(c, event)
 		if err != nil {
-			c.JSON(403, "unauthorized")
+			c.JSON(401, "unauthenticated")
 			return
 		}
-		tabs, err := e.guildStashService.GetGuildStashesForTeam(teamUser.TeamId)
+		teamId, err := strconv.Atoi(c.Param("teamId"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid team id"})
+			return
+		}
+		if teamUser.TeamId != teamId && !slices.Contains(user.Permissions, repository.PermissionAdmin) {
+			c.JSON(403, gin.H{"error": "unauthorized"})
+			return
+		}
+		tabs, err := e.guildStashService.GetGuildStashesForTeam(teamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(200, utils.Map(tabs, toModel))
-	}
-}
-
-// @id UpdateAccess
-// @Description Parses all user access for guild stash tabs
-// @Tags guild-stash
-// @Security BearerAuth
-// @Produce json
-// @Param eventId path int true "Event Id"
-// @Success 204
-// @Router /{eventId}/guild-stash/update-access [post]
-func (e *GuildStashController) updateAccess() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-		defer cancel()
-		err := cron.NewFetchingService(ctx, event, e.poeClient).DetermineStashAccess()
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		c.Status(204)
 	}
 }
 
@@ -343,17 +329,27 @@ func (e *GuildStashController) updateAccess() gin.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Param eventId path int true "Event Id"
+// @Param teamId path int true "Team Id"
 // @Param stash_id path string true "Stash Tab Id"
 // @Success 204
-// @Router /{eventId}/guild-stash/{stash_id}/update [post]
+// @Router /{eventId}/teams/{teamId}/guild-stash/{stash_id}/update [post]
 func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
 			return
 		}
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err != nil || !teamUser.IsTeamLead {
+		teamUser, user, err := e.userService.GetTeamForUser(c, event)
+		if err != nil {
+			c.JSON(401, "unauthenticated")
+			return
+		}
+		teamId, err := strconv.Atoi(c.Param("teamId"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid team id"})
+			return
+		}
+		if !(teamUser.IsTeamLead && teamUser.TeamId == teamId) && !slices.Contains(user.Permissions, repository.PermissionAdmin) {
 			c.JSON(403, "unauthorized")
 			return
 		}
@@ -384,17 +380,27 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Param eventId path int true "Event Id"
+// @Param teamId path int true "Team Id"
 // @Param stash_id path string true "Stash Tab Id"
 // @Success 200 {object} GuildStashTab
-// @Router /{eventId}/guild-stash/{stash_id} [patch]
+// @Router /{eventId}/teams/{teamId}/guild-stash/{stash_id} [patch]
 func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
 			return
 		}
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err != nil || !teamUser.IsTeamLead {
+		teamUser, user, err := e.userService.GetTeamForUser(c, event)
+		if err != nil {
+			c.JSON(401, "unauthenticated")
+			return
+		}
+		teamId, err := strconv.Atoi(c.Param("teamId"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid team id"})
+			return
+		}
+		if !(teamUser.IsTeamLead && teamUser.TeamId == teamId) && !slices.Contains(user.Permissions, repository.PermissionAdmin) {
 			c.JSON(403, "unauthorized")
 			return
 		}
@@ -414,13 +420,28 @@ func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Param eventId path int true "Event Id"
+// @Param teamId path int true "Team Id"
 // @Param stash_id path string true "Stash Tab Id"
 // @Success 200 {object} client.GuildStashTabGGG
-// @Router /{eventId}/guild-stash/{stash_id}  [get]
+// @Router /{eventId}/teams/{teamId}/guild-stash/{stash_id}  [get]
 func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		event := getEvent(c)
 		if event == nil {
+			return
+		}
+		teamUser, user, err := e.userService.GetTeamForUser(c, event)
+		if err != nil {
+			c.JSON(401, "unauthenticated")
+			return
+		}
+		teamId, err := strconv.Atoi(c.Param("teamId"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid team id"})
+			return
+		}
+		if teamUser.TeamId != teamId && !slices.Contains(user.Permissions, repository.PermissionAdmin) {
+			c.JSON(403, gin.H{"error": "unauthorized"})
 			return
 		}
 		stashId := c.Param("stash_id")
