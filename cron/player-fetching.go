@@ -257,6 +257,14 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 	if err != nil {
 		return nil, err
 	}
+	latestPobs, err := service.characterService.GetLatestPoBsForEvent(event.Id)
+	if err != nil {
+		return nil, err
+	}
+	pobMap := make(map[string]*repository.CharacterPob, len(latestPobs))
+	for _, pob := range latestPobs {
+		pobMap[pob.CharacterId] = pob
+	}
 	characterMap := make(map[int]*repository.Character, len(latestCharacters))
 	for _, character := range latestCharacters {
 		characterMap[*character.UserId] = character
@@ -273,7 +281,10 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 			player.New.Character.Class = character.Ascendancy
 			player.Old.Character.Class = character.Ascendancy
 			player.LastUpdateTimes.CharacterName = time.Now()
-
+			if pob, ok := pobMap[character.Id]; ok {
+				player.New.PoB = pob
+				player.Old.PoB = pob
+			}
 		}
 	}
 	return players, nil

@@ -59,6 +59,10 @@ func (c *CharacterService) GetCharactersForEvent(eventId int) ([]*repository.Cha
 	return c.characterRepository.GetCharactersForEvent(eventId)
 }
 
+func (c *CharacterService) GetLatestPoBsForEvent(eventId int) ([]*repository.CharacterPob, error) {
+	return c.characterRepository.GetLatestPoBsForEvent(eventId)
+}
+
 func (c *CharacterService) GetCharacterById(characterId string) (*repository.Character, error) {
 	return c.characterRepository.GetCharacterById(characterId)
 }
