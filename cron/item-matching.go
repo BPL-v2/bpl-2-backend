@@ -100,7 +100,7 @@ func (m *MatchingService) getItemMatches(
 			accountName = *stash.AccountName
 		}
 
-		userId := new(int)
+		var userId *int
 		teamId := stash.TeamId
 
 		if accountName != "" {
