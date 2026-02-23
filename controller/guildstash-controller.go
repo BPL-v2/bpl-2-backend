@@ -305,7 +305,7 @@ func (e *GuildStashController) getGuildStashForUser() gin.HandlerFunc {
 			c.JSON(401, "unauthenticated")
 			return
 		}
-		teamId, err := strconv.Atoi(c.Param("teamId"))
+		teamId, err := strconv.Atoi(c.Param("team_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": "invalid team id"})
 			return
@@ -344,7 +344,7 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 			c.JSON(401, "unauthenticated")
 			return
 		}
-		teamId, err := strconv.Atoi(c.Param("teamId"))
+		teamId, err := strconv.Atoi(c.Param("team_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": "invalid team id"})
 			return
@@ -395,7 +395,7 @@ func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 			c.JSON(401, "unauthenticated")
 			return
 		}
-		teamId, err := strconv.Atoi(c.Param("teamId"))
+		teamId, err := strconv.Atoi(c.Param("team_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": "invalid team id"})
 			return
@@ -435,7 +435,7 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 			c.JSON(401, "unauthenticated")
 			return
 		}
-		teamId, err := strconv.Atoi(c.Param("teamId"))
+		teamId, err := strconv.Atoi(c.Param("team_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": "invalid team id"})
 			return
