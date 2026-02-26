@@ -281,6 +281,7 @@ func (r *CharacterRepository) GetCharacterStatsForEvent(eventId int, cutoff time
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
 	query := `SELECT DISTINCT ON (character_id) 
+					p.ascendancy,
 					p.character_id,
 					p.created_at,
 					p.dps,
