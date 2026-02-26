@@ -165,24 +165,7 @@ func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) {
 	p.Armour = float2Int32(pob.Build.PlayerStats.Armour)
 	p.Evasion = float2Int32(pob.Build.PlayerStats.Evasion)
 	p.MovementSpeed = float2Int32(pob.Build.PlayerStats.EffectiveMovementSpeedMod * 100)
-	highestDps := 0.0
-	for _, skill := range pob.Build.FullDpsSkils {
-		if skill.Value > highestDps {
-			highestDps = skill.Value
-			if skill.Source != "" {
-				p.MainSkill = skill.Source
-			} else {
-				if matches := fullDpsSkillMultiplierRegex.FindStringSubmatch(skill.Stat); len(matches) == 2 {
-					p.MainSkill = matches[1]
-				} else {
-					p.MainSkill = skill.Stat
-				}
-			}
-		}
-	}
-	if p.MainSkill == "" {
-		fmt.Println("Warning: Main skill is empty for character", p.CharacterId)
-	}
+	p.MainSkill = pob.GetMainSkill()
 }
 
 type CharacterRepository struct {
