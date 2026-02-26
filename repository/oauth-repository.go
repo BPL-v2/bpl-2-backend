@@ -79,6 +79,7 @@ func (r *OauthRepository) GetOauthForTokenRefresh(provider Provider) (*Oauth, er
 		provider = ? AND
 		refresh_token != '' AND
 		refresh_expiry > NOW() AND
+		expiry <= NOW() + INTERVAL '1 day' AND
 		ABS(EXTRACT(EPOCH FROM (refresh_expiry - expiry))) > 1
 	`, provider).Order("expiry ASC").First(&oauth)
 	if result.Error != nil {

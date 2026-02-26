@@ -358,9 +358,16 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 			}
 			return 0
 		}, nil
+	case repository.NumberFieldBloodlineAscendancyPoints:
+		return func(p *Player) int {
+			if p.Character == nil {
+				return 0
+			}
+			return p.Character.GetBloodlinePoints()
+		}, nil
 	case repository.NumberFieldBloodlineAscendancy:
 		return func(p *Player) int {
-			if p.Character == nil || p.Character.GetBloodlinePoints() == 0 {
+			if p.Character == nil || p.Character.Passives.AlternateAscendancy == nil {
 				return 0
 			}
 			return 1

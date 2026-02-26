@@ -37,15 +37,16 @@ type NumberField string
 const (
 	NumberFieldStackSize NumberField = "STACK_SIZE"
 
-	NumberFieldPlayerLevel             NumberField = "PLAYER_LEVEL"
-	NumberFieldDelveDepth              NumberField = "DELVE_DEPTH"
-	NumberFieldDelveDepthPast100       NumberField = "DELVE_DEPTH_PAST_100"
-	NumberFieldPantheon                NumberField = "PANTHEON"
-	NumberFieldAscendancy              NumberField = "ASCENDANCY"
-	NumberFieldFullyAscended           NumberField = "FULLY_ASCENDED"
-	NumberFieldBloodlineAscendancy     NumberField = "BLOODLINE_ASCENDANCY"
-	NumberFieldPlayerScore             NumberField = "PLAYER_SCORE"
-	NumberFieldHasRareAscendancyPast90 NumberField = "HAS_RARE_ASCENDANCY_PAST_90"
+	NumberFieldPlayerLevel               NumberField = "PLAYER_LEVEL"
+	NumberFieldDelveDepth                NumberField = "DELVE_DEPTH"
+	NumberFieldDelveDepthPast100         NumberField = "DELVE_DEPTH_PAST_100"
+	NumberFieldPantheon                  NumberField = "PANTHEON"
+	NumberFieldAscendancy                NumberField = "ASCENDANCY"
+	NumberFieldFullyAscended             NumberField = "FULLY_ASCENDED"
+	NumberFieldBloodlineAscendancyPoints NumberField = "BLOODLINE_ASCENDANCY_POINTS"
+	NumberFieldBloodlineAscendancy       NumberField = "BLOODLINE_ASCENDANCY"
+	NumberFieldPlayerScore               NumberField = "PLAYER_SCORE"
+	NumberFieldHasRareAscendancyPast90   NumberField = "HAS_RARE_ASCENDANCY_PAST_90"
 
 	NumberFieldWeaponQuality NumberField = "WEAPON_QUALITY"
 	NumberFieldArmourQuality NumberField = "ARMOUR_QUALITY"
@@ -85,6 +86,7 @@ var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
 		NumberFieldPantheon,
 		NumberFieldAscendancy,
 		NumberFieldBloodlineAscendancy,
+		NumberFieldBloodlineAscendancyPoints,
 		NumberFieldFullyAscended,
 		NumberFieldPlayerScore,
 		NumberFieldWeaponQuality,
@@ -116,6 +118,7 @@ var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
 		NumberFieldPantheon,
 		NumberFieldAscendancy,
 		NumberFieldBloodlineAscendancy,
+		NumberFieldBloodlineAscendancyPoints,
 		NumberFieldFullyAscended,
 		NumberFieldPlayerScore,
 		NumberFieldWeaponQuality,
