@@ -74,6 +74,16 @@ type PathOfBuilding struct {
 	Items  []PoBItem `xml:"Items>Item"`
 }
 
+func (p *PathOfBuilding) GetMainSkill() string {
+	if p.Skills.ActiveSkillSet == 0 || len(p.Skills.SkillSets) == 0 || len(p.Skills.SkillSets[0].Skills) < p.Skills.ActiveSkillSet {
+		return ""
+	}
+	for _, gem := range p.Skills.SkillSets[0].Skills[p.Skills.ActiveSkillSet-1].Gems {
+		return gem.NameSpec
+	}
+	return ""
+}
+
 func (p *PathOfBuilding) GetPassives() []int {
 	nodes := strings.Split(p.Tree.Spec.Nodes, ",")
 	passives := make([]int, 0, len(nodes))
@@ -462,6 +472,17 @@ func (ps *PlayerStats) SetStat(stat string, value float64) {
 }
 
 func (b *Build) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	for _, attr := range start.Attr {
+		if attr.Name.Local == "mainSocketGroup" {
+			value, err := strconv.Atoi(attr.Value)
+			if err != nil {
+				return fmt.Errorf("invalid mainSocketGroup value %q: %w", attr.Value, err)
+			}
+			b.MainSocketGroup = value
+			break
+		}
+	}
+
 	for {
 		t, err := d.Token()
 		if err != nil {

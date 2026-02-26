@@ -303,6 +303,7 @@ func (c *CharacterService) UpdatePoBStats() error {
 			for itemId := range itemIndexes {
 				characterPob.Items = append(characterPob.Items, int32(itemId))
 			}
+			characterPob.MainSkill = pob.GetMainSkill()
 		}
 		err = c.characterRepository.SavePoBs(pobs)
 		if err != nil {
