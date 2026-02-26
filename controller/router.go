@@ -6,6 +6,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"fmt"
 	"slices"
 	"strconv"
 	"time"
@@ -60,6 +61,7 @@ func SetRoutes(r *gin.Engine) {
 		if len(route.RequiredRoles) > 0 {
 			handlerfuncs = append(handlerfuncs, AuthorizationMiddleware(route.RequiredRoles))
 		}
+		handlerfuncs = append(handlerfuncs, LoadEventMiddleware())
 		if route.RequiresUserSelf {
 			handlerfuncs = append(handlerfuncs, UserSelfMiddleware())
 		}
@@ -69,7 +71,6 @@ func SetRoutes(r *gin.Engine) {
 		if route.RequiresTeamLeader {
 			handlerfuncs = append(handlerfuncs, TeamLeaderMiddleware())
 		}
-		handlerfuncs = append(handlerfuncs, LoadEventMiddleware())
 		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
 		group.Handle(route.Method, route.Path, handlerfuncs...)
 	}
@@ -168,10 +169,16 @@ func TeamSelfMiddleware() gin.HandlerFunc {
 		}
 		teamId, err := strconv.Atoi(teamIdParam)
 		if err != nil {
+			fmt.Println("Error parsing team ID:", err)
 			r.AbortWithStatus(400)
 			return
 		}
 		event := getEvent(r)
+		if event == nil {
+			fmt.Println("Event not found in context")
+			r.AbortWithStatus(400)
+			return
+		}
 		teamService := service.NewUserService()
 		teamUser, _, err := teamService.GetTeamForUser(r, event)
 		if (err != nil || teamUser.TeamId != teamId) && !slices.Contains(getUserRoles(r), repository.PermissionAdmin) {
