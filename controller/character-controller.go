@@ -183,7 +183,7 @@ func (c *CharacterController) deletePoBExportHandler() gin.HandlerFunc {
 		}
 		roles := getUserRoles(ctx)
 		isAdmin := slices.Contains(roles, repository.PermissionAdmin)
-		if user.Id != userId || !isAdmin {
+		if user.Id != userId && !isAdmin {
 			ctx.JSON(403, gin.H{"error": "Forbidden"})
 			return
 		}
