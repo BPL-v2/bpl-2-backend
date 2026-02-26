@@ -26,7 +26,7 @@ func setupActivityController() []RouteInfo {
 	baseUrl := "/events/:event_id/activity"
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventActivitiesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
-		{Method: "GET", Path: "/:user_id", HandlerFunc: e.getEventActivitiesForUserHandler(), Authenticated: true},
+		{Method: "GET", Path: "/:user_id", HandlerFunc: e.getEventActivitiesForUserHandler(), Authenticated: true, RequiresUserSelf: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -85,22 +85,12 @@ func (e *ActivityController) getEventActivitiesForUserHandler() gin.HandlerFunc 
 			c.JSON(400, gin.H{"error": "Invalid user id"})
 			return
 		}
-		user, err := e.userService.GetUserFromAuthHeader(c)
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Not authenticated"})
-			return
-		}
-		if user.Id != userId {
-			c.JSON(403, gin.H{"error": "You are not allowed to view activities of other users"})
-			return
-		}
 		thresholdStr := c.DefaultQuery("threshold_seconds", "1800")
 		thresholdSeconds, err := strconv.Atoi(thresholdStr)
 		if err != nil || thresholdSeconds <= 0 {
 			c.JSON(400, gin.H{"error": "Invalid threshold_seconds"})
 			return
 		}
-
 		activity, err := e.activityService.CalculateActiveTime(userId, event, time.Duration(thresholdSeconds)*time.Second)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})

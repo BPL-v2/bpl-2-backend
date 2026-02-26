@@ -6,6 +6,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"slices"
 	"strconv"
 	"time"
 
@@ -14,11 +15,14 @@ import (
 )
 
 type RouteInfo struct {
-	Method        string
-	Path          string
-	HandlerFunc   gin.HandlerFunc
-	Authenticated bool
-	RequiredRoles []repository.Permission
+	Method             string
+	Path               string
+	HandlerFunc        gin.HandlerFunc
+	Authenticated      bool
+	RequiredRoles      []repository.Permission
+	RequiresUserSelf   bool
+	RequiresTeamSelf   bool
+	RequiresTeamLeader bool
 }
 
 func SetRoutes(r *gin.Engine) {
@@ -55,6 +59,15 @@ func SetRoutes(r *gin.Engine) {
 		}
 		if len(route.RequiredRoles) > 0 {
 			handlerfuncs = append(handlerfuncs, AuthorizationMiddleware(route.RequiredRoles))
+		}
+		if route.RequiresUserSelf {
+			handlerfuncs = append(handlerfuncs, UserSelfMiddleware())
+		}
+		if route.RequiresTeamSelf {
+			handlerfuncs = append(handlerfuncs, TeamSelfMiddleware())
+		}
+		if route.RequiresTeamLeader {
+			handlerfuncs = append(handlerfuncs, TeamLeaderMiddleware())
 		}
 		handlerfuncs = append(handlerfuncs, LoadEventMiddleware())
 		handlerfuncs = append(handlerfuncs, route.HandlerFunc)
@@ -121,6 +134,77 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 	}
 }
 
+func UserSelfMiddleware() gin.HandlerFunc {
+	return func(r *gin.Context) {
+		userId, ok := getUserId(r)
+		if !ok {
+			r.AbortWithStatus(401)
+			return
+		}
+		userIdParam := r.Param("user_id")
+		if userIdParam == "" {
+			r.Next()
+			return
+		}
+		userId, err := strconv.Atoi(userIdParam)
+		if err != nil {
+			r.AbortWithStatus(400)
+			return
+		}
+		if userId != userId && slices.Contains(getUserRoles(r), repository.PermissionAdmin) {
+			r.AbortWithStatus(403)
+			return
+		}
+		r.Next()
+	}
+}
+
+func TeamSelfMiddleware() gin.HandlerFunc {
+	return func(r *gin.Context) {
+		teamIdParam := r.Param("team_id")
+		if teamIdParam == "" {
+			r.Next()
+			return
+		}
+		teamId, err := strconv.Atoi(teamIdParam)
+		if err != nil {
+			r.AbortWithStatus(400)
+			return
+		}
+		event := getEvent(r)
+		teamService := service.NewUserService()
+		teamUser, _, err := teamService.GetTeamForUser(r, event)
+		if (err != nil || teamUser.TeamId != teamId) && !slices.Contains(getUserRoles(r), repository.PermissionAdmin) {
+			r.AbortWithStatus(403)
+			return
+		}
+		r.Next()
+	}
+}
+
+func TeamLeaderMiddleware() gin.HandlerFunc {
+	return func(r *gin.Context) {
+		teamIdParam := r.Param("team_id")
+		if teamIdParam == "" {
+			r.Next()
+			return
+		}
+		teamId, err := strconv.Atoi(teamIdParam)
+		if err != nil {
+			r.AbortWithStatus(400)
+			return
+		}
+		event := getEvent(r)
+		teamService := service.NewUserService()
+		teamUser, _, err := teamService.GetTeamForUser(r, event)
+		if (err != nil || teamUser.TeamId != teamId || !teamUser.IsTeamLead) && !slices.Contains(getUserRoles(r), repository.PermissionAdmin) {
+			r.AbortWithStatus(403)
+			return
+		}
+		r.Next()
+	}
+}
+
 func AuthorizationMiddleware(requiredRoles []repository.Permission) gin.HandlerFunc {
 	return func(r *gin.Context) {
 		userRoles := getUserRoles(r)
@@ -138,6 +222,26 @@ func AuthorizationMiddleware(requiredRoles []repository.Permission) gin.HandlerF
 		}
 		r.AbortWithStatus(403)
 	}
+}
+
+func getUserId(r *gin.Context) (userId int, ok bool) {
+	authHeader := r.Request.Header.Get("Authorization")
+	if len(authHeader) < 7 || authHeader[:7] != "Bearer " {
+		return 0, false
+	}
+	token, err := auth.ParseToken(authHeader[7:])
+	if err != nil {
+		return 0, false
+	}
+	claims := &auth.Claims{}
+	if !token.Valid {
+		return 0, false
+	}
+	claims.FromJWTClaims(token.Claims)
+	if err := claims.Valid(); err != nil {
+		return 0, false
+	}
+	return claims.UserId, true
 }
 
 func getUserRoles(r *gin.Context) (permissions []repository.Permission) {

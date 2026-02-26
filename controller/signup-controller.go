@@ -34,7 +34,7 @@ func setupSignupController() []RouteInfo {
 		{Method: "GET", Path: "", HandlerFunc: e.getSignupsForEvent(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/self", HandlerFunc: e.getPersonalSignupHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/self", HandlerFunc: e.createSignupHandler(), Authenticated: true},
-		{Method: "DELETE", Path: "/:user_id", HandlerFunc: e.deleteSignupHandler(), Authenticated: true},
+		{Method: "DELETE", Path: "/:user_id", HandlerFunc: e.deleteSignupHandler(), Authenticated: true, RequiresUserSelf: true},
 		{Method: "GET", Path: "/discord", HandlerFunc: getDiscordMembersHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 	}
 	for i, route := range routes {
@@ -177,16 +177,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 		}
 		userId, err := strconv.Atoi(c.Param("user_id"))
 		if err != nil {
-			c.JSON(400, gin.H{"error": "Invalid user id"})
-			return
-		}
-		user, err := e.userService.GetUserFromAuthHeader(c)
-		if err != nil {
-			c.JSON(401, gin.H{"error": "Not authenticated"})
-			return
-		}
-		if (user.Id != userId) && !user.HasOneOfPermissions(repository.PermissionAdmin, repository.PermissionManager) {
-			c.JSON(403, gin.H{"error": "Not authorized"})
+			c.JSON(400, gin.H{"error": "Invalid user ID"})
 			return
 		}
 		err = e.signupService.RemoveSignupForUser(userId, event.Id)

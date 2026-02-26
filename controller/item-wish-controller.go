@@ -26,9 +26,9 @@ func setupItemWishController() []RouteInfo {
 	e := NewItemWishController()
 	basePath := "events/:event_id/teams/:team_id/item_wishes"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getItemWishesForTeamHandler(), Authenticated: true},
-		{Method: "POST", Path: "", HandlerFunc: e.creatItemWishHandler(), Authenticated: true},
-		{Method: "PATCH", Path: "/:wish_id", HandlerFunc: e.changeItemWishHandler(), Authenticated: true},
+		{Method: "GET", Path: "", HandlerFunc: e.getItemWishesForTeamHandler(), Authenticated: true, RequiresTeamSelf: true},
+		{Method: "POST", Path: "", HandlerFunc: e.creatItemWishHandler(), Authenticated: true, RequiresTeamSelf: true},
+		{Method: "PATCH", Path: "/:wish_id", HandlerFunc: e.changeItemWishHandler(), Authenticated: true, RequiresTeamLeader: true},
 		{Method: "DELETE", Path: "/:wish_id", HandlerFunc: e.deleteItemWishHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
@@ -47,18 +47,11 @@ func setupItemWishController() []RouteInfo {
 // @Router /events/{event_id}/teams/{team_id}/item_wishes [get]
 func (e *ItemWishController) getItemWishesForTeamHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := getEvent(c)
 		teamId, err := strconv.Atoi(c.Param("team_id"))
 		if err != nil {
 			c.JSON(400, gin.H{"error": "Invalid team ID"})
 			return
 		}
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
-		if err != nil || teamId != teamUser.TeamId {
-			c.JSON(403, gin.H{"error": "You are not part of this team"})
-			return
-		}
-
 		itemWishes, err := e.itemWishService.GetItemWishesForTeam(teamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Failed to get item wishes"})
@@ -81,10 +74,14 @@ func (e *ItemWishController) getItemWishesForTeamHandler() gin.HandlerFunc {
 // @Router /events/{event_id}/teams/{team_id}/item_wishes [post]
 func (e *ItemWishController) creatItemWishHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := getEvent(c)
-		teamUser, _, err := e.userService.GetTeamForUser(c, event)
+		userId, ok := getUserId(c)
+		if !ok {
+			c.JSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+		teamId, err := strconv.Atoi(c.Param("team_id"))
 		if err != nil {
-			c.JSON(403, gin.H{"error": "You are not part of a team"})
+			c.JSON(400, gin.H{"error": "Invalid team ID"})
 			return
 		}
 
@@ -95,14 +92,14 @@ func (e *ItemWishController) creatItemWishHandler() gin.HandlerFunc {
 		}
 
 		itemWish := &repository.ItemWish{
-			UserID:    teamUser.UserId,
-			TeamID:    teamUser.TeamId,
+			UserID:    userId,
+			TeamID:    teamId,
 			ItemField: itemWishReq.ItemField,
 			Value:     itemWishReq.Value,
 			Fulfilled: false,
 		}
 
-		savedItemWish, err := e.itemWishService.CreateItemWish(itemWish, teamUser.TeamId)
+		savedItemWish, err := e.itemWishService.CreateItemWish(itemWish, teamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Failed to save item wish"})
 			return

@@ -74,12 +74,8 @@ func (c *CharacterService) GetCharacterStatsForEvent(eventId int, cutoff time.Ti
 	return c.characterRepository.GetCharacterStatsForEvent(eventId, cutoff)
 }
 
-func (c *CharacterService) GetTeamAtlasesForEvent(eventId int, userId int) ([]*repository.AtlasTree, error) {
-	team, err := c.teamRepository.GetTeamForUser(eventId, userId)
-	if err != nil {
-		return []*repository.AtlasTree{}, nil
-	}
-	return c.atlasService.GetLatestAtlasesForEventAndTeam(eventId, team.TeamId)
+func (c *CharacterService) GetTeamAtlasesForEvent(eventId int, teamId int) ([]*repository.AtlasTree, error) {
+	return c.atlasService.GetLatestAtlasesForEventAndTeam(eventId, teamId)
 }
 
 func (c *CharacterService) GetPobForIdBeforeTimestamp(characterId string, timestamp time.Time) (*repository.CharacterPob, error) {

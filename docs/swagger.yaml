@@ -2866,31 +2866,6 @@ paths:
       - BearerAuth: []
       tags:
       - activity
-  /events/{event_id}/atlas:
-    get:
-      consumes:
-      - application/json
-      description: Get atlas trees for your team for an event
-      operationId: GetTeamAtlasesForEvent
-      parameters:
-      - description: Event ID
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Atlas'
-            type: array
-      security:
-      - BearerAuth: []
-      tags:
-      - atlas
   /events/{event_id}/characters:
     get:
       consumes:
@@ -3548,14 +3523,21 @@ paths:
       - BearerAuth: []
       tags:
       - submission
-  /events/{event_id}/suggestions:
+  /events/{event_id}/team/{team_id}/atlas:
     get:
-      description: Fetches all suggestions for your team for an event
-      operationId: GetTeamSuggestions
+      consumes:
+      - application/json
+      description: Get atlas trees for your team for an event
+      operationId: GetTeamAtlasesForEvent
       parameters:
-      - description: Event Id
+      - description: Event ID
         in: path
         name: event_id
+        required: true
+        type: integer
+      - description: Team ID
+        in: path
+        name: team_id
         required: true
         type: integer
       produces:
@@ -3565,67 +3547,12 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/TeamSuggestion'
+              $ref: '#/definitions/Atlas'
             type: array
       security:
       - BearerAuth: []
       tags:
-      - team
-  /events/{event_id}/suggestions/{objective_id}:
-    delete:
-      description: Deletes a suggestion for an objective for your team for an event
-      operationId: DeleteObjectiveTeamSuggestion
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Objective Id
-        in: path
-        name: objective_id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: No Content
-      security:
-      - BearerAuth: []
-      tags:
-      - team
-    put:
-      consumes:
-      - application/json
-      description: Creates a suggestion for an objective for your team for an event
-      operationId: CreateObjectiveTeamSuggestion
-      parameters:
-      - description: Event Id
-        in: path
-        name: event_id
-        required: true
-        type: integer
-      - description: Objective Id
-        in: path
-        name: objective_id
-        required: true
-        type: integer
-      - description: Suggestion data
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/TeamSuggestion'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-      security:
-      - BearerAuth: []
-      tags:
-      - team
+      - atlas
   /events/{event_id}/teams:
     get:
       description: Fetches all teams for an event
@@ -3840,6 +3767,99 @@ paths:
             $ref: '#/definitions/ItemWish'
       tags:
       - item_wishes
+  /events/{event_id}/teams/{team_id}/suggestions:
+    get:
+      description: Fetches all suggestions for your team for an event
+      operationId: GetTeamSuggestions
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team Id
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/TeamSuggestion'
+            type: array
+      security:
+      - BearerAuth: []
+      tags:
+      - team
+  /events/{event_id}/teams/{team_id}/suggestions/{objective_id}:
+    delete:
+      description: Deletes a suggestion for an objective for your team for an event
+      operationId: DeleteObjectiveTeamSuggestion
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team Id
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Objective Id
+        in: path
+        name: objective_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+      security:
+      - BearerAuth: []
+      tags:
+      - team
+    put:
+      consumes:
+      - application/json
+      description: Creates a suggestion for an objective for your team for an event
+      operationId: CreateObjectiveTeamSuggestion
+      parameters:
+      - description: Event Id
+        in: path
+        name: event_id
+        required: true
+        type: integer
+      - description: Team Id
+        in: path
+        name: team_id
+        required: true
+        type: integer
+      - description: Objective Id
+        in: path
+        name: objective_id
+        required: true
+        type: integer
+      - description: Suggestion data
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TeamSuggestion'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+      security:
+      - BearerAuth: []
+      tags:
+      - team
   /events/{event_id}/teams/users:
     get:
       description: Fetches all users of an event sorted by team and role

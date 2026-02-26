@@ -25,11 +25,11 @@ func NewTeamSuggestionController() *TeamSuggestionController {
 
 func setupTeamSuggestionController() []RouteInfo {
 	e := NewTeamSuggestionController()
-	basePath := "events/:event_id/suggestions"
+	basePath := "events/:event_id/teams/:team_id/suggestions"
 	routes := []RouteInfo{
-		{Method: "GET", Path: "", HandlerFunc: e.getTeamSuggestionsHandler(), Authenticated: true},
-		{Method: "PUT", Path: "/:objective_id", HandlerFunc: e.createTeamSuggestionHandler(), Authenticated: true},
-		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteTeamSuggestionHandler(), Authenticated: true},
+		{Method: "GET", Path: "", HandlerFunc: e.getTeamSuggestionsHandler(), Authenticated: true, RequiresTeamSelf: true},
+		{Method: "PUT", Path: "/:objective_id", HandlerFunc: e.createTeamSuggestionHandler(), Authenticated: true, RequiresTeamLeader: true},
+		{Method: "DELETE", Path: "/:objective_id", HandlerFunc: e.deleteTeamSuggestionHandler(), Authenticated: true, RequiresTeamLeader: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = basePath + route.Path
@@ -60,15 +60,17 @@ func (e *TeamSuggestionController) GetTeamUser(c *gin.Context, requiresTeamLead 
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
 // @Success 200 {array} TeamSuggestion
-// @Router /events/{event_id}/suggestions [get]
+// @Router /events/{event_id}/teams/{team_id}/suggestions [get]
 func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		teamUser := e.GetTeamUser(c, false)
-		if teamUser == nil {
+		teamId, err := strconv.Atoi(c.Param("team_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "Invalid team ID"})
 			return
 		}
-		suggestions, err := e.teamSuggestionService.GetSuggestionsForTeam(teamUser.TeamId)
+		suggestions, err := e.teamSuggestionService.GetSuggestionsForTeam(teamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -84,14 +86,16 @@ func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
 // @Param objective_id path int true "Objective Id"
 // @Param body body TeamSuggestion true "Suggestion data"
 // @Success 201
-// @Router /events/{event_id}/suggestions/{objective_id} [PUT]
+// @Router /events/{event_id}/teams/{team_id}/suggestions/{objective_id} [PUT]
 func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		teamUser := e.GetTeamUser(c, true)
-		if teamUser == nil {
+		teamId, err := strconv.Atoi(c.Param("team_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "Invalid team ID"})
 			return
 		}
 		objectiveId, err := strconv.Atoi(c.Param("objective_id"))
@@ -104,7 +108,7 @@ func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.teamSuggestionService.SaveSuggestion(objectiveId, teamUser.TeamId, suggestion.Extra)
+		err = e.teamSuggestionService.SaveSuggestion(objectiveId, teamId, suggestion.Extra)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
@@ -119,13 +123,15 @@ func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
 // @Param objective_id path int true "Objective Id"
 // @Success 204
-// @Router /events/{event_id}/suggestions/{objective_id} [delete]
+// @Router /events/{event_id}/teams/{team_id}/suggestions/{objective_id} [delete]
 func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		teamUser := e.GetTeamUser(c, true)
-		if teamUser == nil {
+		teamId, err := strconv.Atoi(c.Param("team_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "Invalid team ID"})
 			return
 		}
 		objectiveId, err := strconv.Atoi(c.Param("objective_id"))
@@ -133,7 +139,7 @@ func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.teamSuggestionService.DeleteSuggestion(objectiveId, teamUser.TeamId)
+		err = e.teamSuggestionService.DeleteSuggestion(objectiveId, teamId)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

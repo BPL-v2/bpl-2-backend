@@ -5,6 +5,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,7 @@ func setupLadderController(poeClient *client.PoEClient) []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "/ladder", HandlerFunc: c.getLadderHandler()},
 		{Method: "GET", Path: "/characters", HandlerFunc: c.GetCharactersForEvent()},
-		{Method: "GET", Path: "/atlas", HandlerFunc: c.getAtlasesForEvent(), Authenticated: true},
+		{Method: "GET", Path: "/team/:team_id/atlas", HandlerFunc: c.getAtlasesForEvent(), Authenticated: true, RequiresTeamSelf: true},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -129,20 +130,21 @@ func (c *LadderController) GetCharactersForEvent() gin.HandlerFunc {
 // @Produce json
 // @Security BearerAuth
 // @Param event_id path int true "Event ID"
+// @Param team_id path int true "Team ID"
 // @Success 200 {array} Atlas
-// @Router /events/{event_id}/atlas [get]
+// @Router /events/{event_id}/team/{team_id}/atlas [get]
 func (c *LadderController) getAtlasesForEvent() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		event := getEvent(ctx)
 		if event == nil {
 			return
 		}
-		user, err := c.userService.GetUserFromAuthHeader(ctx)
+		teamId, err := strconv.Atoi(ctx.Param("team_id"))
 		if err != nil {
-			ctx.JSON(401, gin.H{"error": "Not authenticated"})
+			ctx.JSON(400, gin.H{"error": "Invalid team ID"})
 			return
 		}
-		atlases, err := c.characterService.GetTeamAtlasesForEvent(event.Id, user.Id)
+		atlases, err := c.characterService.GetTeamAtlasesForEvent(event.Id, teamId)
 		if err != nil {
 			ctx.JSON(500, gin.H{"error": err.Error()})
 			return

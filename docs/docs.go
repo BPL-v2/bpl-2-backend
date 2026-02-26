@@ -349,46 +349,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/{event_id}/atlas": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Get atlas trees for your team for an event",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "atlas"
-                ],
-                "operationId": "GetTeamAtlasesForEvent",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event ID",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/Atlas"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/events/{event_id}/characters": {
             "get": {
                 "description": "Get all characters for an event",
@@ -1417,26 +1377,36 @@ const docTemplate = `{
                 }
             }
         },
-        "/events/{event_id}/suggestions": {
+        "/events/{event_id}/team/{team_id}/atlas": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches all suggestions for your team for an event",
+                "description": "Get atlas trees for your team for an event",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "team"
+                    "atlas"
                 ],
-                "operationId": "GetTeamSuggestions",
+                "operationId": "GetTeamAtlasesForEvent",
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "Event Id",
+                        "description": "Event ID",
                         "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team ID",
+                        "name": "team_id",
                         "in": "path",
                         "required": true
                     }
@@ -1447,95 +1417,9 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/TeamSuggestion"
+                                "$ref": "#/definitions/Atlas"
                             }
                         }
-                    }
-                }
-            }
-        },
-        "/events/{event_id}/suggestions/{objective_id}": {
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a suggestion for an objective for your team for an event",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "team"
-                ],
-                "operationId": "CreateObjectiveTeamSuggestion",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Objective Id",
-                        "name": "objective_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Suggestion data",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/TeamSuggestion"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created"
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes a suggestion for an objective for your team for an event",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "team"
-                ],
-                "operationId": "DeleteObjectiveTeamSuggestion",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Event Id",
-                        "name": "event_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Objective Id",
-                        "name": "objective_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
                     }
                 }
             }
@@ -1937,6 +1821,150 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/ItemWish"
                         }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/teams/{team_id}/suggestions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches all suggestions for your team for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "GetTeamSuggestions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team Id",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/TeamSuggestion"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/events/{event_id}/teams/{team_id}/suggestions/{objective_id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a suggestion for an objective for your team for an event",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "CreateObjectiveTeamSuggestion",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team Id",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Objective Id",
+                        "name": "objective_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Suggestion data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TeamSuggestion"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a suggestion for an objective for your team for an event",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "team"
+                ],
+                "operationId": "DeleteObjectiveTeamSuggestion",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Event Id",
+                        "name": "event_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Team Id",
+                        "name": "team_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Objective Id",
+                        "name": "objective_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
