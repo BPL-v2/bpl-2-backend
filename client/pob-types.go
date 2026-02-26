@@ -78,7 +78,7 @@ func (p *PathOfBuilding) GetMainSkill() string {
 	if p.Skills.ActiveSkillSet == 0 || len(p.Skills.SkillSets) == 0 || len(p.Skills.SkillSets[0].Skills) < p.Skills.ActiveSkillSet {
 		return ""
 	}
-	for _, gem := range p.Skills.SkillSets[0].Skills[p.Skills.ActiveSkillSet-1].Gems {
+	for _, gem := range p.Skills.SkillSets[0].Skills[p.Build.MainSocketGroup-1].Gems {
 		return gem.NameSpec
 	}
 	return ""
