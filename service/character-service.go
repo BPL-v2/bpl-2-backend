@@ -313,3 +313,11 @@ func (c *CharacterService) UpdatePoBStats() error {
 	}
 	return nil
 }
+
+func (c *CharacterService) GetPoBById(pobId int) (*repository.CharacterPob, error) {
+	return c.characterRepository.GetPoBById(pobId)
+}
+
+func (c *CharacterService) DeletePoB(pobId int) error {
+	return c.characterRepository.DeletePoB(pobId)
+}

@@ -6,6 +6,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"slices"
 	"strconv"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 
 type CharacterController struct {
 	characterService      *service.CharacterService
+	eventService          *service.EventService
 	userService           *service.UserService
 	playerFetchingService *cron.PlayerFetchingService
 }
@@ -22,6 +24,7 @@ type CharacterController struct {
 func NewCharacterController(poeClient *client.PoEClient) *CharacterController {
 	return &CharacterController{
 		characterService:      service.NewCharacterService(poeClient),
+		eventService:          service.NewEventService(),
 		userService:           service.NewUserService(),
 		playerFetchingService: cron.NewPlayerFetchingService(poeClient),
 	}
@@ -35,6 +38,7 @@ func setupCharacterController(poeClient *client.PoEClient) []RouteInfo {
 		{Method: "GET", Path: "/:character_id", HandlerFunc: e.getCharacterHistoryHandler()},
 		{Method: "PATCH", Path: "/:character_id", HandlerFunc: e.updateCharacterHandler()},
 		{Method: "GET", Path: "/:character_id/pobs", HandlerFunc: e.getPoBExportHandler()},
+		{Method: "DELETE", Path: "/:character_id/pobs/:pob_id", HandlerFunc: e.deletePoBExportHandler(), Authenticated: true},
 		// {Method: "GET", Path: "/:user_id/:event_id/:character_name", HandlerFunc: e.getTimeSeries()},
 	}
 	for i, route := range routes {
@@ -146,6 +150,63 @@ func (c *CharacterController) getCharacterHistoryHandler() gin.HandlerFunc {
 			return
 		}
 		ctx.JSON(200, utils.Map(stats, toCharacterStatResponse))
+	}
+}
+
+// @id DeletePoBExport
+// @Description Delete a PoB export for a character
+// @Tags characters
+// @Accept json
+// @Produce json
+// @Param user_id path int true "User ID"
+// @Param character_id path string true "Character ID"
+// @Param pob_id path int true "PoB Export ID"
+// @Success 204 "No Content"
+// @Router /users/{user_id}/characters/{character_id}/pobs/{pob_id} [delete]
+func (c *CharacterController) deletePoBExportHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		characterId := ctx.Param("character_id")
+		pobId, err := strconv.Atoi(ctx.Param("pob_id"))
+		if err != nil {
+			ctx.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		userId, err := strconv.Atoi(ctx.Param("user_id"))
+		if err != nil {
+			ctx.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := c.userService.GetUserFromAuthHeader(ctx)
+		if err != nil {
+			ctx.JSON(401, gin.H{"error": "Not authenticated"})
+			return
+		}
+		roles := getUserRoles(ctx)
+		isAdmin := slices.Contains(roles, repository.PermissionAdmin)
+		if user.Id != userId || !isAdmin {
+			ctx.JSON(403, gin.H{"error": "Forbidden"})
+			return
+		}
+		character, err := c.characterService.GetCharacterById(characterId)
+		if err != nil {
+			ctx.String(404, "character not found")
+			return
+		}
+		event, err := c.eventService.GetEventById(character.EventId)
+		if err != nil {
+			ctx.String(404, "event not found")
+			return
+		}
+		if event.EventEndTime.After(time.Now()) && !isAdmin {
+			ctx.JSON(403, gin.H{"error": "Cannot delete PoB export for character in an active event"})
+			return
+		}
+		err = c.characterService.DeletePoB(pobId)
+		if err != nil {
+			ctx.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.Status(204)
 	}
 }
 

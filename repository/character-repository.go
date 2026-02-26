@@ -384,3 +384,16 @@ func (r *CharacterRepository) GetHighestCharacterLevelForEventsForUsers(userIds 
 	}
 	return resultMap, nil
 }
+
+func (r *CharacterRepository) DeletePoB(pobId int) error {
+	return r.DB.Delete(&CharacterPob{}, pobId).Error
+}
+
+func (r *CharacterRepository) GetPoBById(pobId int) (*CharacterPob, error) {
+	charData := &CharacterPob{}
+	err := r.DB.Where("id = ?", pobId).First(charData).Error
+	if err != nil {
+		return nil, fmt.Errorf("error getting PoB with id %d: %w", pobId, err)
+	}
+	return charData, nil
+}

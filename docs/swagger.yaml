@@ -2123,6 +2123,7 @@ definitions:
     - PANTHEON
     - ASCENDANCY
     - FULLY_ASCENDED
+    - BLOODLINE_ASCENDANCY_POINTS
     - BLOODLINE_ASCENDANCY
     - PLAYER_SCORE
     - HAS_RARE_ASCENDANCY_PAST_90
@@ -2157,6 +2158,7 @@ definitions:
     - NumberFieldPantheon
     - NumberFieldAscendancy
     - NumberFieldFullyAscended
+    - NumberFieldBloodlineAscendancyPoints
     - NumberFieldBloodlineAscendancy
     - NumberFieldPlayerScore
     - NumberFieldHasRareAscendancyPast90
@@ -4267,6 +4269,35 @@ paths:
             items:
               $ref: '#/definitions/PoB'
             type: array
+      tags:
+      - characters
+  /users/{user_id}/characters/{character_id}/pobs/{pob_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a PoB export for a character
+      operationId: DeletePoBExport
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Character ID
+        in: path
+        name: character_id
+        required: true
+        type: string
+      - description: PoB Export ID
+        in: path
+        name: pob_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
       tags:
       - characters
   /users/remove-auth:

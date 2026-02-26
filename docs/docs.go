@@ -2626,6 +2626,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{user_id}/characters/{character_id}/pobs/{pob_id}": {
+            "delete": {
+                "description": "Delete a PoB export for a character",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "characters"
+                ],
+                "operationId": "DeletePoBExport",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Character ID",
+                        "name": "character_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "PoB Export ID",
+                        "name": "pob_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                }
+            }
+        },
         "/{eventId}/guilds": {
             "get": {
                 "security": [
@@ -6088,6 +6131,7 @@ const docTemplate = `{
                 "PANTHEON",
                 "ASCENDANCY",
                 "FULLY_ASCENDED",
+                "BLOODLINE_ASCENDANCY_POINTS",
                 "BLOODLINE_ASCENDANCY",
                 "PLAYER_SCORE",
                 "HAS_RARE_ASCENDANCY_PAST_90",
@@ -6122,6 +6166,7 @@ const docTemplate = `{
                 "NumberFieldPantheon",
                 "NumberFieldAscendancy",
                 "NumberFieldFullyAscended",
+                "NumberFieldBloodlineAscendancyPoints",
                 "NumberFieldBloodlineAscendancy",
                 "NumberFieldPlayerScore",
                 "NumberFieldHasRareAscendancyPast90",
