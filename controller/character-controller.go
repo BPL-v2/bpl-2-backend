@@ -224,6 +224,7 @@ type Character struct {
 }
 
 type PoB struct {
+	Id            int       `json:"id" binding:"required"`
 	ExportString  string    `json:"export_string" binding:"required"`
 	Level         int       `json:"level" binding:"required"`
 	Ascendancy    string    `json:"ascendancy" binding:"required"`
@@ -247,6 +248,7 @@ func toPoBResponse(pob *repository.CharacterPob) *PoB {
 		return nil
 	}
 	return &PoB{
+		Id:            pob.Id,
 		ExportString:  pob.Export.ToString(),
 		Level:         pob.Level,
 		Ascendancy:    pob.Ascendancy,

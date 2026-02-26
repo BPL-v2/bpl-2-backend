@@ -5278,6 +5278,7 @@ const docTemplate = `{
                 "evasion",
                 "export_string",
                 "hp",
+                "id",
                 "level",
                 "main_skill",
                 "mana",
@@ -5312,6 +5313,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "hp": {
+                    "type": "integer"
+                },
+                "id": {
                     "type": "integer"
                 },
                 "level": {
