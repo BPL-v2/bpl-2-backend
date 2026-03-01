@@ -97,8 +97,8 @@ func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, 
 	return stashesToPersist, nil
 }
 
-func (s *GuildStashService) SwitchStashFetch(stashId string, eventId int, fetchEnabled bool, priorityFetch bool) error {
-	return s.GuildStashRepository.SwitchStashFetch(stashId, eventId, fetchEnabled, priorityFetch)
+func (s *GuildStashService) SwitchStashFetch(stashId string, teamId int, fetchEnabled bool, priorityFetch bool) error {
+	return s.GuildStashRepository.SwitchStashFetch(stashId, teamId, fetchEnabled, priorityFetch)
 }
 
 func (s *GuildStashService) SaveGuildstashLogs(stashLogs []*repository.GuildStashChangelog) error {

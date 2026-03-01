@@ -360,17 +360,19 @@ type TabSwitchRequest struct {
 // @Router /{eventId}/teams/{teamId}/guild-stash/{stash_id} [patch]
 func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		event := getEvent(c)
-		if event == nil {
-			return
-		}
 		stashId := c.Param("stash_id")
 		var req TabSwitchRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(400, gin.H{"error": "invalid request"})
 			return
 		}
-		err := e.guildStashService.SwitchStashFetch(stashId, event.Id, req.FetchEnabled, req.PriorityFetch)
+		teamId, err := strconv.Atoi(c.Param("team_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid team id"})
+			return
+		}
+
+		err = e.guildStashService.SwitchStashFetch(stashId, teamId, req.FetchEnabled, req.PriorityFetch)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
