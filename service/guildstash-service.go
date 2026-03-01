@@ -31,8 +31,8 @@ func (s *GuildStashService) GetGuildStashesForUserForEvent(user repository.User,
 func (s *GuildStashService) GetGuildStashesForTeam(teamId int) ([]*repository.GuildStashTab, error) {
 	return s.GuildStashRepository.GetByTeam(teamId)
 }
-func (s *GuildStashService) GetGuildStash(tabId string, eventId int, preloads ...string) (*repository.GuildStashTab, error) {
-	return s.GuildStashRepository.GetById(tabId, eventId, preloads...)
+func (s *GuildStashService) GetGuildStash(tabId string, eventId int) (*repository.GuildStashTab, error) {
+	return s.GuildStashRepository.GetById(tabId, eventId)
 }
 
 func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, event *repository.Event) ([]*repository.GuildStashTab, error) {
@@ -97,8 +97,8 @@ func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, 
 	return stashesToPersist, nil
 }
 
-func (s *GuildStashService) SwitchStashFetch(stashId string, eventId int) (*repository.GuildStashTab, error) {
-	return s.GuildStashRepository.SwitchStashFetch(stashId, eventId)
+func (s *GuildStashService) SwitchStashFetch(stashId string, eventId int, fetchEnabled bool, priorityFetch bool) error {
+	return s.GuildStashRepository.SwitchStashFetch(stashId, eventId, fetchEnabled, priorityFetch)
 }
 
 func (s *GuildStashService) SaveGuildstashLogs(stashLogs []*repository.GuildStashChangelog) error {

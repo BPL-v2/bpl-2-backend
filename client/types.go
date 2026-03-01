@@ -580,6 +580,17 @@ func (g *GuildStashTabGGG) FlatMap() []*GuildStashTabGGG {
 	return result
 }
 
+func (g *GuildStashTabGGG) GetHash() [32]byte {
+	idAggregate := g.Id
+	for _, item := range utils.Deref(g.Items) {
+		idAggregate += item.Id
+		if item.StackSize != nil {
+			idAggregate += fmt.Sprint(*item.StackSize)
+		}
+	}
+	return sha256.Sum256([]byte(idAggregate))
+}
+
 type AtlasPassiveTree struct {
 	Name   string `json:"name"`
 	Hashes []int  `json:"hashes"`

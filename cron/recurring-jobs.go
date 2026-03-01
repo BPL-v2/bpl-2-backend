@@ -109,8 +109,6 @@ func (s *RecurringJobService) StartJob(job *RecurringJob) error {
 		return s.FetchStashChanges(job)
 	case repository.EvaluateStashChanges:
 		return s.EvaluateStashChanges(job)
-	// case CalculateScores:
-	// 	return s.CalculateScores(job)
 	case repository.FetchCharacterData:
 		return s.FetchCharacterData(job)
 	case repository.FetchGuildStashes:

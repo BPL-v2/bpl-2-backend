@@ -82,6 +82,9 @@ func (r *StashChangeRepository) SaveStashChangesConditionally(message StashChang
 		if err != nil {
 			return err
 		}
+		if len(message.Stashes) == 0 {
+			return nil
+		}
 		data, err := json.Marshal(message)
 		if err != nil {
 			return err

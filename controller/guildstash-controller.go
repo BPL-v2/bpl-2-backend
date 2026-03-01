@@ -342,6 +342,11 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 	}
 }
 
+type TabSwitchRequest struct {
+	FetchEnabled  bool `json:"fetch_enabled"`
+	PriorityFetch bool `json:"priority_fetch"`
+}
+
 // @id SwitchStashFetching
 // @Description Enables fetching for a specific guild stash tab
 // @Tags guild-stash
@@ -350,7 +355,8 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 // @Param eventId path int true "Event Id"
 // @Param teamId path int true "Team Id"
 // @Param stash_id path string true "Stash Tab Id"
-// @Success 200 {object} GuildStashTab
+// @Param body body TabSwitchRequest true "Request body"
+// @Success 204
 // @Router /{eventId}/teams/{teamId}/guild-stash/{stash_id} [patch]
 func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -359,12 +365,17 @@ func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 			return
 		}
 		stashId := c.Param("stash_id")
-		tab, err := e.guildStashService.SwitchStashFetch(stashId, event.Id)
+		var req TabSwitchRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": "invalid request"})
+			return
+		}
+		err := e.guildStashService.SwitchStashFetch(stashId, event.Id, req.FetchEnabled, req.PriorityFetch)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(200, toModel(tab))
+		c.Status(204)
 	}
 }
 
@@ -385,8 +396,9 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 			return
 		}
 		stashId := c.Param("stash_id")
-		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id, "Children")
+		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id)
 		if err != nil || tab.Raw == "" || tab.Raw == "{}" {
+			fmt.Printf("Error fetching guild stash tab: %v\n", err)
 			c.JSON(404, gin.H{"error": "stash tab not found"})
 			return
 		}
@@ -402,15 +414,16 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 }
 
 type GuildStashTab struct {
-	Id           string    `json:"id" binding:"required"`
-	Name         string    `json:"name" binding:"required"`
-	Type         string    `json:"type" binding:"required"`
-	Index        *int      `json:"index"`
-	Color        *string   `json:"color"`
-	ParentId     *string   `json:"parent_id"`
-	FetchEnabled bool      `json:"fetch_enabled" binding:"required"`
-	LastFetch    time.Time `json:"last_fetch" binding:"required"`
-	UserIds      []int     `json:"user_ids" binding:"required"`
+	Id            string    `json:"id" binding:"required"`
+	Name          string    `json:"name" binding:"required"`
+	Type          string    `json:"type" binding:"required"`
+	Index         *int      `json:"index"`
+	Color         *string   `json:"color"`
+	ParentId      *string   `json:"parent_id"`
+	FetchEnabled  bool      `json:"fetch_enabled" binding:"required"`
+	PriorityFetch bool      `json:"priority_fetch" binding:"required"`
+	LastFetch     time.Time `json:"last_fetch" binding:"required"`
+	UserIds       []int     `json:"user_ids" binding:"required"`
 }
 
 func toModel(tab *repository.GuildStashTab) *GuildStashTab {
@@ -418,15 +431,16 @@ func toModel(tab *repository.GuildStashTab) *GuildStashTab {
 		return nil
 	}
 	return &GuildStashTab{
-		Id:           tab.Id,
-		Name:         tab.Name,
-		Type:         tab.Type,
-		Index:        tab.Index,
-		Color:        tab.Color,
-		ParentId:     tab.ParentId,
-		FetchEnabled: tab.FetchEnabled,
-		LastFetch:    tab.LastFetch,
-		UserIds:      utils.Map(tab.UserIds, func(id int32) int { return int(id) }),
+		Id:            tab.Id,
+		Name:          tab.Name,
+		Type:          tab.Type,
+		Index:         tab.Index,
+		Color:         tab.Color,
+		ParentId:      tab.ParentId,
+		FetchEnabled:  tab.FetchEnabled,
+		PriorityFetch: tab.PriorityFetch,
+		LastFetch:     tab.LastFetch,
+		UserIds:       utils.Map(tab.UserIds, func(id int32) int { return int(id) }),
 	}
 }
 

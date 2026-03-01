@@ -1186,6 +1186,8 @@ definitions:
         type: string
       parent_id:
         type: string
+      priority_fetch:
+        type: boolean
       type:
         type: string
       user_ids:
@@ -1197,6 +1199,7 @@ definitions:
     - id
     - last_fetch
     - name
+    - priority_fetch
     - type
     - user_ids
     type: object
@@ -1727,6 +1730,13 @@ definitions:
     required:
     - approval_status
     type: object
+  TabSwitchRequest:
+    properties:
+      fetch_enabled:
+        type: boolean
+      priority_fetch:
+        type: boolean
+    type: object
   Team:
     properties:
       abbreviation:
@@ -2109,14 +2119,12 @@ definitions:
     - EvaluateStashChanges
     - FetchCharacterData
     - FetchGuildStashes
-    - DetermineGuildStashAccess
     type: string
     x-enum-varnames:
     - FetchStashChanges
     - EvaluateStashChanges
     - FetchCharacterData
     - FetchGuildStashes
-    - DetermineGuildStashAccess
   NumberField:
     enum:
     - STACK_SIZE
@@ -2282,6 +2290,7 @@ definitions:
     - character_inactivity_duration
     - ladder_update_interval
     - guildstash_update_interval
+    - guildstash_priority_fetch_interval
     - public_stash_update_interval
     type: string
     x-enum-varnames:
@@ -2296,6 +2305,7 @@ definitions:
     - InactivityDuration
     - LadderUpdateInterval
     - GuildstashUpdateInterval
+    - GuildstashPriorityFetchInterval
     - PublicStashUpdateInterval
   ApplicationStatus:
     enum:
@@ -2617,13 +2627,17 @@ paths:
         name: stash_id
         required: true
         type: string
+      - description: Request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/TabSwitchRequest'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/GuildStashTab'
+        "204":
+          description: No Content
       security:
       - BearerAuth: []
       tags:

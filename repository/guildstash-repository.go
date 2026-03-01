@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/client"
 	"bpl/config"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ type GuildStashTab struct {
 	ParentEventId *int          `gorm:"null"`
 	Raw           string        `gorm:"type:text;not null;default:''"`
 	FetchEnabled  bool          `gorm:"not null"`
+	PriorityFetch bool          `gorm:"not null;default:false"`
 	UserIds       pq.Int32Array `gorm:"not null;type:integer[]"`
 	LastFetch     time.Time     `gorm:"not null;default:CURRENT_TIMESTAMP"`
 
@@ -30,6 +32,47 @@ type GuildStashTab struct {
 	Parent   *GuildStashTab   `gorm:"foreignKey:ParentId,ParentEventId;references:Id,EventId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	Owner    User             `gorm:"foreignKey:OwnerId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	Children []*GuildStashTab `gorm:"foreignKey:ParentId,ParentEventId;references:Id,EventId;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+}
+
+func (g *GuildStashTab) ShouldUpdate(timings map[TimingKey]time.Duration) bool {
+	if !g.FetchEnabled {
+		return false
+	}
+	if g.PriorityFetch {
+		return time.Since(g.LastFetch) > timings[GuildstashPriorityFetchInterval]
+	}
+	return time.Since(g.LastFetch) > timings[GuildstashUpdateInterval]
+}
+
+func (g *GuildStashTab) AddChildren(children []client.GuildStashTabGGG) {
+	existingChildren := make(map[string]*GuildStashTab)
+	for _, child := range g.Children {
+		existingChildren[child.Id] = child
+	}
+	for _, child := range children {
+		c := &GuildStashTab{}
+		if existingChild, exists := existingChildren[child.Id]; exists {
+			c = existingChild
+		}
+		c.Id = child.Id
+		c.EventId = g.EventId
+		c.TeamId = g.TeamId
+		c.OwnerId = g.OwnerId
+		c.Name = child.Name
+		c.Type = child.Type
+		c.Index = child.Index
+		c.Color = child.Metadata.Colour
+		c.ParentId = &g.Id
+		c.ParentEventId = &g.EventId
+		c.LastFetch = time.Now()
+		c.Raw = "{}"
+		c.FetchEnabled = g.FetchEnabled
+		c.PriorityFetch = g.PriorityFetch
+		c.UserIds = g.UserIds
+		g.Children = append(g.Children, c)
+
+	}
+
 }
 
 type GuildStashChangelog struct {
@@ -110,13 +153,25 @@ func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
 func (r *GuildStashRepository) Save(tab *GuildStashTab) error {
 	return r.db.Save(tab).Error
 }
-func (r *GuildStashRepository) GetById(stashId string, eventId int, preloads ...string) (tab *GuildStashTab, err error) {
-	tab = &GuildStashTab{}
-	query := r.db
-	for _, preload := range preloads {
-		query = query.Preload(preload)
+func (r *GuildStashRepository) GetById(stashId string, eventId int) (tab *GuildStashTab, err error) {
+	allTabs := make([]*GuildStashTab, 0)
+	q := `select * from guild_stash_tabs where (id = @stash_id OR parent_id = @stash_id) and event_id = @event_id`
+	err = r.db.Raw(q, map[string]interface{}{
+		"stash_id": stashId,
+		"event_id": eventId,
+	}).Scan(&allTabs).Error
+	if err != nil {
+		return nil, err
 	}
-	err = query.Where(GuildStashTab{Id: stashId, EventId: eventId}).First(tab).Error
+	children := make([]*GuildStashTab, 0)
+	for _, t := range allTabs {
+		if t.Id == stashId {
+			tab = t
+		} else {
+			children = append(children, t)
+		}
+	}
+	tab.Children = children
 	return tab, err
 }
 
@@ -156,30 +211,18 @@ func (r *GuildStashRepository) GetByUserAndEvent(userId int, eventId int) ([]*Gu
 	return tabs, nil
 }
 
-func (r *GuildStashRepository) SwitchStashFetch(stashId string, eventId int) (*GuildStashTab, error) {
-	var tab GuildStashTab
-	err := r.db.Where(GuildStashTab{Id: stashId, EventId: eventId}).First(&tab).Error
-	if err != nil {
-		return nil, err
-	}
-
-	tab.FetchEnabled = !tab.FetchEnabled
-	if !tab.FetchEnabled {
-		var children []*GuildStashTab
-		err = r.db.Where(GuildStashTab{ParentId: &tab.Id, ParentEventId: &tab.EventId}).Find(&children).Error
-		if err == nil && len(children) > 0 {
-			for _, child := range children {
-				child.FetchEnabled = false
-			}
-			if err := r.db.Save(&children).Error; err != nil {
-				return nil, err
-			}
-		}
-	}
-	if err := r.db.Save(&tab).Error; err != nil {
-		return nil, err
-	}
-	return &tab, nil
+func (r *GuildStashRepository) SwitchStashFetch(stashId string, eventId int, fetchEnabled bool, priorityFetch bool) error {
+	query := `
+		UPDATE guild_stash_tabs g
+		SET fetch_enabled = @fetch_enabled, priority_fetch = @priority_fetch
+		WHERE (g.id = @stash_id OR g.parent_id = @stash_id) AND g.event_id = @event_id;
+	`
+	return r.db.Exec(query, map[string]interface{}{
+		"fetch_enabled":  fetchEnabled,
+		"priority_fetch": priorityFetch,
+		"stash_id":       stashId,
+		"event_id":       eventId,
+	}).Error
 }
 
 func (r *GuildStashRepository) SaveGuildstashLogs(logs []*GuildStashChangelog) error {

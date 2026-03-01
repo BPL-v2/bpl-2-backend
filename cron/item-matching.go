@@ -15,8 +15,6 @@ import (
 	"slices"
 	"time"
 
-	"runtime"
-
 	"github.com/segmentio/kafka-go"
 )
 
@@ -65,30 +63,6 @@ func (m *MatchingService) getItemMatches(
 	itemChecker *parser.ItemChecker,
 	desyncedObjectiveIds []int,
 ) []*repository.ObjectiveMatch {
-	defer func() {
-		if r := recover(); r != nil {
-			buf := make([]byte, 1<<20)
-			n := runtime.Stack(buf, true)
-			log.Printf("PANIC in getItemMatches: %v\nstack:\n%s\n", r, string(buf[:n]))
-		}
-	}()
-	if m == nil {
-		log.Printf("ERROR: MatchingService receiver is nil")
-		return nil
-	}
-	if m.event == nil {
-		log.Printf("ERROR: m.event is nil")
-		return nil
-	}
-	if itemChecker == nil {
-		log.Printf("ERROR: itemChecker is nil")
-		return nil
-	}
-	if m.objectiveMatchService == nil {
-		log.Printf("ERROR: objectiveMatchService is nil")
-		return nil
-	}
-
 	matches := make([]*repository.ObjectiveMatch, 0)
 	syncFinished := len(desyncedObjectiveIds) == 0
 
@@ -114,6 +88,7 @@ func (m *MatchingService) getItemMatches(
 			continue
 		}
 
+		fmt.Printf("Processing stash %s for team %d\n", stash.Id, teamId)
 		completions := make(map[int]int)
 		if stash.Items != nil {
 			for _, item := range stash.Items {
@@ -129,13 +104,8 @@ func (m *MatchingService) getItemMatches(
 		if accountName != "" {
 			if lbl, ok := teamMap[accountName]; ok && lbl != "" {
 				teamLabel = lbl
-			} else {
-				log.Printf("DEBUG: no teamMap entry for account %q (stash id: %s, teamId: %d)", accountName, stash.Id, teamId)
 			}
-		} else {
-			log.Printf("DEBUG: stash %s has no AccountName; teamId=%d", stash.Id, teamId)
 		}
-
 		metrics.TeamMatchesTotal.WithLabelValues(teamLabel).Add(float64(len(completions)))
 
 		sc := &repository.StashChange{
@@ -173,7 +143,6 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 }
 
 func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, objectives []*repository.Objective) {
-
 	users, err := m.userService.GetUsersForEvent(m.event.Id)
 	if err != nil {
 		log.Fatal(err)
@@ -231,7 +200,6 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				log.Fatal(err)
 				return
 			}
-			fmt.Println("Processing stash change", stashChange.ChangeId)
 			if m.lastTimestamp != nil && stashChange.Timestamp.Truncate(time.Millisecond).Equal(m.lastTimestamp.Truncate(time.Millisecond)) {
 				log.Println("Sync finished")
 				// once we reach the starting change id the sync is finished

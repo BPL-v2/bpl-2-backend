@@ -23,9 +23,10 @@ const (
 
 	InactivityDuration TimingKey = "character_inactivity_duration"
 
-	LadderUpdateInterval      TimingKey = "ladder_update_interval"
-	GuildstashUpdateInterval  TimingKey = "guildstash_update_interval"
-	PublicStashUpdateInterval TimingKey = "public_stash_update_interval"
+	LadderUpdateInterval            TimingKey = "ladder_update_interval"
+	GuildstashUpdateInterval        TimingKey = "guildstash_update_interval"
+	GuildstashPriorityFetchInterval TimingKey = "guildstash_priority_fetch_interval"
+	PublicStashUpdateInterval       TimingKey = "public_stash_update_interval"
 )
 
 var TimingKeyDescriptions = map[TimingKey]string{
@@ -41,9 +42,10 @@ var TimingKeyDescriptions = map[TimingKey]string{
 	CharacterNameRefetchDelay: "Minimum delay after a character name is refetched",
 	InactivityDuration:        "Duration after which a character is considered inactive",
 
-	LadderUpdateInterval:      "Interval at which the ladder is updated",
-	GuildstashUpdateInterval:  "Interval at which the guild stash is updated",
-	PublicStashUpdateInterval: "Interval at which the public stash is updated",
+	LadderUpdateInterval:            "Interval at which the ladder is updated",
+	GuildstashUpdateInterval:        "Interval at which the guild stash is updated",
+	GuildstashPriorityFetchInterval: "Interval at which priority guild stashes are updated",
+	PublicStashUpdateInterval:       "Interval at which the public stash is updated",
 }
 
 var DefaultTimings = map[TimingKey]time.Duration{
@@ -60,9 +62,10 @@ var DefaultTimings = map[TimingKey]time.Duration{
 
 	InactivityDuration: 30 * time.Minute,
 
-	LadderUpdateInterval:      30 * time.Second,
-	GuildstashUpdateInterval:  2 * time.Minute,
-	PublicStashUpdateInterval: 0 * time.Minute,
+	LadderUpdateInterval:            30 * time.Second,
+	GuildstashUpdateInterval:        2 * time.Minute,
+	GuildstashPriorityFetchInterval: 5 * time.Second,
+	PublicStashUpdateInterval:       0 * time.Minute,
 }
 
 type Timing struct {

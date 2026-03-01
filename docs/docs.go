@@ -3073,14 +3073,20 @@ const docTemplate = `{
                         "name": "stash_id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "Request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/TabSwitchRequest"
+                        }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/GuildStashTab"
-                        }
+                    "204": {
+                        "description": "No Content"
                     }
                 }
             }
@@ -4869,6 +4875,7 @@ const docTemplate = `{
                 "id",
                 "last_fetch",
                 "name",
+                "priority_fetch",
                 "type",
                 "user_ids"
             ],
@@ -4893,6 +4900,9 @@ const docTemplate = `{
                 },
                 "parent_id": {
                     "type": "string"
+                },
+                "priority_fetch": {
+                    "type": "boolean"
                 },
                 "type": {
                     "type": "string"
@@ -5659,6 +5669,17 @@ const docTemplate = `{
                 }
             }
         },
+        "TabSwitchRequest": {
+            "type": "object",
+            "properties": {
+                "fetch_enabled": {
+                    "type": "boolean"
+                },
+                "priority_fetch": {
+                    "type": "boolean"
+                }
+            }
+        },
         "Team": {
             "type": "object",
             "required": [
@@ -6142,15 +6163,13 @@ const docTemplate = `{
                 "FetchStashChanges",
                 "EvaluateStashChanges",
                 "FetchCharacterData",
-                "FetchGuildStashes",
-                "DetermineGuildStashAccess"
+                "FetchGuildStashes"
             ],
             "x-enum-varnames": [
                 "FetchStashChanges",
                 "EvaluateStashChanges",
                 "FetchCharacterData",
-                "FetchGuildStashes",
-                "DetermineGuildStashAccess"
+                "FetchGuildStashes"
             ]
         },
         "NumberField": {
@@ -6334,6 +6353,7 @@ const docTemplate = `{
                 "character_inactivity_duration",
                 "ladder_update_interval",
                 "guildstash_update_interval",
+                "guildstash_priority_fetch_interval",
                 "public_stash_update_interval"
             ],
             "x-enum-varnames": [
@@ -6348,6 +6368,7 @@ const docTemplate = `{
                 "InactivityDuration",
                 "LadderUpdateInterval",
                 "GuildstashUpdateInterval",
+                "GuildstashPriorityFetchInterval",
                 "PublicStashUpdateInterval"
             ]
         },
