@@ -1,2 +1,0 @@
-ALTER TABLE item_wishes DROP COLUMN event_id;
-ALTER TABLE item_wishes ADD COLUMN team_id INTEGER NOT NULL REFERENCES teams(id) ON DELETE CASCADE;

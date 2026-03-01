@@ -1,1 +1,0 @@
-ALTER TABLE events ADD is_main_event BOOLEAN NOT NULL DEFAULT TRUE;

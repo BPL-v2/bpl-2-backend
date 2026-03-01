@@ -1,1 +1,0 @@
-ALTER TABLE item_wishes ADD COLUMN build_enabling BOOLEAN NOT NULL DEFAULT FALSE;
