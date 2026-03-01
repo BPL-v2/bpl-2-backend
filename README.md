@@ -36,18 +36,12 @@ Running `make swagger` will generate the files in the /docs directory which will
 
 ## DB migration
 
-We use a custom migration tool to execute sql files for db migrations that uses files named "n-m.sql" to migrate from version n to version m.
+We use a custom migration tool to execute sql files for db migrations that uses files named "<int>.sql"
 
 To run this, run
 
 ```
-make migrate-up
-```
-
-in the root directory to migrate up n versions or
-
-```
-make migrate-up head
+make migrate
 ```
 
 to migrate to the latest version
