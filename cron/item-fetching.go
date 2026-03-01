@@ -442,7 +442,7 @@ func (f *FetchingService) FetchGuildStashes() error {
 				defer wg.Done()
 				err := f.updateGuildStash(stash, fetchers, kafkaWriter)
 				if err != nil {
-					fmt.Printf(err.Error())
+					fmt.Println(err.Error())
 					return
 				}
 			}(*stash)
