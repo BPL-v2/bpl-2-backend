@@ -156,7 +156,7 @@ func (r *GuildStashRepository) Save(tab *GuildStashTab) error {
 func (r *GuildStashRepository) GetById(stashId string, eventId int) (tab *GuildStashTab, err error) {
 	allTabs := make([]*GuildStashTab, 0)
 	q := `select * from guild_stash_tabs where (id = @stash_id OR parent_id = @stash_id) and event_id = @event_id`
-	err = r.db.Raw(q, map[string]interface{}{
+	err = r.db.Raw(q, map[string]any{
 		"stash_id": stashId,
 		"event_id": eventId,
 	}).Scan(&allTabs).Error
@@ -218,7 +218,7 @@ func (r *GuildStashRepository) SwitchStashFetch(stashId string, teamId int, fetc
 		SET fetch_enabled = @fetch_enabled, priority_fetch = @priority_fetch
 		WHERE (g.id = @stash_id OR g.parent_id = @stash_id) AND g.team_id = @team_id;
 	`
-		err := r.db.Exec(query, map[string]interface{}{
+		err := r.db.Exec(query, map[string]any{
 			"fetch_enabled":  fetchEnabled,
 			"priority_fetch": priorityFetch,
 			"stash_id":       stashId,
@@ -233,7 +233,7 @@ func (r *GuildStashRepository) SwitchStashFetch(stashId string, teamId int, fetc
 				SET priority_fetch = false
 				WHERE (g.id != @stash_id OR g.parent_id != @stash_id) AND g.team_id = @team_id;
 			`
-			err = r.db.Exec(query, map[string]interface{}{
+			err = r.db.Exec(query, map[string]any{
 				"stash_id": stashId,
 				"team_id":  teamId,
 			}).Error

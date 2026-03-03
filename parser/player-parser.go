@@ -348,15 +348,10 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 		}, nil
 	case repository.NumberFieldHasRareAscendancyPast90:
 		return func(p *Player) int {
-			if p.Character == nil || p.Character.Level < 90 {
+			if p.Character == nil || p.Character.Level < 90 || !slices.Contains(rareAscendancies, p.Character.Class) {
 				return 0
 			}
-			for _, rare := range rareAscendancies {
-				if p.Character.Class == rare {
-					return 1
-				}
-			}
-			return 0
+			return 1
 		}, nil
 	case repository.NumberFieldBloodlineAscendancyPoints:
 		return func(p *Player) int {

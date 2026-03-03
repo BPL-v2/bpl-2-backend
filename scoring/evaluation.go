@@ -6,6 +6,7 @@ import (
 	"bpl/utils"
 	"math"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -478,9 +479,7 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 			continue
 		}
 		timestamps := teamCompletionTimestamps[teamId]
-		sort.Slice(timestamps, func(i, j int) bool {
-			return timestamps[i] < timestamps[j]
-		})
+		slices.Sort(timestamps)
 		completion.LatestTimestamp = timestamps[requiredChildCompletions-1]
 	}
 	rankedTeams := utils.Values(teamCompletions)

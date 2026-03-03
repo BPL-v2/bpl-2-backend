@@ -27,7 +27,7 @@ const (
 
 type Permissions []Permission
 
-func (p *Permissions) Scan(src interface{}) error {
+func (p *Permissions) Scan(src any) error {
 	x := make(pq.StringArray, 0)
 	err := x.Scan(src)
 	if err != nil {

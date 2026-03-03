@@ -89,13 +89,13 @@ func StringFieldGetter(field dbModel.ItemField) (func(item *clientModel.Item) st
 	case dbModel.SOCKETS:
 		return func(item *clientModel.Item) string {
 			if item.Sockets != nil {
-				socketString := ""
+				var socketString strings.Builder
 				for _, socket := range *item.Sockets {
 					if socket.SColour != nil {
-						socketString += *socket.SColour
+						socketString.WriteString(*socket.SColour)
 					}
 				}
-				return socketString
+				return socketString.String()
 			}
 			return ""
 		}, nil

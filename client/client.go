@@ -215,7 +215,7 @@ func (c *AsyncHttpClient) adjustPolicies(key RequestKey, headers http.Header) {
 				}
 			}
 			missingHits := currentHits - trackedHits
-			for i := 0; i < missingHits; i++ {
+			for range missingHits {
 				timestamps = append(timestamps, now)
 			}
 		}

@@ -139,7 +139,7 @@ type Condition struct {
 }
 type Conditions []*Condition
 
-func (c *Conditions) Scan(value interface{}) error {
+func (c *Conditions) Scan(value any) error {
 	if value == nil {
 		*c = []*Condition{}
 		return nil

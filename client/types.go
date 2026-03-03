@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Realm string
@@ -59,7 +60,7 @@ type LadderEntryCharacter struct {
 	Class      string                     `json:"class"`
 	Time       *int                       `json:"time,omitempty"`
 	Score      *int                       `json:"score,omitempty"`
-	Progress   *map[string]interface{}    `json:"progress,omitempty"`
+	Progress   *map[string]any            `json:"progress,omitempty"`
 	Experience *int                       `json:"experience,omitempty"`
 	Depth      *LadderEntryCharacterDepth `json:"depth,omitempty"`
 }
@@ -162,14 +163,15 @@ type PublicStashChange struct {
 }
 
 func (p PublicStashChange) GetHash() [32]byte {
-	idAggregate := p.Id
+	var idAggregate strings.Builder
+	idAggregate.WriteString(p.Id)
 	for _, item := range p.Items {
-		idAggregate += item.Id
+		idAggregate.WriteString(item.Id)
 		if item.StackSize != nil {
-			idAggregate += fmt.Sprint(*item.StackSize)
+			idAggregate.WriteString(fmt.Sprint(*item.StackSize))
 		}
 	}
-	return sha256.Sum256([]byte(idAggregate))
+	return sha256.Sum256([]byte(idAggregate.String()))
 }
 
 type Ladder struct {
@@ -581,14 +583,15 @@ func (g *GuildStashTabGGG) FlatMap() []*GuildStashTabGGG {
 }
 
 func (g *GuildStashTabGGG) GetHash() [32]byte {
-	idAggregate := g.Id
+	var idAggregate strings.Builder
+	idAggregate.WriteString(g.Id)
 	for _, item := range utils.Deref(g.Items) {
-		idAggregate += item.Id
+		idAggregate.WriteString(item.Id)
 		if item.StackSize != nil {
-			idAggregate += fmt.Sprint(*item.StackSize)
+			idAggregate.WriteString(fmt.Sprint(*item.StackSize))
 		}
 	}
-	return sha256.Sum256([]byte(idAggregate))
+	return sha256.Sum256([]byte(idAggregate.String()))
 }
 
 type AtlasPassiveTree struct {

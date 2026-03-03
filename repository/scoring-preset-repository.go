@@ -21,7 +21,7 @@ func (e ExtendingNumberSlice) Get(i int) float64 {
 	return e[i]
 }
 
-func (e *ExtendingNumberSlice) Scan(value interface{}) error {
+func (e *ExtendingNumberSlice) Scan(value any) error {
 	var floatArray pq.Float64Array
 	if err := floatArray.Scan(value); err != nil {
 		return err

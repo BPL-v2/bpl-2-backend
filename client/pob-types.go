@@ -39,8 +39,8 @@ func (p *PoBItem) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		cleaned = append(cleaned, trimmed)
 	}
 	if len(cleaned) > 0 {
-		if strings.HasPrefix(cleaned[0], "Rarity:") {
-			p.Rarity = strings.TrimSpace(strings.TrimPrefix(cleaned[0], "Rarity:"))
+		if after, ok := strings.CutPrefix(cleaned[0], "Rarity:"); ok {
+			p.Rarity = strings.TrimSpace(after)
 		} else {
 			p.Rarity = cleaned[0]
 		}
@@ -94,8 +94,8 @@ func (p *PathOfBuilding) GetPassives() []int {
 		}
 		passives = append(passives, id)
 	}
-	masteryEffects := strings.Split(p.Tree.Spec.MasteryEffects[1:len(p.Tree.Spec.MasteryEffects)-1], "},{")
-	for _, me := range masteryEffects {
+	masteryEffects := strings.SplitSeq(p.Tree.Spec.MasteryEffects[1:len(p.Tree.Spec.MasteryEffects)-1], "},{")
+	for me := range masteryEffects {
 		parts := strings.Split(me, ",")
 		if len(parts) != 2 {
 			continue

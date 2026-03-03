@@ -18,7 +18,7 @@ type Claims struct {
 func (claims *Claims) FromJWTClaims(jwtClaims jwt.Claims) {
 	permissions := []string{}
 	if jwtClaims.(jwt.MapClaims)["permissions"] != nil {
-		for _, perm := range jwtClaims.(jwt.MapClaims)["permissions"].([]interface{}) {
+		for _, perm := range jwtClaims.(jwt.MapClaims)["permissions"].([]any) {
 			permissions = append(permissions, perm.(string))
 		}
 	}
@@ -51,7 +51,7 @@ func CreateToken(user *repository.User) (string, error) {
 }
 
 func ParseToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
 		return []byte(config.Env().JWTSecret), nil
 	})
 

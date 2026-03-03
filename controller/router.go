@@ -220,11 +220,9 @@ func AuthorizationMiddleware(requiredRoles []repository.Permission) gin.HandlerF
 			return
 		}
 		for _, requiredRole := range requiredRoles {
-			for _, userRole := range userRoles {
-				if requiredRole == userRole {
-					r.Next()
-					return
-				}
+			if slices.Contains(userRoles, requiredRole) {
+				r.Next()
+				return
 			}
 		}
 		r.AbortWithStatus(403)

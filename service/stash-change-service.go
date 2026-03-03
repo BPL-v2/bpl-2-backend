@@ -84,7 +84,7 @@ func (s *StashChangeService) GetInitialChangeId(event *repository.Event) (string
 
 func ChangeIdToInt(changeId string) int {
 	sum := 0
-	for _, str := range strings.Split(changeId, "-") {
+	for str := range strings.SplitSeq(changeId, "-") {
 		i, err := strconv.Atoi(str)
 		if err != nil {
 			return 0
