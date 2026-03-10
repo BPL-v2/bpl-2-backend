@@ -245,7 +245,7 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 				if slices.Contains(tree.Hashes, 65225) {
 					points -= 20
 				}
-				total = utils.Max(total, points)
+				total = max(total, points)
 			}
 			return total
 		}, nil

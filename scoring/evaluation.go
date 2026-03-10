@@ -298,7 +298,7 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 			x, _ := strconv.Atoi(matches[1])
 			y, _ := strconv.Atoi(matches[2])
 			gridCellMap[child.Id] = Tuple{X: x, Y: y}
-			gridSize = utils.Max(gridSize, x+1, y+1)
+			gridSize = max(gridSize, x+1, y+1)
 		}
 	}
 
@@ -362,7 +362,7 @@ func getBingoCompletionTime(numberOfBingosRequired int, girdTimestamps map[int]m
 	diag2Times := []int64{}
 	for x, row := range girdTimestamps {
 		for y := range row {
-			gridSize = utils.Max(gridSize, x, y)
+			gridSize = max(gridSize, x, y)
 		}
 	}
 
@@ -381,20 +381,20 @@ func getBingoCompletionTime(numberOfBingosRequired int, girdTimestamps map[int]m
 	bingoCount := 0
 	for i := 0; i < gridSize; i++ {
 		if len(rowTimes[i]) == gridSize {
-			finishTime = utils.Min(utils.Max(rowTimes[i]...), finishTime)
+			finishTime = min(utils.Max(rowTimes[i]...), finishTime)
 			bingoCount++
 		}
 		if len(colTimes[i]) == gridSize {
-			finishTime = utils.Min(utils.Max(colTimes[i]...), finishTime)
+			finishTime = min(utils.Max(colTimes[i]...), finishTime)
 			bingoCount++
 		}
 	}
 	if len(diag1Times) == gridSize {
-		finishTime = utils.Min(utils.Max(diag1Times...), finishTime)
+		finishTime = min(utils.Max(diag1Times...), finishTime)
 		bingoCount++
 	}
 	if len(diag2Times) == gridSize {
-		finishTime = utils.Min(utils.Max(diag2Times...), finishTime)
+		finishTime = min(utils.Max(diag2Times...), finishTime)
 		bingoCount++
 	}
 	if finishTime == int64(math.MaxInt64) || bingoCount < numberOfBingosRequired {
@@ -470,7 +470,7 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 				timestamp := childScore.Timestamp().UnixNano()
 				teamCompletionTimestamps[teamId] = append(teamCompletionTimestamps[teamId], timestamp)
 				teamCompletions[teamId].ObjectivesCompleted++
-				teamCompletions[teamId].LatestTimestamp = utils.Max(teamCompletions[teamId].LatestTimestamp, timestamp)
+				teamCompletions[teamId].LatestTimestamp = max(teamCompletions[teamId].LatestTimestamp, timestamp)
 			}
 		}
 	}
@@ -536,7 +536,7 @@ func handleChildRankingByNumber(objective *repository.Objective, scoringPreset *
 					}
 				}
 				teamCompletions[teamId].ObjectivesCompleted += maxNum
-				teamCompletions[teamId].LatestTimestamp = utils.Max(teamCompletions[teamId].LatestTimestamp, latest.UnixNano())
+				teamCompletions[teamId].LatestTimestamp = max(teamCompletions[teamId].LatestTimestamp, latest.UnixNano())
 			}
 		}
 	}

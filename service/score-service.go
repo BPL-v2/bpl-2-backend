@@ -37,7 +37,7 @@ func buildTrie(objectiveNameMap map[int]string) *TrieNode {
 
 func findObjectiveId(itemName string, root *TrieNode) *int {
 	// Try all possible starting positions in the item name
-	for i := 0; i < len(itemName); i++ {
+	for i := range len(itemName) {
 		node := root
 		// Try to match from position i
 		for j := i; j < len(itemName); j++ {

@@ -155,10 +155,10 @@ func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {
 }
 
 func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) {
-	p.DPS = float2Int64(utils.Max(pob.Build.PlayerStats.CombinedDPS, pob.Build.PlayerStats.CullingDPS, pob.Build.PlayerStats.FullDPS, pob.Build.PlayerStats.FullDotDPS, pob.Build.PlayerStats.PoisonDPS, pob.Build.PlayerStats.ReservationDPS, pob.Build.PlayerStats.TotalDPS, pob.Build.PlayerStats.TotalDotDPS, pob.Build.PlayerStats.WithBleedDPS, pob.Build.PlayerStats.WithIgniteDPS, pob.Build.PlayerStats.WithPoisonDPS))
+	p.DPS = float2Int64(max(pob.Build.PlayerStats.CombinedDPS, pob.Build.PlayerStats.CullingDPS, pob.Build.PlayerStats.FullDPS, pob.Build.PlayerStats.FullDotDPS, pob.Build.PlayerStats.PoisonDPS, pob.Build.PlayerStats.ReservationDPS, pob.Build.PlayerStats.TotalDPS, pob.Build.PlayerStats.TotalDotDPS, pob.Build.PlayerStats.WithBleedDPS, pob.Build.PlayerStats.WithIgniteDPS, pob.Build.PlayerStats.WithPoisonDPS))
 	p.EHP = float2Int32(pob.Build.PlayerStats.TotalEHP)
 	p.PhysMaxHit = float2Int32(pob.Build.PlayerStats.PhysicalMaximumHitTaken)
-	p.EleMaxHit = float2Int32(utils.Min(pob.Build.PlayerStats.FireMaximumHitTaken, pob.Build.PlayerStats.ColdMaximumHitTaken, pob.Build.PlayerStats.LightningMaximumHitTaken))
+	p.EleMaxHit = float2Int32(min(pob.Build.PlayerStats.FireMaximumHitTaken, pob.Build.PlayerStats.ColdMaximumHitTaken, pob.Build.PlayerStats.LightningMaximumHitTaken))
 	p.HP = float2Int32(pob.Build.PlayerStats.Life)
 	p.Mana = float2Int32(pob.Build.PlayerStats.Mana)
 	p.ES = float2Int32(pob.Build.PlayerStats.EnergyShield)
