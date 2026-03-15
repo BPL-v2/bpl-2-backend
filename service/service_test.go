@@ -817,3 +817,299 @@ func TestGetNinjaChangeId_ServerError(t *testing.T) {
 	_, err := GetNinjaChangeId()
 	assert.Error(t, err)
 }
+
+// ==================== Achievement Helper Tests ====================
+
+func TestHasLevelNCharacter(t *testing.T) {
+	chars := []*repository.Character{
+		{Level: 80},
+		{Level: 95},
+		{Level: 70},
+	}
+
+	assert.True(t, hasLevelNCharacter(90, chars))
+	assert.True(t, hasLevelNCharacter(95, chars))
+	assert.False(t, hasLevelNCharacter(96, chars))
+	assert.False(t, hasLevelNCharacter(100, chars))
+}
+
+func TestHasLevelNCharacter_Empty(t *testing.T) {
+	assert.False(t, hasLevelNCharacter(1, []*repository.Character{}))
+}
+
+func TestPlayedNLeagues(t *testing.T) {
+	chars := make([]*repository.Character, 5)
+	assert.True(t, playedNLeagues(1, chars))
+	assert.True(t, playedNLeagues(5, chars))
+	assert.False(t, playedNLeagues(6, chars))
+}
+
+func TestPlayedNDifferentAscendancies(t *testing.T) {
+	chars := []*repository.Character{
+		{Ascendancy: "Berserker"},
+		{Ascendancy: "Deadeye"},
+		{Ascendancy: "Necromancer"},
+		{Ascendancy: "Berserker"}, // duplicate
+		{Ascendancy: "Marauder"},  // base class - should be excluded
+		{Ascendancy: "Witch"},     // base class - should be excluded
+	}
+
+	assert.True(t, playedNDifferentAscendancies(3, chars))
+	assert.False(t, playedNDifferentAscendancies(4, chars))
+}
+
+func TestPlayedNDifferentAscendancies_AllBaseClasses(t *testing.T) {
+	chars := []*repository.Character{
+		{Ascendancy: "Scion"},
+		{Ascendancy: "Marauder"},
+		{Ascendancy: "Ranger"},
+	}
+	assert.False(t, playedNDifferentAscendancies(1, chars))
+}
+
+func TestCheckAchievements(t *testing.T) {
+	chars := make([]*repository.Character, 10)
+	for i := range chars {
+		chars[i] = &repository.Character{Level: 95, Ascendancy: "Asc" + string(rune('A'+i))}
+	}
+
+	achievements := checkAchievements(chars)
+	assert.Contains(t, achievements, repository.AchievementReachedLvl90)
+	assert.Contains(t, achievements, repository.AchievementReachedLvl95)
+	assert.NotContains(t, achievements, repository.AchievementReachedLvl100)
+	assert.Contains(t, achievements, repository.AchievementParticipated)
+	assert.Contains(t, achievements, repository.AchievementPlayed5Leagues)
+	assert.Contains(t, achievements, repository.AchievementPlayed10Leagues)
+	assert.Contains(t, achievements, repository.AchievementPlayed10DifferentAscendancies)
+}
+
+func TestCheckAchievements_MinimalChars(t *testing.T) {
+	chars := []*repository.Character{
+		{Level: 50, Ascendancy: "Berserker"},
+	}
+	achievements := checkAchievements(chars)
+	assert.Contains(t, achievements, repository.AchievementParticipated)
+	assert.NotContains(t, achievements, repository.AchievementReachedLvl90)
+	assert.NotContains(t, achievements, repository.AchievementPlayed5Leagues)
+}
+
+// ==================== CharacterInfo.ToPlayerUpdate Tests ====================
+
+func TestCharacterInfo_ToPlayerUpdate_ValidToken(t *testing.T) {
+	ci := &CharacterInfo{
+		User: &repository.User{
+			Id: 42,
+			OauthAccounts: []*repository.Oauth{
+				{Provider: repository.ProviderPoE, AccessToken: "valid-token", Expiry: time.Now().Add(time.Hour), Name: "player#1234"},
+			},
+		},
+		Event:     &repository.Event{Id: 1},
+		Character: &repository.Character{Id: "char-1", Name: "TestChar", Ascendancy: "Berserker", Level: 90},
+		TeamId:    5,
+	}
+
+	pu, err := ci.ToPlayerUpdate()
+	require.NoError(t, err)
+	assert.Equal(t, 42, pu.UserId)
+	assert.Equal(t, 5, pu.TeamId)
+	assert.Equal(t, "valid-token", pu.Token)
+	assert.Equal(t, "char-1", pu.New.Character.Id)
+	assert.Equal(t, "Berserker", pu.New.Character.Class)
+}
+
+func TestCharacterInfo_ToPlayerUpdate_ExpiredToken(t *testing.T) {
+	ci := &CharacterInfo{
+		User: &repository.User{
+			Id: 42,
+			OauthAccounts: []*repository.Oauth{
+				{Provider: repository.ProviderPoE, AccessToken: "expired", Expiry: time.Now().Add(-time.Hour), Name: "player#1234"},
+			},
+		},
+		Event:     &repository.Event{Id: 1},
+		Character: &repository.Character{Id: "char-1", Name: "TestChar"},
+		TeamId:    5,
+	}
+
+	_, err := ci.ToPlayerUpdate()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "no valid PoE oauth token")
+}
+
+func TestCharacterInfo_ToPlayerUpdate_NoPoEAccount(t *testing.T) {
+	ci := &CharacterInfo{
+		User: &repository.User{
+			Id: 42,
+			OauthAccounts: []*repository.Oauth{
+				{Provider: "discord", AccessToken: "discord-token", Expiry: time.Now().Add(time.Hour)},
+			},
+		},
+		Event:     &repository.Event{Id: 1},
+		Character: &repository.Character{Id: "char-1", Name: "TestChar"},
+		TeamId:    5,
+	}
+
+	_, err := ci.ToPlayerUpdate()
+	assert.Error(t, err)
+}
+
+// ==================== Submission Service Tests ====================
+
+type mockSubmissionRepository struct{ mock.Mock }
+
+func (m *mockSubmissionRepository) GetSubmissionsForEvent(event *repository.Event) ([]*repository.Submission, error) {
+	args := m.Called(event)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*repository.Submission), args.Error(1)
+}
+func (m *mockSubmissionRepository) GetSubmissionsForObjectives(objectives []*repository.Objective) ([]*repository.Submission, error) {
+	args := m.Called(objectives)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*repository.Submission), args.Error(1)
+}
+func (m *mockSubmissionRepository) GetSubmissionById(id int) (*repository.Submission, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*repository.Submission), args.Error(1)
+}
+func (m *mockSubmissionRepository) SaveSubmission(submission *repository.Submission) (*repository.Submission, error) {
+	args := m.Called(submission)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*repository.Submission), args.Error(1)
+}
+func (m *mockSubmissionRepository) AddMatchToSubmission(submission *repository.Submission) error {
+	return m.Called(submission).Error(0)
+}
+func (m *mockSubmissionRepository) RemoveMatchFromSubmission(submission *repository.Submission) error {
+	return m.Called(submission).Error(0)
+}
+func (m *mockSubmissionRepository) DeleteSubmission(submissionId int) error {
+	return m.Called(submissionId).Error(0)
+}
+
+func TestSubmissionService_SaveSubmission_New(t *testing.T) {
+	mockRepo := new(mockSubmissionRepository)
+	svc := &SubmissionServiceImpl{submissionRepository: mockRepo}
+
+	submission := &repository.Submission{ObjectiveId: 1, Proof: "screenshot.png"}
+	submitter := &repository.User{Id: 10}
+
+	mockRepo.On("SaveSubmission", mock.AnythingOfType("*repository.Submission")).Return(
+		&repository.Submission{Id: 1, ObjectiveId: 1, UserId: 10, ApprovalStatus: repository.PENDING}, nil,
+	)
+
+	result, err := svc.SaveSubmission(submission, submitter)
+	require.NoError(t, err)
+	assert.Equal(t, repository.PENDING, result.ApprovalStatus)
+	assert.Equal(t, 10, submission.UserId)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestSubmissionService_SaveSubmission_UpdateOwn(t *testing.T) {
+	mockRepo := new(mockSubmissionRepository)
+	svc := &SubmissionServiceImpl{submissionRepository: mockRepo}
+
+	existing := &repository.Submission{Id: 5, ObjectiveId: 1, UserId: 10, ApprovalStatus: repository.APPROVED}
+	submission := &repository.Submission{Id: 5, ObjectiveId: 2, Proof: "new-proof.png"}
+	submitter := &repository.User{Id: 10}
+
+	mockRepo.On("GetSubmissionById", 5).Return(existing, nil)
+	mockRepo.On("RemoveMatchFromSubmission", existing).Return(nil)
+	mockRepo.On("SaveSubmission", existing).Return(existing, nil)
+
+	result, err := svc.SaveSubmission(submission, submitter)
+	require.NoError(t, err)
+	assert.Equal(t, repository.PENDING, result.ApprovalStatus) // was APPROVED, should become PENDING
+	assert.Equal(t, 2, existing.ObjectiveId)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestSubmissionService_SaveSubmission_UpdateOther_Forbidden(t *testing.T) {
+	mockRepo := new(mockSubmissionRepository)
+	svc := &SubmissionServiceImpl{submissionRepository: mockRepo}
+
+	existing := &repository.Submission{Id: 5, ObjectiveId: 1, UserId: 10}
+	submission := &repository.Submission{Id: 5, ObjectiveId: 2}
+	submitter := &repository.User{Id: 99} // different user
+
+	mockRepo.On("GetSubmissionById", 5).Return(existing, nil)
+
+	_, err := svc.SaveSubmission(submission, submitter)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not allowed")
+}
+
+func TestSubmissionService_ReviewSubmission_Approve(t *testing.T) {
+	mockRepo := new(mockSubmissionRepository)
+	svc := &SubmissionServiceImpl{submissionRepository: mockRepo}
+
+	existing := &repository.Submission{Id: 1, ObjectiveId: 1, UserId: 10, ApprovalStatus: repository.PENDING}
+	reviewer := &repository.User{Id: 99}
+	review := &repository.Submission{ApprovalStatus: repository.APPROVED}
+
+	mockRepo.On("GetSubmissionById", 1).Return(existing, nil)
+	mockRepo.On("AddMatchToSubmission", existing).Return(nil)
+	mockRepo.On("SaveSubmission", existing).Return(existing, nil)
+
+	result, err := svc.ReviewSubmission(1, review, reviewer)
+	require.NoError(t, err)
+	assert.Equal(t, repository.APPROVED, result.ApprovalStatus)
+	assert.Equal(t, &reviewer.Id, result.ReviewerId)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestSubmissionService_ReviewSubmission_Reject(t *testing.T) {
+	mockRepo := new(mockSubmissionRepository)
+	svc := &SubmissionServiceImpl{submissionRepository: mockRepo}
+
+	existing := &repository.Submission{Id: 1, ObjectiveId: 1, UserId: 10, ApprovalStatus: repository.APPROVED}
+	reviewer := &repository.User{Id: 99}
+	reviewComment := "insufficient proof"
+	review := &repository.Submission{ApprovalStatus: repository.REJECTED, ReviewComment: &reviewComment}
+
+	mockRepo.On("GetSubmissionById", 1).Return(existing, nil)
+	mockRepo.On("RemoveMatchFromSubmission", existing).Return(nil)
+	mockRepo.On("SaveSubmission", existing).Return(existing, nil)
+
+	result, err := svc.ReviewSubmission(1, review, reviewer)
+	require.NoError(t, err)
+	assert.Equal(t, repository.REJECTED, result.ApprovalStatus)
+	assert.Equal(t, &reviewComment, result.ReviewComment)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestSubmissionService_SaveBulkSubmissions(t *testing.T) {
+	mockRepo := new(mockSubmissionRepository)
+	svc := &SubmissionServiceImpl{submissionRepository: mockRepo}
+
+	submissions := []*repository.Submission{
+		{ObjectiveId: 1, Proof: "p1"},
+		{ObjectiveId: 2, Proof: "p2"},
+	}
+
+	mockRepo.On("SaveSubmission", submissions[0]).Return(&repository.Submission{Id: 1, ObjectiveId: 1}, nil)
+	mockRepo.On("SaveSubmission", submissions[1]).Return(&repository.Submission{Id: 2, ObjectiveId: 2}, nil)
+
+	result, err := svc.SaveBulkSubmissions(submissions)
+	require.NoError(t, err)
+	assert.Len(t, result, 2)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestSubmissionService_DeleteSubmission(t *testing.T) {
+	mockRepo := new(mockSubmissionRepository)
+	svc := &SubmissionServiceImpl{submissionRepository: mockRepo}
+
+	mockRepo.On("DeleteSubmission", 5).Return(nil)
+
+	err := svc.DeleteSubmission(&repository.Submission{Id: 5}, &repository.User{Id: 1})
+	require.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}

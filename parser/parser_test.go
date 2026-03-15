@@ -1635,6 +1635,587 @@ func TestNewTeamChecker(t *testing.T) {
 	})
 }
 
+// ========== Additional StringFieldGetter coverage ==========
+
+func TestStringFieldGetterAdditional(t *testing.T) {
+	t.Run("item class", func(t *testing.T) {
+		getter, err := StringFieldGetter(dbModel.ITEM_CLASS)
+		require.NoError(t, err)
+		assert.Equal(t, "StackableCurrency", getter(makeItem(withBaseType("Chaos Orb"))))
+		assert.Equal(t, "", getter(makeItem(withBaseType("UnknownItem"))))
+	})
+
+	t.Run("heist target", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Heist Target: {0} ({1})",
+			Values: []clientModel.ItemValue{itemValue("Replicas"), itemValue("Unique")},
+		}))
+		getter, err := StringFieldGetter(dbModel.HEIST_TARGET)
+		require.NoError(t, err)
+		assert.Equal(t, "Replicas (Unique)", getter(item))
+	})
+
+	t.Run("heist target no properties", func(t *testing.T) {
+		getter, err := StringFieldGetter(dbModel.HEIST_TARGET)
+		require.NoError(t, err)
+		assert.Equal(t, "", getter(makeItem()))
+	})
+
+	t.Run("heist rogue requirement", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Requires {1} (Level {0})",
+			Values: []clientModel.ItemValue{itemValue("Karst"), itemValue("5")},
+		}))
+		getter, err := StringFieldGetter(dbModel.HEIST_ROGUE_REQUIREMENT)
+		require.NoError(t, err)
+		assert.Equal(t, "Karst (Level 5)", getter(item))
+	})
+
+	t.Run("heist rogue requirement no properties", func(t *testing.T) {
+		getter, err := StringFieldGetter(dbModel.HEIST_ROGUE_REQUIREMENT)
+		require.NoError(t, err)
+		assert.Equal(t, "", getter(makeItem()))
+	})
+
+	t.Run("sockets with nil colour", func(t *testing.T) {
+		getter, err := StringFieldGetter(dbModel.SOCKETS)
+		require.NoError(t, err)
+		item := makeItem(withSockets(
+			clientModel.ItemSocket{SColour: new("R")},
+			clientModel.ItemSocket{SColour: nil},
+			clientModel.ItemSocket{SColour: new("B")},
+		))
+		assert.Equal(t, "RB", getter(item))
+	})
+
+	t.Run("graft skill name empty socketed items", func(t *testing.T) {
+		items := []clientModel.Item{}
+		getter, err := StringFieldGetter(dbModel.GRAFT_SKILL_NAME)
+		require.NoError(t, err)
+		item := &clientModel.Item{SocketedItems: &items}
+		assert.Equal(t, "", getter(item))
+	})
+
+	t.Run("ritual map no matching property", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "SomethingElse",
+			Values: []clientModel.ItemValue{itemValue("value")},
+		}))
+		getter, err := StringFieldGetter(dbModel.RITUAL_MAP)
+		require.NoError(t, err)
+		assert.Equal(t, "", getter(item))
+	})
+
+	t.Run("heist target no matching property", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "SomethingElse",
+			Values: []clientModel.ItemValue{itemValue("value")},
+		}))
+		getter, err := StringFieldGetter(dbModel.HEIST_TARGET)
+		require.NoError(t, err)
+		assert.Equal(t, "", getter(item))
+	})
+
+	t.Run("heist rogue no matching property", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "SomethingElse",
+			Values: []clientModel.ItemValue{itemValue("value")},
+		}))
+		getter, err := StringFieldGetter(dbModel.HEIST_ROGUE_REQUIREMENT)
+		require.NoError(t, err)
+		assert.Equal(t, "", getter(item))
+	})
+}
+
+// ========== Additional IntFieldGetter coverage ==========
+
+func TestIntFieldGetterAdditional(t *testing.T) {
+	t.Run("map rarity", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Map Rarity",
+			Values: []clientModel.ItemValue{itemValue("+80%")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MAP_RARITY)
+		require.NoError(t, err)
+		assert.Equal(t, 80, getter(item))
+	})
+
+	t.Run("map rarity no properties", func(t *testing.T) {
+		getter, err := IntFieldGetter(dbModel.MAP_RARITY)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(makeItem()))
+	})
+
+	t.Run("map rarity parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Map Rarity",
+			Values: []clientModel.ItemValue{itemValue("abc%")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MAP_RARITY)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("map pack size", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Monster Pack Size",
+			Values: []clientModel.ItemValue{itemValue("+30%")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MAP_PACK_SIZE)
+		require.NoError(t, err)
+		assert.Equal(t, 30, getter(item))
+	})
+
+	t.Run("map pack size no properties", func(t *testing.T) {
+		getter, err := IntFieldGetter(dbModel.MAP_PACK_SIZE)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(makeItem()))
+	})
+
+	t.Run("map pack size parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Monster Pack Size",
+			Values: []clientModel.ItemValue{itemValue("bad")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MAP_PACK_SIZE)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("facetor lens exp", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Stored Experience: {0}",
+			Values: []clientModel.ItemValue{itemValue("1000000")},
+		}))
+		getter, err := IntFieldGetter(dbModel.FACETOR_LENS_EXP)
+		require.NoError(t, err)
+		assert.Equal(t, 1000000, getter(item))
+	})
+
+	t.Run("facetor lens exp no properties", func(t *testing.T) {
+		getter, err := IntFieldGetter(dbModel.FACETOR_LENS_EXP)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(makeItem()))
+	})
+
+	t.Run("facetor lens exp parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Stored Experience: {0}",
+			Values: []clientModel.ItemValue{itemValue("notanumber")},
+		}))
+		getter, err := IntFieldGetter(dbModel.FACETOR_LENS_EXP)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("memory strands", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Memory Strands",
+			Values: []clientModel.ItemValue{itemValue("42")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MEMORY_STRANDS)
+		require.NoError(t, err)
+		assert.Equal(t, 42, getter(item))
+	})
+
+	t.Run("memory strands no properties", func(t *testing.T) {
+		getter, err := IntFieldGetter(dbModel.MEMORY_STRANDS)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(makeItem()))
+	})
+
+	t.Run("memory strands parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Memory Strands",
+			Values: []clientModel.ItemValue{itemValue("xyz")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MEMORY_STRANDS)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("map tier parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Map Tier",
+			Values: []clientModel.ItemValue{itemValue("abc")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MAP_TIER)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("map quantity parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Item Quantity",
+			Values: []clientModel.ItemValue{itemValue("bad%")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MAP_QUANT)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("quality parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Quality",
+			Values: []clientModel.ItemValue{itemValue("bad%")},
+		}))
+		getter, err := IntFieldGetter(dbModel.QUALITY)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("level parse error", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Level",
+			Values: []clientModel.ItemValue{itemValue("abc")},
+		}))
+		getter, err := IntFieldGetter(dbModel.LEVEL)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("graft skill level nil socketed items", func(t *testing.T) {
+		getter, err := IntFieldGetter(dbModel.GRAFT_SKILL_LEVEL)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(makeItem()))
+	})
+
+	t.Run("graft skill level no properties on socketed item", func(t *testing.T) {
+		item := makeItem(withSocketedItems(clientModel.Item{}))
+		getter, err := IntFieldGetter(dbModel.GRAFT_SKILL_LEVEL)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("graft skill level parse error", func(t *testing.T) {
+		item := makeItem(withSocketedItems(clientModel.Item{
+			Properties: &[]clientModel.ItemProperty{
+				{Name: "Level", Values: []clientModel.ItemValue{itemValue("bad")}},
+			},
+		}))
+		getter, err := IntFieldGetter(dbModel.GRAFT_SKILL_LEVEL)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+
+	t.Run("map quantity no matching property", func(t *testing.T) {
+		item := makeItem(withProperties(clientModel.ItemProperty{
+			Name:   "Other Property",
+			Values: []clientModel.ItemValue{itemValue("10")},
+		}))
+		getter, err := IntFieldGetter(dbModel.MAP_QUANT)
+		require.NoError(t, err)
+		assert.Equal(t, 0, getter(item))
+	})
+}
+
+// ========== Additional StringComparator coverage ==========
+
+func TestStringComparatorAdditional(t *testing.T) {
+	t.Run("invalid regex for DOES_NOT_MATCH", func(t *testing.T) {
+		_, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.DOES_NOT_MATCH, "[invalid"))
+		assert.Error(t, err)
+	})
+
+	t.Run("LENGTH_EQ invalid value", func(t *testing.T) {
+		_, err := StringComparator(makeCondition(dbModel.NAME, dbModel.LENGTH_EQ, "abc"))
+		assert.Error(t, err)
+	})
+
+	t.Run("LENGTH_GT invalid value", func(t *testing.T) {
+		_, err := StringComparator(makeCondition(dbModel.NAME, dbModel.LENGTH_GT, "abc"))
+		assert.Error(t, err)
+	})
+
+	t.Run("LENGTH_LT invalid value", func(t *testing.T) {
+		_, err := StringComparator(makeCondition(dbModel.NAME, dbModel.LENGTH_LT, "abc"))
+		assert.Error(t, err)
+	})
+
+	t.Run("invalid operator", func(t *testing.T) {
+		_, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.CONTAINS_ALL, "x"))
+		assert.Error(t, err)
+	})
+}
+
+// ========== Additional StringArrayComparator coverage ==========
+
+func TestStringArrayComparatorAdditional(t *testing.T) {
+	t.Run("CONTAINS_MATCH invalid regex", func(t *testing.T) {
+		_, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.CONTAINS_MATCH, "[invalid"))
+		assert.Error(t, err)
+	})
+
+	t.Run("DOES_NOT_MATCH invalid regex", func(t *testing.T) {
+		_, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.DOES_NOT_MATCH, "[invalid"))
+		assert.Error(t, err)
+	})
+
+	t.Run("LENGTH_EQ invalid value", func(t *testing.T) {
+		_, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.LENGTH_EQ, "abc"))
+		assert.Error(t, err)
+	})
+
+	t.Run("LENGTH_GT invalid value", func(t *testing.T) {
+		_, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.LENGTH_GT, "abc"))
+		assert.Error(t, err)
+	})
+
+	t.Run("LENGTH_LT invalid value", func(t *testing.T) {
+		_, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.LENGTH_LT, "abc"))
+		assert.Error(t, err)
+	})
+}
+
+// ========== Additional ComperatorFromConditions coverage ==========
+
+func TestComperatorFromConditionsAdditional(t *testing.T) {
+	t.Run("error in multi-condition list", func(t *testing.T) {
+		conditions := []*dbModel.Condition{
+			makeCondition(dbModel.BASE_TYPE, dbModel.EQ, "Chaos Orb"),
+			makeCondition("INVALID_FIELD", dbModel.EQ, "x"),
+		}
+		_, err := ComperatorFromConditions(conditions)
+		assert.Error(t, err)
+	})
+}
+
+// ========== Additional ValidateConditions coverage ==========
+
+func TestValidateConditionsAdditional(t *testing.T) {
+	t.Run("empty conditions valid", func(t *testing.T) {
+		assert.NoError(t, ValidateConditions(nil))
+	})
+
+	t.Run("invalid operator for field type", func(t *testing.T) {
+		conditions := []*dbModel.Condition{
+			makeCondition(dbModel.IS_CORRUPTED, dbModel.GT, "true"),
+		}
+		assert.Error(t, ValidateConditions(conditions))
+	})
+}
+
+// ========== Additional NewItemChecker coverage ==========
+
+func TestNewItemCheckerAdditional(t *testing.T) {
+	t.Run("item class discriminator", func(t *testing.T) {
+		objectives := []*dbModel.Objective{
+			makeObjective(1, dbModel.ObjectiveTypeItem,
+				makeCondition(dbModel.ITEM_CLASS, dbModel.EQ, "StackableCurrency"),
+			),
+		}
+		checker, err := NewItemChecker(objectives, true)
+		require.NoError(t, err)
+
+		results := checker.CheckForCompletions(makeItem(withBaseType("Chaos Orb")))
+		require.Len(t, results, 1)
+		assert.Equal(t, 1, results[0].ObjectiveId)
+	})
+
+	t.Run("item class discriminator no match", func(t *testing.T) {
+		objectives := []*dbModel.Objective{
+			makeObjective(1, dbModel.ObjectiveTypeItem,
+				makeCondition(dbModel.ITEM_CLASS, dbModel.EQ, "StackableCurrency"),
+			),
+		}
+		checker, err := NewItemChecker(objectives, true)
+		require.NoError(t, err)
+
+		results := checker.CheckForCompletions(makeItem(withBaseType("Glorious Plate")))
+		assert.Len(t, results, 0)
+	})
+
+	t.Run("name IN discriminator", func(t *testing.T) {
+		objectives := []*dbModel.Objective{
+			makeObjective(1, dbModel.ObjectiveTypeItem,
+				makeCondition(dbModel.NAME, dbModel.IN, "Headhunter,Mageblood"),
+			),
+		}
+		checker, err := NewItemChecker(objectives, true)
+		require.NoError(t, err)
+
+		results := checker.CheckForCompletions(makeItem(withName("Headhunter")))
+		require.Len(t, results, 1)
+
+		results = checker.CheckForCompletions(makeItem(withName("Mageblood")))
+		require.Len(t, results, 1)
+
+		results = checker.CheckForCompletions(makeItem(withName("Other")))
+		assert.Len(t, results, 0)
+	})
+
+	t.Run("ignoreTime true ignores valid from/to", func(t *testing.T) {
+		past := time.Now().Add(-2 * time.Hour)
+		pastEnd := time.Now().Add(-1 * time.Hour)
+		objectives := []*dbModel.Objective{
+			{
+				Id:            1,
+				ObjectiveType: dbModel.ObjectiveTypeItem,
+				Conditions:    []*dbModel.Condition{makeCondition(dbModel.BASE_TYPE, dbModel.EQ, "Chaos Orb")},
+				ValidFrom:     &past,
+				ValidTo:       &pastEnd,
+			},
+		}
+		checker, err := NewItemChecker(objectives, true) // ignoreTime=true
+		require.NoError(t, err)
+
+		results := checker.CheckForCompletions(makeItem(withBaseType("Chaos Orb")))
+		require.Len(t, results, 1) // should match even though outside time window
+	})
+
+	t.Run("ValidFrom in future rejects", func(t *testing.T) {
+		future := time.Now().Add(1 * time.Hour)
+		futureEnd := time.Now().Add(2 * time.Hour)
+		objectives := []*dbModel.Objective{
+			{
+				Id:            1,
+				ObjectiveType: dbModel.ObjectiveTypeItem,
+				Conditions:    []*dbModel.Condition{makeCondition(dbModel.BASE_TYPE, dbModel.EQ, "Chaos Orb")},
+				ValidFrom:     &future,
+				ValidTo:       &futureEnd,
+			},
+		}
+		checker, err := NewItemChecker(objectives, false)
+		require.NoError(t, err)
+
+		results := checker.CheckForCompletions(makeItem(withBaseType("Chaos Orb")))
+		assert.Len(t, results, 0)
+	})
+}
+
+// ========== Additional ShouldUpdateCharacter coverage ==========
+
+func TestShouldUpdateCharacterAdditional(t *testing.T) {
+	timings := map[dbModel.TimingKey]time.Duration{
+		dbModel.CharacterRefetchDelay:          5 * time.Minute,
+		dbModel.CharacterRefetchDelayImportant: 2 * time.Minute,
+		dbModel.CharacterRefetchDelayInactive:  30 * time.Minute,
+		dbModel.InactivityDuration:             1 * time.Hour,
+	}
+
+	t.Run("cannot make requests", func(t *testing.T) {
+		p := &PlayerUpdate{
+			Token:       "",
+			TokenExpiry: time.Now().Add(1 * time.Hour),
+			New:         Player{Character: &clientModel.Character{Name: "TestChar"}},
+		}
+		assert.False(t, p.ShouldUpdateCharacter(timings))
+	})
+
+	t.Run("high level without pantheon uses important delay", func(t *testing.T) {
+		p := &PlayerUpdate{
+			Token:       "token",
+			TokenExpiry: time.Now().Add(1 * time.Hour),
+			LastActive:  time.Now(),
+			New: Player{Character: &clientModel.Character{
+				Name:  "TestChar",
+				Level: 45,
+				// No pantheon - HasPantheon() returns false for empty Passives
+			}},
+		}
+		// Updated 3 min ago - past important delay of 2 min
+		p.LastUpdateTimes.Character = time.Now().Add(-3 * time.Minute)
+		assert.True(t, p.ShouldUpdateCharacter(timings))
+
+		// Updated 1 min ago - within important delay of 2 min
+		p.LastUpdateTimes.Character = time.Now().Add(-1 * time.Minute)
+		assert.False(t, p.ShouldUpdateCharacter(timings))
+	})
+
+	t.Run("high level with low ascendancy uses important delay", func(t *testing.T) {
+		p := &PlayerUpdate{
+			Token:       "token",
+			TokenExpiry: time.Now().Add(1 * time.Hour),
+			LastActive:  time.Now(),
+			New: Player{Character: &clientModel.Character{
+				Name:  "TestChar",
+				Level: 70,
+				// 0 ascendancy points (< 8)
+				Passives: clientModel.Passives{
+					PantheonMajor: new("Soul of Lunaris"),
+					PantheonMinor: new("Soul of Gruthkul"),
+				},
+			}},
+		}
+		// Updated 3 min ago - past important delay
+		p.LastUpdateTimes.Character = time.Now().Add(-3 * time.Minute)
+		assert.True(t, p.ShouldUpdateCharacter(timings))
+
+		// Updated 1 min ago - within important delay
+		p.LastUpdateTimes.Character = time.Now().Add(-1 * time.Minute)
+		assert.False(t, p.ShouldUpdateCharacter(timings))
+	})
+
+	t.Run("normal update within delay returns false", func(t *testing.T) {
+		p := &PlayerUpdate{
+			Token:       "token",
+			TokenExpiry: time.Now().Add(1 * time.Hour),
+			LastActive:  time.Now(),
+			New: Player{Character: &clientModel.Character{
+				Name:  "TestChar",
+				Level: 30,
+			}},
+		}
+		// Updated 2 min ago - within normal delay of 5 min
+		p.LastUpdateTimes.Character = time.Now().Add(-2 * time.Minute)
+		assert.False(t, p.ShouldUpdateCharacter(timings))
+	})
+}
+
+// ========== Additional ShouldUpdateLeagueAccount coverage ==========
+
+func TestShouldUpdateLeagueAccountAdditional(t *testing.T) {
+	timings := map[dbModel.TimingKey]time.Duration{
+		dbModel.LeagueAccountRefetchDelay:          5 * time.Minute,
+		dbModel.LeagueAccountRefetchDelayImportant: 2 * time.Minute,
+		dbModel.LeagueAccountRefetchDelayInactive:  30 * time.Minute,
+		dbModel.InactivityDuration:                 1 * time.Hour,
+	}
+
+	t.Run("cannot make requests", func(t *testing.T) {
+		p := &PlayerUpdate{
+			Token:       "",
+			TokenExpiry: time.Now().Add(1 * time.Hour),
+			New:         Player{Character: &clientModel.Character{Level: 60}},
+		}
+		assert.False(t, p.ShouldUpdateLeagueAccount(timings))
+	})
+
+	t.Run("inactive player uses longer delay", func(t *testing.T) {
+		p := &PlayerUpdate{
+			Token:       "token",
+			TokenExpiry: time.Now().Add(1 * time.Hour),
+			LastActive:  time.Now().Add(-2 * time.Hour), // inactive
+			New: Player{
+				Character:         &clientModel.Character{Level: 60},
+				AtlasPassiveTrees: []clientModel.AtlasPassiveTree{{Hashes: make([]int, 50)}},
+			},
+		}
+		// Updated 10 min ago - within inactive delay of 30 min
+		p.LastUpdateTimes.LeagueAccount = time.Now().Add(-10 * time.Minute)
+		assert.False(t, p.ShouldUpdateLeagueAccount(timings))
+
+		// Updated 35 min ago - past inactive delay
+		p.LastUpdateTimes.LeagueAccount = time.Now().Add(-35 * time.Minute)
+		assert.True(t, p.ShouldUpdateLeagueAccount(timings))
+	})
+
+	t.Run("important update within delay returns false", func(t *testing.T) {
+		p := &PlayerUpdate{
+			Token:       "token",
+			TokenExpiry: time.Now().Add(1 * time.Hour),
+			LastActive:  time.Now(),
+			New: Player{
+				Character:         &clientModel.Character{Level: 60},
+				AtlasPassiveTrees: []clientModel.AtlasPassiveTree{{Hashes: make([]int, 50)}},
+			},
+		}
+		// Updated 1 min ago - within important delay of 2 min
+		p.LastUpdateTimes.LeagueAccount = time.Now().Add(-1 * time.Minute)
+		assert.False(t, p.ShouldUpdateLeagueAccount(timings))
+	})
+}
+
 // ========== Quality helper ==========
 
 func TestQuality(t *testing.T) {
@@ -1668,5 +2249,70 @@ func TestQuality(t *testing.T) {
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 0, checker(&Player{Character: nil}))
+	})
+
+	t.Run("quality nil equipment", func(t *testing.T) {
+		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		checker, err := GetPlayerChecker(obj)
+		require.NoError(t, err)
+		assert.Equal(t, 0, checker(&Player{Character: &clientModel.Character{Equipment: nil}}))
+	})
+
+	t.Run("quality skips non-matching superclass", func(t *testing.T) {
+		obj := makePlayerObjective(1, dbModel.NumberFieldWeaponQuality)
+		checker, err := GetPlayerChecker(obj)
+		require.NoError(t, err)
+
+		props := []clientModel.ItemProperty{
+			{Name: "Quality", Values: []clientModel.ItemValue{itemValue("+20%")}},
+		}
+		// Glorious Plate is Armour, not Weapon
+		equipment := []clientModel.Item{
+			{BaseType: "Glorious Plate", Properties: &props},
+		}
+		assert.Equal(t, 0, checker(&Player{Character: &clientModel.Character{Equipment: &equipment}}))
+	})
+
+	t.Run("quality skips items without properties", func(t *testing.T) {
+		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		checker, err := GetPlayerChecker(obj)
+		require.NoError(t, err)
+
+		equipment := []clientModel.Item{
+			{BaseType: "Glorious Plate"}, // no properties
+		}
+		assert.Equal(t, 0, checker(&Player{Character: &clientModel.Character{Equipment: &equipment}}))
+	})
+
+	t.Run("quality parse error", func(t *testing.T) {
+		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		checker, err := GetPlayerChecker(obj)
+		require.NoError(t, err)
+
+		props := []clientModel.ItemProperty{
+			{Name: "Quality", Values: []clientModel.ItemValue{itemValue("bad%")}},
+		}
+		equipment := []clientModel.Item{
+			{BaseType: "Glorious Plate", Properties: &props},
+		}
+		assert.Equal(t, 0, checker(&Player{Character: &clientModel.Character{Equipment: &equipment}}))
+	})
+
+	t.Run("quality sums multiple items", func(t *testing.T) {
+		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		checker, err := GetPlayerChecker(obj)
+		require.NoError(t, err)
+
+		props1 := []clientModel.ItemProperty{
+			{Name: "Quality", Values: []clientModel.ItemValue{itemValue("+20%")}},
+		}
+		props2 := []clientModel.ItemProperty{
+			{Name: "Quality", Values: []clientModel.ItemValue{itemValue("+15%")}},
+		}
+		equipment := []clientModel.Item{
+			{BaseType: "Glorious Plate", Properties: &props1},
+			{BaseType: "Glorious Plate", Properties: &props2},
+		}
+		assert.Equal(t, 35, checker(&Player{Character: &clientModel.Character{Equipment: &equipment}}))
 	})
 }

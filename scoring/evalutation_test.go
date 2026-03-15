@@ -10,6 +10,259 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// ========== Score methods ==========
+
+func TestScoreFinished(t *testing.T) {
+	t.Run("all presets finished", func(t *testing.T) {
+		s := &Score{
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: true},
+				2: {Finished: true},
+			},
+		}
+		assert.True(t, s.Finished())
+	})
+
+	t.Run("one preset not finished", func(t *testing.T) {
+		s := &Score{
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: true},
+				2: {Finished: false},
+			},
+		}
+		assert.False(t, s.Finished())
+	})
+
+	t.Run("empty presets is finished", func(t *testing.T) {
+		s := &Score{PresetCompletions: map[int]*PresetCompletion{}}
+		assert.True(t, s.Finished())
+	})
+}
+
+func TestScoreTimestamp(t *testing.T) {
+	t.Run("returns latest timestamp when finished", func(t *testing.T) {
+		t1 := time.Date(2025, 1, 1, 10, 0, 0, 0, time.UTC)
+		t2 := time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)
+		s := &Score{
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: true, Timestamp: t1},
+				2: {Finished: true, Timestamp: t2},
+			},
+		}
+		assert.Equal(t, t2, s.Timestamp())
+	})
+
+	t.Run("returns zero time when not finished", func(t *testing.T) {
+		s := &Score{
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: true, Timestamp: time.Now()},
+				2: {Finished: false},
+			},
+		}
+		assert.True(t, s.Timestamp().IsZero())
+	})
+
+	t.Run("single preset", func(t *testing.T) {
+		t1 := time.Date(2025, 1, 1, 10, 0, 0, 0, time.UTC)
+		s := &Score{
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: true, Timestamp: t1},
+			},
+		}
+		assert.Equal(t, t1, s.Timestamp())
+	})
+}
+
+func TestScorePoints(t *testing.T) {
+	t.Run("sums all preset points plus bonus", func(t *testing.T) {
+		s := &Score{
+			BonusPoints: 5,
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Points: 10},
+				2: {Points: 20},
+			},
+		}
+		assert.Equal(t, 35, s.Points())
+	})
+
+	t.Run("bonus only no presets", func(t *testing.T) {
+		s := &Score{
+			BonusPoints:       7,
+			PresetCompletions: map[int]*PresetCompletion{},
+		}
+		assert.Equal(t, 7, s.Points())
+	})
+
+	t.Run("zero points", func(t *testing.T) {
+		s := &Score{
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Points: 0},
+			},
+		}
+		assert.Equal(t, 0, s.Points())
+	})
+}
+
+func TestScoreCanShowTo(t *testing.T) {
+	t.Run("same team can always see", func(t *testing.T) {
+		s := &Score{
+			TeamId:       1,
+			HideProgress: true,
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: false},
+			},
+		}
+		assert.True(t, s.CanShowTo(1))
+	})
+
+	t.Run("other team can see when finished", func(t *testing.T) {
+		s := &Score{
+			TeamId:       1,
+			HideProgress: true,
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: true},
+			},
+		}
+		assert.True(t, s.CanShowTo(2))
+	})
+
+	t.Run("other team can see when progress not hidden", func(t *testing.T) {
+		s := &Score{
+			TeamId:       1,
+			HideProgress: false,
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: false},
+			},
+		}
+		assert.True(t, s.CanShowTo(2))
+	})
+
+	t.Run("other team cannot see when hidden and not finished", func(t *testing.T) {
+		s := &Score{
+			TeamId:       1,
+			HideProgress: true,
+			PresetCompletions: map[int]*PresetCompletion{
+				1: {Finished: false},
+			},
+		}
+		assert.False(t, s.CanShowTo(2))
+	})
+}
+
+func TestEvaluateAggregations(t *testing.T) {
+	t.Run("evaluates leaf objective with presence scoring", func(t *testing.T) {
+		presetId := 100
+		objective := &repository.Objective{
+			Id: 1,
+			ScoringPresets: []*repository.ScoringPreset{
+				{
+					Id:            presetId,
+					Points:        repository.ExtendingNumberSlice{10},
+					ScoringMethod: repository.PRESENCE,
+				},
+			},
+		}
+		aggregations := make(ObjectiveTeamMatches)
+		aggregations[1] = TeamMatches{
+			1: &Match{TeamId: 1, UserId: 1, Finished: true, Timestamp: time.Now()},
+		}
+		scoreMap := map[int]map[int]*Score{
+			1: {
+				1: &Score{
+					ObjectiveId: 1,
+					TeamId:      1,
+					PresetCompletions: map[int]*PresetCompletion{
+						presetId: {ObjectiveId: 1},
+					},
+				},
+			},
+		}
+		err := EvaluateAggregations(objective, aggregations, scoreMap)
+		assert.NoError(t, err)
+		assert.Equal(t, 10, scoreMap[1][1].PresetCompletions[presetId].Points)
+		assert.True(t, scoreMap[1][1].PresetCompletions[presetId].Finished)
+	})
+
+	t.Run("evaluates children recursively", func(t *testing.T) {
+		presetId := 100
+		childPresetId := 200
+		child := &repository.Objective{
+			Id: 2,
+			ScoringPresets: []*repository.ScoringPreset{
+				{
+					Id:            childPresetId,
+					Points:        repository.ExtendingNumberSlice{5},
+					ScoringMethod: repository.PRESENCE,
+				},
+			},
+		}
+		parent := &repository.Objective{
+			Id:       1,
+			Children: []*repository.Objective{child},
+			ScoringPresets: []*repository.ScoringPreset{
+				{
+					Id:            presetId,
+					Points:        repository.ExtendingNumberSlice{20},
+					ScoringMethod: repository.PRESENCE,
+				},
+			},
+		}
+		aggregations := make(ObjectiveTeamMatches)
+		aggregations[1] = TeamMatches{
+			1: &Match{TeamId: 1, UserId: 1, Finished: true, Timestamp: time.Now()},
+		}
+		aggregations[2] = TeamMatches{
+			1: &Match{TeamId: 1, UserId: 1, Finished: true, Timestamp: time.Now()},
+		}
+		scoreMap := map[int]map[int]*Score{
+			1: {
+				1: &Score{
+					ObjectiveId: 1,
+					TeamId:      1,
+					PresetCompletions: map[int]*PresetCompletion{
+						presetId: {ObjectiveId: 1},
+					},
+				},
+				2: &Score{
+					ObjectiveId: 2,
+					TeamId:      1,
+					PresetCompletions: map[int]*PresetCompletion{
+						childPresetId: {ObjectiveId: 2},
+					},
+				},
+			},
+		}
+		err := EvaluateAggregations(parent, aggregations, scoreMap)
+		assert.NoError(t, err)
+		assert.Equal(t, 5, scoreMap[1][2].PresetCompletions[childPresetId].Points)
+		assert.Equal(t, 20, scoreMap[1][1].PresetCompletions[presetId].Points)
+	})
+
+	t.Run("no scoring presets is fine", func(t *testing.T) {
+		objective := &repository.Objective{
+			Id:             1,
+			ScoringPresets: []*repository.ScoringPreset{},
+		}
+		err := EvaluateAggregations(objective, make(ObjectiveTeamMatches), make(map[int]map[int]*Score))
+		assert.NoError(t, err)
+	})
+
+	t.Run("unknown scoring method is silently skipped", func(t *testing.T) {
+		objective := &repository.Objective{
+			Id: 1,
+			ScoringPresets: []*repository.ScoringPreset{
+				{
+					Id:            1,
+					Points:        repository.ExtendingNumberSlice{10},
+					ScoringMethod: "UNKNOWN_METHOD",
+				},
+			},
+		}
+		err := EvaluateAggregations(objective, make(ObjectiveTeamMatches), make(map[int]map[int]*Score))
+		assert.NoError(t, err)
+	})
+}
+
 func TestHandlePresence(t *testing.T) {
 	// This tests PRESENCE scoring where teams get points simply for completing an objective
 	// Only teams with Finished=true should receive points

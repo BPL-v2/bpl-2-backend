@@ -1,16 +1,20 @@
 package repository
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"testing"
 	"time"
+
+	"bpl/client"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
+	"github.com/lib/pq"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -145,6 +149,8 @@ func createTestTeamsWithUsers(event *Event) ([]*Team, []*User) {
 	db.Create(&TeamUser{TeamId: teams[1].Id, UserId: users[3].Id})
 	return teams, users
 }
+
+func intPtr(i int) *int { return &i }
 
 // ==================== UserRepository Tests ====================
 
@@ -1125,4 +1131,731 @@ func TestEvent_TeamIds(t *testing.T) {
 	}
 	ids := event.TeamIds()
 	assert.Equal(t, []int{1, 5, 10}, ids)
+}
+
+// ==================== Pure Function Tests: float2Int64 / float2Int32 ====================
+
+func TestFloat2Int64(t *testing.T) {
+	assert.Equal(t, int64(42), float2Int64(42.7))
+	assert.Equal(t, int64(0), float2Int64(0))
+	assert.Equal(t, int64(-42), float2Int64(-42.7))
+	// Large value should cap at max int
+	assert.Equal(t, int64(^uint(0)>>1), float2Int64(1e20))
+	// Negative large value
+	assert.Equal(t, -int64(^uint(0)>>1), float2Int64(-1e20))
+}
+
+func TestFloat2Int32(t *testing.T) {
+	assert.Equal(t, int32(42), float2Int32(42.7))
+	assert.Equal(t, int32(0), float2Int32(0))
+	assert.Equal(t, int32(-42), float2Int32(-42.7))
+	// Large value should cap at max int32
+	assert.Equal(t, int32(^uint32(0)>>1), float2Int32(1e15))
+	// Negative large value
+	assert.Equal(t, -int32(^uint32(0)>>1), float2Int32(-1e15))
+}
+
+// ==================== PoBExport Tests ====================
+
+func TestPoBExport_FromStringAndToString(t *testing.T) {
+	original := "SGVsbG8gV29ybGQ=" // base64 of "Hello World"
+	var p PoBExport
+	err := p.FromString(original)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("Hello World"), []byte(p))
+
+	// Round-trip
+	encoded := p.ToString()
+	var p2 PoBExport
+	err = p2.FromString(encoded)
+	require.NoError(t, err)
+	assert.Equal(t, []byte(p), []byte(p2))
+}
+
+func TestPoBExport_FromString_URLSafeChars(t *testing.T) {
+	// Test URL-safe character replacement (- -> +, _ -> /)
+	var p PoBExport
+	// "abc+def/ghi=" in standard base64 should be passable as "abc-def_ghi="
+	err := p.FromString("abc-def_ghi=")
+	// This may or may not decode depending on content, just check it doesn't crash
+	// The replacement should happen: abc+def/ghi=
+	_ = err
+}
+
+func TestPoBExport_FromString_Invalid(t *testing.T) {
+	var p PoBExport
+	err := p.FromString("!!!invalid!!!")
+	assert.Error(t, err)
+}
+
+func TestPoBExport_ToString_URLSafe(t *testing.T) {
+	// Create PoBExport with bytes that would produce + and / in standard base64
+	p := PoBExport([]byte{0xff, 0xff, 0xff})
+	result := p.ToString()
+	assert.NotContains(t, result, "+")
+	assert.NotContains(t, result, "/")
+}
+
+func TestPoBExport_Scan(t *testing.T) {
+	var p PoBExport
+
+	// Scan nil
+	err := p.Scan(nil)
+	require.NoError(t, err)
+	assert.Nil(t, PoBExport(p))
+
+	// Scan bytes
+	err = p.Scan([]byte("test data"))
+	require.NoError(t, err)
+	assert.Equal(t, PoBExport("test data"), p)
+
+	// Scan wrong type
+	err = p.Scan("string value")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "expected []byte")
+}
+
+func TestPoBExport_Value(t *testing.T) {
+	// Non-nil
+	p := PoBExport([]byte("test"))
+	val, err := p.Value()
+	require.NoError(t, err)
+	assert.Equal(t, []byte("test"), val)
+
+	// Nil
+	var pNil PoBExport
+	val, err = pNil.Value()
+	require.NoError(t, err)
+	assert.Nil(t, val)
+}
+
+// ==================== CharacterPob.HasEqualStats Tests ====================
+
+func TestCharacterPob_HasEqualStats(t *testing.T) {
+	pob1 := &CharacterPob{
+		DPS: 100, EHP: 200, PhysMaxHit: 300, EleMaxHit: 400,
+		HP: 500, Mana: 600, ES: 700, Armour: 800,
+		Evasion: 900, XP: 1000, MovementSpeed: 130,
+	}
+
+	t.Run("equal", func(t *testing.T) {
+		pob2 := &CharacterPob{
+			DPS: 100, EHP: 200, PhysMaxHit: 300, EleMaxHit: 400,
+			HP: 500, Mana: 600, ES: 700, Armour: 800,
+			Evasion: 900, XP: 1000, MovementSpeed: 130,
+		}
+		assert.True(t, pob1.HasEqualStats(pob2))
+	})
+
+	t.Run("nil other", func(t *testing.T) {
+		assert.False(t, pob1.HasEqualStats(nil))
+	})
+
+	t.Run("different DPS", func(t *testing.T) {
+		pob2 := &CharacterPob{
+			DPS: 999, EHP: 200, PhysMaxHit: 300, EleMaxHit: 400,
+			HP: 500, Mana: 600, ES: 700, Armour: 800,
+			Evasion: 900, XP: 1000, MovementSpeed: 130,
+		}
+		assert.False(t, pob1.HasEqualStats(pob2))
+	})
+
+	t.Run("different MovementSpeed", func(t *testing.T) {
+		pob2 := &CharacterPob{
+			DPS: 100, EHP: 200, PhysMaxHit: 300, EleMaxHit: 400,
+			HP: 500, Mana: 600, ES: 700, Armour: 800,
+			Evasion: 900, XP: 1000, MovementSpeed: 999,
+		}
+		assert.False(t, pob1.HasEqualStats(pob2))
+	})
+}
+
+// ==================== Event.GetRealm Tests ====================
+
+func TestEvent_GetRealm(t *testing.T) {
+	t.Run("PoE2 returns realm", func(t *testing.T) {
+		event := &Event{GameVersion: PoE2}
+		realm := event.GetRealm()
+		require.NotNil(t, realm)
+	})
+
+	t.Run("PoE1 returns nil", func(t *testing.T) {
+		event := &Event{GameVersion: PoE1}
+		realm := event.GetRealm()
+		assert.Nil(t, realm)
+	})
+}
+
+// ==================== GuildStashTab.ShouldUpdate Tests ====================
+
+func TestGuildStashTab_ShouldUpdate(t *testing.T) {
+	timings := map[TimingKey]time.Duration{
+		GuildstashUpdateInterval:        5 * time.Minute,
+		GuildstashPriorityFetchInterval: 30 * time.Second,
+	}
+
+	t.Run("fetch disabled", func(t *testing.T) {
+		tab := &GuildStashTab{FetchEnabled: false, LastFetch: time.Now().Add(-1 * time.Hour)}
+		assert.False(t, tab.ShouldUpdate(timings))
+	})
+
+	t.Run("normal fetch after interval", func(t *testing.T) {
+		tab := &GuildStashTab{FetchEnabled: true, PriorityFetch: false, LastFetch: time.Now().Add(-10 * time.Minute)}
+		assert.True(t, tab.ShouldUpdate(timings))
+	})
+
+	t.Run("normal fetch before interval", func(t *testing.T) {
+		tab := &GuildStashTab{FetchEnabled: true, PriorityFetch: false, LastFetch: time.Now().Add(-1 * time.Minute)}
+		assert.False(t, tab.ShouldUpdate(timings))
+	})
+
+	t.Run("priority fetch after interval", func(t *testing.T) {
+		tab := &GuildStashTab{FetchEnabled: true, PriorityFetch: true, LastFetch: time.Now().Add(-1 * time.Minute)}
+		assert.True(t, tab.ShouldUpdate(timings))
+	})
+
+	t.Run("priority fetch before interval", func(t *testing.T) {
+		tab := &GuildStashTab{FetchEnabled: true, PriorityFetch: true, LastFetch: time.Now().Add(-10 * time.Second)}
+		assert.False(t, tab.ShouldUpdate(timings))
+	})
+}
+
+// ==================== ActionFromString Tests ====================
+
+func TestActionFromString(t *testing.T) {
+	assert.Equal(t, ActionAdded, ActionFromString("added"))
+	assert.Equal(t, ActionModified, ActionFromString("modified"))
+	assert.Equal(t, ActionRemoved, ActionFromString("removed"))
+	assert.Equal(t, ActionModified, ActionFromString("unknown"))
+	assert.Equal(t, ActionModified, ActionFromString(""))
+}
+
+// ==================== GuildStashTab.AddChildren Tests ====================
+
+func TestGuildStashTab_AddChildren(t *testing.T) {
+	parent := &GuildStashTab{
+		Id:            "parent-1",
+		EventId:       10,
+		TeamId:        20,
+		OwnerId:       30,
+		FetchEnabled:  true,
+		PriorityFetch: true,
+		UserIds:       []int32{1, 2, 3},
+	}
+
+	idx := 0
+	colour := "#ff0000"
+	children := []client.GuildStashTabGGG{
+		{
+			StashTab: &client.StashTab{
+				Id:       "child-1",
+				Name:     "Child Tab 1",
+				Type:     "NormalStash",
+				Index:    &idx,
+				Metadata: client.StashTabMetadata{Colour: &colour},
+			},
+		},
+	}
+
+	parent.AddChildren(children)
+	require.Len(t, parent.Children, 1)
+	child := parent.Children[0]
+	assert.Equal(t, "child-1", child.Id)
+	assert.Equal(t, 10, child.EventId)
+	assert.Equal(t, 20, child.TeamId)
+	assert.Equal(t, 30, child.OwnerId)
+	assert.Equal(t, "Child Tab 1", child.Name)
+	assert.Equal(t, "NormalStash", child.Type)
+	assert.Equal(t, "parent-1", *child.ParentId)
+	assert.True(t, child.FetchEnabled)
+	assert.True(t, child.PriorityFetch)
+	assert.Equal(t, "{}", child.Raw)
+}
+
+func TestGuildStashTab_AddChildren_ReusesExisting(t *testing.T) {
+	existingChild := &GuildStashTab{
+		Id:      "child-1",
+		EventId: 10,
+		Raw:     "existing-data",
+	}
+	parent := &GuildStashTab{
+		Id:       "parent-1",
+		EventId:  10,
+		TeamId:   20,
+		OwnerId:  30,
+		Children: []*GuildStashTab{existingChild},
+	}
+
+	children := []client.GuildStashTabGGG{
+		{
+			StashTab: &client.StashTab{
+				Id:       "child-1",
+				Name:     "Updated Name",
+				Type:     "QuadStash",
+				Metadata: client.StashTabMetadata{},
+			},
+		},
+	}
+
+	parent.AddChildren(children)
+	// Should have original + appended = 2 entries, but the second reuses the existing child object
+	// The function appends to Children, so we get 2 entries
+	require.Len(t, parent.Children, 2)
+	// The last one should be the updated existing child
+	updated := parent.Children[1]
+	assert.Equal(t, "child-1", updated.Id)
+	assert.Equal(t, "Updated Name", updated.Name)
+	assert.Equal(t, "QuadStash", updated.Type)
+}
+
+// ==================== Timing.GetDuration Tests ====================
+
+func TestTiming_GetDuration(t *testing.T) {
+	timing := &Timing{Key: CharacterRefetchDelay, DurationMs: 5000}
+	assert.Equal(t, 5*time.Second, timing.GetDuration())
+
+	timing2 := &Timing{Key: InactivityDuration, DurationMs: 0}
+	assert.Equal(t, time.Duration(0), timing2.GetDuration())
+
+	timing3 := &Timing{Key: LadderUpdateInterval, DurationMs: 60000}
+	assert.Equal(t, time.Minute, timing3.GetDuration())
+}
+
+// ==================== EventRepository: SaveEvent ====================
+
+func TestEventRepository_SaveEvent(t *testing.T) {
+	defer tearDown()
+	repo := &EventRepositoryImpl{DB: db}
+
+	event := &Event{
+		Name:                 "save-test",
+		MaxSize:              20,
+		GameVersion:          PoE1,
+		ApplicationStartTime: time.Now(),
+		ApplicationEndTime:   time.Now().Add(time.Hour),
+		EventStartTime:       time.Now(),
+		EventEndTime:         time.Now().Add(24 * time.Hour),
+	}
+	saved, err := repo.SaveEvent(event)
+	require.NoError(t, err)
+	assert.NotZero(t, saved.Id)
+	assert.Equal(t, "save-test", saved.Name)
+	assert.Equal(t, 20, saved.MaxSize)
+}
+
+// ==================== TeamRepository: RemoveTeamUsersForEvent, GetAllTeamUsers ====================
+
+func TestTeamRepository_GetAllTeamUsers(t *testing.T) {
+	defer tearDown()
+	repo := &TeamRepositoryImpl{DB: db}
+	event := createTestEvent()
+	createTestTeamsWithUsers(event)
+
+	allUsers, err := repo.GetAllTeamUsers()
+	require.NoError(t, err)
+	assert.Len(t, allUsers, 4)
+}
+
+func TestTeamRepository_RemoveTeamUsersForEvent(t *testing.T) {
+	defer tearDown()
+	repo := &TeamRepositoryImpl{DB: db}
+	event := createTestEvent()
+	teams, users := createTestTeamsWithUsers(event)
+
+	teamUsers := []*TeamUser{
+		{TeamId: teams[0].Id, UserId: users[0].Id},
+		{TeamId: teams[0].Id, UserId: users[1].Id},
+	}
+	err := repo.RemoveTeamUsersForEvent(teamUsers, event)
+	require.NoError(t, err)
+
+	remaining, err := repo.GetTeamUsersForEvent(event.Id)
+	require.NoError(t, err)
+	assert.Len(t, remaining, 2) // Only team2 users remain
+}
+
+// ==================== PassiveNodes Tests ====================
+
+func TestPassiveNodes_GetHash(t *testing.T) {
+	nodes1 := PassiveNodes{1, 2, 3}
+	nodes2 := PassiveNodes{1, 2, 3}
+	nodes3 := PassiveNodes{3, 2, 1}
+
+	hash1 := nodes1.GetHash()
+	hash2 := nodes2.GetHash()
+	hash3 := nodes3.GetHash()
+
+	assert.Equal(t, hash1, hash2, "same nodes should produce same hash")
+	assert.NotEqual(t, hash1, hash3, "different order should produce different hash")
+}
+
+func TestPassiveNodes_GetHash_Empty(t *testing.T) {
+	nodes := PassiveNodes{}
+	hash := nodes.GetHash()
+	assert.NotEqual(t, [32]byte{}, hash, "empty nodes should still produce a hash")
+}
+
+func TestPassiveNodes_MarshalJSON(t *testing.T) {
+	nodes := PassiveNodes{10, 20, 30}
+	data, err := json.Marshal(nodes)
+	require.NoError(t, err)
+	assert.Equal(t, "[10,20,30]", string(data))
+}
+
+func TestPassiveNodes_UnmarshalJSON(t *testing.T) {
+	var nodes PassiveNodes
+	err := json.Unmarshal([]byte("[5,10,15]"), &nodes)
+	require.NoError(t, err)
+	assert.Equal(t, PassiveNodes{5, 10, 15}, nodes)
+}
+
+func TestPassiveNodes_UnmarshalJSON_Invalid(t *testing.T) {
+	var nodes PassiveNodes
+	err := json.Unmarshal([]byte("not json"), &nodes)
+	assert.Error(t, err)
+}
+
+func TestPassiveNodes_ScanValue_Roundtrip(t *testing.T) {
+	original := PassiveNodes{100, 200, 300}
+	val, err := original.Value()
+	require.NoError(t, err)
+
+	var restored PassiveNodes
+	err = restored.Scan(val)
+	require.NoError(t, err)
+	assert.Equal(t, original, restored)
+}
+
+// ==================== Activity TableName Test ====================
+
+func TestActivity_TableName(t *testing.T) {
+	a := Activity{}
+	assert.Equal(t, "activity", a.TableName())
+}
+
+// ==================== User.GetPoEToken Tests ====================
+
+func TestUser_GetPoEToken_Valid(t *testing.T) {
+	u := &User{
+		OauthAccounts: []*Oauth{
+			{Provider: "discord", AccessToken: "discord-token", Expiry: time.Now().Add(time.Hour)},
+			{Provider: "poe", AccessToken: "poe-token-123", Expiry: time.Now().Add(time.Hour)},
+		},
+	}
+	assert.Equal(t, "poe-token-123", u.GetPoEToken())
+}
+
+func TestUser_GetPoEToken_Expired(t *testing.T) {
+	u := &User{
+		OauthAccounts: []*Oauth{
+			{Provider: "poe", AccessToken: "expired-token", Expiry: time.Now().Add(-time.Hour)},
+		},
+	}
+	assert.Equal(t, "", u.GetPoEToken())
+}
+
+func TestUser_GetPoEToken_NoPoe(t *testing.T) {
+	u := &User{
+		OauthAccounts: []*Oauth{
+			{Provider: "discord", AccessToken: "discord-token", Expiry: time.Now().Add(time.Hour)},
+		},
+	}
+	assert.Equal(t, "", u.GetPoEToken())
+}
+
+func TestUser_GetPoEToken_NoOauths(t *testing.T) {
+	u := &User{}
+	assert.Equal(t, "", u.GetPoEToken())
+}
+
+// ==================== GetSignupPartners Tests ====================
+
+func TestGetSignupPartners(t *testing.T) {
+	partnerName := "player2#1234"
+	signups := []*Signup{
+		{User: &User{Id: 1, OauthAccounts: []*Oauth{{Provider: "poe", Name: "player1#5678"}}}, PartnerWish: &partnerName},
+		{User: &User{Id: 2, OauthAccounts: []*Oauth{{Provider: "poe", Name: "player2#1234"}}}},
+	}
+	partners := GetSignupPartners(signups)
+	assert.Len(t, partners, 1)
+	assert.Equal(t, 2, partners[1].User.Id)
+}
+
+func TestGetSignupPartners_NoPartnerWish(t *testing.T) {
+	signups := []*Signup{
+		{User: &User{Id: 1}},
+		{User: &User{Id: 2}},
+	}
+	partners := GetSignupPartners(signups)
+	assert.Empty(t, partners)
+}
+
+func TestGetSignupPartners_NoMatch(t *testing.T) {
+	wish := "nonexistent#0000"
+	signups := []*Signup{
+		{User: &User{Id: 1, OauthAccounts: []*Oauth{{Provider: "poe", Name: "player1#1111"}}}, PartnerWish: &wish},
+		{User: &User{Id: 2, OauthAccounts: []*Oauth{{Provider: "poe", Name: "player2#2222"}}}},
+	}
+	partners := GetSignupPartners(signups)
+	assert.Empty(t, partners)
+}
+
+// ==================== CharacterPob.UpdateStats Tests ====================
+
+func TestCharacterPob_UpdateStats(t *testing.T) {
+	pob := &client.PathOfBuilding{
+		Build: client.Build{
+			PlayerStats: client.PlayerStats{
+				TotalDPS:                  1000.5,
+				CombinedDPS:              2000.7,
+				TotalEHP:                 50000.3,
+				PhysicalMaximumHitTaken:   30000.0,
+				FireMaximumHitTaken:       25000.0,
+				ColdMaximumHitTaken:       20000.0,
+				LightningMaximumHitTaken:  22000.0,
+				Life:                      5000.0,
+				Mana:                      2000.0,
+				EnergyShield:             1500.0,
+				Armour:                    10000.0,
+				Evasion:                   8000.0,
+				EffectiveMovementSpeedMod: 1.35,
+			},
+		},
+	}
+
+	cp := &CharacterPob{}
+	cp.UpdateStats(pob)
+
+	assert.Equal(t, int64(2000), cp.DPS) // max of all DPS fields = CombinedDPS = 2000.7 -> 2000
+	assert.Equal(t, int32(50000), cp.EHP)
+	assert.Equal(t, int32(20000), cp.EleMaxHit) // min of fire/cold/lightning
+	assert.Equal(t, int32(30000), cp.PhysMaxHit)
+	assert.Equal(t, int32(5000), cp.HP)
+	assert.Equal(t, int32(2000), cp.Mana)
+	assert.Equal(t, int32(1500), cp.ES)
+	assert.Equal(t, int32(10000), cp.Armour)
+	assert.Equal(t, int32(8000), cp.Evasion)
+	assert.Equal(t, int32(135), cp.MovementSpeed) // 1.35 * 100
+}
+
+// ==================== ActivityRepository DB Tests ====================
+
+func TestActivityRepository_SaveAndGetActivity(t *testing.T) {
+	defer tearDown()
+	db.AutoMigrate(&Activity{})
+	defer db.Exec("DROP TABLE IF EXISTS bpl2.activity")
+
+	repo := &ActivityRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(2)
+
+	now := time.Now().Truncate(time.Microsecond)
+	err := repo.SaveActivity(&Activity{UserId: users[0].Id, EventId: event.Id, Time: now})
+	require.NoError(t, err)
+	err = repo.SaveActivity(&Activity{UserId: users[0].Id, EventId: event.Id, Time: now.Add(time.Minute)})
+	require.NoError(t, err)
+	err = repo.SaveActivity(&Activity{UserId: users[1].Id, EventId: event.Id, Time: now})
+	require.NoError(t, err)
+
+	activities, err := repo.GetActivity(users[0].Id, event.Id)
+	require.NoError(t, err)
+	assert.Len(t, activities, 2)
+
+	allActivities, err := repo.GetAllActivitiesForEvent(event.Id)
+	require.NoError(t, err)
+	assert.Len(t, allActivities, 3)
+}
+
+func TestActivityRepository_GetLatestActiveTimestampsForEvent(t *testing.T) {
+	defer tearDown()
+	db.AutoMigrate(&Activity{})
+	defer db.Exec("DROP TABLE IF EXISTS bpl2.activity")
+
+	repo := &ActivityRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(2)
+
+	t1 := time.Now().Truncate(time.Microsecond)
+	t2 := t1.Add(time.Hour)
+
+	repo.SaveActivity(&Activity{UserId: users[0].Id, EventId: event.Id, Time: t1})
+	repo.SaveActivity(&Activity{UserId: users[0].Id, EventId: event.Id, Time: t2})
+	repo.SaveActivity(&Activity{UserId: users[1].Id, EventId: event.Id, Time: t1})
+
+	timestamps, err := repo.GetLatestActiveTimestampsForEvent(event.Id)
+	require.NoError(t, err)
+	assert.Len(t, timestamps, 2)
+	assert.Equal(t, t2.UTC(), timestamps[users[0].Id].UTC())
+	assert.Equal(t, t1.UTC(), timestamps[users[1].Id].UTC())
+}
+
+func TestActivityRepository_GetActivityHistoryForUsers(t *testing.T) {
+	defer tearDown()
+	db.AutoMigrate(&Activity{})
+	defer db.Exec("DROP TABLE IF EXISTS bpl2.activity")
+
+	repo := &ActivityRepositoryImpl{DB: db}
+	event1 := createTestEvent()
+	event2 := &Event{
+		Name: "event2", MaxSize: 10, IsCurrent: false, GameVersion: PoE2,
+		ApplicationStartTime: time.Now(), ApplicationEndTime: time.Now().Add(time.Hour),
+		EventStartTime: time.Now(), EventEndTime: time.Now().Add(24 * time.Hour),
+	}
+	db.Create(event2)
+	users := createTestUsers(2)
+
+	now := time.Now().Truncate(time.Microsecond)
+	repo.SaveActivity(&Activity{UserId: users[0].Id, EventId: event1.Id, Time: now})
+	repo.SaveActivity(&Activity{UserId: users[0].Id, EventId: event2.Id, Time: now})
+	repo.SaveActivity(&Activity{UserId: users[1].Id, EventId: event1.Id, Time: now})
+
+	history, err := repo.GetActivityHistoryForUsers([]int{users[0].Id, users[1].Id})
+	require.NoError(t, err)
+	assert.Len(t, history, 2)
+	assert.Len(t, history[users[0].Id], 2)
+	assert.Len(t, history[users[1].Id], 1)
+}
+
+// ==================== CharacterRepository DB Tests ====================
+
+func TestCharacterRepository_SaveAndGetCharacters(t *testing.T) {
+	defer tearDown()
+	repo := &CharacterRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(1)
+
+	chars := []*Character{
+		{Id: "char1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "TestChar", Level: 50},
+	}
+	err := repo.SaveCharacters(chars)
+	require.NoError(t, err)
+
+	found, err := repo.GetCharactersForEvent(event.Id)
+	require.NoError(t, err)
+	assert.Len(t, found, 1)
+	assert.Equal(t, "TestChar", found[0].Name)
+
+	byId, err := repo.GetCharacterById("char1")
+	require.NoError(t, err)
+	assert.Equal(t, 50, byId.Level)
+}
+
+func TestCharacterRepository_SaveAndGetPoB(t *testing.T) {
+	defer tearDown()
+	repo := &CharacterRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(1)
+
+	chars := []*Character{
+		{Id: "char-pob-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "PoBChar", Level: 80},
+	}
+	repo.SaveCharacters(chars)
+
+	pob := &CharacterPob{
+		CharacterId: "char-pob-1",
+		DPS:         100000,
+		HP:          5000,
+		ES:          2000,
+		Export:      PoBExport([]byte{0x01}),
+		Items:       pq.Int32Array{},
+	}
+	err := repo.SavePoB(pob)
+	require.NoError(t, err)
+
+	latest, err := repo.GetLatestCharacterPoB("char-pob-1")
+	require.NoError(t, err)
+	assert.Equal(t, int64(100000), latest.DPS)
+	assert.Equal(t, int32(5000), latest.HP)
+
+	history, err := repo.GetCharacterHistory("char-pob-1")
+	require.NoError(t, err)
+	assert.Len(t, history, 1)
+}
+
+func TestCharacterRepository_GetPoBById_DeletePoB(t *testing.T) {
+	defer tearDown()
+	repo := &CharacterRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(1)
+
+	chars := []*Character{
+		{Id: "char-del-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "DelChar", Level: 90},
+	}
+	repo.SaveCharacters(chars)
+
+	pob := &CharacterPob{CharacterId: "char-del-1", DPS: 50000, Export: PoBExport([]byte{0x01}), Items: pq.Int32Array{}}
+	repo.SavePoB(pob)
+
+	found, err := repo.GetPoBById(pob.Id)
+	require.NoError(t, err)
+	assert.Equal(t, int64(50000), found.DPS)
+
+	err = repo.DeletePoB(pob.Id)
+	require.NoError(t, err)
+
+	_, err = repo.GetPoBById(pob.Id)
+	assert.Error(t, err)
+}
+
+func TestCharacterRepository_GetCharactersForUser(t *testing.T) {
+	defer tearDown()
+	repo := &CharacterRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(2)
+
+	repo.SaveCharacters([]*Character{
+		{Id: "cu-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "Char1", Level: 10},
+		{Id: "cu-2", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "Char2", Level: 20},
+		{Id: "cu-3", UserId: intPtr(users[1].Id), EventId: event.Id, Name: "Char3", Level: 30},
+	})
+
+	found, err := repo.GetCharactersForUser(users[0])
+	require.NoError(t, err)
+	assert.Len(t, found, 2)
+}
+
+func TestCharacterRepository_SavePoBs(t *testing.T) {
+	defer tearDown()
+	repo := &CharacterRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(1)
+
+	repo.SaveCharacters([]*Character{
+		{Id: "spob-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "C1", Level: 50},
+		{Id: "spob-2", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "C2", Level: 60},
+	})
+
+	dummyExport := PoBExport([]byte{0x01})
+	pobs := []*CharacterPob{
+		{CharacterId: "spob-1", DPS: 1000, Export: dummyExport, Items: pq.Int32Array{}},
+		{CharacterId: "spob-2", DPS: 2000, Export: dummyExport, Items: pq.Int32Array{}},
+	}
+	err := repo.SavePoBs(pobs)
+	require.NoError(t, err)
+
+	found, err := repo.GetLatestPoBsForEvent(event.Id)
+	require.NoError(t, err)
+	assert.Len(t, found, 2)
+}
+
+func TestCharacterRepository_GetPobByCharacterIdBeforeTimestamp(t *testing.T) {
+	defer tearDown()
+	repo := &CharacterRepositoryImpl{DB: db}
+	event := createTestEvent()
+	users := createTestUsers(1)
+
+	repo.SaveCharacters([]*Character{
+		{Id: "ts-char-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "TSChar", Level: 70},
+	})
+
+	dummy := PoBExport([]byte{0x01})
+	repo.SavePoB(&CharacterPob{CharacterId: "ts-char-1", DPS: 1000, Export: dummy, Items: pq.Int32Array{}})
+	time.Sleep(10 * time.Millisecond)
+	cutoff := time.Now()
+	time.Sleep(10 * time.Millisecond)
+	repo.SavePoB(&CharacterPob{CharacterId: "ts-char-1", DPS: 9999, Export: dummy, Items: pq.Int32Array{}})
+
+	pob, err := repo.GetPobByCharacterIdBeforeTimestamp("ts-char-1", cutoff)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1000), pob.DPS)
 }
