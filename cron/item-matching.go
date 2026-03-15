@@ -210,20 +210,6 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 				syncing = false
 			}
 
-			// this is used for testing, remove this once we have actual users
-			// for _, stash := range stashChange.Stashes {
-			// 	if stash.League != nil && *stash.League == m.event.Name {
-			// 		if stash.AccountName != nil && userMap[*stash.AccountName] == 0 {
-			// 			user, err := m.userService.AddUserFromStashchange(*stash.AccountName, m.event)
-			// 			if err != nil {
-			// 				fmt.Println(err)
-			// 				continue
-			// 			}
-			// 			userMap[*stash.AccountName] = user.Id
-			// 		}
-			// 	}
-			// }
-
 			matches = append(matches, m.getItemMatches(stashChange, userMap, teamMap, itemChecker, desyncedObjectiveIds)...)
 			if !syncing {
 				err = m.objectiveMatchService.SaveMatches(matches, desyncedObjectiveIds)

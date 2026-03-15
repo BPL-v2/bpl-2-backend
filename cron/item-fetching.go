@@ -69,7 +69,6 @@ func (f *FetchingService) FetchStashChanges() error {
 		log.Printf("Failed to get PoE token: %v", err)
 		return fmt.Errorf("failed to get PoE token: %w", err)
 	}
-	fmt.Printf("Using token %s for event %d\n", token, f.event.Id)
 	initialStashChange, err := f.stashChangeService.GetInitialChangeId(f.event)
 	fmt.Printf("Initial stash change ID: %s\n", initialStashChange)
 	if err != nil {

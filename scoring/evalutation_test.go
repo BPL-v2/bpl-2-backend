@@ -1686,3 +1686,816 @@ func TestHandleBingoBoardWithRequiredNumberOfBingos(t *testing.T) {
 	assert.Equal(t, 0, scoreMap[2][objective.Id].PresetCompletions[presetId].Rank, "Team 2 should have rank 0")
 	assert.Equal(t, 0, scoreMap[2][objective.Id].PresetCompletions[presetId].Points, "Team 2 should have 0 points")
 }
+
+// -- Edge case tests for tie-breaking and sorting logic --
+func TestHandlePointsFromValue_MissingScoreMapEntry(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:     presetId,
+		Points: repository.ExtendingNumberSlice{2},
+	}
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1:  {TeamId: 1, Number: 5, Finished: true, Timestamp: time.Now()},
+			99: {TeamId: 99, Number: 3, Finished: true, Timestamp: time.Now()}, // no scoreMap entry
+		},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			10: {ObjectiveId: 10, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {},
+			}},
+		},
+		// team 99 missing from scoreMap
+	}
+	err := handlePointsFromValue(objective, preset, aggregations, scoreMap)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, scoreMap[1][10].PresetCompletions[presetId].Points) // 2*5
+}
+
+func TestHandlePointsFromValue_NoCap(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:       presetId,
+		Points:   repository.ExtendingNumberSlice{10},
+		PointCap: 0, // no cap
+	}
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1: {TeamId: 1, Number: 100, Finished: true, Timestamp: time.Now()},
+		},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {10: {ObjectiveId: 10, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+			presetId: {},
+		}}},
+	}
+	err := handlePointsFromValue(objective, preset, aggregations, scoreMap)
+	assert.NoError(t, err)
+	assert.Equal(t, 1000, scoreMap[1][10].PresetCompletions[presetId].Points) // uncapped
+}
+
+func TestHandlePointsFromValue_WithCap(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:       presetId,
+		Points:   repository.ExtendingNumberSlice{10},
+		PointCap: 50,
+	}
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1: {TeamId: 1, Number: 100, Finished: true, Timestamp: time.Now()},
+		},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {10: {ObjectiveId: 10, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+			presetId: {},
+		}}},
+	}
+	err := handlePointsFromValue(objective, preset, aggregations, scoreMap)
+	assert.NoError(t, err)
+	assert.Equal(t, 50, scoreMap[1][10].PresetCompletions[presetId].Points) // capped
+}
+
+func TestHandlePointsFromValue_NilObjectiveScore(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:     presetId,
+		Points: repository.ExtendingNumberSlice{10},
+	}
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1: {TeamId: 1, Number: 5, Finished: true, Timestamp: time.Now()},
+		},
+	}
+	// scoreMap has team but no objective entry
+	scoreMap := map[int]map[int]*Score{
+		1: {},
+	}
+	err := handlePointsFromValue(objective, preset, aggregations, scoreMap)
+	assert.NoError(t, err) // should not panic
+}
+
+// ========== handlePresence edge cases ==========
+
+func TestHandlePresence_MissingScoreMapEntry(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:     presetId,
+		Points: repository.ExtendingNumberSlice{25},
+	}
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1:  {TeamId: 1, Finished: true, Timestamp: time.Now()},
+			99: {TeamId: 99, Finished: true, Timestamp: time.Now()}, // no scoreMap
+		},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {10: {ObjectiveId: 10, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+			presetId: {},
+		}}},
+	}
+	err := handlePresence(objective, preset, aggregations, scoreMap)
+	assert.NoError(t, err)
+	assert.Equal(t, 25, scoreMap[1][10].PresetCompletions[presetId].Points)
+}
+
+func TestHandlePresence_NotFinished(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:     presetId,
+		Points: repository.ExtendingNumberSlice{25},
+	}
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1: {TeamId: 1, Finished: false, Number: 3, Timestamp: time.Now()},
+		},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {10: {ObjectiveId: 10, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+			presetId: {},
+		}}},
+	}
+	err := handlePresence(objective, preset, aggregations, scoreMap)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, scoreMap[1][10].PresetCompletions[presetId].Points) // no points for unfinished
+	assert.Equal(t, 3, scoreMap[1][10].PresetCompletions[presetId].Number)
+}
+
+// ========== handleRanked edge cases ==========
+
+func TestHandleRanked_MissingScoreMapEntry(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:     presetId,
+		Points: repository.ExtendingNumberSlice{100, 50},
+	}
+	now := time.Now()
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1:  {TeamId: 1, Finished: true, Timestamp: now.Add(-time.Hour)},
+			2:  {TeamId: 2, Finished: true, Timestamp: now},
+			99: {TeamId: 99, Finished: true, Timestamp: now.Add(-2 * time.Hour)}, // no scoreMap
+		},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {10: {ObjectiveId: 10, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}}},
+		2: {10: {ObjectiveId: 10, TeamId: 2, PresetCompletions: map[int]*PresetCompletion{presetId: {}}}},
+	}
+	rankFun := func(a, b *Match) bool { return a.Timestamp.Before(b.Timestamp) }
+	err := handleRanked(objective, preset, aggregations, rankFun, scoreMap)
+	assert.NoError(t, err)
+	// Team 99 (earliest) is skipped; team 1 and 2 should still get ranked
+	comp1 := scoreMap[1][10].PresetCompletions[presetId]
+	comp2 := scoreMap[2][10].PresetCompletions[presetId]
+	assert.True(t, comp1.Points > 0 || comp2.Points > 0)
+}
+
+func TestHandleRanked_UnfinishedTeam(t *testing.T) {
+	presetId := 1
+	objective := &repository.Objective{Id: 10}
+	preset := &repository.ScoringPreset{
+		Id:     presetId,
+		Points: repository.ExtendingNumberSlice{100, 50},
+	}
+	now := time.Now()
+	aggregations := ObjectiveTeamMatches{
+		10: TeamMatches{
+			1: {TeamId: 1, Finished: true, Timestamp: now},
+			2: {TeamId: 2, Finished: false, Number: 5, Timestamp: now},
+		},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {10: {ObjectiveId: 10, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}}},
+		2: {10: {ObjectiveId: 10, TeamId: 2, PresetCompletions: map[int]*PresetCompletion{presetId: {}}}},
+	}
+	rankFun := func(a, b *Match) bool { return a.Timestamp.Before(b.Timestamp) }
+	err := handleRanked(objective, preset, aggregations, rankFun, scoreMap)
+	assert.NoError(t, err)
+	comp1 := scoreMap[1][10].PresetCompletions[presetId]
+	comp2 := scoreMap[2][10].PresetCompletions[presetId]
+	assert.Equal(t, 100, comp1.Points)
+	assert.Equal(t, 0, comp2.Points) // not finished
+	assert.Equal(t, 0, comp2.Rank)   // no rank
+	assert.Equal(t, 5, comp2.Number) // Number still set
+}
+
+// ========== handleChildBonus edge cases ==========
+
+func TestHandleChildBonus_NoFinishedChildren(t *testing.T) {
+	presetId := 1
+	child1 := &repository.Objective{Id: 2}
+	child2 := &repository.Objective{Id: 3}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child1, child2},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{10, 5},
+		}},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: false},
+			}},
+			3: {ObjectiveId: 3, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: false},
+			}},
+		},
+	}
+	err := handleChildBonus(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+	// teamChildScores is empty for team 1, so the loop body doesn't run
+	// and scoreMap[1][1].PresetCompletions[presetId] is not updated
+}
+
+func TestHandleChildBonus_MissingParentScore(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{10},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			// no entry for parent objective 1
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+		},
+	}
+	err := handleChildBonus(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err) // should not panic
+}
+
+// ========== handleBingoBoard edge cases ==========
+
+func TestHandleBingoBoard_InvalidRequiredBingos(t *testing.T) {
+	presetId := 1
+	child1 := &repository.Objective{Id: 2, Extra: "0,0"}
+	child2 := &repository.Objective{Id: 3, Extra: "0,1"}
+	child3 := &repository.Objective{Id: 4, Extra: "1,0"}
+	child4 := &repository.Objective{Id: 5, Extra: "1,1"}
+	objective := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child1, child2, child3, child4},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+			Extra:  map[string]string{"required_number_of_bingos": "not_a_number"},
+		}},
+	}
+	now := time.Now()
+	// Team 1 completes top row (0,0) and (0,1) → 1 bingo
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+			3: {ObjectiveId: 3, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+			4: {ObjectiveId: 4, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: false},
+			}},
+			5: {ObjectiveId: 5, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: false},
+			}},
+		},
+	}
+	// invalid parse → falls back to 1 required bingo. Top row complete → should finish.
+	err := handleBingoBoard(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err)
+	assert.True(t, scoreMap[1][1].PresetCompletions[presetId].Finished)
+}
+
+func TestHandleBingoBoard_ChildWithoutGridCoordinates(t *testing.T) {
+	presetId := 1
+	child1 := &repository.Objective{Id: 2, Extra: "0,0"}
+	child2 := &repository.Objective{Id: 3, Extra: "invalid"}
+	objective := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child1, child2},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+			3: {ObjectiveId: 3, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+		},
+	}
+	// child2 has no valid grid coords → gets gridCellMap entry {0,0} by default (zero value)
+	// The function should not panic.
+	err := handleBingoBoard(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err)
+}
+
+func TestHandleBingoBoard_NoBingoCompletion(t *testing.T) {
+	presetId := 1
+	child1 := &repository.Objective{Id: 2, Extra: "0,0"}
+	child2 := &repository.Objective{Id: 3, Extra: "0,1"}
+	child3 := &repository.Objective{Id: 4, Extra: "1,0"}
+	child4 := &repository.Objective{Id: 5, Extra: "1,1"}
+	objective := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child1, child2, child3, child4},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	now := time.Now()
+	// Team 1 only has diagonal (0,0) and (1,1) — not a complete row/col/diagonal in 2x2
+	// Wait, (0,0) and (1,1) IS a diagonal in 2x2. Let me only give (0,0) and (1,0).
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+			3: {ObjectiveId: 3, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: false},
+			}},
+			4: {ObjectiveId: 4, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+			5: {ObjectiveId: 5, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: false},
+			}},
+		},
+	}
+	// (0,0) and (1,0) done → col 0 complete! Let me change to (0,0) only.
+	// Actually, let's just give (0,0) completed and nothing else:
+	scoreMap[1][3].PresetCompletions[presetId].Finished = false
+	scoreMap[1][4].PresetCompletions[presetId].Finished = false
+
+	err := handleBingoBoard(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err)
+	assert.False(t, scoreMap[1][1].PresetCompletions[presetId].Finished)
+	assert.Equal(t, 0, scoreMap[1][1].PresetCompletions[presetId].Points)
+}
+
+func TestHandleBingoBoard_MissingScoreMapForParent(t *testing.T) {
+	presetId := 1
+	child1 := &repository.Objective{Id: 2, Extra: "0,0"}
+	child2 := &repository.Objective{Id: 3, Extra: "1,0"}
+	objective := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child1, child2},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			// no entry for parent objective 1
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+			3: {ObjectiveId: 3, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+		},
+	}
+	err := handleBingoBoard(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err) // should not panic
+}
+
+// ========== handleChildRankingByTime edge cases ==========
+
+func TestHandleChildRankingByTime_InvalidExtraParse(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+			Extra:  map[string]string{"required_child_completions": "abc"},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+		},
+	}
+	// invalid parse → falls back to len(children) = 1
+	err := handleChildRankingByTime(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+	assert.True(t, scoreMap[1][1].PresetCompletions[presetId].Finished)
+	assert.Equal(t, 100, scoreMap[1][1].PresetCompletions[presetId].Points)
+}
+
+func TestHandleChildRankingByTime_MissingScoreMapForParent(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			// no entry for parent objective 1
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+		},
+	}
+	err := handleChildRankingByTime(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+}
+
+func TestHandleChildRankingByTime_ZeroRequiredCompletions(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+			Extra:  map[string]string{"required_child_completions": "0"},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: true, Timestamp: now},
+			}},
+		},
+	}
+	// requiredChildCompletions=0 → the guard skips timestamp correction,
+	// but ObjectivesCompleted (1) >= 0, so team IS finished with default timestamp
+	err := handleChildRankingByTime(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+	assert.True(t, scoreMap[1][1].PresetCompletions[presetId].Finished)
+	assert.Equal(t, 100, scoreMap[1][1].PresetCompletions[presetId].Points)
+}
+
+func TestHandleChildRankingByTime_PercentOverwritesAbsolute(t *testing.T) {
+	presetId := 1
+	children := make([]*repository.Objective, 10)
+	for i := range children {
+		children[i] = &repository.Objective{Id: i + 2}
+	}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: children,
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+			Extra: map[string]string{
+				"required_child_completions":         "1",  // would be easy
+				"required_child_completions_percent": "50", // 50% of 10 = 5
+			},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+		},
+	}
+	// Only complete 3 of 10 children → below 50%
+	for i := 2; i <= 11; i++ {
+		finished := i <= 4 // 3 finished
+		scoreMap[1][i] = &Score{
+			ObjectiveId: i,
+			TeamId:      1,
+			PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Finished: finished, Timestamp: now},
+			},
+		}
+	}
+	err := handleChildRankingByTime(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+	// 3 < 5 (50%), so team shouldn't finish despite 3 >= 1 (absolute)
+	assert.False(t, scoreMap[1][1].PresetCompletions[presetId].Finished)
+}
+
+// ========== handleChildRankingByNumber edge cases ==========
+
+func TestHandleChildRankingByNumber_ZeroNumbers(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Number: 0},
+			}},
+		},
+	}
+	err := handleChildRankingByNumber(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+	comp := scoreMap[1][1].PresetCompletions[presetId]
+	assert.Equal(t, 0, comp.Number) // sum of zeros
+	assert.Equal(t, 0, comp.Points) // skipped due to Number==0
+}
+
+func TestHandleChildRankingByNumber_MissingChildScore(t *testing.T) {
+	presetId := 1
+	child1 := &repository.Objective{Id: 2}
+	child2 := &repository.Objective{Id: 3}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child1, child2},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Number: 5, Timestamp: now},
+			}},
+			// child 3 missing from scoreMap
+		},
+	}
+	err := handleChildRankingByNumber(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+	comp := scoreMap[1][1].PresetCompletions[presetId]
+	assert.Equal(t, 5, comp.Number) // only counts existing child
+	assert.Equal(t, 100, comp.Points)
+}
+
+func TestHandleChildRankingByNumber_MissingParentScore(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			// no parent entry
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{
+				presetId: {Number: 5, Timestamp: now},
+			}},
+		},
+	}
+	err := handleChildRankingByNumber(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err) // should not panic
+}
+
+// ========== EvaluateAggregations edge cases ==========
+
+func TestEvaluateAggregations_UnknownScoringMethod(t *testing.T) {
+	objective := &repository.Objective{
+		Id: 1,
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:            1,
+			ScoringMethod: "NONEXISTENT_METHOD",
+			Points:        repository.ExtendingNumberSlice{10},
+		}},
+	}
+	scoreMap := map[int]map[int]*Score{}
+	err := EvaluateAggregations(objective, make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err) // unknown method is silently skipped
+}
+
+func TestEvaluateAggregations_ChildError(t *testing.T) {
+	// This tests that if a child evaluation fails, the error propagates.
+	// All scoring functions return nil normally, so we just test the recursion works.
+	child := &repository.Objective{
+		Id:             2,
+		ScoringPresets: []*repository.ScoringPreset{},
+	}
+	parent := &repository.Objective{
+		Id:             1,
+		Children:       []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{},
+	}
+	scoreMap := map[int]map[int]*Score{}
+	err := EvaluateAggregations(parent, make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err)
+}
+
+// ========== getBingoCompletionTime edge cases ==========
+
+func TestGetBingoCompletionTime_EmptyGrid(t *testing.T) {
+	result := getBingoCompletionTime(1, map[int]map[int]time.Time{}, 3)
+	assert.True(t, result.IsZero())
+}
+
+func TestGetBingoCompletionTime_InsufficientBingos(t *testing.T) {
+	now := time.Now()
+	grid := map[int]map[int]time.Time{
+		0: {0: now, 1: now}, // row 0 complete in 2x2
+	}
+	// Require 2 bingos but only 1 is complete
+	result := getBingoCompletionTime(2, grid, 2)
+	assert.True(t, result.IsZero())
+}
+
+func TestGetBingoCompletionTime_ExactBingos(t *testing.T) {
+	now := time.Now()
+	grid := map[int]map[int]time.Time{
+		0: {0: now, 1: now.Add(time.Hour)},     // row 0 complete
+		1: {0: now, 1: now.Add(2 * time.Hour)}, // row 1 complete
+	}
+	// Require 2 bingos, have 2 rows complete
+	result := getBingoCompletionTime(2, grid, 2)
+	assert.False(t, result.IsZero())
+}
+
+// ========== handleChildRankingByTime: uncovered branches ==========
+
+func TestHandleChildRankingByTime_InvalidPercentParse(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+			Extra: map[string]string{
+				"required_child_completions_percent": "not-a-number",
+			},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		1: {
+			1: {ObjectiveId: 1, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {}}},
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {Finished: true, Timestamp: now}}},
+		},
+	}
+	err := handleChildRankingByTime(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+	// Invalid parse falls back to len(children)=1, so completing 1 child should finish
+	assert.True(t, scoreMap[1][1].PresetCompletions[presetId].Finished)
+}
+
+func TestHandleChildRankingByTime_NilScoreMapEntry(t *testing.T) {
+	presetId := 1
+	child := &repository.Objective{Id: 2}
+	parent := &repository.Objective{
+		Id:       1,
+		Children: []*repository.Objective{child},
+		ScoringPresets: []*repository.ScoringPreset{{
+			Id:     presetId,
+			Points: repository.ExtendingNumberSlice{100},
+		}},
+	}
+	now := time.Now()
+	scoreMap := map[int]map[int]*Score{
+		// Team 1 has no entry for the parent objective → nil guard hit
+		1: {
+			2: {ObjectiveId: 2, TeamId: 1, PresetCompletions: map[int]*PresetCompletion{presetId: {Finished: true, Timestamp: now}}},
+		},
+	}
+	err := handleChildRankingByTime(parent, parent.ScoringPresets[0], nil, scoreMap)
+	assert.NoError(t, err)
+}
+
+// ========== getExtremeQuery: uncovered default branch ==========
+
+func TestGetExtremeQuery_InvalidType(t *testing.T) {
+	_, err := getExtremeQuery("INVALID_TYPE")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid aggregation type")
+}
+
+func TestGetExtremeQuery_Maximum(t *testing.T) {
+	query, err := getExtremeQuery(repository.AggregationTypeMaximum)
+	assert.NoError(t, err)
+	assert.Contains(t, query, "MAX")
+}
+
+func TestGetExtremeQuery_Minimum(t *testing.T) {
+	query, err := getExtremeQuery(repository.AggregationTypeMinimum)
+	assert.NoError(t, err)
+	assert.Contains(t, query, "MIN")
+}
+
+// ========== handleChildRankingByTime sort: multiple unfinished teams ==========
+
+func TestHandleChildRankingByTime_MultipleUnfinishedTeams(t *testing.T) {
+	// Two teams below required_child_completions with different completion counts.
+	// This exercises the sort branches for unfinished teams.
+	presetId := 100
+	objective := &repository.Objective{
+		Id: 10,
+		ScoringPresets: []*repository.ScoringPreset{
+			{
+				Id:     presetId,
+				Points: repository.ExtendingNumberSlice{100, 75, 50, 25},
+				Extra: map[string]string{
+					"required_child_completions": "3",
+				},
+			},
+		},
+		Children: []*repository.Objective{
+			{Id: 1}, {Id: 2}, {Id: 3}, {Id: 4},
+		},
+	}
+
+	now := time.Now()
+	scoreMap := make(map[int]map[int]*Score)
+	for teamId := 1; teamId <= 4; teamId++ {
+		scoreMap[teamId] = make(map[int]*Score)
+		for childId := 1; childId <= 4; childId++ {
+			scoreMap[teamId][childId] = &Score{
+				ObjectiveId: childId,
+				TeamId:      teamId,
+				PresetCompletions: map[int]*PresetCompletion{
+					presetId: {ObjectiveId: childId},
+				},
+			}
+		}
+		scoreMap[teamId][objective.Id] = &Score{
+			ObjectiveId: objective.Id,
+			TeamId:      teamId,
+			PresetCompletions: map[int]*PresetCompletion{
+				presetId: {ObjectiveId: objective.Id},
+			},
+		}
+	}
+
+	// Team 1: 3 completions (meets threshold) — finished
+	for _, childId := range []int{1, 2, 3} {
+		scoreMap[1][childId].PresetCompletions[presetId].Finished = true
+		scoreMap[1][childId].PresetCompletions[presetId].Timestamp = now.Add(-time.Duration(childId) * time.Hour)
+	}
+	// Team 2: 2 completions (below threshold) — unfinished
+	for _, childId := range []int{1, 2} {
+		scoreMap[2][childId].PresetCompletions[presetId].Finished = true
+		scoreMap[2][childId].PresetCompletions[presetId].Timestamp = now.Add(-time.Duration(childId) * time.Hour)
+	}
+	// Team 3: 1 completion (below threshold) — unfinished, fewer than team 2
+	scoreMap[3][1].PresetCompletions[presetId].Finished = true
+	scoreMap[3][1].PresetCompletions[presetId].Timestamp = now.Add(-time.Hour)
+	// Team 4: 2 completions (below threshold) — same count as team 2, exercises equal-completions branch
+	for _, childId := range []int{1, 2} {
+		scoreMap[4][childId].PresetCompletions[presetId].Finished = true
+		scoreMap[4][childId].PresetCompletions[presetId].Timestamp = now.Add(-time.Duration(childId+5) * time.Hour)
+	}
+
+	err := handleChildRankingByTime(objective, objective.ScoringPresets[0], make(ObjectiveTeamMatches), scoreMap)
+	assert.NoError(t, err)
+
+	// Team 1 should be finished and ranked
+	assert.True(t, scoreMap[1][objective.Id].PresetCompletions[presetId].Finished)
+	assert.Equal(t, 100, scoreMap[1][objective.Id].PresetCompletions[presetId].Points)
+
+	// Teams 2, 3, 4 unfinished — no points
+	assert.False(t, scoreMap[2][objective.Id].PresetCompletions[presetId].Finished)
+	assert.False(t, scoreMap[3][objective.Id].PresetCompletions[presetId].Finished)
+	assert.False(t, scoreMap[4][objective.Id].PresetCompletions[presetId].Finished)
+}
