@@ -7,7 +7,7 @@ import (
 )
 
 type ItemController struct {
-	itemService *service.ItemService
+	itemService service.ItemService
 }
 
 func NewItemController() *ItemController {

@@ -5,35 +5,43 @@ import (
 	"bpl/utils"
 )
 
-type ScoringPresetService struct {
-	scoringPresetRepository *repository.ScoringPresetRepository
-	objectiveRepository     *repository.ObjectiveRepository
+type ScoringPresetService interface {
+	SavePreset(preset *repository.ScoringPreset) (*repository.ScoringPreset, error)
+	SavePresets(presets []*repository.ScoringPreset) ([]*repository.ScoringPreset, error)
+	GetPresetsForEvent(eventId int) ([]*repository.ScoringPreset, error)
+	DeletePreset(presetId int) error
+	DuplicatePresets(oldEventId int, newEventId int) (map[int]*repository.ScoringPreset, error)
 }
 
-func NewScoringPresetsService() *ScoringPresetService {
-	return &ScoringPresetService{
+type ScoringPresetServiceImpl struct {
+	scoringPresetRepository repository.ScoringPresetRepository
+	objectiveRepository     repository.ObjectiveRepository
+}
+
+func NewScoringPresetsService() ScoringPresetService {
+	return &ScoringPresetServiceImpl{
 		scoringPresetRepository: repository.NewScoringPresetRepository(),
 		objectiveRepository:     repository.NewObjectiveRepository(),
 	}
 }
 
-func (s *ScoringPresetService) SavePreset(preset *repository.ScoringPreset) (*repository.ScoringPreset, error) {
+func (s *ScoringPresetServiceImpl) SavePreset(preset *repository.ScoringPreset) (*repository.ScoringPreset, error) {
 	return s.scoringPresetRepository.SavePreset(preset)
 }
 
-func (s *ScoringPresetService) SavePresets(presets []*repository.ScoringPreset) ([]*repository.ScoringPreset, error) {
+func (s *ScoringPresetServiceImpl) SavePresets(presets []*repository.ScoringPreset) ([]*repository.ScoringPreset, error) {
 	return s.scoringPresetRepository.SavePresets(presets)
 }
 
-func (s *ScoringPresetService) GetPresetsForEvent(eventId int) ([]*repository.ScoringPreset, error) {
+func (s *ScoringPresetServiceImpl) GetPresetsForEvent(eventId int) ([]*repository.ScoringPreset, error) {
 	return s.scoringPresetRepository.GetPresetsForEvent(eventId)
 }
 
-func (s *ScoringPresetService) DeletePreset(presetId int) error {
+func (s *ScoringPresetServiceImpl) DeletePreset(presetId int) error {
 	return s.scoringPresetRepository.DeletePreset(presetId)
 }
 
-func (s *ScoringPresetService) DuplicatePresets(oldEventId int, newEventId int) (map[int]*repository.ScoringPreset, error) {
+func (s *ScoringPresetServiceImpl) DuplicatePresets(oldEventId int, newEventId int) (map[int]*repository.ScoringPreset, error) {
 	presets, err := s.GetPresetsForEvent(oldEventId)
 	if err != nil {
 		return nil, err

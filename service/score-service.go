@@ -88,23 +88,31 @@ type ScoreDifference struct {
 	DiffType  Difftype
 }
 
-type ScoreService struct {
+type ScoreService interface {
+	GetNewDiff(eventId int) (ScoreMap, error)
+	GetCurrentScore(eventId int) (ScoreMap, error)
+	IsCalculating(eventId int) bool
+	GetPlayerAttributionsFromGuildstash(event *repository.Event, objectiveTree *repository.Objective) (AttributionOverwrites, error)
+	GetLatestScores(eventId int) ScoreMap
+}
+
+type ScoreServiceImpl struct {
 	LatestScores      map[int]ScoreMap
-	eventService      *EventService
-	objectiveService  *ObjectiveService
-	guildStashService *GuildStashService
-	cachedDataService *CachedDataService
-	userService       *UserService
+	eventService      EventService
+	objectiveService  ObjectiveService
+	guildStashService GuildStashService
+	cachedDataService CachedDataService
+	userService       UserService
 	db                *gorm.DB
 	// Mutex to protect concurrent access to calculation state
 	calculationMutex sync.Mutex
 	calculating      map[int]chan ScoreMap // Track which events are currently being calculated with result channels
 }
 
-func NewScoreService(PoEClient *client.PoEClient) *ScoreService {
+func NewScoreService(PoEClient *client.PoEClient) ScoreService {
 	eventService := NewEventService()
 	objectiveService := NewObjectiveService()
-	return &ScoreService{
+	return &ScoreServiceImpl{
 		db:                config.DatabaseConnection(),
 		eventService:      eventService,
 		objectiveService:  objectiveService,
@@ -169,7 +177,11 @@ func Diff(scoreMap ScoreMap, scores []*scoring.Score) (ScoreMap, ScoreMap) {
 	return newMap, diffMap
 }
 
-func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
+func (s *ScoreServiceImpl) GetLatestScores(eventId int) ScoreMap {
+	return s.LatestScores[eventId]
+}
+
+func (s *ScoreServiceImpl) GetNewDiff(eventId int) (ScoreMap, error) {
 	// Check if calculation is already in progress for this event
 	s.calculationMutex.Lock()
 	if resultChan, exists := s.calculating[eventId]; exists {
@@ -222,7 +234,7 @@ func (s *ScoreService) GetNewDiff(eventId int) (ScoreMap, error) {
 	return diff, nil
 }
 
-func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err error) {
+func (s *ScoreServiceImpl) calcScores(eventId int) (score []*scoring.Score, err error) {
 	event, err := s.eventService.GetEventById(eventId, "Teams", "Teams.Users")
 	if err != nil {
 		return nil, err
@@ -275,7 +287,7 @@ func (s *ScoreService) calcScores(eventId int) (score []*scoring.Score, err erro
 	return scores, nil
 }
 
-func (s *ScoreService) GetCurrentScore(eventId int) (ScoreMap, error) {
+func (s *ScoreServiceImpl) GetCurrentScore(eventId int) (ScoreMap, error) {
 	if s.LatestScores[eventId] != nil {
 		return s.LatestScores[eventId], nil
 	}
@@ -291,7 +303,7 @@ func (s *ScoreService) GetCurrentScore(eventId int) (ScoreMap, error) {
 }
 
 // IsCalculating returns true if a score calculation is currently in progress for the given event
-func (s *ScoreService) IsCalculating(eventId int) bool {
+func (s *ScoreServiceImpl) IsCalculating(eventId int) bool {
 	s.calculationMutex.Lock()
 	defer s.calculationMutex.Unlock()
 	_, exists := s.calculating[eventId]
@@ -306,7 +318,7 @@ type PlayerOverwrite struct {
 type TeamAttributionOverwrite = map[int]PlayerOverwrite
 type AttributionOverwrites = map[int]TeamAttributionOverwrite
 
-func (s *ScoreService) GetPlayerAttributionsFromGuildstash(event *repository.Event, objectiveTree *repository.Objective) (AttributionOverwrites, error) {
+func (s *ScoreServiceImpl) GetPlayerAttributionsFromGuildstash(event *repository.Event, objectiveTree *repository.Objective) (AttributionOverwrites, error) {
 	overwrites := make(AttributionOverwrites)
 	objectiveNameMap := make(map[int]string)
 	// we can only definitively identify objectives that have their name or base type as their only condition

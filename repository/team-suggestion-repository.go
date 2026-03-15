@@ -12,19 +12,25 @@ type TeamSuggestion struct {
 	Extra  string `gorm:"not null"`
 }
 
-type TeamSuggestionRepository struct {
+type TeamSuggestionRepository interface {
+	SaveSuggestion(suggestion *TeamSuggestion) error
+	GetSuggestionsForTeam(teamId int) ([]*TeamSuggestion, error)
+	DeleteSuggestion(suggestion *TeamSuggestion) error
+}
+
+type TeamSuggestionRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewTeamSuggestionRepository() *TeamSuggestionRepository {
-	return &TeamSuggestionRepository{DB: config.DatabaseConnection()}
+func NewTeamSuggestionRepository() TeamSuggestionRepository {
+	return &TeamSuggestionRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *TeamSuggestionRepository) SaveSuggestion(suggestion *TeamSuggestion) error {
+func (r *TeamSuggestionRepositoryImpl) SaveSuggestion(suggestion *TeamSuggestion) error {
 	return r.DB.Save(&suggestion).Error
 }
 
-func (r *TeamSuggestionRepository) GetSuggestionsForTeam(teamId int) ([]*TeamSuggestion, error) {
+func (r *TeamSuggestionRepositoryImpl) GetSuggestionsForTeam(teamId int) ([]*TeamSuggestion, error) {
 	var suggestions []*TeamSuggestion
 	result := r.DB.Find(&suggestions, TeamSuggestion{TeamId: teamId})
 	if result.Error != nil {
@@ -33,6 +39,6 @@ func (r *TeamSuggestionRepository) GetSuggestionsForTeam(teamId int) ([]*TeamSug
 	return suggestions, nil
 }
 
-func (r *TeamSuggestionRepository) DeleteSuggestion(suggestion *TeamSuggestion) error {
+func (r *TeamSuggestionRepositoryImpl) DeleteSuggestion(suggestion *TeamSuggestion) error {
 	return r.DB.Delete(suggestion).Error
 }

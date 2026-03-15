@@ -29,15 +29,25 @@ type KafkaConsumer struct {
 	GroupId int `gorm:"not null"`
 }
 
-type ObjectiveMatchRepository struct {
+type ObjectiveMatchRepository interface {
+	SaveValidations(objectiveValidations []*ObjectiveValidation) error
+	GetValidationsByEventId(eventId int) ([]*ObjectiveValidation, error)
+	SaveMatches(objectiveMatches []*ObjectiveMatch) error
+	OverwriteMatches(objectiveMatches []*ObjectiveMatch, objectiveIds []int) error
+	GetKafkaConsumer(eventId int) (*KafkaConsumer, error)
+	SaveKafkaConsumer(consumer *KafkaConsumer) error
+	DeleteMatches(objectiveIds []int) error
+}
+
+type ObjectiveMatchRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewObjectiveMatchRepository() *ObjectiveMatchRepository {
-	return &ObjectiveMatchRepository{DB: config.DatabaseConnection()}
+func NewObjectiveMatchRepository() ObjectiveMatchRepository {
+	return &ObjectiveMatchRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *ObjectiveMatchRepository) SaveValidations(objectiveValidations []*ObjectiveValidation) error {
+func (r *ObjectiveMatchRepositoryImpl) SaveValidations(objectiveValidations []*ObjectiveValidation) error {
 	result := r.DB.Save(objectiveValidations)
 	if result.Error != nil {
 		return result.Error
@@ -45,7 +55,7 @@ func (r *ObjectiveMatchRepository) SaveValidations(objectiveValidations []*Objec
 	return nil
 }
 
-func (r *ObjectiveMatchRepository) GetValidationsByEventId(eventId int) ([]*ObjectiveValidation, error) {
+func (r *ObjectiveMatchRepositoryImpl) GetValidationsByEventId(eventId int) ([]*ObjectiveValidation, error) {
 	var validations []*ObjectiveValidation
 	query := `SELECT ov.*
 			  FROM objective_validations ov
@@ -58,7 +68,7 @@ func (r *ObjectiveMatchRepository) GetValidationsByEventId(eventId int) ([]*Obje
 	return validations, nil
 }
 
-func (r *ObjectiveMatchRepository) SaveMatches(objectiveMatches []*ObjectiveMatch) error {
+func (r *ObjectiveMatchRepositoryImpl) SaveMatches(objectiveMatches []*ObjectiveMatch) error {
 	result := r.DB.CreateInBatches(objectiveMatches, 1000)
 	if result.Error != nil {
 		return result.Error
@@ -66,7 +76,7 @@ func (r *ObjectiveMatchRepository) SaveMatches(objectiveMatches []*ObjectiveMatc
 	return nil
 }
 
-func (r *ObjectiveMatchRepository) OverwriteMatches(objectiveMatches []*ObjectiveMatch, objectiveIds []int) error {
+func (r *ObjectiveMatchRepositoryImpl) OverwriteMatches(objectiveMatches []*ObjectiveMatch, objectiveIds []int) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		t := time.Now()
 		err := r.DeleteMatches(objectiveIds)
@@ -82,7 +92,7 @@ func (r *ObjectiveMatchRepository) OverwriteMatches(objectiveMatches []*Objectiv
 	})
 }
 
-func (r *ObjectiveMatchRepository) GetKafkaConsumer(eventId int) (*KafkaConsumer, error) {
+func (r *ObjectiveMatchRepositoryImpl) GetKafkaConsumer(eventId int) (*KafkaConsumer, error) {
 	var consumer *KafkaConsumer
 	result := r.DB.Where(KafkaConsumer{EventId: eventId}).First(&consumer)
 	if result.Error != nil {
@@ -98,7 +108,7 @@ func (r *ObjectiveMatchRepository) GetKafkaConsumer(eventId int) (*KafkaConsumer
 	return consumer, nil
 }
 
-func (r *ObjectiveMatchRepository) SaveKafkaConsumer(consumer *KafkaConsumer) error {
+func (r *ObjectiveMatchRepositoryImpl) SaveKafkaConsumer(consumer *KafkaConsumer) error {
 	result := r.DB.Save(consumer)
 	if result.Error != nil {
 		return result.Error
@@ -106,6 +116,6 @@ func (r *ObjectiveMatchRepository) SaveKafkaConsumer(consumer *KafkaConsumer) er
 	return nil
 }
 
-func (r *ObjectiveMatchRepository) DeleteMatches(objectiveIds []int) error {
+func (r *ObjectiveMatchRepositoryImpl) DeleteMatches(objectiveIds []int) error {
 	return r.DB.Where("objective_id IN ?", objectiveIds).Delete(&ObjectiveMatch{}).Error
 }

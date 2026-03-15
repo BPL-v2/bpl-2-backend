@@ -9,20 +9,29 @@ import (
 	"github.com/lib/pq"
 )
 
-type ItemService struct {
-	itemRepository *repository.ItemRepository
+type ItemService interface {
+	SaveItems(itemNames []string, itemType repository.ItemType) error
+	SaveItem(itemName string, itemType repository.ItemType) (*repository.Item, error)
+	GetIds(items []*repository.Item) (pq.Int32Array, error)
+	GetOrCreateId(itemName string, itemType repository.ItemType) (int, error)
+	GetItemMap() (map[repository.ItemType]map[string]int, error)
+	GetItemIds(character *client.Character) (pq.Int32Array, error)
+}
+
+type ItemServiceImpl struct {
+	itemRepository repository.ItemRepository
 	itemMap        map[repository.ItemType]map[string]int
 	mu             sync.RWMutex
 }
 
-func NewItemService() *ItemService {
-	return &ItemService{
+func NewItemService() ItemService {
+	return &ItemServiceImpl{
 		itemRepository: repository.NewItemRepository(),
 		itemMap:        make(map[repository.ItemType]map[string]int),
 	}
 }
 
-func (s *ItemService) SaveItems(itemNames []string, itemType repository.ItemType) error {
+func (s *ItemServiceImpl) SaveItems(itemNames []string, itemType repository.ItemType) error {
 	items := make([]*repository.Item, 0, len(itemNames))
 	for _, name := range itemNames {
 		items = append(items, &repository.Item{Name: name, ItemType: itemType})
@@ -30,12 +39,12 @@ func (s *ItemService) SaveItems(itemNames []string, itemType repository.ItemType
 	return s.itemRepository.SaveItems(items)
 }
 
-func (s *ItemService) SaveItem(itemName string, itemType repository.ItemType) (*repository.Item, error) {
+func (s *ItemServiceImpl) SaveItem(itemName string, itemType repository.ItemType) (*repository.Item, error) {
 	item := &repository.Item{Name: itemName, ItemType: itemType}
 	return s.itemRepository.SaveItem(item)
 }
 
-func (s *ItemService) GetIds(items []*repository.Item) (pq.Int32Array, error) {
+func (s *ItemServiceImpl) GetIds(items []*repository.Item) (pq.Int32Array, error) {
 	itemIds := make(pq.Int32Array, 0)
 	_, err := s.GetItemMap()
 	if err != nil {
@@ -51,7 +60,7 @@ func (s *ItemService) GetIds(items []*repository.Item) (pq.Int32Array, error) {
 	return itemIds, nil
 }
 
-func (s *ItemService) GetOrCreateId(itemName string, itemType repository.ItemType) (int, error) {
+func (s *ItemServiceImpl) GetOrCreateId(itemName string, itemType repository.ItemType) (int, error) {
 	s.mu.RLock()
 	itemTypeMap, ok := s.itemMap[itemType]
 	if ok {
@@ -84,7 +93,7 @@ func (s *ItemService) GetOrCreateId(itemName string, itemType repository.ItemTyp
 	return savedItem.Id, nil
 }
 
-func (s *ItemService) GetItemMap() (map[repository.ItemType]map[string]int, error) {
+func (s *ItemServiceImpl) GetItemMap() (map[repository.ItemType]map[string]int, error) {
 	s.mu.RLock()
 	if len(s.itemMap) > 0 {
 		defer s.mu.RUnlock()
@@ -105,7 +114,7 @@ func (s *ItemService) GetItemMap() (map[repository.ItemType]map[string]int, erro
 	return s.itemMap, nil
 }
 
-func (c *ItemService) GetItemIds(character *client.Character) (pq.Int32Array, error) {
+func (c *ItemServiceImpl) GetItemIds(character *client.Character) (pq.Int32Array, error) {
 	itemIds := make(pq.Int32Array, 0)
 	items := make([]*repository.Item, 0)
 	for _, item := range character.GetAllItems() {

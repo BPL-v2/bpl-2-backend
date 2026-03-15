@@ -47,23 +47,31 @@ type Achievement struct {
 	User *User `gorm:"foreignKey:UserId"`
 }
 
-type AchievementRepository struct {
+type AchievementRepository interface {
+	SaveAchievement(achievement *Achievement) error
+	SaveAchievements(achievements []*Achievement) error
+	GetAllAchievementsForUser() ([]*Achievement, error)
+	GetAchievementsForUser(userId int) ([]*Achievement, error)
+	GetAllAchievements() ([]*Achievement, error)
+}
+
+type AchievementRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewAchievementRepository() *AchievementRepository {
-	return &AchievementRepository{DB: config.DatabaseConnection()}
+func NewAchievementRepository() AchievementRepository {
+	return &AchievementRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *AchievementRepository) SaveAchievement(achievement *Achievement) error {
+func (r *AchievementRepositoryImpl) SaveAchievement(achievement *Achievement) error {
 	return r.DB.Save(&achievement).Error
 }
 
-func (r *AchievementRepository) SaveAchievements(achievements []*Achievement) error {
+func (r *AchievementRepositoryImpl) SaveAchievements(achievements []*Achievement) error {
 	return r.DB.Save(&achievements).Error
 }
 
-func (r *AchievementRepository) GetAllAchievementsForUser() ([]*Achievement, error) {
+func (r *AchievementRepositoryImpl) GetAllAchievementsForUser() ([]*Achievement, error) {
 	achievements := []*Achievement{}
 	err := r.DB.Order("completed_at ASC").Find(&achievements).Error
 	if err != nil {
@@ -72,7 +80,7 @@ func (r *AchievementRepository) GetAllAchievementsForUser() ([]*Achievement, err
 	return achievements, nil
 }
 
-func (r *AchievementRepository) GetAchievementsForUser(userId int) ([]*Achievement, error) {
+func (r *AchievementRepositoryImpl) GetAchievementsForUser(userId int) ([]*Achievement, error) {
 	achievements := []*Achievement{}
 	err := r.DB.Where("user_id = ?", userId).Order("completed_at ASC").Find(&achievements).Error
 	if err != nil {
@@ -81,7 +89,7 @@ func (r *AchievementRepository) GetAchievementsForUser(userId int) ([]*Achieveme
 	return achievements, nil
 }
 
-func (r *AchievementRepository) GetAllAchievements() ([]*Achievement, error) {
+func (r *AchievementRepositoryImpl) GetAllAchievements() ([]*Achievement, error) {
 	achievements := []*Achievement{}
 	err := r.DB.Find(&achievements).Error
 	if err != nil {

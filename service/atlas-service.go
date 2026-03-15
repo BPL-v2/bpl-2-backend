@@ -5,19 +5,25 @@ import (
 	"bpl/repository"
 )
 
-type AtlasService struct {
-	atlasRepository *repository.AtlasRepository
+type AtlasService interface {
+	SaveAtlasTrees(userId int, eventId int, trees []client.AtlasPassiveTree) error
+	GetLatestAtlasesForEventAndTeam(eventId int, teamId int) (atlas []*repository.AtlasTree, err error)
+	GetAtlasesForEventAndUser(userId int, eventId int) (atlas []*repository.AtlasTree, err error)
+}
+
+type AtlasServiceImpl struct {
+	atlasRepository repository.AtlasRepository
 	latestAtlas     map[int]map[int]map[int][32]byte
 }
 
-func NewAtlasService() *AtlasService {
-	return &AtlasService{
+func NewAtlasService() AtlasService {
+	return &AtlasServiceImpl{
 		atlasRepository: repository.NewAtlasRepository(),
 		latestAtlas:     make(map[int]map[int]map[int][32]byte),
 	}
 }
 
-func (a *AtlasService) initCache(userId int, eventId int) error {
+func (a *AtlasServiceImpl) initCache(userId int, eventId int) error {
 	if a.latestAtlas[eventId] == nil {
 		trees, err := a.atlasRepository.GetLatestTreesForEvent(eventId)
 		if err != nil {
@@ -37,7 +43,7 @@ func (a *AtlasService) initCache(userId int, eventId int) error {
 	return nil
 }
 
-func (a *AtlasService) SaveAtlasTrees(userId int, eventId int, trees []client.AtlasPassiveTree) error {
+func (a *AtlasServiceImpl) SaveAtlasTrees(userId int, eventId int, trees []client.AtlasPassiveTree) error {
 	if err := a.initCache(userId, eventId); err != nil {
 		return err
 	}
@@ -54,10 +60,10 @@ func (a *AtlasService) SaveAtlasTrees(userId int, eventId int, trees []client.At
 	return nil
 }
 
-func (a *AtlasService) GetLatestAtlasesForEventAndTeam(eventId int, teamId int) (atlas []*repository.AtlasTree, err error) {
+func (a *AtlasServiceImpl) GetLatestAtlasesForEventAndTeam(eventId int, teamId int) (atlas []*repository.AtlasTree, err error) {
 	return a.atlasRepository.GetLatestAtlasesForEventAndTeam(eventId, teamId)
 }
 
-func (a *AtlasService) GetAtlasesForEventAndUser(userId int, eventId int) (atlas []*repository.AtlasTree, err error) {
+func (a *AtlasServiceImpl) GetAtlasesForEventAndUser(userId int, eventId int) (atlas []*repository.AtlasTree, err error) {
 	return a.atlasRepository.GetAtlasesForEventAndUser(eventId, userId)
 }

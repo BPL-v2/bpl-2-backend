@@ -29,15 +29,24 @@ type Oauth struct {
 	User *User `gorm:"foreignKey:UserId"`
 }
 
-type OauthRepository struct {
+type OauthRepository interface {
+	GetOauthByProviderAndAccountId(provider Provider, accountId string) (*Oauth, error)
+	GetOauthByProviderAndAccountName(provider Provider, accountName string) (*Oauth, error)
+	GetAllOauths() ([]*Oauth, error)
+	DeleteOauthsByUserIdAndProvider(userId int, provider Provider) error
+	GetOauthForTokenRefresh(provider Provider) (*Oauth, error)
+	SaveOauth(oauth *Oauth) (*Oauth, error)
+}
+
+type OauthRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewOauthRepository() *OauthRepository {
-	return &OauthRepository{DB: config.DatabaseConnection()}
+func NewOauthRepository() OauthRepository {
+	return &OauthRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *OauthRepository) GetOauthByProviderAndAccountId(provider Provider, accountId string) (*Oauth, error) {
+func (r *OauthRepositoryImpl) GetOauthByProviderAndAccountId(provider Provider, accountId string) (*Oauth, error) {
 	var oauth Oauth
 	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, Oauth{Provider: provider, AccountId: accountId})
 	if result.Error != nil {
@@ -46,7 +55,7 @@ func (r *OauthRepository) GetOauthByProviderAndAccountId(provider Provider, acco
 	return &oauth, nil
 }
 
-func (r *OauthRepository) GetOauthByProviderAndAccountName(provider Provider, accountName string) (*Oauth, error) {
+func (r *OauthRepositoryImpl) GetOauthByProviderAndAccountName(provider Provider, accountName string) (*Oauth, error) {
 	var oauth Oauth
 	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, Oauth{Provider: provider, Name: accountName})
 	if result.Error != nil {
@@ -55,7 +64,7 @@ func (r *OauthRepository) GetOauthByProviderAndAccountName(provider Provider, ac
 	return &oauth, nil
 }
 
-func (r *OauthRepository) GetAllOauths() ([]*Oauth, error) {
+func (r *OauthRepositoryImpl) GetAllOauths() ([]*Oauth, error) {
 	var oauths []*Oauth
 	result := r.DB.Find(&oauths)
 	if result.Error != nil {
@@ -64,7 +73,7 @@ func (r *OauthRepository) GetAllOauths() ([]*Oauth, error) {
 	return oauths, nil
 }
 
-func (r *OauthRepository) DeleteOauthsByUserIdAndProvider(userId int, provider Provider) error {
+func (r *OauthRepositoryImpl) DeleteOauthsByUserIdAndProvider(userId int, provider Provider) error {
 	query := r.DB.Where("user_id = ? AND provider = ?", userId, provider)
 	result := query.Delete(&Oauth{})
 	if result.Error != nil {
@@ -73,7 +82,7 @@ func (r *OauthRepository) DeleteOauthsByUserIdAndProvider(userId int, provider P
 	return nil
 }
 
-func (r *OauthRepository) GetOauthForTokenRefresh(provider Provider) (*Oauth, error) {
+func (r *OauthRepositoryImpl) GetOauthForTokenRefresh(provider Provider) (*Oauth, error) {
 	var oauth *Oauth
 	result := r.DB.Preload("User").Where(`
 		provider = ? AND
@@ -88,7 +97,7 @@ func (r *OauthRepository) GetOauthForTokenRefresh(provider Provider) (*Oauth, er
 	return oauth, nil
 }
 
-func (r *OauthRepository) SaveOauth(oauth *Oauth) (*Oauth, error) {
+func (r *OauthRepositoryImpl) SaveOauth(oauth *Oauth) (*Oauth, error) {
 	result := r.DB.Save(oauth)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to save oauth: %v", result.Error)

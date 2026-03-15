@@ -5,30 +5,38 @@ import (
 	"bpl/repository"
 )
 
-type CachedDataService struct {
-	repository *repository.CachedDataRepository
+type CachedDataService interface {
+	GetLatestScore(eventId int) ([]byte, error)
+	GetLatestLadder(eventId int) ([]byte, error)
+	GetLatestLadderUnMarshalled(eventId int) (*client.Ladder, error)
+	SaveScore(eventId int, data []byte) error
+	SaveLadder(eventId int, ladder *client.Ladder) error
 }
 
-func NewCachedDataService() *CachedDataService {
-	return &CachedDataService{repository: repository.NewCachedDataRepository()}
+type CachedDataServiceImpl struct {
+	repository repository.CachedDataRepository
 }
 
-func (s *CachedDataService) GetLatestScore(eventId int) ([]byte, error) {
+func NewCachedDataService() CachedDataService {
+	return &CachedDataServiceImpl{repository: repository.NewCachedDataRepository()}
+}
+
+func (s *CachedDataServiceImpl) GetLatestScore(eventId int) ([]byte, error) {
 	return s.repository.GetLatestScore(eventId)
 }
 
-func (s *CachedDataService) GetLatestLadder(eventId int) ([]byte, error) {
+func (s *CachedDataServiceImpl) GetLatestLadder(eventId int) ([]byte, error) {
 	return s.repository.GetLatestLadder(eventId)
 }
 
-func (s *CachedDataService) GetLatestLadderUnMarshalled(eventId int) (*client.Ladder, error) {
+func (s *CachedDataServiceImpl) GetLatestLadderUnMarshalled(eventId int) (*client.Ladder, error) {
 	return s.repository.GetLatestLadderUnMarshalled(eventId)
 }
 
-func (s *CachedDataService) SaveScore(eventId int, data []byte) error {
+func (s *CachedDataServiceImpl) SaveScore(eventId int, data []byte) error {
 	return s.repository.SaveScore(eventId, data)
 }
 
-func (s *CachedDataService) SaveLadder(eventId int, ladder *client.Ladder) error {
+func (s *CachedDataServiceImpl) SaveLadder(eventId int, ladder *client.Ladder) error {
 	return s.repository.SaveLadder(eventId, ladder)
 }

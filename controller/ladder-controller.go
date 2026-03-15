@@ -12,12 +12,12 @@ import (
 )
 
 type LadderController struct {
-	ladderService    *service.LadderService
-	characterService *service.CharacterService
-	userService      *service.UserService
-	teamService      *service.TeamService
-	signupService    *service.SignupService
-	activityService  *service.ActivityService
+	ladderService    service.LadderService
+	characterService service.CharacterService
+	userService      service.UserService
+	teamService      service.TeamService
+	signupService    service.SignupService
+	activityService  service.ActivityService
 }
 
 func NewLadderController(poeClient *client.PoEClient) *LadderController {

@@ -25,13 +25,13 @@ type FetchingService struct {
 	ctx                  context.Context
 	event                *repository.Event
 	poeClient            *client.PoEClient
-	stashChangeService   *service.StashChangeService
+	stashChangeService   service.StashChangeService
 	stashChannel         chan repository.StashChangeMessage
-	oauthService         *service.OauthService
-	userRepository       *repository.UserRepository
-	guildStashRepository *repository.GuildStashRepository
-	activityRepository   *repository.ActivityRepository
-	timingRepository     *repository.TimingRepository
+	oauthService         service.OauthService
+	userRepository       repository.UserRepository
+	guildStashRepository repository.GuildStashRepository
+	activityRepository   repository.ActivityRepository
+	timingRepository     repository.TimingRepository
 }
 
 var (

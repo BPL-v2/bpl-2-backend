@@ -24,14 +24,28 @@ type OauthState struct {
 	LastUrl  string
 }
 
-type OauthService struct {
+type OauthService interface {
+	GetNewVerifier(user *repository.User, lastUrl string) (string, string)
+	GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string) string
+	Verify(state string, code string, referrer *string, provider repository.Provider, oauthConfig oauth2.Config) (*OauthState, error)
+	VerifyDiscord(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error)
+	VerifyTwitch(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error)
+	VerifyPoE(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error)
+	GetApplicationToken(provider repository.Provider) (string, error)
+	GetToken(provider repository.Provider) (token string, expiry *time.Time, err error)
+	RefreshOnePoEToken() error
+	RefreshPoETokensLoop(ctx context.Context, sleepDuration time.Duration)
+	GetOauthConfig(provider repository.Provider) *oauth2.Config
+}
+
+type OauthServiceImpl struct {
 	Config                     map[repository.Provider]*oauth2.Config
 	clientConfig               map[repository.Provider]*clientcredentials.Config
 	stateMap                   map[string]OauthState
 	mu                         *sync.Mutex
-	userService                *UserService
-	clientCredentialRepository *repository.ClientCredentialsRepository
-	oauthRepository            *repository.OauthRepository
+	userService                UserService
+	clientCredentialRepository repository.ClientCredentialsRepository
+	oauthRepository            repository.OauthRepository
 }
 
 type DiscordUserResponse struct {
@@ -67,8 +81,8 @@ type TwitchExtendedUserResponse struct {
 	} `json:"data"`
 }
 
-func NewOauthService() *OauthService {
-	return &OauthService{
+func NewOauthService() OauthService {
+	return &OauthServiceImpl{
 		Config: map[repository.Provider]*oauth2.Config{
 			repository.ProviderDiscord: {
 				ClientID:     config.Env().DiscordClientID,
@@ -122,7 +136,7 @@ func NewOauthService() *OauthService {
 	}
 }
 
-func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (string, string) {
+func (e *OauthServiceImpl) GetNewVerifier(user *repository.User, lastUrl string) (string, string) {
 	// clean up old verifiers
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -142,7 +156,11 @@ func (e *OauthService) GetNewVerifier(user *repository.User, lastUrl string) (st
 	return state, verifier
 }
 
-func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string) string {
+func (e *OauthServiceImpl) GetOauthConfig(provider repository.Provider) *oauth2.Config {
+	return e.Config[provider]
+}
+
+func (e *OauthServiceImpl) GetOauthProviderUrl(user *repository.User, provider repository.Provider, lastUrl string) string {
 	state, verifier := e.GetNewVerifier(user, lastUrl)
 	config := e.Config[provider]
 	return config.AuthCodeURL(
@@ -152,7 +170,7 @@ func (e *OauthService) GetOauthProviderUrl(user *repository.User, provider repos
 	)
 }
 
-func (e *OauthService) Verify(state string, code string, referrer *string, provider repository.Provider, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthServiceImpl) Verify(state string, code string, referrer *string, provider repository.Provider, oauthConfig oauth2.Config) (*OauthState, error) {
 	switch provider {
 	case repository.ProviderDiscord:
 		return e.VerifyDiscord(state, code, referrer, oauthConfig)
@@ -165,7 +183,7 @@ func (e *OauthService) Verify(state string, code string, referrer *string, provi
 	}
 }
 
-func (e *OauthService) addAccountToUser(authState *OauthState, referrer *string, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
+func (e *OauthServiceImpl) addAccountToUser(authState *OauthState, referrer *string, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
 	if err == nil {
 		fmt.Printf("Updating %s account %s for user %s\n", provider, accountName, user.DisplayName)
@@ -211,7 +229,7 @@ func (e *OauthService) addAccountToUser(authState *OauthState, referrer *string,
 	}
 	return authState, err
 }
-func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
+func (e *OauthServiceImpl) fetchToken(oauthConfig oauth2.Config, state string, code string) (*OauthState, *oauth2.Token, error) {
 	e.mu.Lock()
 	authState, ok := e.stateMap[state]
 	e.mu.Unlock()
@@ -226,7 +244,7 @@ func (e *OauthService) fetchToken(oauthConfig oauth2.Config, state string, code 
 	return &authState, token, nil
 }
 
-func (e *OauthService) VerifyDiscord(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthServiceImpl) VerifyDiscord(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
 
 	authState, token, err := e.fetchToken(oauthConfig, state, code)
 	if err != nil {
@@ -248,7 +266,7 @@ func (e *OauthService) VerifyDiscord(state string, code string, referrer *string
 	return e.addAccountToUser(authState, referrer, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
 }
 
-func (e *OauthService) VerifyTwitch(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthServiceImpl) VerifyTwitch(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
 	authState, token, err := e.fetchToken(oauthConfig, state, code)
 	if err != nil {
 		return nil, err
@@ -291,7 +309,7 @@ func (e *OauthService) VerifyTwitch(state string, code string, referrer *string,
 	return e.addAccountToUser(authState, referrer, twitchId, twitchExtendedUser.Data[0].DisplayName, token, repository.ProviderTwitch)
 }
 
-func (e *OauthService) VerifyPoE(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
+func (e *OauthServiceImpl) VerifyPoE(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
 	client := client.NewPoEClient(1, true, 10)
 	e.mu.Lock()
 	authState, ok := e.stateMap[state]
@@ -318,7 +336,7 @@ func (e *OauthService) VerifyPoE(state string, code string, referrer *string, oa
 	return e.addAccountToUser(&authState, referrer, profile.UUId, profile.Name, token, repository.ProviderPoE)
 }
 
-func (e *OauthService) GetApplicationToken(provider repository.Provider) (string, error) {
+func (e *OauthServiceImpl) GetApplicationToken(provider repository.Provider) (string, error) {
 	credentials, err := e.clientCredentialRepository.GetClientCredentialsByName(provider)
 	if err != nil || (credentials.Expiry != nil && credentials.Expiry.Before(time.Now())) {
 		token, expiry, err := e.GetToken(provider)
@@ -335,12 +353,12 @@ func (e *OauthService) GetApplicationToken(provider repository.Provider) (string
 			credentials.AccessToken = token
 			credentials.Expiry = expiry
 		}
-		e.clientCredentialRepository.DB.Save(credentials)
+		e.clientCredentialRepository.SaveClientCredentials(credentials)
 	}
 	return credentials.AccessToken, nil
 }
 
-func (e *OauthService) GetToken(provider repository.Provider) (token string, expiry *time.Time, err error) {
+func (e *OauthServiceImpl) GetToken(provider repository.Provider) (token string, expiry *time.Time, err error) {
 	if provider == repository.ProviderPoE {
 		poeClient := client.NewPoEClient(1, false, 10)
 		tokenResponse, hhtpErr := poeClient.GetClientCredentials(config.Env().POEClientID, config.Env().POEClientSecret)
@@ -369,7 +387,7 @@ func (e *OauthService) GetToken(provider repository.Provider) (token string, exp
 	return oauthToken.AccessToken, &oauthToken.Expiry, nil
 }
 
-func (e *OauthService) RefreshOnePoEToken() error {
+func (e *OauthServiceImpl) RefreshOnePoEToken() error {
 	oauth, err := e.oauthRepository.GetOauthForTokenRefresh(repository.ProviderPoE)
 	if err != nil {
 		return err
@@ -399,7 +417,7 @@ func (e *OauthService) RefreshOnePoEToken() error {
 	return err
 }
 
-func (e *OauthService) RefreshPoETokensLoop(ctx context.Context, sleepDuration time.Duration) {
+func (e *OauthServiceImpl) RefreshPoETokensLoop(ctx context.Context, sleepDuration time.Duration) {
 	ticker := time.NewTicker(sleepDuration)
 	defer ticker.Stop()
 	for {

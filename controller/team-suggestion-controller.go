@@ -10,9 +10,9 @@ import (
 )
 
 type TeamSuggestionController struct {
-	teamSuggestionService *service.TeamSuggestionService
-	teamService           *service.TeamService
-	userService           *service.UserService
+	teamSuggestionService service.TeamSuggestionService
+	teamService           service.TeamService
+	userService           service.UserService
 }
 
 func NewTeamSuggestionController() *TeamSuggestionController {

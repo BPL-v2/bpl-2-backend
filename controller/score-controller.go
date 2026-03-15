@@ -18,9 +18,9 @@ import (
 )
 
 type ScoreController struct {
-	eventService      *service.EventService
-	scoreService      *service.ScoreService
-	userService       *service.UserService
+	eventService      service.EventService
+	scoreService      service.ScoreService
+	userService       service.UserService
 	mu                sync.Mutex
 	connections       map[int]map[*websocket.Conn]int
 	simpleConnections map[int]map[*websocket.Conn]int
@@ -135,7 +135,7 @@ func (e *ScoreController) SimpleWebSocketHandler(c *gin.Context) {
 	}
 	defer utils.Closer(conn)()
 
-	serialized, err := json.Marshal(e.scoreService.LatestScores[event.Id].GetSimpleScore())
+	serialized, err := json.Marshal(e.scoreService.GetLatestScores(event.Id).GetSimpleScore())
 	if err != nil {
 		return
 	}
@@ -186,7 +186,7 @@ func (e *ScoreController) StartScoreUpdater() {
 			for _, eventId := range eventIds {
 				event, ok := eventMap[eventId]
 				// dont update event if its over and its already cached
-				if !ok || (event.EventEndTime.Before(time.Now()) && e.scoreService.LatestScores[eventId] != nil) {
+				if !ok || (event.EventEndTime.Before(time.Now()) && e.scoreService.GetLatestScores(eventId) != nil) {
 					continue
 				}
 
@@ -194,7 +194,7 @@ func (e *ScoreController) StartScoreUpdater() {
 				if err != nil {
 					continue
 				}
-				simpleScore, err := json.Marshal(e.scoreService.LatestScores[eventId].GetSimpleScore())
+				simpleScore, err := json.Marshal(e.scoreService.GetLatestScores(eventId).GetSimpleScore())
 				if err != nil {
 					log.Fatal(err)
 					continue

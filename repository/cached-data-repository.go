@@ -23,15 +23,23 @@ type CachedData struct {
 	Timestamp time.Time `gorm:"not null"`
 }
 
-type CachedDataRepository struct {
+type CachedDataRepository interface {
+	GetLatestScore(eventId int) ([]byte, error)
+	GetLatestLadder(eventId int) ([]byte, error)
+	GetLatestLadderUnMarshalled(eventId int) (*client.Ladder, error)
+	SaveScore(eventId int, scores []byte) error
+	SaveLadder(eventId int, ladder *client.Ladder) error
+}
+
+type CachedDataRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewCachedDataRepository() *CachedDataRepository {
-	return &CachedDataRepository{db: config.DatabaseConnection()}
+func NewCachedDataRepository() CachedDataRepository {
+	return &CachedDataRepositoryImpl{db: config.DatabaseConnection()}
 }
 
-func (r *CachedDataRepository) GetLatestScore(eventId int) ([]byte, error) {
+func (r *CachedDataRepositoryImpl) GetLatestScore(eventId int) ([]byte, error) {
 	var data CachedData
 	result := r.db.First(&data, CachedData{Key: Score, EventId: eventId})
 	if result.Error != nil {
@@ -40,7 +48,7 @@ func (r *CachedDataRepository) GetLatestScore(eventId int) ([]byte, error) {
 	return data.Data, nil
 }
 
-func (r *CachedDataRepository) GetLatestLadder(eventId int) ([]byte, error) {
+func (r *CachedDataRepositoryImpl) GetLatestLadder(eventId int) ([]byte, error) {
 	var data CachedData
 	result := r.db.First(&data, CachedData{Key: Ladder, EventId: eventId})
 	if result.Error != nil {
@@ -49,7 +57,7 @@ func (r *CachedDataRepository) GetLatestLadder(eventId int) ([]byte, error) {
 	return data.Data, nil
 }
 
-func (r *CachedDataRepository) GetLatestLadderUnMarshalled(eventId int) (*client.Ladder, error) {
+func (r *CachedDataRepositoryImpl) GetLatestLadderUnMarshalled(eventId int) (*client.Ladder, error) {
 	var data CachedData
 	result := r.db.First(&data, CachedData{Key: Ladder, EventId: eventId})
 	if result.Error != nil {
@@ -65,7 +73,7 @@ func (r *CachedDataRepository) GetLatestLadderUnMarshalled(eventId int) (*client
 
 }
 
-func (r *CachedDataRepository) SaveScore(eventId int, scores []byte) error {
+func (r *CachedDataRepositoryImpl) SaveScore(eventId int, scores []byte) error {
 	return r.db.Save(&CachedData{
 		Key:       Score,
 		EventId:   eventId,
@@ -74,7 +82,7 @@ func (r *CachedDataRepository) SaveScore(eventId int, scores []byte) error {
 	}).Error
 }
 
-func (r *CachedDataRepository) SaveLadder(eventId int, ladder *client.Ladder) error {
+func (r *CachedDataRepositoryImpl) SaveLadder(eventId int, ladder *client.Ladder) error {
 	data, err := json.Marshal(ladder)
 	if err != nil {
 		return err

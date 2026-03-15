@@ -13,8 +13,8 @@ import (
 )
 
 type TeamController struct {
-	teamService  *service.TeamService
-	eventService *service.EventService
+	teamService  service.TeamService
+	eventService service.EventService
 }
 
 func NewTeamController() *TeamController {

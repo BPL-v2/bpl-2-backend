@@ -44,15 +44,22 @@ func PoENameWithoutDiscriminator(name *string) string {
 	return strings.ToLower(strings.Split(*name, "#")[0])
 }
 
-type SignupRepository struct {
+type SignupRepository interface {
+	SaveSignup(signup *Signup) (*Signup, error)
+	RemoveSignupForUser(userId int, eventId int) error
+	GetSignupForUser(userId int, eventId int) (*Signup, error)
+	GetSignupsForEvent(eventId int) ([]*Signup, error)
+}
+
+type SignupRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewSignupRepository() *SignupRepository {
-	return &SignupRepository{DB: config.DatabaseConnection()}
+func NewSignupRepository() SignupRepository {
+	return &SignupRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *SignupRepository) SaveSignup(signup *Signup) (*Signup, error) {
+func (r *SignupRepositoryImpl) SaveSignup(signup *Signup) (*Signup, error) {
 	result := r.DB.Save(signup)
 	if result.Error != nil {
 		return nil, result.Error
@@ -60,12 +67,12 @@ func (r *SignupRepository) SaveSignup(signup *Signup) (*Signup, error) {
 	return signup, nil
 }
 
-func (r *SignupRepository) RemoveSignupForUser(userId int, eventId int) error {
+func (r *SignupRepositoryImpl) RemoveSignupForUser(userId int, eventId int) error {
 	result := r.DB.Delete(&Signup{}, &Signup{UserId: userId, EventId: eventId})
 	return result.Error
 }
 
-func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, error) {
+func (r *SignupRepositoryImpl) GetSignupForUser(userId int, eventId int) (*Signup, error) {
 	signup := Signup{}
 	result := r.DB.First(&signup, &Signup{UserId: userId, EventId: eventId})
 	if result.Error != nil {
@@ -74,7 +81,7 @@ func (r *SignupRepository) GetSignupForUser(userId int, eventId int) (*Signup, e
 	return &signup, nil
 }
 
-func (r *SignupRepository) GetSignupsForEvent(eventId int) ([]*Signup, error) {
+func (r *SignupRepositoryImpl) GetSignupsForEvent(eventId int) ([]*Signup, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetSignupsForEvent"))
 	defer timer.ObserveDuration()
 	signups := make([]*Signup, 0)

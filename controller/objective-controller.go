@@ -16,9 +16,9 @@ import (
 )
 
 type ObjectiveController struct {
-	objectiveService        *service.ObjectiveService
-	objectiveMatchService   *service.ObjectiveMatchService
-	eventService            *service.EventService
+	objectiveService        service.ObjectiveService
+	objectiveMatchService   service.ObjectiveMatchService
+	eventService            service.EventService
 	poeClient               *client.PoEClient
 	validationContextCancel *context.CancelFunc
 }

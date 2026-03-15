@@ -2,7 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -26,16 +25,27 @@ type EventStatus struct {
 	UsersWhoWantToSignUpWithYou []string          `json:"users_who_want_to_sign_up_with_you"`
 }
 
-type EventService struct {
-	eventRepository         *repository.EventRepository
-	scoringPresetRepository *repository.ScoringPresetRepository
-	objectiveRepository     *repository.ObjectiveRepository
-	teamService             *TeamService
-	signupService           *SignupService
+type EventService interface {
+	GetAllEvents(preloads ...string) ([]*repository.Event, error)
+	CreateEvent(event *repository.Event) (*repository.Event, error)
+	CreateEventWithoutCategory(event *repository.Event) (*repository.Event, error)
+	GetEventById(eventId int, preloads ...string) (*repository.Event, error)
+	GetCurrentEvent(preloads ...string) (*repository.Event, error)
+	DeleteEvent(event *repository.Event) error
+	GetEventByConditionId(conditionId int) (*repository.Event, error)
+	GetEventStatus(event *repository.Event, user *repository.User) (*EventStatus, error)
 }
 
-func NewEventService() *EventService {
-	return &EventService{
+type EventServiceImpl struct {
+	eventRepository         repository.EventRepository
+	scoringPresetRepository repository.ScoringPresetRepository
+	objectiveRepository     repository.ObjectiveRepository
+	teamService             TeamService
+	signupService           SignupService
+}
+
+func NewEventService() EventService {
+	return &EventServiceImpl{
 		eventRepository:         repository.NewEventRepository(),
 		scoringPresetRepository: repository.NewScoringPresetRepository(),
 		objectiveRepository:     repository.NewObjectiveRepository(),
@@ -44,11 +54,11 @@ func NewEventService() *EventService {
 	}
 }
 
-func (e *EventService) GetAllEvents(preloads ...string) ([]*repository.Event, error) {
+func (e *EventServiceImpl) GetAllEvents(preloads ...string) ([]*repository.Event, error) {
 	return e.eventRepository.FindAll(preloads...)
 }
 
-func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, error) {
+func (e *EventServiceImpl) CreateEvent(event *repository.Event) (*repository.Event, error) {
 	if event.Id == 0 {
 		event.Objectives = []*repository.Objective{{
 			Name: "default",
@@ -60,35 +70,27 @@ func (e *EventService) CreateEvent(event *repository.Event) (*repository.Event, 
 			return nil, err
 		}
 	}
-	result := e.eventRepository.DB.Save(event)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to save event: %v", result.Error)
-	}
-	return event, nil
+	return e.eventRepository.SaveEvent(event)
 }
-func (e *EventService) CreateEventWithoutCategory(event *repository.Event) (*repository.Event, error) {
+func (e *EventServiceImpl) CreateEventWithoutCategory(event *repository.Event) (*repository.Event, error) {
 	if event.IsCurrent {
 		err := e.eventRepository.InvalidateCurrentEvent()
 		if err != nil {
 			return nil, err
 		}
 	}
-	result := e.eventRepository.DB.Save(event)
-	if result.Error != nil {
-		return nil, fmt.Errorf("failed to save event: %v", result.Error)
-	}
-	return event, nil
+	return e.eventRepository.SaveEvent(event)
 }
 
-func (e *EventService) GetEventById(eventId int, preloads ...string) (*repository.Event, error) {
+func (e *EventServiceImpl) GetEventById(eventId int, preloads ...string) (*repository.Event, error) {
 	return e.eventRepository.GetEventById(eventId, preloads...)
 }
 
-func (e *EventService) GetCurrentEvent(preloads ...string) (*repository.Event, error) {
+func (e *EventServiceImpl) GetCurrentEvent(preloads ...string) (*repository.Event, error) {
 	return e.eventRepository.GetCurrentEvent(preloads...)
 }
 
-func (e *EventService) DeleteEvent(event *repository.Event) error {
+func (e *EventServiceImpl) DeleteEvent(event *repository.Event) error {
 	err := e.objectiveRepository.DeleteObjectivesByEventId(event.Id)
 	if err != nil {
 		return err
@@ -100,15 +102,11 @@ func (e *EventService) DeleteEvent(event *repository.Event) error {
 	return e.scoringPresetRepository.DeletePresetsForEvent(event.Id)
 }
 
-func (e *EventService) GetEventByObjectiveId(objectiveId int) (*repository.Event, error) {
-	return e.eventRepository.GetEventByObjectiveId(objectiveId)
-}
-
-func (e *EventService) GetEventByConditionId(conditionId int) (*repository.Event, error) {
+func (e *EventServiceImpl) GetEventByConditionId(conditionId int) (*repository.Event, error) {
 	return e.eventRepository.GetEventByConditionId(conditionId)
 }
 
-func (e *EventService) GetEventStatus(event *repository.Event, user *repository.User) (*EventStatus, error) {
+func (e *EventServiceImpl) GetEventStatus(event *repository.Event, user *repository.User) (*EventStatus, error) {
 	eventStatus := &EventStatus{
 		ApplicationStatus: ApplicationStatusNone,
 	}

@@ -12,19 +12,39 @@ import (
 	"time"
 )
 
-type CharacterService struct {
-	characterRepository *repository.CharacterRepository
-	eventRepository     *repository.EventRepository
-	teamRepository      *repository.TeamRepository
-	userRepository      *repository.UserRepository
-	activityRepository  *repository.ActivityRepository
-	atlasService        *AtlasService
-	itemService         *ItemService
+type CharacterService interface {
+	TrackActivity(eventId int, update *parser.PlayerUpdate) error
+	GetCharactersForUser(user *repository.User) ([]*repository.Character, error)
+	GetCharactersForEvent(eventId int) ([]*repository.Character, error)
+	GetLatestPoBsForEvent(eventId int) ([]*repository.CharacterPob, error)
+	GetCharacterById(characterId string) (*repository.Character, error)
+	GetCharacterHistory(characterId string) ([]*repository.CharacterPob, error)
+	GetCharacterStatsForEvent(eventId int, cutoff time.Time) (map[string]*repository.CharacterPob, error)
+	GetTeamAtlasesForEvent(eventId int, teamId int) ([]*repository.AtlasTree, error)
+	GetPobForIdBeforeTimestamp(characterId string, timestamp time.Time) (*repository.CharacterPob, error)
+	GetPobs(characterId string) ([]*repository.CharacterPob, error)
+	UpdateCharacter(characterId string) (*client.Character, error)
+	GetInfoForCharacter(characterId string) (*CharacterInfo, error)
+	UpdatePoB(pob *repository.CharacterPob) error
+	UpdateLatestPoBs() error
+	UpdatePoBStats() error
+	GetPoBById(pobId int) (*repository.CharacterPob, error)
+	DeletePoB(pobId int) error
+}
+
+type CharacterServiceImpl struct {
+	characterRepository repository.CharacterRepository
+	eventRepository     repository.EventRepository
+	teamRepository      repository.TeamRepository
+	userRepository      repository.UserRepository
+	activityRepository  repository.ActivityRepository
+	atlasService        AtlasService
+	itemService         ItemService
 	poeClient           *client.PoEClient
 }
 
-func NewCharacterService(poeClient *client.PoEClient) *CharacterService {
-	return &CharacterService{
+func NewCharacterService(poeClient *client.PoEClient) CharacterService {
+	return &CharacterServiceImpl{
 		characterRepository: repository.NewCharacterRepository(),
 		eventRepository:     repository.NewEventRepository(),
 		teamRepository:      repository.NewTeamRepository(),
@@ -36,7 +56,7 @@ func NewCharacterService(poeClient *client.PoEClient) *CharacterService {
 	}
 }
 
-func (c *CharacterService) TrackActivity(eventId int, update *parser.PlayerUpdate) error {
+func (c *CharacterServiceImpl) TrackActivity(eventId int, update *parser.PlayerUpdate) error {
 	if update.New.Character.Experience != update.Old.Character.Experience {
 		err := c.activityRepository.SaveActivity(&repository.Activity{
 			Time:    time.Now(),
@@ -51,34 +71,34 @@ func (c *CharacterService) TrackActivity(eventId int, update *parser.PlayerUpdat
 	return nil
 }
 
-func (c *CharacterService) GetCharactersForUser(user *repository.User) ([]*repository.Character, error) {
+func (c *CharacterServiceImpl) GetCharactersForUser(user *repository.User) ([]*repository.Character, error) {
 	return c.characterRepository.GetCharactersForUser(user)
 }
 
-func (c *CharacterService) GetCharactersForEvent(eventId int) ([]*repository.Character, error) {
+func (c *CharacterServiceImpl) GetCharactersForEvent(eventId int) ([]*repository.Character, error) {
 	return c.characterRepository.GetCharactersForEvent(eventId)
 }
 
-func (c *CharacterService) GetLatestPoBsForEvent(eventId int) ([]*repository.CharacterPob, error) {
+func (c *CharacterServiceImpl) GetLatestPoBsForEvent(eventId int) ([]*repository.CharacterPob, error) {
 	return c.characterRepository.GetLatestPoBsForEvent(eventId)
 }
 
-func (c *CharacterService) GetCharacterById(characterId string) (*repository.Character, error) {
+func (c *CharacterServiceImpl) GetCharacterById(characterId string) (*repository.Character, error) {
 	return c.characterRepository.GetCharacterById(characterId)
 }
 
-func (c *CharacterService) GetCharacterHistory(characterId string) ([]*repository.CharacterPob, error) {
+func (c *CharacterServiceImpl) GetCharacterHistory(characterId string) ([]*repository.CharacterPob, error) {
 	return c.characterRepository.GetCharacterHistory(characterId)
 }
-func (c *CharacterService) GetCharacterStatsForEvent(eventId int, cutoff time.Time) (map[string]*repository.CharacterPob, error) {
+func (c *CharacterServiceImpl) GetCharacterStatsForEvent(eventId int, cutoff time.Time) (map[string]*repository.CharacterPob, error) {
 	return c.characterRepository.GetCharacterStatsForEvent(eventId, cutoff)
 }
 
-func (c *CharacterService) GetTeamAtlasesForEvent(eventId int, teamId int) ([]*repository.AtlasTree, error) {
+func (c *CharacterServiceImpl) GetTeamAtlasesForEvent(eventId int, teamId int) ([]*repository.AtlasTree, error) {
 	return c.atlasService.GetLatestAtlasesForEventAndTeam(eventId, teamId)
 }
 
-func (c *CharacterService) GetPobForIdBeforeTimestamp(characterId string, timestamp time.Time) (*repository.CharacterPob, error) {
+func (c *CharacterServiceImpl) GetPobForIdBeforeTimestamp(characterId string, timestamp time.Time) (*repository.CharacterPob, error) {
 	pob, err := c.characterRepository.GetPobByCharacterIdBeforeTimestamp(characterId, timestamp)
 	if err != nil {
 		return nil, err
@@ -86,7 +106,7 @@ func (c *CharacterService) GetPobForIdBeforeTimestamp(characterId string, timest
 	return pob, nil
 }
 
-func (c *CharacterService) GetPobs(characterId string) ([]*repository.CharacterPob, error) {
+func (c *CharacterServiceImpl) GetPobs(characterId string) ([]*repository.CharacterPob, error) {
 	pob, err := c.characterRepository.GetPobs(characterId)
 	if err != nil {
 		return nil, err
@@ -94,7 +114,7 @@ func (c *CharacterService) GetPobs(characterId string) ([]*repository.CharacterP
 	return pob, nil
 }
 
-func (c *CharacterService) UpdateCharacter(characterId string) (*client.Character, error) {
+func (c *CharacterServiceImpl) UpdateCharacter(characterId string) (*client.Character, error) {
 	character, err := c.characterRepository.GetCharacterById(characterId)
 	if err != nil {
 		return nil, err
@@ -154,7 +174,7 @@ func (ci *CharacterInfo) ToPlayerUpdate() (*parser.PlayerUpdate, error) {
 	return nil, fmt.Errorf("no valid PoE oauth token found for user")
 }
 
-func (c *CharacterService) GetInfoForCharacter(characterId string) (*CharacterInfo, error) {
+func (c *CharacterServiceImpl) GetInfoForCharacter(characterId string) (*CharacterInfo, error) {
 	character, err := c.characterRepository.GetCharacterById(characterId)
 	if err != nil {
 		return nil, err
@@ -183,7 +203,7 @@ func (c *CharacterService) GetInfoForCharacter(characterId string) (*CharacterIn
 
 }
 
-func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
+func (c *CharacterServiceImpl) UpdatePoB(pob *repository.CharacterPob) error {
 	newExport, err := client.UpdatePoBExport(pob.Export.ToString())
 	if err != nil {
 		metrics.PobsCalculatedErrorCounter.Inc()
@@ -206,7 +226,7 @@ func (c *CharacterService) UpdatePoB(pob *repository.CharacterPob) error {
 	return c.characterRepository.SavePoB(pob)
 }
 
-func (c *CharacterService) UpdateLatestPoBs() error {
+func (c *CharacterServiceImpl) UpdateLatestPoBs() error {
 	semaphore := make(chan struct{}, config.Env().NumberOfPoBReplicas)
 	updateStart := time.Date(2026, 01, 29, 12, 0, 0, 0, time.Local)
 	startId := 0
@@ -241,7 +261,7 @@ func (c *CharacterService) UpdateLatestPoBs() error {
 	return nil
 }
 
-func (c *CharacterService) UpdatePoBStats() error {
+func (c *CharacterServiceImpl) UpdatePoBStats() error {
 	startId := 0
 	_, err := c.itemService.GetItemMap()
 	if err != nil {
@@ -310,10 +330,10 @@ func (c *CharacterService) UpdatePoBStats() error {
 	return nil
 }
 
-func (c *CharacterService) GetPoBById(pobId int) (*repository.CharacterPob, error) {
+func (c *CharacterServiceImpl) GetPoBById(pobId int) (*repository.CharacterPob, error) {
 	return c.characterRepository.GetPoBById(pobId)
 }
 
-func (c *CharacterService) DeletePoB(pobId int) error {
+func (c *CharacterServiceImpl) DeletePoB(pobId int) error {
 	return c.characterRepository.DeletePoB(pobId)
 }

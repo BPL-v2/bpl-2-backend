@@ -11,19 +11,29 @@ type Engagement struct {
 	Number int    `gorm:"not null"`
 }
 
-type EngagementRepository struct {
+type EngagementRepository interface {
+	SaveEngagement(engagement *Engagement) error
+	UpdateEngagement(engagement *Engagement) error
+	GetEngagementByName(name string) (*Engagement, error)
+}
+
+type EngagementRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewEngagementRepository() *EngagementRepository {
-	return &EngagementRepository{DB: config.DatabaseConnection()}
+func NewEngagementRepository() EngagementRepository {
+	return &EngagementRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *EngagementRepository) SaveEngagement(engagement *Engagement) error {
+func (r *EngagementRepositoryImpl) SaveEngagement(engagement *Engagement) error {
 	return r.DB.Create(&engagement).Error
 }
 
-func (r *EngagementRepository) GetEngagementByName(name string) (*Engagement, error) {
+func (r *EngagementRepositoryImpl) UpdateEngagement(engagement *Engagement) error {
+	return r.DB.Save(engagement).Error
+}
+
+func (r *EngagementRepositoryImpl) GetEngagementByName(name string) (*Engagement, error) {
 	engagement := &Engagement{}
 	err := r.DB.Where("name = ?", name).First(&engagement).Error
 	if err != nil {

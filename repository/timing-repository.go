@@ -77,16 +77,21 @@ func (t *Timing) GetDuration() time.Duration {
 	return time.Duration(t.DurationMs) * time.Millisecond
 }
 
-type TimingRepository struct {
+type TimingRepository interface {
+	GetTimings() (map[TimingKey]time.Duration, error)
+	SaveTimings(timings []*Timing) error
+}
+
+type TimingRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewTimingRepository() *TimingRepository {
+func NewTimingRepository() TimingRepository {
 	db := config.DatabaseConnection()
-	return &TimingRepository{db: db}
+	return &TimingRepositoryImpl{db: db}
 }
 
-func (r *TimingRepository) GetTimings() (map[TimingKey]time.Duration, error) {
+func (r *TimingRepositoryImpl) GetTimings() (map[TimingKey]time.Duration, error) {
 	var timings []*Timing
 	err := r.db.Find(&timings).Error
 	if err != nil {
@@ -104,7 +109,7 @@ func (r *TimingRepository) GetTimings() (map[TimingKey]time.Duration, error) {
 	return result, nil
 }
 
-func (r *TimingRepository) SaveTimings(timings []*Timing) error {
+func (r *TimingRepositoryImpl) SaveTimings(timings []*Timing) error {
 	for _, timing := range timings {
 		err := r.db.Save(timing).Error
 		if err != nil {

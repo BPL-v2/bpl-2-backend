@@ -15,9 +15,9 @@ import (
 )
 
 type CharacterController struct {
-	characterService      *service.CharacterService
-	eventService          *service.EventService
-	userService           *service.UserService
+	characterService      service.CharacterService
+	eventService          service.EventService
+	userService           service.UserService
 	playerFetchingService *cron.PlayerFetchingService
 }
 

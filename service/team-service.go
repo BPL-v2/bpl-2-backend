@@ -5,23 +5,36 @@ import (
 	"bpl/utils"
 )
 
-type TeamService struct {
-	teamRepository *repository.TeamRepository
-	userRepository *repository.UserRepository
+type TeamService interface {
+	GetTeamsForEvent(eventId int) ([]*repository.Team, error)
+	SaveTeam(team *repository.Team) (*repository.Team, error)
+	GetTeamById(teamId int) (*repository.Team, error)
+	DeleteTeam(teamId int) error
+	AddUsersToTeams(teamUsers []*repository.TeamUser, event *repository.Event) error
+	GetTeamUsersForEvent(eventId int) ([]*repository.TeamUser, error)
+	GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error)
+	GetTeamForUser(eventId int, userId int) (*repository.TeamUser, error)
+	GetTeamLeadsForEvent(eventId int) (map[int][]*repository.TeamUser, error)
+	GetSortedUsersForEvent(eventId int) ([]*SortedUser, error)
 }
 
-func NewTeamService() *TeamService {
-	return &TeamService{
+type TeamServiceImpl struct {
+	teamRepository repository.TeamRepository
+	userRepository repository.UserRepository
+}
+
+func NewTeamService() TeamService {
+	return &TeamServiceImpl{
 		teamRepository: repository.NewTeamRepository(),
 		userRepository: repository.NewUserRepository(),
 	}
 }
 
-func (e *TeamService) GetTeamsForEvent(eventId int) ([]*repository.Team, error) {
+func (e *TeamServiceImpl) GetTeamsForEvent(eventId int) ([]*repository.Team, error) {
 	return e.teamRepository.GetTeamsForEvent(eventId)
 }
 
-func (e *TeamService) SaveTeam(team *repository.Team) (*repository.Team, error) {
+func (e *TeamServiceImpl) SaveTeam(team *repository.Team) (*repository.Team, error) {
 	team, err := e.teamRepository.Save(team)
 	if err != nil {
 		return nil, err
@@ -29,15 +42,15 @@ func (e *TeamService) SaveTeam(team *repository.Team) (*repository.Team, error) 
 	return team, nil
 }
 
-func (e *TeamService) GetTeamById(teamId int) (*repository.Team, error) {
+func (e *TeamServiceImpl) GetTeamById(teamId int) (*repository.Team, error) {
 	return e.teamRepository.GetTeamById(teamId)
 }
 
-func (e *TeamService) DeleteTeam(teamId int) error {
+func (e *TeamServiceImpl) DeleteTeam(teamId int) error {
 	return e.teamRepository.Delete(teamId)
 }
 
-func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser, event *repository.Event) error {
+func (e *TeamServiceImpl) AddUsersToTeams(teamUsers []*repository.TeamUser, event *repository.Event) error {
 	err := e.teamRepository.RemoveTeamUsersForEvent(teamUsers, event)
 	if err != nil {
 		return err
@@ -45,11 +58,11 @@ func (e *TeamService) AddUsersToTeams(teamUsers []*repository.TeamUser, event *r
 	return e.teamRepository.AddUsersToTeams(teamUsers)
 }
 
-func (e *TeamService) GetTeamUsersForEvent(eventId int) ([]*repository.TeamUser, error) {
+func (e *TeamServiceImpl) GetTeamUsersForEvent(eventId int) ([]*repository.TeamUser, error) {
 	return e.teamRepository.GetTeamUsersForEvent(eventId)
 }
 
-func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error) {
+func (e *TeamServiceImpl) GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error) {
 	teamUsers, err := e.GetTeamUsersForEvent(event.Id)
 	if err != nil {
 		return nil, err
@@ -61,11 +74,11 @@ func (e *TeamService) GetTeamUserMapForEvent(event *repository.Event) (*map[int]
 	return &userToTeam, nil
 }
 
-func (e *TeamService) GetTeamForUser(eventId int, userId int) (*repository.TeamUser, error) {
+func (e *TeamServiceImpl) GetTeamForUser(eventId int, userId int) (*repository.TeamUser, error) {
 	return e.teamRepository.GetTeamForUser(eventId, userId)
 }
 
-func (e *TeamService) GetTeamLeadsForEvent(eventId int) (map[int][]*repository.TeamUser, error) {
+func (e *TeamServiceImpl) GetTeamLeadsForEvent(eventId int) (map[int][]*repository.TeamUser, error) {
 	leads, err := e.teamRepository.GetTeamLeadsForEvent(eventId)
 	if err != nil {
 		return nil, err
@@ -90,7 +103,7 @@ type SortedUser struct {
 	IsTeamLead  bool   `json:"is_team_lead" binding:"required"`
 }
 
-func (e *TeamService) GetSortedUsersForEvent(eventId int) ([]*SortedUser, error) {
+func (e *TeamServiceImpl) GetSortedUsersForEvent(eventId int) ([]*SortedUser, error) {
 	teamUsers, err := e.GetTeamUsersForEvent(eventId)
 	if err != nil {
 		return nil, err

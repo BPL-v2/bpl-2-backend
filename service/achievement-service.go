@@ -4,19 +4,26 @@ import (
 	"bpl/repository"
 )
 
-type AchievementService struct {
-	achievementRepository *repository.AchievementRepository
-	characterRepository   *repository.CharacterRepository
+type AchievementService interface {
+	FindAllAchievements() (map[repository.AchievementName][]int, error)
+	SaveAchievement(achievement *repository.Achievement) error
+	FindAchievementsForUser(userId int) ([]*repository.Achievement, error)
+	UpdateAchievements() error
 }
 
-func NewAchievementService() *AchievementService {
-	return &AchievementService{
+type AchievementServiceImpl struct {
+	achievementRepository repository.AchievementRepository
+	characterRepository   repository.CharacterRepository
+}
+
+func NewAchievementService() AchievementService {
+	return &AchievementServiceImpl{
 		achievementRepository: repository.NewAchievementRepository(),
 		characterRepository:   repository.NewCharacterRepository(),
 	}
 }
 
-func (s *AchievementService) FindAllAchievements() (map[repository.AchievementName][]int, error) {
+func (s *AchievementServiceImpl) FindAllAchievements() (map[repository.AchievementName][]int, error) {
 
 	achievements, err := s.achievementRepository.GetAllAchievements()
 	if err != nil {
@@ -29,15 +36,15 @@ func (s *AchievementService) FindAllAchievements() (map[repository.AchievementNa
 	return result, nil
 }
 
-func (s *AchievementService) SaveAchievement(achievement *repository.Achievement) error {
+func (s *AchievementServiceImpl) SaveAchievement(achievement *repository.Achievement) error {
 	return s.achievementRepository.SaveAchievement(achievement)
 }
 
-func (s *AchievementService) FindAchievementsForUser(userId int) ([]*repository.Achievement, error) {
+func (s *AchievementServiceImpl) FindAchievementsForUser(userId int) ([]*repository.Achievement, error) {
 	return s.achievementRepository.GetAchievementsForUser(userId)
 }
 
-func (s *AchievementService) UpdateAchievements() error {
+func (s *AchievementServiceImpl) UpdateAchievements() error {
 	character, err := s.characterRepository.GetAllHighestLevelCharactersForEachEventAndUser()
 	if err != nil {
 		return err

@@ -10,8 +10,8 @@ import (
 )
 
 type ActivityController struct {
-	activityService *service.ActivityService
-	userService     *service.UserService
+	activityService service.ActivityService
+	userService     service.UserService
 }
 
 func NewActivityController() *ActivityController {

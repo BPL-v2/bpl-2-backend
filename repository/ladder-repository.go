@@ -22,15 +22,20 @@ type LadderEntry struct {
 	EventId       int     `gorm:"foreignKey:EventId;constraint:OnDelete:CASCADE;index;not null"`
 }
 
-type LadderRepository struct {
+type LadderRepository interface {
+	UpsertLadder(ladder []*client.LadderEntry, eventId int, playerMap map[string]int) error
+	GetLadderForEvent(eventId int) ([]*LadderEntry, error)
+}
+
+type LadderRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewLadderRepository() *LadderRepository {
-	return &LadderRepository{DB: config.DatabaseConnection()}
+func NewLadderRepository() LadderRepository {
+	return &LadderRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId int, playerMap map[string]int) error {
+func (r *LadderRepositoryImpl) UpsertLadder(ladder []*client.LadderEntry, eventId int, playerMap map[string]int) error {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("UpsertLadder"))
 	defer timer.ObserveDuration()
 
@@ -65,7 +70,7 @@ func (r *LadderRepository) UpsertLadder(ladder []*client.LadderEntry, eventId in
 	return r.DB.CreateInBatches(dbEntries, 500).Error
 }
 
-func (r *LadderRepository) GetLadderForEvent(eventId int) ([]*LadderEntry, error) {
+func (r *LadderRepositoryImpl) GetLadderForEvent(eventId int) ([]*LadderEntry, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLadderForEvent"))
 	defer timer.ObserveDuration()
 	var ladder []*LadderEntry

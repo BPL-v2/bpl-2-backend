@@ -7,7 +7,7 @@ import (
 )
 
 type EngagementController struct {
-	engagementService *service.EngagementService
+	engagementService service.EngagementService
 }
 
 func NewEngagementController() *EngagementController {

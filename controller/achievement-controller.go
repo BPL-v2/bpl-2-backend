@@ -8,7 +8,7 @@ import (
 )
 
 type AchievementController struct {
-	AchievementService *service.AchievementService
+	AchievementService service.AchievementService
 }
 
 func NewAchievementController() *AchievementController {

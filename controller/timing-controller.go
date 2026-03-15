@@ -10,7 +10,7 @@ import (
 )
 
 type TimingController struct {
-	TimingService *service.TimingService
+	TimingService service.TimingService
 }
 
 func NewTimingController() *TimingController {

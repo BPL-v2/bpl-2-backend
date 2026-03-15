@@ -5,19 +5,28 @@ import (
 	"fmt"
 )
 
-type SubmissionService struct {
-	submissionRepository *repository.SubmissionRepository
-	eventRepository      *repository.EventRepository
+type SubmissionService interface {
+	GetSubmissions(eventId int) ([]*repository.Submission, error)
+	SaveBulkSubmissions(submissions []*repository.Submission) ([]*repository.Submission, error)
+	SaveSubmission(submission *repository.Submission, submitter *repository.User) (*repository.Submission, error)
+	ReviewSubmission(submissionId int, submissionReview *repository.Submission, reviewer *repository.User) (*repository.Submission, error)
+	GetSubmissionById(id int) (*repository.Submission, error)
+	DeleteSubmission(submission *repository.Submission, user *repository.User) error
 }
 
-func NewSubmissionService() *SubmissionService {
-	return &SubmissionService{
+type SubmissionServiceImpl struct {
+	submissionRepository repository.SubmissionRepository
+	eventRepository      repository.EventRepository
+}
+
+func NewSubmissionService() SubmissionService {
+	return &SubmissionServiceImpl{
 		submissionRepository: repository.NewSubmissionRepository(),
 		eventRepository:      repository.NewEventRepository(),
 	}
 }
 
-func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submission, error) {
+func (e *SubmissionServiceImpl) GetSubmissions(eventId int) ([]*repository.Submission, error) {
 	event, err := e.eventRepository.GetEventById(eventId, "Teams")
 	if err != nil {
 		return nil, err
@@ -25,7 +34,7 @@ func (e *SubmissionService) GetSubmissions(eventId int) ([]*repository.Submissio
 	return e.submissionRepository.GetSubmissionsForEvent(event)
 }
 
-func (e *SubmissionService) SaveBulkSubmissions(submissions []*repository.Submission) ([]*repository.Submission, error) {
+func (e *SubmissionServiceImpl) SaveBulkSubmissions(submissions []*repository.Submission) ([]*repository.Submission, error) {
 	persisted := make([]*repository.Submission, 0)
 	for _, submission := range submissions {
 		s, err := e.submissionRepository.SaveSubmission(submission)
@@ -37,7 +46,7 @@ func (e *SubmissionService) SaveBulkSubmissions(submissions []*repository.Submis
 	return persisted, nil
 }
 
-func (e *SubmissionService) SaveSubmission(submission *repository.Submission, submitter *repository.User) (*repository.Submission, error) {
+func (e *SubmissionServiceImpl) SaveSubmission(submission *repository.Submission, submitter *repository.User) (*repository.Submission, error) {
 	if submission.Id != 0 {
 		existingSubmission, err := e.submissionRepository.GetSubmissionById(submission.Id)
 		if err != nil {
@@ -66,7 +75,7 @@ func (e *SubmissionService) SaveSubmission(submission *repository.Submission, su
 	return e.submissionRepository.SaveSubmission(submission)
 }
 
-func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview *repository.Submission, reviewer *repository.User) (*repository.Submission, error) {
+func (e *SubmissionServiceImpl) ReviewSubmission(submissionId int, submissionReview *repository.Submission, reviewer *repository.User) (*repository.Submission, error) {
 	submission, err := e.submissionRepository.GetSubmissionById(submissionId)
 	if err != nil {
 		return nil, err
@@ -85,7 +94,7 @@ func (e *SubmissionService) ReviewSubmission(submissionId int, submissionReview 
 	return e.submissionRepository.SaveSubmission(submission)
 }
 
-func (e *SubmissionService) GetSubmissionById(id int) (*repository.Submission, error) {
+func (e *SubmissionServiceImpl) GetSubmissionById(id int) (*repository.Submission, error) {
 	submission, err := e.submissionRepository.GetSubmissionById(id)
 	if err != nil {
 		return nil, err
@@ -93,6 +102,6 @@ func (e *SubmissionService) GetSubmissionById(id int) (*repository.Submission, e
 	return submission, nil
 }
 
-func (e *SubmissionService) DeleteSubmission(submission *repository.Submission, user *repository.User) error {
+func (e *SubmissionServiceImpl) DeleteSubmission(submission *repository.Submission, user *repository.User) error {
 	return e.submissionRepository.DeleteSubmission(submission.Id)
 }

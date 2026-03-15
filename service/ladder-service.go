@@ -5,20 +5,25 @@ import (
 	"bpl/repository"
 )
 
-type LadderService struct {
-	ladderRepository *repository.LadderRepository
+type LadderService interface {
+	UpsertLadder(ladder []*client.LadderEntry, eventId int, playerMap map[string]int) error
+	GetLadderForEvent(eventId int) ([]*repository.LadderEntry, error)
 }
 
-func NewLadderService() *LadderService {
-	return &LadderService{
+type LadderServiceImpl struct {
+	ladderRepository repository.LadderRepository
+}
+
+func NewLadderService() LadderService {
+	return &LadderServiceImpl{
 		ladderRepository: repository.NewLadderRepository(),
 	}
 }
 
-func (s *LadderService) UpsertLadder(ladder []*client.LadderEntry, eventId int, playerMap map[string]int) error {
+func (s *LadderServiceImpl) UpsertLadder(ladder []*client.LadderEntry, eventId int, playerMap map[string]int) error {
 	return s.ladderRepository.UpsertLadder(ladder, eventId, playerMap)
 }
 
-func (s *LadderService) GetLadderForEvent(eventId int) ([]*repository.LadderEntry, error) {
+func (s *LadderServiceImpl) GetLadderForEvent(eventId int) ([]*repository.LadderEntry, error) {
 	return s.ladderRepository.GetLadderForEvent(eventId)
 }

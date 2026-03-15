@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+var ninjaStatsURL = "https://poe.ninja/poe1/api/data/stats"
+
 type NinjaResponse struct {
 	Id                      int    `json:"id"`
 	NextChangeId            string `json:"next_change_id"`
@@ -26,32 +28,41 @@ type NinjaResponse struct {
 	OAuthFlows              int    `json:"oauth_flows"`
 }
 
-type StashChangeService struct {
-	stashChangeRepository *repository.StashChangeRepository
+type StashChangeService interface {
+	GetLatestTimestamp(eventId int) (time.Time, error)
+	SaveStashChangesConditionally(message repository.StashChangeMessage, eventId int, sendFunc func([]byte) error) error
+	GetNextChangeIdForEvent(event *repository.Event) (string, error)
+	GetCurrentChangeIdForEvent(event *repository.Event) (*repository.ChangeId, error)
+	GetInitialChangeId(event *repository.Event) (string, error)
+	GetNinjaDifference(changeId string) int
 }
 
-func NewStashChangeService() *StashChangeService {
-	return &StashChangeService{
+type StashChangeServiceImpl struct {
+	stashChangeRepository repository.StashChangeRepository
+}
+
+func NewStashChangeService() StashChangeService {
+	return &StashChangeServiceImpl{
 		stashChangeRepository: repository.NewStashChangeRepository(),
 	}
 }
 
-func (s *StashChangeService) GetLatestTimestamp(eventId int) (time.Time, error) {
+func (s *StashChangeServiceImpl) GetLatestTimestamp(eventId int) (time.Time, error) {
 	return s.stashChangeRepository.GetLatestTimestamp(eventId)
 }
 
-func (s *StashChangeService) SaveStashChangesConditionally(message repository.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
+func (s *StashChangeServiceImpl) SaveStashChangesConditionally(message repository.StashChangeMessage, eventId int, sendFunc func([]byte) error) error {
 	return s.stashChangeRepository.SaveStashChangesConditionally(message, eventId, sendFunc)
 }
 
-func (s *StashChangeService) GetNextChangeIdForEvent(event *repository.Event) (string, error) {
+func (s *StashChangeServiceImpl) GetNextChangeIdForEvent(event *repository.Event) (string, error) {
 	changeId, err := s.stashChangeRepository.GetChangeIdForEvent(event)
 	if err != nil {
 		return "", fmt.Errorf("failed to get next change id for event %d: %s", event.Id, err)
 	}
 	return changeId.NextChangeId, nil
 }
-func (s *StashChangeService) GetCurrentChangeIdForEvent(event *repository.Event) (*repository.ChangeId, error) {
+func (s *StashChangeServiceImpl) GetCurrentChangeIdForEvent(event *repository.Event) (*repository.ChangeId, error) {
 	changeId, err := s.stashChangeRepository.GetChangeIdForEvent(event)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get current change id for event %d: %s", event.Id, err)
@@ -60,7 +71,7 @@ func (s *StashChangeService) GetCurrentChangeIdForEvent(event *repository.Event)
 }
 
 func GetNinjaChangeId() (string, error) {
-	response, err := http.Get("https://poe.ninja/poe1/api/data/stats")
+	response, err := http.Get(ninjaStatsURL)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch ninja change id: %s", err)
 	}
@@ -73,7 +84,7 @@ func GetNinjaChangeId() (string, error) {
 	return ninjaResponse.NextChangeId, nil
 }
 
-func (s *StashChangeService) GetInitialChangeId(event *repository.Event) (string, error) {
+func (s *StashChangeServiceImpl) GetInitialChangeId(event *repository.Event) (string, error) {
 	stashChange, err := s.GetNextChangeIdForEvent(event)
 	if err == nil {
 		return stashChange, nil
@@ -94,7 +105,7 @@ func ChangeIdToInt(changeId string) int {
 	return sum
 }
 
-func (s *StashChangeService) GetNinjaDifference(changeId string) int {
+func (s *StashChangeServiceImpl) GetNinjaDifference(changeId string) int {
 	ninjaId, err := GetNinjaChangeId()
 	if err != nil {
 		return 0

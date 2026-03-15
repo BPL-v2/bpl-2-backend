@@ -17,8 +17,8 @@ type Verifier struct {
 }
 
 type OauthController struct {
-	oauthService *service.OauthService
-	userService  *service.UserService
+	oauthService service.OauthService
+	userService  service.UserService
 }
 
 func NewOauthController() *OauthController {
@@ -119,7 +119,7 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
-		config := *e.oauthService.Config[provider]
+		config := *e.oauthService.GetOauthConfig(provider)
 		verifier, err := e.oauthService.Verify(body.State, body.Code, body.Referrer, provider, config)
 		if err != nil {
 			fmt.Printf("Failed to verify oauth: %v\n", err)

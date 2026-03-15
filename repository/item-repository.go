@@ -20,26 +20,32 @@ type Item struct {
 	ItemType ItemType `gorm:"not null"`
 }
 
-type ItemRepository struct {
+type ItemRepository interface {
+	SaveItem(item *Item) (*Item, error)
+	SaveItems(items []*Item) error
+	GetItemMap() (map[ItemType]map[string]int, error)
+}
+
+type ItemRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewItemRepository() *ItemRepository {
-	return &ItemRepository{DB: config.DatabaseConnection()}
+func NewItemRepository() ItemRepository {
+	return &ItemRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *ItemRepository) SaveItem(item *Item) (*Item, error) {
+func (r *ItemRepositoryImpl) SaveItem(item *Item) (*Item, error) {
 	if err := r.DB.Create(&item).Error; err != nil {
 		return nil, err
 	}
 	return item, nil
 }
 
-func (r *ItemRepository) SaveItems(items []*Item) error {
+func (r *ItemRepositoryImpl) SaveItems(items []*Item) error {
 	return r.DB.Create(&items).Error
 }
 
-func (r *ItemRepository) GetItemMap() (map[ItemType]map[string]int, error) {
+func (r *ItemRepositoryImpl) GetItemMap() (map[ItemType]map[string]int, error) {
 	items := []*Item{}
 	err := r.DB.Find(&items).Error
 	if err != nil {

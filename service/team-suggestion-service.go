@@ -2,21 +2,27 @@ package service
 
 import "bpl/repository"
 
-type TeamSuggestionService struct {
-	teamSuggestionRepository *repository.TeamSuggestionRepository
+type TeamSuggestionService interface {
+	GetSuggestionsForTeam(teamId int) ([]*repository.TeamSuggestion, error)
+	SaveSuggestion(id int, teamId int, extra string) error
+	DeleteSuggestion(id int, teamId int) error
 }
 
-func NewTeamSuggestionService() *TeamSuggestionService {
-	return &TeamSuggestionService{
+type TeamSuggestionServiceImpl struct {
+	teamSuggestionRepository repository.TeamSuggestionRepository
+}
+
+func NewTeamSuggestionService() TeamSuggestionService {
+	return &TeamSuggestionServiceImpl{
 		teamSuggestionRepository: repository.NewTeamSuggestionRepository(),
 	}
 }
 
-func (t *TeamSuggestionService) GetSuggestionsForTeam(teamId int) ([]*repository.TeamSuggestion, error) {
+func (t *TeamSuggestionServiceImpl) GetSuggestionsForTeam(teamId int) ([]*repository.TeamSuggestion, error) {
 	return t.teamSuggestionRepository.GetSuggestionsForTeam(teamId)
 }
 
-func (t *TeamSuggestionService) SaveSuggestion(id int, teamId int, extra string) error {
+func (t *TeamSuggestionServiceImpl) SaveSuggestion(id int, teamId int, extra string) error {
 	suggestion := &repository.TeamSuggestion{
 		Id:     id,
 		TeamId: teamId,
@@ -25,7 +31,7 @@ func (t *TeamSuggestionService) SaveSuggestion(id int, teamId int, extra string)
 	return t.teamSuggestionRepository.SaveSuggestion(suggestion)
 }
 
-func (t *TeamSuggestionService) DeleteSuggestion(id int, teamId int) error {
+func (t *TeamSuggestionServiceImpl) DeleteSuggestion(id int, teamId int) error {
 	suggestion := &repository.TeamSuggestion{
 		Id:     id,
 		TeamId: teamId,

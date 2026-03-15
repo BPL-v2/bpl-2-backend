@@ -12,12 +12,12 @@ import (
 )
 
 type EventController struct {
-	eventService         *service.EventService
-	teamService          *service.TeamService
-	userService          *service.UserService
-	signupService        *service.SignupService
-	scoringPresetService *service.ScoringPresetService
-	objectiveService     *service.ObjectiveService
+	eventService         service.EventService
+	teamService          service.TeamService
+	userService          service.UserService
+	signupService        service.SignupService
+	scoringPresetService service.ScoringPresetService
+	objectiveService     service.ObjectiveService
 }
 
 func NewEventController() *EventController {

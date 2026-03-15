@@ -13,10 +13,10 @@ import (
 )
 
 type SubmissionController struct {
-	submissionService *service.SubmissionService
-	userService       *service.UserService
-	teamService       *service.TeamService
-	eventService      *service.EventService
+	submissionService service.SubmissionService
+	userService       service.UserService
+	teamService       service.TeamService
+	eventService      service.EventService
 }
 
 func NewSubmissionController() *SubmissionController {

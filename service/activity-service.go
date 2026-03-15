@@ -6,12 +6,20 @@ import (
 	"time"
 )
 
-type ActivityService struct {
-	activityRepository *repository.ActivityRepository
+type ActivityService interface {
+	CalculateActiveTime(userId int, event *repository.Event, threshold time.Duration) (time.Duration, error)
+	CalculateActiveTimesForEvent(event *repository.Event, threshold time.Duration) (map[int]int, error)
+	RecordActivity(userId int, eventId int, timestamp time.Time) error
+	GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error)
+	CalculateActiveTimesForUsers(userIds []int) (map[int]map[int]time.Duration, error)
 }
 
-func NewActivityService() *ActivityService {
-	return &ActivityService{
+type ActivityServiceImpl struct {
+	activityRepository repository.ActivityRepository
+}
+
+func NewActivityService() ActivityService {
+	return &ActivityServiceImpl{
 		activityRepository: repository.NewActivityRepository(),
 	}
 }
@@ -21,7 +29,7 @@ type ActivitySession struct {
 	End   time.Time
 }
 
-func (s *ActivityService) CalculateActiveTime(userId int, event *repository.Event, threshold time.Duration) (time.Duration, error) {
+func (s *ActivityServiceImpl) CalculateActiveTime(userId int, event *repository.Event, threshold time.Duration) (time.Duration, error) {
 	activities, err := s.activityRepository.GetActivity(userId, event.Id)
 	if err != nil || len(activities) == 0 {
 		return 0, nil
@@ -52,7 +60,7 @@ func determineActiveTime(activities []*repository.Activity, threshold time.Durat
 	return totalDuration
 }
 
-func (s *ActivityService) CalculateActiveTimesForEvent(event *repository.Event, threshold time.Duration) (map[int]int, error) {
+func (s *ActivityServiceImpl) CalculateActiveTimesForEvent(event *repository.Event, threshold time.Duration) (map[int]int, error) {
 	activities, err := s.activityRepository.GetAllActivitiesForEvent(event.Id)
 	if err != nil {
 		return nil, err
@@ -68,7 +76,7 @@ func (s *ActivityService) CalculateActiveTimesForEvent(event *repository.Event, 
 	return activeTimes, nil
 }
 
-func (s *ActivityService) RecordActivity(userId int, eventId int, timestamp time.Time) error {
+func (s *ActivityServiceImpl) RecordActivity(userId int, eventId int, timestamp time.Time) error {
 	activity := &repository.Activity{
 		Time:    timestamp,
 		UserId:  userId,
@@ -77,11 +85,11 @@ func (s *ActivityService) RecordActivity(userId int, eventId int, timestamp time
 	return s.activityRepository.SaveActivity(activity)
 }
 
-func (s *ActivityService) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {
+func (s *ActivityServiceImpl) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {
 	return s.activityRepository.GetLatestActiveTimestampsForEvent(eventId)
 }
 
-func (s *ActivityService) CalculateActiveTimesForUsers(userIds []int) (map[int]map[int]time.Duration, error) {
+func (s *ActivityServiceImpl) CalculateActiveTimesForUsers(userIds []int) (map[int]map[int]time.Duration, error) {
 	activities, err := s.activityRepository.GetActivityHistoryForUsers(userIds)
 	if err != nil {
 		return nil, err

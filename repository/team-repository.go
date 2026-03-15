@@ -27,15 +27,31 @@ type TeamUser struct {
 	IsTeamLead bool `gorm:"not null;default:false"`
 }
 
-type TeamRepository struct {
+type TeamRepository interface {
+	GetTeamById(teamId int) (*Team, error)
+	GetTeamsForEvent(eventId int) ([]*Team, error)
+	Save(team *Team) (*Team, error)
+	Delete(teamId int) error
+	GetTeamUsersForEvent(eventId int) ([]*TeamUser, error)
+	GetTeamUsersForTeam(teamId int) ([]*TeamUser, error)
+	GetTeamLeadsForEvent(eventId int) ([]*TeamUser, error)
+	RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *Event) error
+	RemoveUserForEvent(userId int, eventId int) error
+	AddUsersToTeams(teamUsers []*TeamUser) error
+	GetTeamForUser(eventId int, userId int) (*TeamUser, error)
+	GetAllTeamUsers() ([]*TeamUser, error)
+	GetNumbersOfPastEventsParticipatedByUsers(userIds []int) (map[int]int, error)
+}
+
+type TeamRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewTeamRepository() *TeamRepository {
-	return &TeamRepository{DB: config.DatabaseConnection()}
+func NewTeamRepository() TeamRepository {
+	return &TeamRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *TeamRepository) GetTeamById(teamId int) (*Team, error) {
+func (r *TeamRepositoryImpl) GetTeamById(teamId int) (*Team, error) {
 	var team Team
 	result := r.DB.First(&team, teamId)
 	if result.Error != nil {
@@ -44,7 +60,7 @@ func (r *TeamRepository) GetTeamById(teamId int) (*Team, error) {
 	return &team, nil
 }
 
-func (r *TeamRepository) GetTeamsForEvent(eventId int) ([]*Team, error) {
+func (r *TeamRepositoryImpl) GetTeamsForEvent(eventId int) ([]*Team, error) {
 	var teams []*Team
 	result := r.DB.Find(&teams, Team{EventId: eventId})
 	if result.Error != nil {
@@ -53,7 +69,7 @@ func (r *TeamRepository) GetTeamsForEvent(eventId int) ([]*Team, error) {
 	return teams, nil
 }
 
-func (r *TeamRepository) Save(team *Team) (*Team, error) {
+func (r *TeamRepositoryImpl) Save(team *Team) (*Team, error) {
 	result := r.DB.Save(team)
 	if result.Error != nil {
 		return nil, result.Error
@@ -61,7 +77,7 @@ func (r *TeamRepository) Save(team *Team) (*Team, error) {
 	return team, nil
 }
 
-func (r *TeamRepository) Delete(teamId int) error {
+func (r *TeamRepositoryImpl) Delete(teamId int) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		err := r.DB.Delete(&TeamUser{}, "team_id = ?", teamId).Error
 		if err != nil {
@@ -71,7 +87,7 @@ func (r *TeamRepository) Delete(teamId int) error {
 	})
 }
 
-func (r *TeamRepository) GetTeamUsersForEvent(eventId int) ([]*TeamUser, error) {
+func (r *TeamRepositoryImpl) GetTeamUsersForEvent(eventId int) ([]*TeamUser, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetTeamUsersForEvent"))
 	defer timer.ObserveDuration()
 	teamUsers := make([]*TeamUser, 0)
@@ -89,7 +105,7 @@ func (r *TeamRepository) GetTeamUsersForEvent(eventId int) ([]*TeamUser, error) 
 	return teamUsers, nil
 }
 
-func (r *TeamRepository) GetTeamUsersForTeam(teamId int) ([]*TeamUser, error) {
+func (r *TeamRepositoryImpl) GetTeamUsersForTeam(teamId int) ([]*TeamUser, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetTeamUsersForTeam"))
 	defer timer.ObserveDuration()
 	teamUsers := make([]*TeamUser, 0)
@@ -101,7 +117,7 @@ func (r *TeamRepository) GetTeamUsersForTeam(teamId int) ([]*TeamUser, error) {
 
 }
 
-func (r *TeamRepository) GetTeamLeadsForEvent(eventId int) ([]*TeamUser, error) {
+func (r *TeamRepositoryImpl) GetTeamLeadsForEvent(eventId int) ([]*TeamUser, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetTeamLeadsForEvent"))
 	defer timer.ObserveDuration()
 	teamUsers := make([]*TeamUser, 0)
@@ -119,7 +135,7 @@ func (r *TeamRepository) GetTeamLeadsForEvent(eventId int) ([]*TeamUser, error) 
 	return teamUsers, nil
 }
 
-func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *Event) error {
+func (r *TeamRepositoryImpl) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *Event) error {
 	query := `
 		DELETE FROM team_users
 		WHERE team_id IN (
@@ -135,7 +151,7 @@ func (r *TeamRepository) RemoveTeamUsersForEvent(teamUsers []*TeamUser, event *E
 	return result.Error
 }
 
-func (r *TeamRepository) RemoveUserForEvent(userId int, eventId int) error {
+func (r *TeamRepositoryImpl) RemoveUserForEvent(userId int, eventId int) error {
 	query := `
 		DELETE FROM team_users
 		WHERE team_id IN (
@@ -149,7 +165,7 @@ func (r *TeamRepository) RemoveUserForEvent(userId int, eventId int) error {
 	return result.Error
 }
 
-func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
+func (r *TeamRepositoryImpl) AddUsersToTeams(teamUsers []*TeamUser) error {
 	validTeamUsers := utils.Filter(teamUsers, func(teamUser *TeamUser) bool {
 		return teamUser.TeamId != 0
 	})
@@ -157,7 +173,7 @@ func (r *TeamRepository) AddUsersToTeams(teamUsers []*TeamUser) error {
 	return result.Error
 }
 
-func (r *TeamRepository) GetTeamForUser(eventId int, userId int) (*TeamUser, error) {
+func (r *TeamRepositoryImpl) GetTeamForUser(eventId int, userId int) (*TeamUser, error) {
 	team := &TeamUser{}
 	query := `
 		SELECT team_users.*
@@ -173,7 +189,7 @@ func (r *TeamRepository) GetTeamForUser(eventId int, userId int) (*TeamUser, err
 	return team, nil
 }
 
-func (r *TeamRepository) GetAllTeamUsers() ([]*TeamUser, error) {
+func (r *TeamRepositoryImpl) GetAllTeamUsers() ([]*TeamUser, error) {
 	teamUsers := make([]*TeamUser, 0)
 	result := r.DB.Find(&teamUsers)
 	if result.Error != nil {
@@ -182,7 +198,7 @@ func (r *TeamRepository) GetAllTeamUsers() ([]*TeamUser, error) {
 	return teamUsers, nil
 }
 
-func (r *TeamRepository) GetNumbersOfPastEventsParticipatedByUsers(userIds []int) (map[int]int, error) {
+func (r *TeamRepositoryImpl) GetNumbersOfPastEventsParticipatedByUsers(userIds []int) (map[int]int, error) {
 	type Result struct {
 		UserId         int
 		NumberOfEvents int

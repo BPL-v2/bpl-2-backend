@@ -13,10 +13,10 @@ import (
 )
 
 type UserController struct {
-	userService      *service.UserService
-	eventService     *service.EventService
-	characterService *service.CharacterService
-	atlasService     *service.AtlasService
+	userService      service.UserService
+	eventService     service.EventService
+	characterService service.CharacterService
+	atlasService     service.AtlasService
 }
 
 func NewUserController(poeClient *client.PoEClient) *UserController {

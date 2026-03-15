@@ -23,20 +23,25 @@ type RecurringJob struct {
 	EndDate                  time.Time `gorm:"not null"`
 }
 
-type RecurringJobsRepository struct {
+type RecurringJobsRepository interface {
+	CreateRecurringJob(job *RecurringJob) error
+	GetAllJobs() (jobs []*RecurringJob, err error)
+}
+
+type RecurringJobsRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewRecurringJobsRepository() *RecurringJobsRepository {
-	return &RecurringJobsRepository{DB: config.DatabaseConnection()}
+func NewRecurringJobsRepository() RecurringJobsRepository {
+	return &RecurringJobsRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *RecurringJobsRepository) CreateRecurringJob(job *RecurringJob) error {
+func (r *RecurringJobsRepositoryImpl) CreateRecurringJob(job *RecurringJob) error {
 	r.DB.Delete(&RecurringJob{}, &RecurringJob{JobType: job.JobType})
 	return r.DB.Create(job).Error
 }
 
-func (r *RecurringJobsRepository) GetAllJobs() (jobs []*RecurringJob, err error) {
+func (r *RecurringJobsRepositoryImpl) GetAllJobs() (jobs []*RecurringJob, err error) {
 	err = r.DB.Find(&jobs).Error
 	return jobs, err
 }

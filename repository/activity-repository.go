@@ -21,19 +21,27 @@ func (Activity) TableName() string {
 	return "activity"
 }
 
-type ActivityRepository struct {
+type ActivityRepository interface {
+	SaveActivity(activity *Activity) error
+	GetActivity(userId int, eventId int) ([]*Activity, error)
+	GetAllActivitiesForEvent(eventId int) ([]*Activity, error)
+	GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error)
+	GetActivityHistoryForUsers(userIds []int) (map[int]map[int][]*Activity, error)
+}
+
+type ActivityRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewActivityRepository() *ActivityRepository {
-	return &ActivityRepository{DB: config.DatabaseConnection()}
+func NewActivityRepository() ActivityRepository {
+	return &ActivityRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *ActivityRepository) SaveActivity(activity *Activity) error {
+func (r *ActivityRepositoryImpl) SaveActivity(activity *Activity) error {
 	return r.DB.Create(&activity).Error
 }
 
-func (r *ActivityRepository) GetActivity(userId int, eventId int) ([]*Activity, error) {
+func (r *ActivityRepositoryImpl) GetActivity(userId int, eventId int) ([]*Activity, error) {
 	activities := []*Activity{}
 	err := r.DB.Where("user_id = ? AND event_id = ?", userId, eventId).Order("time ASC").Find(&activities).Error
 	if err != nil {
@@ -42,7 +50,7 @@ func (r *ActivityRepository) GetActivity(userId int, eventId int) ([]*Activity, 
 	return activities, nil
 }
 
-func (r *ActivityRepository) GetAllActivitiesForEvent(eventId int) ([]*Activity, error) {
+func (r *ActivityRepositoryImpl) GetAllActivitiesForEvent(eventId int) ([]*Activity, error) {
 	activities := []*Activity{}
 	err := r.DB.Where("event_id = ?", eventId).Order("time ASC").Find(&activities).Error
 	if err != nil {
@@ -51,7 +59,7 @@ func (r *ActivityRepository) GetAllActivitiesForEvent(eventId int) ([]*Activity,
 	return activities, nil
 }
 
-func (r *ActivityRepository) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {
+func (r *ActivityRepositoryImpl) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {
 	type Result struct {
 		UserId int
 		Time   time.Time
@@ -72,7 +80,7 @@ func (r *ActivityRepository) GetLatestActiveTimestampsForEvent(eventId int) (map
 	return resultMap, nil
 }
 
-func (r *ActivityRepository) GetActivityHistoryForUsers(userIds []int) (map[int]map[int][]*Activity, error) {
+func (r *ActivityRepositoryImpl) GetActivityHistoryForUsers(userIds []int) (map[int]map[int][]*Activity, error) {
 	activities := []*Activity{}
 	err := r.DB.Where("user_id IN ?", userIds).Find(&activities).Error
 	if err != nil {

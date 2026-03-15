@@ -10,9 +10,9 @@ import (
 )
 
 type StreamController struct {
-	teamService   *service.TeamService
-	oauthService  *service.OauthService
-	streamService *service.StreamService
+	teamService   service.TeamService
+	oauthService  service.OauthService
+	streamService service.StreamService
 }
 
 func NewStreamController() *StreamController {

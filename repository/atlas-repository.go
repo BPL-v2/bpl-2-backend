@@ -12,12 +12,19 @@ import (
 	"gorm.io/gorm"
 )
 
-type AtlasRepository struct {
+type AtlasRepository interface {
+	CreateAtlasTree(userId int, eventId int, index int, nodes []int) error
+	GetLatestAtlasesForEventAndTeam(eventId int, teamId int) (atlas []*AtlasTree, err error)
+	GetLatestTreesForEvent(eventId int) (atlas []*AtlasTree, err error)
+	GetAtlasesForEventAndUser(eventId int, userId int) (atlas []*AtlasTree, err error)
+}
+
+type AtlasRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewAtlasRepository() *AtlasRepository {
-	return &AtlasRepository{DB: config.DatabaseConnection()}
+func NewAtlasRepository() AtlasRepository {
+	return &AtlasRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
 type AtlasTree struct {
@@ -74,7 +81,7 @@ func (t PassiveNodes) Value() (driver.Value, error) {
 	return int32Array.Value()
 }
 
-func (r *AtlasRepository) CreateAtlasTree(userId int, eventId int, index int, nodes []int) error {
+func (r *AtlasRepositoryImpl) CreateAtlasTree(userId int, eventId int, index int, nodes []int) error {
 	tree := &AtlasTree{
 		UserID:    userId,
 		EventID:   eventId,
@@ -85,7 +92,7 @@ func (r *AtlasRepository) CreateAtlasTree(userId int, eventId int, index int, no
 	return r.DB.Create(tree).Error
 }
 
-func (r *AtlasRepository) GetLatestAtlasesForEventAndTeam(eventId int, teamId int) (atlas []*AtlasTree, err error) {
+func (r *AtlasRepositoryImpl) GetLatestAtlasesForEventAndTeam(eventId int, teamId int) (atlas []*AtlasTree, err error) {
 	query := `
         SELECT DISTINCT ON (a.user_id, a.index) a.* 
         FROM atlas_trees a
@@ -100,7 +107,7 @@ func (r *AtlasRepository) GetLatestAtlasesForEventAndTeam(eventId int, teamId in
 	return atlas, nil
 }
 
-func (r *AtlasRepository) GetLatestTreesForEvent(eventId int) (atlas []*AtlasTree, err error) {
+func (r *AtlasRepositoryImpl) GetLatestTreesForEvent(eventId int) (atlas []*AtlasTree, err error) {
 	query := `
 		SELECT DISTINCT ON (a.user_id, a.index) a.*
 		FROM atlas_trees a
@@ -114,7 +121,7 @@ func (r *AtlasRepository) GetLatestTreesForEvent(eventId int) (atlas []*AtlasTre
 	return atlas, nil
 }
 
-func (r *AtlasRepository) GetAtlasesForEventAndUser(eventId int, userId int) (atlas []*AtlasTree, err error) {
+func (r *AtlasRepositoryImpl) GetAtlasesForEventAndUser(eventId int, userId int) (atlas []*AtlasTree, err error) {
 	err = r.DB.Where("event_id = ? AND user_id = ?", eventId, userId).Order("timestamp DESC").Find(&atlas).Error
 	if err != nil {
 		return nil, err

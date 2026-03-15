@@ -168,15 +168,36 @@ func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) {
 	p.MainSkill = pob.GetMainSkill()
 }
 
-type CharacterRepository struct {
+type CharacterRepository interface {
+	GetPobByCharacterIdBeforeTimestamp(characterId string, timestamp time.Time) (*CharacterPob, error)
+	GetPobs(characterId string) ([]*CharacterPob, error)
+	SaveCharacters(characters []*Character) error
+	SavePoB(characterPoB *CharacterPob) error
+	SavePoBs(characterPobs []*CharacterPob) error
+	Save(character *Character) error
+	GetCharactersForEvent(eventId int) ([]*Character, error)
+	GetCharactersForUser(user *User) ([]*Character, error)
+	GetCharacterById(characterId string) (*Character, error)
+	GetCharacterHistory(characterId string) ([]*CharacterPob, error)
+	GetLatestCharacterPoB(characterId string) (*CharacterPob, error)
+	GetCharacterStatsForEvent(eventId int, cutoff time.Time) (map[string]*CharacterPob, error)
+	GetLatestPoBsForEvent(eventId int) ([]*CharacterPob, error)
+	GetAllHighestLevelCharactersForEachEventAndUser() ([]*Character, error)
+	GetPobsFromIdWithLimit(startId int, limit int) ([]*CharacterPob, error)
+	GetHighestCharacterLevelForEventsForUsers(userIds []int) (map[int]map[int]int, error)
+	DeletePoB(pobId int) error
+	GetPoBById(pobId int) (*CharacterPob, error)
+}
+
+type CharacterRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewCharacterRepository() *CharacterRepository {
-	return &CharacterRepository{DB: config.DatabaseConnection()}
+func NewCharacterRepository() CharacterRepository {
+	return &CharacterRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *CharacterRepository) GetPobByCharacterIdBeforeTimestamp(characterId string, timestamp time.Time) (*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetPobByCharacterIdBeforeTimestamp(characterId string, timestamp time.Time) (*CharacterPob, error) {
 	characterPob := &CharacterPob{}
 	err := r.DB.Where("character_id = ? AND created_at < ?", characterId, timestamp).
 		Order("created_at DESC").First(characterPob).Error
@@ -186,7 +207,7 @@ func (r *CharacterRepository) GetPobByCharacterIdBeforeTimestamp(characterId str
 	return characterPob, nil
 }
 
-func (r *CharacterRepository) GetPobs(characterId string) ([]*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetPobs(characterId string) ([]*CharacterPob, error) {
 	pobs := []*CharacterPob{}
 	err := r.DB.Where("character_id = ?", characterId).Order("created_at ASC").Find(&pobs).Error
 	if err != nil {
@@ -195,28 +216,28 @@ func (r *CharacterRepository) GetPobs(characterId string) ([]*CharacterPob, erro
 	return pobs, nil
 }
 
-func (r *CharacterRepository) SaveCharacters(characters []*Character) error {
+func (r *CharacterRepositoryImpl) SaveCharacters(characters []*Character) error {
 	if len(characters) == 0 {
 		return nil
 	}
 	return r.DB.CreateInBatches(characters, 500).Error
 }
 
-func (r *CharacterRepository) SavePoB(characterPoB *CharacterPob) error {
+func (r *CharacterRepositoryImpl) SavePoB(characterPoB *CharacterPob) error {
 	return r.DB.Save(&characterPoB).Error
 }
-func (r *CharacterRepository) SavePoBs(characterPobs []*CharacterPob) error {
+func (r *CharacterRepositoryImpl) SavePoBs(characterPobs []*CharacterPob) error {
 	return r.DB.Save(&characterPobs).Error
 }
 
-func (r *CharacterRepository) Save(character *Character) error {
+func (r *CharacterRepositoryImpl) Save(character *Character) error {
 	if character.Id == "" || character.Name == "" {
 		return fmt.Errorf("character ID and Name must be set")
 	}
 	return r.DB.Save(&character).Error
 }
 
-func (r *CharacterRepository) GetCharactersForEvent(eventId int) ([]*Character, error) {
+func (r *CharacterRepositoryImpl) GetCharactersForEvent(eventId int) ([]*Character, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharactersForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
@@ -226,7 +247,7 @@ func (r *CharacterRepository) GetCharactersForEvent(eventId int) ([]*Character, 
 	}
 	return charData, nil
 }
-func (r *CharacterRepository) GetCharactersForUser(user *User) ([]*Character, error) {
+func (r *CharacterRepositoryImpl) GetCharactersForUser(user *User) ([]*Character, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharactersForUser"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
@@ -240,7 +261,7 @@ func (r *CharacterRepository) GetCharactersForUser(user *User) ([]*Character, er
 	}
 	return charData, nil
 }
-func (r *CharacterRepository) GetCharacterById(characterId string) (*Character, error) {
+func (r *CharacterRepositoryImpl) GetCharacterById(characterId string) (*Character, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharacterById"))
 	defer timer.ObserveDuration()
 	character := &Character{}
@@ -251,7 +272,7 @@ func (r *CharacterRepository) GetCharacterById(characterId string) (*Character, 
 	return character, nil
 }
 
-func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetCharacterHistory(characterId string) ([]*CharacterPob, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharacterHistory"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
@@ -265,7 +286,7 @@ func (r *CharacterRepository) GetCharacterHistory(characterId string) ([]*Charac
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetLatestCharacterPoB(characterId string) (*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetLatestCharacterPoB(characterId string) (*CharacterPob, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestCharacterPoB"))
 	defer timer.ObserveDuration()
 	charData := &CharacterPob{}
@@ -276,7 +297,7 @@ func (r *CharacterRepository) GetLatestCharacterPoB(characterId string) (*Charac
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetCharacterStatsForEvent(eventId int, cutoff time.Time) (map[string]*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetCharacterStatsForEvent(eventId int, cutoff time.Time) (map[string]*CharacterPob, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharacterStatsForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
@@ -314,7 +335,7 @@ func (r *CharacterRepository) GetCharacterStatsForEvent(eventId int, cutoff time
 	return result, nil
 }
 
-func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetLatestPoBsForEvent(eventId int) ([]*CharacterPob, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetLatestPoBsForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
@@ -329,7 +350,7 @@ func (r *CharacterRepository) GetLatestPoBsForEvent(eventId int) ([]*CharacterPo
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetAllHighestLevelCharactersForEachEventAndUser() ([]*Character, error) {
+func (r *CharacterRepositoryImpl) GetAllHighestLevelCharactersForEachEventAndUser() ([]*Character, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetAllHighestLevelCharactersForEachEventAndUser"))
 	defer timer.ObserveDuration()
 	charData := []*Character{}
@@ -349,7 +370,7 @@ func (r *CharacterRepository) GetAllHighestLevelCharactersForEachEventAndUser() 
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetPobsFromIdWithLimit(startId int, limit int) ([]*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetPobsFromIdWithLimit(startId int, limit int) ([]*CharacterPob, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetPobsFromIdWithLimit"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
@@ -360,7 +381,7 @@ func (r *CharacterRepository) GetPobsFromIdWithLimit(startId int, limit int) ([]
 	return charData, nil
 }
 
-func (r *CharacterRepository) GetHighestCharacterLevelForEventsForUsers(userIds []int) (map[int]map[int]int, error) {
+func (r *CharacterRepositoryImpl) GetHighestCharacterLevelForEventsForUsers(userIds []int) (map[int]map[int]int, error) {
 	type Result struct {
 		EventId int
 		UserId  int
@@ -386,11 +407,11 @@ func (r *CharacterRepository) GetHighestCharacterLevelForEventsForUsers(userIds 
 	return resultMap, nil
 }
 
-func (r *CharacterRepository) DeletePoB(pobId int) error {
+func (r *CharacterRepositoryImpl) DeletePoB(pobId int) error {
 	return r.DB.Delete(&CharacterPob{}, pobId).Error
 }
 
-func (r *CharacterRepository) GetPoBById(pobId int) (*CharacterPob, error) {
+func (r *CharacterRepositoryImpl) GetPoBById(pobId int) (*CharacterPob, error) {
 	charData := &CharacterPob{}
 	err := r.DB.Where("id = ?", pobId).First(charData).Error
 	if err != nil {

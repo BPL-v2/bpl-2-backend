@@ -6,12 +6,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type ItemWishRepository struct {
+type ItemWishRepository interface {
+	SaveItemWish(itemWish *ItemWish) (*ItemWish, error)
+	SaveItemWishes(itemWishes []*ItemWish) ([]*ItemWish, error)
+	GetItemWishesForTeamAndUser(teamId int, userId int) (itemWishes []*ItemWish, err error)
+	GetItemWishesForTeam(teamId int) (itemWishes []*ItemWish, err error)
+	GetSimilarItemWishesInTeam(teamId int, itemField ItemField, value string) (itemWishes []*ItemWish, err error)
+	DeleteItemWish(id int) error
+	GetItemWishById(id int) (*ItemWish, error)
+}
+
+type ItemWishRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewItemWishRepository() *ItemWishRepository {
-	return &ItemWishRepository{DB: config.DatabaseConnection()}
+func NewItemWishRepository() ItemWishRepository {
+	return &ItemWishRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
 type ItemWish struct {
@@ -29,16 +39,16 @@ type ItemWish struct {
 	Team *Team `gorm:"foreignKey:TeamID"`
 }
 
-func (r *ItemWishRepository) SaveItemWish(itemWish *ItemWish) (*ItemWish, error) {
+func (r *ItemWishRepositoryImpl) SaveItemWish(itemWish *ItemWish) (*ItemWish, error) {
 	err := r.DB.Save(itemWish).Error
 	return itemWish, err
 }
-func (r *ItemWishRepository) SaveItemWishes(itemWishes []*ItemWish) ([]*ItemWish, error) {
+func (r *ItemWishRepositoryImpl) SaveItemWishes(itemWishes []*ItemWish) ([]*ItemWish, error) {
 	err := r.DB.Save(itemWishes).Error
 	return itemWishes, err
 }
 
-func (r *ItemWishRepository) GetItemWishesForTeamAndUser(teamId int, userId int) (itemWishes []*ItemWish, err error) {
+func (r *ItemWishRepositoryImpl) GetItemWishesForTeamAndUser(teamId int, userId int) (itemWishes []*ItemWish, err error) {
 	err = r.DB.Where("team_id = ? AND user_id = ?", teamId, userId).Find(&itemWishes).Error
 	if err != nil {
 		return nil, err
@@ -46,7 +56,7 @@ func (r *ItemWishRepository) GetItemWishesForTeamAndUser(teamId int, userId int)
 	return itemWishes, nil
 }
 
-func (r *ItemWishRepository) GetItemWishesForTeam(teamId int) (itemWishes []*ItemWish, err error) {
+func (r *ItemWishRepositoryImpl) GetItemWishesForTeam(teamId int) (itemWishes []*ItemWish, err error) {
 	err = r.DB.Where("team_id = ?", teamId).Find(&itemWishes).Error
 	if err != nil {
 		return nil, err
@@ -54,7 +64,7 @@ func (r *ItemWishRepository) GetItemWishesForTeam(teamId int) (itemWishes []*Ite
 	return itemWishes, nil
 }
 
-func (r *ItemWishRepository) GetSimilarItemWishesInTeam(teamId int, itemField ItemField, value string) (itemWishes []*ItemWish, err error) {
+func (r *ItemWishRepositoryImpl) GetSimilarItemWishesInTeam(teamId int, itemField ItemField, value string) (itemWishes []*ItemWish, err error) {
 	err = r.DB.Where("team_id = ? AND item_field = ? AND value = ?", teamId, itemField, value).Find(&itemWishes).Error
 	if err != nil {
 		return nil, err
@@ -62,11 +72,11 @@ func (r *ItemWishRepository) GetSimilarItemWishesInTeam(teamId int, itemField It
 	return itemWishes, nil
 }
 
-func (r *ItemWishRepository) DeleteItemWish(id int) error {
+func (r *ItemWishRepositoryImpl) DeleteItemWish(id int) error {
 	return r.DB.Delete(&ItemWish{}, id).Error
 }
 
-func (r *ItemWishRepository) GetItemWishById(id int) (*ItemWish, error) {
+func (r *ItemWishRepositoryImpl) GetItemWishById(id int) (*ItemWish, error) {
 	var itemWish ItemWish
 	err := r.DB.First(&itemWish, id).Error
 	if err != nil {

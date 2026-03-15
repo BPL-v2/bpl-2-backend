@@ -7,17 +7,26 @@ import (
 	"math"
 )
 
-type ItemWishService struct {
-	itemWishRepository *repository.ItemWishRepository
+type ItemWishService interface {
+	CreateItemWish(itemWish *repository.ItemWish, teamId int) (*repository.ItemWish, error)
+	UpdateItemWish(itemWish *repository.ItemWish, teamId int, Fulfilled *bool, BuildEnabling *bool, Priority *int) (*repository.ItemWish, error)
+	GetItemWishById(id int) (*repository.ItemWish, error)
+	DeleteItemWish(id int) error
+	GetItemWishesForTeam(teamId int) ([]*repository.ItemWish, error)
+	UpdateItemWishFulfillment(teamId int, userId int, character *client.Character) error
 }
 
-func NewItemWishService() *ItemWishService {
-	return &ItemWishService{
+type ItemWishServiceImpl struct {
+	itemWishRepository repository.ItemWishRepository
+}
+
+func NewItemWishService() ItemWishService {
+	return &ItemWishServiceImpl{
 		itemWishRepository: repository.NewItemWishRepository(),
 	}
 }
 
-func (s *ItemWishService) CreateItemWish(itemWish *repository.ItemWish, teamId int) (*repository.ItemWish, error) {
+func (s *ItemWishServiceImpl) CreateItemWish(itemWish *repository.ItemWish, teamId int) (*repository.ItemWish, error) {
 	itemWishes, err := s.itemWishRepository.GetSimilarItemWishesInTeam(teamId, itemWish.ItemField, itemWish.Value)
 	if err != nil {
 		return nil, err
@@ -26,7 +35,7 @@ func (s *ItemWishService) CreateItemWish(itemWish *repository.ItemWish, teamId i
 	return s.itemWishRepository.SaveItemWish(itemWish)
 }
 
-func (s *ItemWishService) UpdateItemWish(itemWish *repository.ItemWish, teamId int, Fulfilled *bool, BuildEnabling *bool, Priority *int) (*repository.ItemWish, error) {
+func (s *ItemWishServiceImpl) UpdateItemWish(itemWish *repository.ItemWish, teamId int, Fulfilled *bool, BuildEnabling *bool, Priority *int) (*repository.ItemWish, error) {
 	if Fulfilled != nil {
 		itemWish.Fulfilled = *Fulfilled
 	}
@@ -54,15 +63,15 @@ func (s *ItemWishService) UpdateItemWish(itemWish *repository.ItemWish, teamId i
 	return s.itemWishRepository.SaveItemWish(itemWish)
 }
 
-func (s *ItemWishService) GetItemWishById(id int) (*repository.ItemWish, error) {
+func (s *ItemWishServiceImpl) GetItemWishById(id int) (*repository.ItemWish, error) {
 	return s.itemWishRepository.GetItemWishById(id)
 }
 
-func (s *ItemWishService) DeleteItemWish(id int) error {
+func (s *ItemWishServiceImpl) DeleteItemWish(id int) error {
 	return s.itemWishRepository.DeleteItemWish(id)
 }
 
-func (s *ItemWishService) GetItemWishesForTeam(teamId int) ([]*repository.ItemWish, error) {
+func (s *ItemWishServiceImpl) GetItemWishesForTeam(teamId int) ([]*repository.ItemWish, error) {
 	itemWishes, err := s.itemWishRepository.GetItemWishesForTeam(teamId)
 	if err != nil {
 		return nil, err
@@ -70,7 +79,7 @@ func (s *ItemWishService) GetItemWishesForTeam(teamId int) ([]*repository.ItemWi
 	return itemWishes, nil
 }
 
-func (s *ItemWishService) UpdateItemWishFulfillment(teamId int, userId int, character *client.Character) error {
+func (s *ItemWishServiceImpl) UpdateItemWishFulfillment(teamId int, userId int, character *client.Character) error {
 	itemWishes, err := s.itemWishRepository.GetItemWishesForTeamAndUser(teamId, userId)
 	if err != nil {
 		return err

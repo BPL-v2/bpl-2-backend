@@ -20,11 +20,11 @@ type RecurringJob struct {
 }
 
 type RecurringJobService struct {
-	objectiveRepository *repository.ObjectiveRepository
-	eventService        *service.EventService
-	oauthService        *service.OauthService
+	objectiveRepository repository.ObjectiveRepository
+	eventService        service.EventService
+	oauthService        service.OauthService
 	poeClient           *client.PoEClient
-	jobRepository       *repository.RecurringJobsRepository
+	jobRepository       repository.RecurringJobsRepository
 	Jobs                map[repository.JobType]*RecurringJob
 }
 

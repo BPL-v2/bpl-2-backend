@@ -118,24 +118,43 @@ func ActionFromString(action string) Action {
 	}
 }
 
-type GuildStashRepository struct {
+type GuildStashRepository interface {
+	DeleteAll(tabs []*GuildStashTab) error
+	SaveAll(tabs []*GuildStashTab) (err error)
+	Save(tab *GuildStashTab) error
+	GetById(stashId string, eventId int) (tab *GuildStashTab, err error)
+	GetByEvent(eventId int) ([]*GuildStashTab, error)
+	GetActiveByEvent(eventId int) ([]*GuildStashTab, error)
+	GetByTeam(teamId int) ([]*GuildStashTab, error)
+	GetByUserAndEvent(userId int, eventId int) ([]*GuildStashTab, error)
+	SwitchStashFetch(stashId string, teamId int, fetchEnabled bool, priorityFetch bool) error
+	SaveGuildstashLogs(logs []*GuildStashChangelog) error
+	GetLatestLogEntryTimestampForGuild(event *Event, guildId int) (*int64, *int64)
+	GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*GuildStashChangelog, error)
+	SaveGuild(guild *Guild) error
+	GetGuildsForTeams(teamIds []int) ([]*Guild, error)
+	GetEarliestDeposits(event *Event) ([]*PlayerCompletion, error)
+	GetGuildById(guildId int, eventId int) (*Guild, error)
+}
+
+type GuildStashRepositoryImpl struct {
 	db *gorm.DB
 }
 
-func NewGuildStashRepository() *GuildStashRepository {
-	return &GuildStashRepository{
+func NewGuildStashRepository() GuildStashRepository {
+	return &GuildStashRepositoryImpl{
 		db: config.DatabaseConnection(),
 	}
 }
 
-func (r *GuildStashRepository) DeleteAll(tabs []*GuildStashTab) error {
+func (r *GuildStashRepositoryImpl) DeleteAll(tabs []*GuildStashTab) error {
 	if len(tabs) == 0 {
 		return nil
 	}
 	return r.db.Delete(tabs).Error
 }
 
-func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
+func (r *GuildStashRepositoryImpl) SaveAll(tabs []*GuildStashTab) (err error) {
 	if len(tabs) == 0 {
 		return nil
 	}
@@ -150,10 +169,10 @@ func (r *GuildStashRepository) SaveAll(tabs []*GuildStashTab) (err error) {
 	})
 }
 
-func (r *GuildStashRepository) Save(tab *GuildStashTab) error {
+func (r *GuildStashRepositoryImpl) Save(tab *GuildStashTab) error {
 	return r.db.Save(tab).Error
 }
-func (r *GuildStashRepository) GetById(stashId string, eventId int) (tab *GuildStashTab, err error) {
+func (r *GuildStashRepositoryImpl) GetById(stashId string, eventId int) (tab *GuildStashTab, err error) {
 	allTabs := make([]*GuildStashTab, 0)
 	q := `select * from guild_stash_tabs where (id = @stash_id OR parent_id = @stash_id) and event_id = @event_id`
 	err = r.db.Raw(q, map[string]any{
@@ -175,7 +194,7 @@ func (r *GuildStashRepository) GetById(stashId string, eventId int) (tab *GuildS
 	return tab, err
 }
 
-func (r *GuildStashRepository) GetByEvent(eventId int) ([]*GuildStashTab, error) {
+func (r *GuildStashRepositoryImpl) GetByEvent(eventId int) ([]*GuildStashTab, error) {
 	var tabs []*GuildStashTab
 	err := r.db.Where(GuildStashTab{EventId: eventId}).Find(&tabs).Error
 	if err != nil {
@@ -184,7 +203,7 @@ func (r *GuildStashRepository) GetByEvent(eventId int) ([]*GuildStashTab, error)
 	return tabs, nil
 }
 
-func (r *GuildStashRepository) GetActiveByEvent(eventId int) ([]*GuildStashTab, error) {
+func (r *GuildStashRepositoryImpl) GetActiveByEvent(eventId int) ([]*GuildStashTab, error) {
 	var tabs []*GuildStashTab
 	err := r.db.Where(GuildStashTab{EventId: eventId, FetchEnabled: true}).Find(&tabs).Error
 	if err != nil {
@@ -193,7 +212,7 @@ func (r *GuildStashRepository) GetActiveByEvent(eventId int) ([]*GuildStashTab, 
 	return tabs, nil
 }
 
-func (r *GuildStashRepository) GetByTeam(teamId int) ([]*GuildStashTab, error) {
+func (r *GuildStashRepositoryImpl) GetByTeam(teamId int) ([]*GuildStashTab, error) {
 	var tabs []*GuildStashTab
 	err := r.db.Where(GuildStashTab{TeamId: teamId}).Find(&tabs).Error
 	if err != nil {
@@ -202,7 +221,7 @@ func (r *GuildStashRepository) GetByTeam(teamId int) ([]*GuildStashTab, error) {
 	return tabs, nil
 }
 
-func (r *GuildStashRepository) GetByUserAndEvent(userId int, eventId int) ([]*GuildStashTab, error) {
+func (r *GuildStashRepositoryImpl) GetByUserAndEvent(userId int, eventId int) ([]*GuildStashTab, error) {
 	var tabs []*GuildStashTab
 	err := r.db.Where("event_id = ? AND ? = ANY(user_ids)", eventId, userId).Find(&tabs).Error
 	if err != nil {
@@ -211,7 +230,7 @@ func (r *GuildStashRepository) GetByUserAndEvent(userId int, eventId int) ([]*Gu
 	return tabs, nil
 }
 
-func (r *GuildStashRepository) SwitchStashFetch(stashId string, teamId int, fetchEnabled bool, priorityFetch bool) error {
+func (r *GuildStashRepositoryImpl) SwitchStashFetch(stashId string, teamId int, fetchEnabled bool, priorityFetch bool) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		query := `
 		UPDATE guild_stash_tabs g
@@ -245,14 +264,14 @@ func (r *GuildStashRepository) SwitchStashFetch(stashId string, teamId int, fetc
 	})
 }
 
-func (r *GuildStashRepository) SaveGuildstashLogs(logs []*GuildStashChangelog) error {
+func (r *GuildStashRepositoryImpl) SaveGuildstashLogs(logs []*GuildStashChangelog) error {
 	if len(logs) == 0 {
 		return nil
 	}
 	return r.db.Save(logs).Error
 }
 
-func (r *GuildStashRepository) GetLatestLogEntryTimestampForGuild(event *Event, guildId int) (*int64, *int64) {
+func (r *GuildStashRepositoryImpl) GetLatestLogEntryTimestampForGuild(event *Event, guildId int) (*int64, *int64) {
 	var result struct {
 		EarliestTimestamp *time.Time
 		LatestTimestamp   *time.Time
@@ -270,7 +289,7 @@ func (r *GuildStashRepository) GetLatestLogEntryTimestampForGuild(event *Event, 
 	return &earliestTimestamp, &latestTimestamp
 }
 
-func (r *GuildStashRepository) GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*GuildStashChangelog, error) {
+func (r *GuildStashRepositoryImpl) GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*GuildStashChangelog, error) {
 	var logs []*GuildStashChangelog
 	query := r.db.Model(&GuildStashChangelog{})
 	query = query.Where("event_id = ? AND guild_id = ?", eventId, guildId)
@@ -296,11 +315,11 @@ func (r *GuildStashRepository) GetLogs(eventId, guildId int, limit, offset *int,
 	return logs, nil
 }
 
-func (r *GuildStashRepository) SaveGuild(guild *Guild) error {
+func (r *GuildStashRepositoryImpl) SaveGuild(guild *Guild) error {
 	return r.db.Save(guild).Error
 }
 
-func (r *GuildStashRepository) GetGuildsForTeams(teamIds []int) ([]*Guild, error) {
+func (r *GuildStashRepositoryImpl) GetGuildsForTeams(teamIds []int) ([]*Guild, error) {
 	var guilds []*Guild
 	err := r.db.Where("team_id IN ?", teamIds).Find(&guilds).Error
 	if err != nil {
@@ -316,7 +335,7 @@ type PlayerCompletion struct {
 	TeamId    int    `gorm:"column:team_id"`
 }
 
-func (r *GuildStashRepository) GetEarliestDeposits(event *Event) ([]*PlayerCompletion, error) {
+func (r *GuildStashRepositoryImpl) GetEarliestDeposits(event *Event) ([]*PlayerCompletion, error) {
 	var results []*PlayerCompletion
 	query := `
 	SELECT timestamp, user_id, item_name, team_id 
@@ -345,7 +364,7 @@ func (r *GuildStashRepository) GetEarliestDeposits(event *Event) ([]*PlayerCompl
 	return results, nil
 }
 
-func (r *GuildStashRepository) GetGuildById(guildId int, eventId int) (*Guild, error) {
+func (r *GuildStashRepositoryImpl) GetGuildById(guildId int, eventId int) (*Guild, error) {
 	var guild Guild
 	err := r.db.Where("id = ? AND event_id = ?", guildId, eventId).First(&guild).Error
 	if err != nil {

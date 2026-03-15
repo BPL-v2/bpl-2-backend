@@ -96,15 +96,25 @@ func (u *User) HasPoEName(name string) bool {
 	return strings.EqualFold(strings.Split(*poeName, "#")[0], strings.Split(name, "#")[0])
 }
 
-type UserRepository struct {
+type UserRepository interface {
+	GetUserById(userId int, preloads ...string) (*User, error)
+	GetUsersByIds(userIds []int, preloads ...string) ([]*User, error)
+	SaveUser(user *User) (*User, error)
+	GetAllUsers() ([]*User, error)
+	GetStreamersForEvent(eventId int) (streamers []*Streamer, err error)
+	GetUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error)
+	GetUsersWithTeamForEvent(eventId int) (map[int]*UserWithTeam, error)
+}
+
+type UserRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewUserRepository() *UserRepository {
-	return &UserRepository{DB: config.DatabaseConnection()}
+func NewUserRepository() UserRepository {
+	return &UserRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *UserRepository) GetUserById(userId int, preloads ...string) (*User, error) {
+func (r *UserRepositoryImpl) GetUserById(userId int, preloads ...string) (*User, error) {
 	var user User
 	query := r.DB
 	for _, preload := range preloads {
@@ -116,7 +126,7 @@ func (r *UserRepository) GetUserById(userId int, preloads ...string) (*User, err
 	}
 	return &user, nil
 }
-func (r *UserRepository) GetUsersByIds(userIds []int, preloads ...string) ([]*User, error) {
+func (r *UserRepositoryImpl) GetUsersByIds(userIds []int, preloads ...string) ([]*User, error) {
 	var users []*User
 	query := r.DB
 	for _, preload := range preloads {
@@ -129,7 +139,7 @@ func (r *UserRepository) GetUsersByIds(userIds []int, preloads ...string) ([]*Us
 	return users, nil
 }
 
-func (r *UserRepository) SaveUser(user *User) (*User, error) {
+func (r *UserRepositoryImpl) SaveUser(user *User) (*User, error) {
 	result := r.DB.Save(user)
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to create user: %v", result.Error)
@@ -137,7 +147,7 @@ func (r *UserRepository) SaveUser(user *User) (*User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetAllUsers() ([]*User, error) {
+func (r *UserRepositoryImpl) GetAllUsers() ([]*User, error) {
 	var users []*User
 	result := r.DB.Find(&users)
 	if result.Error != nil {
@@ -151,7 +161,7 @@ type Streamer struct {
 	TwitchId string
 }
 
-func (r *UserRepository) GetStreamersForEvent(eventId int) (streamers []*Streamer, err error) {
+func (r *UserRepositoryImpl) GetStreamersForEvent(eventId int) (streamers []*Streamer, err error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetStreamersForCurrentEvent"))
 	defer timer.ObserveDuration()
 	query := `
@@ -217,7 +227,7 @@ type TeamUserWithPoEToken struct {
 	TokenExpiry time.Time
 }
 
-func (r *UserRepository) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error) {
+func (r *UserRepositoryImpl) GetUsersForEvent(eventId int) ([]*TeamUserWithPoEToken, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetUsersForEvent"))
 	defer timer.ObserveDuration()
 	var users []*TeamUserWithPoEToken
@@ -250,7 +260,7 @@ type UserWithTeam struct {
 	TeamId      int
 }
 
-func (r *UserRepository) GetUsersWithTeamForEvent(eventId int) (map[int]*UserWithTeam, error) {
+func (r *UserRepositoryImpl) GetUsersWithTeamForEvent(eventId int) (map[int]*UserWithTeam, error) {
 	query := `
 		SELECT
 			users.id as user_id,

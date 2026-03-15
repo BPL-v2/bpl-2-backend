@@ -84,24 +84,32 @@ type ScoringPreset struct {
 	Extra         ExtraMap             `gorm:"type:jsonb;not null;default:'{}'"`
 }
 
-type ScoringPresetRepository struct {
+type ScoringPresetRepository interface {
+	SavePreset(preset *ScoringPreset) (*ScoringPreset, error)
+	SavePresets(presets []*ScoringPreset) ([]*ScoringPreset, error)
+	GetPresetsForEvent(eventId int) ([]*ScoringPreset, error)
+	DeletePreset(presetId int) error
+	DeletePresetsForEvent(eventId int) error
+}
+
+type ScoringPresetRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewScoringPresetRepository() *ScoringPresetRepository {
-	return &ScoringPresetRepository{DB: config.DatabaseConnection()}
+func NewScoringPresetRepository() ScoringPresetRepository {
+	return &ScoringPresetRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *ScoringPresetRepository) SavePreset(preset *ScoringPreset) (*ScoringPreset, error) {
+func (r *ScoringPresetRepositoryImpl) SavePreset(preset *ScoringPreset) (*ScoringPreset, error) {
 	result := r.DB.Save(preset)
 	return preset, result.Error
 }
-func (r *ScoringPresetRepository) SavePresets(presets []*ScoringPreset) ([]*ScoringPreset, error) {
+func (r *ScoringPresetRepositoryImpl) SavePresets(presets []*ScoringPreset) ([]*ScoringPreset, error) {
 	result := r.DB.Save(presets)
 	return presets, result.Error
 }
 
-func (r *ScoringPresetRepository) GetPresetsForEvent(eventId int) ([]*ScoringPreset, error) {
+func (r *ScoringPresetRepositoryImpl) GetPresetsForEvent(eventId int) ([]*ScoringPreset, error) {
 	var presets []*ScoringPreset
 	result := r.DB.Find(&presets, ScoringPreset{EventId: eventId})
 	if result.Error != nil {
@@ -110,12 +118,12 @@ func (r *ScoringPresetRepository) GetPresetsForEvent(eventId int) ([]*ScoringPre
 	return presets, nil
 }
 
-func (r *ScoringPresetRepository) DeletePreset(presetId int) error {
+func (r *ScoringPresetRepositoryImpl) DeletePreset(presetId int) error {
 	result := r.DB.Delete(&ScoringPreset{}, &ScoringPreset{Id: presetId})
 	return result.Error
 }
 
-func (r *ScoringPresetRepository) DeletePresetsForEvent(eventId int) error {
+func (r *ScoringPresetRepositoryImpl) DeletePresetsForEvent(eventId int) error {
 	result := r.DB.Delete(&ScoringPreset{}, &ScoringPreset{EventId: eventId})
 	return result.Error
 }

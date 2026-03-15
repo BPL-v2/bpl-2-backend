@@ -4,17 +4,21 @@ import (
 	"bpl/repository"
 )
 
-type EngagementService struct {
-	engagementRepository *repository.EngagementRepository
+type EngagementService interface {
+	AddEngagement(name string) error
 }
 
-func NewEngagementService() *EngagementService {
-	return &EngagementService{
+type EngagementServiceImpl struct {
+	engagementRepository repository.EngagementRepository
+}
+
+func NewEngagementService() EngagementService {
+	return &EngagementServiceImpl{
 		engagementRepository: repository.NewEngagementRepository(),
 	}
 }
 
-func (s *EngagementService) AddEngagement(name string) error {
+func (s *EngagementServiceImpl) AddEngagement(name string) error {
 	existingEngagement, err := s.engagementRepository.GetEngagementByName(name)
 	if err != nil {
 		return s.engagementRepository.SaveEngagement(&repository.Engagement{
@@ -23,5 +27,5 @@ func (s *EngagementService) AddEngagement(name string) error {
 		})
 	}
 	existingEngagement.Number++
-	return s.engagementRepository.DB.Save(existingEngagement).Error
+	return s.engagementRepository.UpdateEngagement(existingEngagement)
 }

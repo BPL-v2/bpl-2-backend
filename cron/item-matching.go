@@ -20,9 +20,9 @@ import (
 
 type MatchingService struct {
 	ctx                   context.Context
-	objectiveMatchService *service.ObjectiveMatchService
-	objectiveService      *service.ObjectiveService
-	userService           *service.UserService
+	objectiveMatchService service.ObjectiveMatchService
+	objectiveService      service.ObjectiveService
+	userService           service.UserService
 	lastTimestamp         *time.Time
 	event                 *repository.Event
 }

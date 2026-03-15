@@ -8,15 +8,30 @@ import (
 	"time"
 )
 
-type GuildStashService struct {
-	GuildStashRepository *repository.GuildStashRepository
-	TeamRepository       *repository.TeamRepository
-	ObjectiveService     *ObjectiveService
+type GuildStashService interface {
+	GetGuildStashesForUserForEvent(user repository.User, event repository.Event) ([]*repository.GuildStashTab, error)
+	GetGuildStashesForTeam(teamId int) ([]*repository.GuildStashTab, error)
+	GetGuildStash(tabId string, eventId int) (*repository.GuildStashTab, error)
+	UpdateGuildStash(user *repository.User, teamId int, event *repository.Event) ([]*repository.GuildStashTab, error)
+	SwitchStashFetch(stashId string, teamId int, fetchEnabled bool, priorityFetch bool) error
+	SaveGuildstashLogs(stashLogs []*repository.GuildStashChangelog) error
+	GetLatestLogEntryTimestampForGuild(event *repository.Event, guildId int) (*int64, *int64)
+	GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*repository.GuildStashChangelog, error)
+	SaveGuild(guild *repository.Guild) error
+	GetGuildsForEvent(event *repository.Event) ([]*repository.Guild, error)
+	GetGuildById(guildId int, eventId int) (*repository.Guild, error)
+	GetEarliestDeposits(event *repository.Event) ([]*repository.PlayerCompletion, error)
+}
+
+type GuildStashServiceImpl struct {
+	GuildStashRepository repository.GuildStashRepository
+	TeamRepository       repository.TeamRepository
+	ObjectiveService     ObjectiveService
 	PoEClient            *client.PoEClient
 }
 
-func NewGuildStashService(PoEClient *client.PoEClient) *GuildStashService {
-	return &GuildStashService{
+func NewGuildStashService(PoEClient *client.PoEClient) GuildStashService {
+	return &GuildStashServiceImpl{
 		GuildStashRepository: repository.NewGuildStashRepository(),
 		TeamRepository:       repository.NewTeamRepository(),
 		ObjectiveService:     NewObjectiveService(),
@@ -24,18 +39,18 @@ func NewGuildStashService(PoEClient *client.PoEClient) *GuildStashService {
 	}
 }
 
-func (s *GuildStashService) GetGuildStashesForUserForEvent(user repository.User, event repository.Event) ([]*repository.GuildStashTab, error) {
+func (s *GuildStashServiceImpl) GetGuildStashesForUserForEvent(user repository.User, event repository.Event) ([]*repository.GuildStashTab, error) {
 	return s.GuildStashRepository.GetByUserAndEvent(user.Id, event.Id)
 }
 
-func (s *GuildStashService) GetGuildStashesForTeam(teamId int) ([]*repository.GuildStashTab, error) {
+func (s *GuildStashServiceImpl) GetGuildStashesForTeam(teamId int) ([]*repository.GuildStashTab, error) {
 	return s.GuildStashRepository.GetByTeam(teamId)
 }
-func (s *GuildStashService) GetGuildStash(tabId string, eventId int) (*repository.GuildStashTab, error) {
+func (s *GuildStashServiceImpl) GetGuildStash(tabId string, eventId int) (*repository.GuildStashTab, error) {
 	return s.GuildStashRepository.GetById(tabId, eventId)
 }
 
-func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, event *repository.Event) ([]*repository.GuildStashTab, error) {
+func (s *GuildStashServiceImpl) UpdateGuildStash(user *repository.User, teamId int, event *repository.Event) ([]*repository.GuildStashTab, error) {
 	token, found := utils.FindFirst(user.OauthAccounts, func(o *repository.Oauth) bool {
 		return o.Provider == repository.ProviderPoE
 	})
@@ -97,27 +112,27 @@ func (s *GuildStashService) UpdateGuildStash(user *repository.User, teamId int, 
 	return stashesToPersist, nil
 }
 
-func (s *GuildStashService) SwitchStashFetch(stashId string, teamId int, fetchEnabled bool, priorityFetch bool) error {
+func (s *GuildStashServiceImpl) SwitchStashFetch(stashId string, teamId int, fetchEnabled bool, priorityFetch bool) error {
 	return s.GuildStashRepository.SwitchStashFetch(stashId, teamId, fetchEnabled, priorityFetch)
 }
 
-func (s *GuildStashService) SaveGuildstashLogs(stashLogs []*repository.GuildStashChangelog) error {
+func (s *GuildStashServiceImpl) SaveGuildstashLogs(stashLogs []*repository.GuildStashChangelog) error {
 	return s.GuildStashRepository.SaveGuildstashLogs(stashLogs)
 }
 
-func (s *GuildStashService) GetLatestLogEntryTimestampForGuild(event *repository.Event, guildId int) (*int64, *int64) {
+func (s *GuildStashServiceImpl) GetLatestLogEntryTimestampForGuild(event *repository.Event, guildId int) (*int64, *int64) {
 	return s.GuildStashRepository.GetLatestLogEntryTimestampForGuild(event, guildId)
 }
 
-func (s *GuildStashService) GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*repository.GuildStashChangelog, error) {
+func (s *GuildStashServiceImpl) GetLogs(eventId, guildId int, limit, offset *int, userName, stashName, itemName *string) ([]*repository.GuildStashChangelog, error) {
 	return s.GuildStashRepository.GetLogs(eventId, guildId, limit, offset, userName, stashName, itemName)
 }
 
-func (s *GuildStashService) SaveGuild(guild *repository.Guild) error {
+func (s *GuildStashServiceImpl) SaveGuild(guild *repository.Guild) error {
 	return s.GuildStashRepository.SaveGuild(guild)
 }
 
-func (s *GuildStashService) GetGuildsForEvent(event *repository.Event) ([]*repository.Guild, error) {
+func (s *GuildStashServiceImpl) GetGuildsForEvent(event *repository.Event) ([]*repository.Guild, error) {
 	teams, err := s.TeamRepository.GetTeamsForEvent(event.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get teams for event: %w", err)
@@ -127,10 +142,10 @@ func (s *GuildStashService) GetGuildsForEvent(event *repository.Event) ([]*repos
 	}))
 }
 
-func (s *GuildStashService) GetGuildById(guildId int, eventId int) (*repository.Guild, error) {
+func (s *GuildStashServiceImpl) GetGuildById(guildId int, eventId int) (*repository.Guild, error) {
 	return s.GuildStashRepository.GetGuildById(guildId, eventId)
 }
 
-func (s *GuildStashService) GetEarliestDeposits(event *repository.Event) ([]*repository.PlayerCompletion, error) {
+func (s *GuildStashServiceImpl) GetEarliestDeposits(event *repository.Event) ([]*repository.PlayerCompletion, error) {
 	return s.GuildStashRepository.GetEarliestDeposits(event)
 }

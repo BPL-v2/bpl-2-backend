@@ -21,17 +21,17 @@ var (
 )
 
 type PlayerFetchingService struct {
-	userRepository        *repository.UserRepository
-	objectiveMatchService *service.ObjectiveMatchService
-	objectiveService      *service.ObjectiveService
-	characterService      *service.CharacterService
-	ladderService         *service.LadderService
-	atlasService          *service.AtlasService
-	oauthService          *service.OauthService
-	timingRepository      *repository.TimingRepository
-	characterRepository   *repository.CharacterRepository
-	activityRepository    *repository.ActivityRepository
-	itemWishService       *service.ItemWishService
+	userRepository        repository.UserRepository
+	objectiveMatchService service.ObjectiveMatchService
+	objectiveService      service.ObjectiveService
+	characterService      service.CharacterService
+	ladderService         service.LadderService
+	atlasService          service.AtlasService
+	oauthService          service.OauthService
+	timingRepository      repository.TimingRepository
+	characterRepository   repository.CharacterRepository
+	activityRepository    repository.ActivityRepository
+	itemWishService       service.ItemWishService
 	timings               map[repository.TimingKey]time.Duration
 
 	lastLadderUpdate time.Time
@@ -306,7 +306,7 @@ func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.Playe
 	return players
 }
 
-func updateStats(character *client.Character, characterRepo *repository.CharacterRepository, itemService *service.ItemService) {
+func updateStats(character *client.Character, characterRepo repository.CharacterRepository, itemService service.ItemService) {
 	pob, export, err := client.GetPoBExport(character)
 	if err != nil {
 		metrics.PobsCalculatedErrorCounter.Inc()

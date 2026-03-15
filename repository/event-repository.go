@@ -50,15 +50,25 @@ func (e *Event) TeamIds() []int {
 	return utils.Map(e.Teams, func(t *Team) int { return t.Id })
 }
 
-type EventRepository struct {
+type EventRepository interface {
+	GetCurrentEvent(preloads ...string) (*Event, error)
+	GetEventById(eventId int, preloads ...string) (*Event, error)
+	InvalidateCurrentEvent() error
+	Delete(event *Event) error
+	FindAll(preloads ...string) ([]*Event, error)
+	SaveEvent(event *Event) (*Event, error)
+	GetEventByConditionId(conditionId int) (*Event, error)
+}
+
+type EventRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewEventRepository() *EventRepository {
-	return &EventRepository{DB: config.DatabaseConnection()}
+func NewEventRepository() EventRepository {
+	return &EventRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
+func (r *EventRepositoryImpl) GetCurrentEvent(preloads ...string) (*Event, error) {
 	var event *Event
 	query := r.DB
 
@@ -83,7 +93,7 @@ func (r *EventRepository) GetCurrentEvent(preloads ...string) (*Event, error) {
 	return event, nil
 }
 
-func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event, error) {
+func (r *EventRepositoryImpl) GetEventById(eventId int, preloads ...string) (*Event, error) {
 	var event *Event
 	query := r.DB
 
@@ -104,7 +114,7 @@ func (r *EventRepository) GetEventById(eventId int, preloads ...string) (*Event,
 	return event, nil
 }
 
-func (r *EventRepository) InvalidateCurrentEvent() error {
+func (r *EventRepositoryImpl) InvalidateCurrentEvent() error {
 	result := r.DB.Exec("UPDATE events SET is_current = false WHERE is_current = true")
 	if result.Error != nil {
 		return fmt.Errorf("failed to invalidate current event: %v", result.Error)
@@ -112,11 +122,11 @@ func (r *EventRepository) InvalidateCurrentEvent() error {
 	return nil
 }
 
-func (r *EventRepository) Delete(event *Event) error {
+func (r *EventRepositoryImpl) Delete(event *Event) error {
 	return r.DB.Delete(&event).Error
 }
 
-func (r *EventRepository) FindAll(preloads ...string) ([]*Event, error) {
+func (r *EventRepositoryImpl) FindAll(preloads ...string) ([]*Event, error) {
 	var events []*Event
 	query := r.DB
 	for _, preload := range preloads {
@@ -129,21 +139,15 @@ func (r *EventRepository) FindAll(preloads ...string) ([]*Event, error) {
 	return events, nil
 }
 
-func (r *EventRepository) GetEventByObjectiveId(objectiveId int) (*Event, error) {
-	var event Event
-	query := `
-		SELECT * FROM events
-		JOIN objectives ON objectives.event_id = events.id
-		WHERE objectives.id = ?
-	`
-	result := r.DB.Raw(query, objectiveId).Scan(&event)
+func (r *EventRepositoryImpl) SaveEvent(event *Event) (*Event, error) {
+	result := r.DB.Save(event)
 	if result.Error != nil {
-		return nil, fmt.Errorf("failed to find event by objective id: %v", result.Error)
+		return nil, fmt.Errorf("failed to save event: %v", result.Error)
 	}
-	return &event, nil
+	return event, nil
 }
 
-func (r *EventRepository) GetEventByConditionId(conditionId int) (*Event, error) {
+func (r *EventRepositoryImpl) GetEventByConditionId(conditionId int) (*Event, error) {
 	var event Event
 	query := `
 		SELECT * FROM events

@@ -11,8 +11,8 @@ import (
 )
 
 type ItemWishController struct {
-	itemWishService *service.ItemWishService
-	userService     *service.UserService
+	itemWishService service.ItemWishService
+	userService     service.UserService
 }
 
 func NewItemWishController() *ItemWishController {

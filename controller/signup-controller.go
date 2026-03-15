@@ -12,10 +12,10 @@ import (
 )
 
 type SignupController struct {
-	signupService *service.SignupService
-	userService   *service.UserService
-	teamService   *service.TeamService
-	eventService  *service.EventService
+	signupService service.SignupService
+	userService   service.UserService
+	teamService   service.TeamService
+	eventService  service.EventService
 }
 
 func NewSignupController() *SignupController {

@@ -12,21 +12,38 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type UserService struct {
-	userRepository  *repository.UserRepository
-	oauthRepository *repository.OauthRepository
-	teamService     *TeamService
+type UserService interface {
+	GetUserByOauthProviderAndAccountId(provider repository.Provider, accountId string) (*repository.User, error)
+	GetUserByOauthProviderAndAccountName(provider repository.Provider, accountName string) (*repository.User, error)
+	SaveUser(user *repository.User) (*repository.User, error)
+	GetAllUsers(preloads ...string) ([]*repository.User, error)
+	GetUserById(id int, preloads ...string) (*repository.User, error)
+	GetUserFromAuthHeader(c *gin.Context) (*repository.User, error)
+	GetUserFromToken(tokenString string) (*repository.User, error)
+	ChangePermissions(userId int, permissions []repository.Permission) (*repository.User, error)
+	RemoveProvider(user *repository.User, provider repository.Provider) (*repository.User, error)
+	DiscordServerCheck(user *repository.User) error
+	AddUserFromStashchange(userName string, event *repository.Event) (*repository.User, error)
+	GetUsersForEvent(eventId int) ([]*repository.TeamUserWithPoEToken, error)
+	GetTeamForUser(c *gin.Context, event *repository.Event) (*repository.TeamUser, *repository.User, error)
+	GetUsersWithTeamForEvent(eventId int) (map[int]*repository.UserWithTeam, error)
 }
 
-func NewUserService() *UserService {
-	return &UserService{
+type UserServiceImpl struct {
+	userRepository  repository.UserRepository
+	oauthRepository repository.OauthRepository
+	teamService     TeamService
+}
+
+func NewUserService() UserService {
+	return &UserServiceImpl{
 		userRepository:  repository.NewUserRepository(),
 		oauthRepository: repository.NewOauthRepository(),
 		teamService:     NewTeamService(),
 	}
 }
 
-func (s *UserService) GetUserByOauthProviderAndAccountId(provider repository.Provider, accountId string) (*repository.User, error) {
+func (s *UserServiceImpl) GetUserByOauthProviderAndAccountId(provider repository.Provider, accountId string) (*repository.User, error) {
 	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountId(provider, accountId)
 	if err != nil {
 		return nil, err
@@ -34,7 +51,7 @@ func (s *UserService) GetUserByOauthProviderAndAccountId(provider repository.Pro
 	return oauth.User, nil
 }
 
-func (s *UserService) GetUserByOauthProviderAndAccountName(provider repository.Provider, accountName string) (*repository.User, error) {
+func (s *UserServiceImpl) GetUserByOauthProviderAndAccountName(provider repository.Provider, accountName string) (*repository.User, error) {
 	oauth, err := s.oauthRepository.GetOauthByProviderAndAccountName(provider, accountName)
 	if err != nil {
 		return nil, err
@@ -42,11 +59,11 @@ func (s *UserService) GetUserByOauthProviderAndAccountName(provider repository.P
 	return oauth.User, nil
 }
 
-func (s *UserService) SaveUser(user *repository.User) (*repository.User, error) {
+func (s *UserServiceImpl) SaveUser(user *repository.User) (*repository.User, error) {
 	return s.userRepository.SaveUser(user)
 }
 
-func (s *UserService) GetAllUsers(preloads ...string) ([]*repository.User, error) {
+func (s *UserServiceImpl) GetAllUsers(preloads ...string) ([]*repository.User, error) {
 	users, err := s.userRepository.GetAllUsers()
 	if err != nil {
 		return nil, err
@@ -72,11 +89,11 @@ func (s *UserService) GetAllUsers(preloads ...string) ([]*repository.User, error
 	return users, nil
 }
 
-func (s *UserService) GetUserById(id int, preloads ...string) (*repository.User, error) {
+func (s *UserServiceImpl) GetUserById(id int, preloads ...string) (*repository.User, error) {
 	return s.userRepository.GetUserById(id, preloads...)
 }
 
-func (s *UserService) GetUserFromAuthHeader(c *gin.Context) (*repository.User, error) {
+func (s *UserServiceImpl) GetUserFromAuthHeader(c *gin.Context) (*repository.User, error) {
 	authHeader := c.Request.Header.Get("Authorization")
 	if len(authHeader) < 7 || authHeader[:7] != "Bearer " {
 		return nil, fmt.Errorf("authorization header is invalid")
@@ -84,7 +101,7 @@ func (s *UserService) GetUserFromAuthHeader(c *gin.Context) (*repository.User, e
 	return s.GetUserFromToken(authHeader[7:])
 }
 
-func (s *UserService) GetUserFromToken(tokenString string) (*repository.User, error) {
+func (s *UserServiceImpl) GetUserFromToken(tokenString string) (*repository.User, error) {
 	token, err := auth.ParseToken(tokenString)
 	if err != nil {
 		return nil, err
@@ -101,7 +118,7 @@ func (s *UserService) GetUserFromToken(tokenString string) (*repository.User, er
 	return nil, jwt.ErrInvalidKey
 }
 
-func (s *UserService) ChangePermissions(userId int, permissions []repository.Permission) (*repository.User, error) {
+func (s *UserServiceImpl) ChangePermissions(userId int, permissions []repository.Permission) (*repository.User, error) {
 	user, err := s.GetUserById(userId)
 	if err != nil {
 		return nil, err
@@ -110,22 +127,20 @@ func (s *UserService) ChangePermissions(userId int, permissions []repository.Per
 	return s.userRepository.SaveUser(user)
 }
 
-func (s *UserService) RemoveProvider(user *repository.User, provider repository.Provider) (*repository.User, error) {
+func (s *UserServiceImpl) RemoveProvider(user *repository.User, provider repository.Provider) (*repository.User, error) {
 
 	if len(user.OauthAccounts) < 2 {
 		return nil, fmt.Errorf("cannot remove last provider")
 	}
 
-	for _, oauth := range user.OauthAccounts {
-		if oauth.Provider == provider {
-
-			s.oauthRepository.DB.Delete(oauth)
-		}
+	err := s.oauthRepository.DeleteOauthsByUserIdAndProvider(user.Id, provider)
+	if err != nil {
+		return nil, err
 	}
 	return s.GetUserById(user.Id, "OauthAccounts")
 }
 
-func (s *UserService) DiscordServerCheck(user *repository.User) error {
+func (s *UserServiceImpl) DiscordServerCheck(user *repository.User) error {
 	return nil
 	// for _, oauth := range user.OauthAccounts {
 	// 	if oauth.Provider == repository.ProviderDiscord {
@@ -140,7 +155,7 @@ func (s *UserService) DiscordServerCheck(user *repository.User) error {
 	// return fmt.Errorf("you do not have a discord account linked")
 }
 
-func (s *UserService) AddUserFromStashchange(userName string, event *repository.Event) (*repository.User, error) {
+func (s *UserServiceImpl) AddUserFromStashchange(userName string, event *repository.Event) (*repository.User, error) {
 	// should only be used for testing
 	user := &repository.User{
 		DisplayName: userName,
@@ -158,7 +173,7 @@ func (s *UserService) AddUserFromStashchange(userName string, event *repository.
 		Name:        userName,
 		Expiry:      time.Now(),
 	}
-	err = s.oauthRepository.DB.Save(oauth).Error
+	_, err = s.oauthRepository.SaveOauth(oauth)
 	if err != nil {
 		return nil, err
 	}
@@ -167,11 +182,11 @@ func (s *UserService) AddUserFromStashchange(userName string, event *repository.
 	return u, s.teamService.AddUsersToTeams([]*repository.TeamUser{{TeamId: team.Id, UserId: u.Id}}, event)
 }
 
-func (s *UserService) GetUsersForEvent(eventId int) ([]*repository.TeamUserWithPoEToken, error) {
+func (s *UserServiceImpl) GetUsersForEvent(eventId int) ([]*repository.TeamUserWithPoEToken, error) {
 	return s.userRepository.GetUsersForEvent(eventId)
 }
 
-func (s *UserService) GetTeamForUser(c *gin.Context, event *repository.Event) (*repository.TeamUser, *repository.User, error) {
+func (s *UserServiceImpl) GetTeamForUser(c *gin.Context, event *repository.Event) (*repository.TeamUser, *repository.User, error) {
 	user, err := s.GetUserFromAuthHeader(c)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get user from auth header: %w", err)
@@ -184,6 +199,6 @@ func (s *UserService) GetTeamForUser(c *gin.Context, event *repository.Event) (*
 	return team, user, nil
 }
 
-func (s *UserService) GetUsersWithTeamForEvent(eventId int) (map[int]*repository.UserWithTeam, error) {
+func (s *UserServiceImpl) GetUsersWithTeamForEvent(eventId int) (map[int]*repository.UserWithTeam, error) {
 	return s.userRepository.GetUsersWithTeamForEvent(eventId)
 }

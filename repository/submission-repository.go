@@ -44,15 +44,25 @@ func (s *Submission) ToObjectiveMatch() *ObjectiveMatch {
 	}
 }
 
-type SubmissionRepository struct {
+type SubmissionRepository interface {
+	GetSubmissionsForEvent(event *Event) ([]*Submission, error)
+	GetSubmissionsForObjectives(objectives []*Objective) ([]*Submission, error)
+	GetSubmissionById(id int) (*Submission, error)
+	SaveSubmission(submission *Submission) (*Submission, error)
+	AddMatchToSubmission(submission *Submission) error
+	RemoveMatchFromSubmission(submission *Submission) error
+	DeleteSubmission(submissionId int) error
+}
+
+type SubmissionRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewSubmissionRepository() *SubmissionRepository {
-	return &SubmissionRepository{DB: config.DatabaseConnection()}
+func NewSubmissionRepository() SubmissionRepository {
+	return &SubmissionRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *SubmissionRepository) GetSubmissionsForEvent(event *Event) ([]*Submission, error) {
+func (r *SubmissionRepositoryImpl) GetSubmissionsForEvent(event *Event) ([]*Submission, error) {
 	var submissions []*Submission
 	result := r.DB.Find(&submissions, "team_id in ?", event.TeamIds())
 	if result.Error != nil {
@@ -61,7 +71,7 @@ func (r *SubmissionRepository) GetSubmissionsForEvent(event *Event) ([]*Submissi
 	return submissions, nil
 }
 
-func (r *SubmissionRepository) GetSubmissionsForObjectives(objectives []*Objective) ([]*Submission, error) {
+func (r *SubmissionRepositoryImpl) GetSubmissionsForObjectives(objectives []*Objective) ([]*Submission, error) {
 	var submissions []*Submission
 	result := r.DB.Preload("Objective").Preload("User").Find(&submissions, "objective_id IN ?", utils.Map(objectives, func(o *Objective) int { return o.Id }))
 	if result.Error != nil {
@@ -70,7 +80,7 @@ func (r *SubmissionRepository) GetSubmissionsForObjectives(objectives []*Objecti
 	return submissions, nil
 }
 
-func (r *SubmissionRepository) GetSubmissionById(id int) (*Submission, error) {
+func (r *SubmissionRepositoryImpl) GetSubmissionById(id int) (*Submission, error) {
 	var submission Submission
 	result := r.DB.Preload("Objective").First(&submission, Submission{Id: id})
 	if result.Error != nil {
@@ -79,7 +89,7 @@ func (r *SubmissionRepository) GetSubmissionById(id int) (*Submission, error) {
 	return &submission, nil
 }
 
-func (r *SubmissionRepository) SaveSubmission(submission *Submission) (*Submission, error) {
+func (r *SubmissionRepositoryImpl) SaveSubmission(submission *Submission) (*Submission, error) {
 	result := r.DB.Save(submission)
 	if result.Error != nil {
 		return nil, result.Error
@@ -87,10 +97,10 @@ func (r *SubmissionRepository) SaveSubmission(submission *Submission) (*Submissi
 	return submission, nil
 }
 
-func (r *SubmissionRepository) AddMatchToSubmission(submission *Submission) error {
+func (r *SubmissionRepositoryImpl) AddMatchToSubmission(submission *Submission) error {
 	return r.DB.Create(submission.ToObjectiveMatch()).Error
 }
-func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission) error {
+func (r *SubmissionRepositoryImpl) RemoveMatchFromSubmission(submission *Submission) error {
 	return r.DB.Delete(ObjectiveMatch{},
 		ObjectiveMatch{
 			ObjectiveId: submission.ObjectiveId,
@@ -100,7 +110,7 @@ func (r *SubmissionRepository) RemoveMatchFromSubmission(submission *Submission)
 		}).Error
 }
 
-func (r *SubmissionRepository) DeleteSubmission(submissionId int) error {
+func (r *SubmissionRepositoryImpl) DeleteSubmission(submissionId int) error {
 	result := r.DB.Delete(&Submission{Id: submissionId})
 	return result.Error
 }

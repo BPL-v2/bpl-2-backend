@@ -188,15 +188,30 @@ func (o *Objective) FlatMap() []*Objective {
 	return result
 }
 
-type ObjectiveRepository struct {
+type ObjectiveRepository interface {
+	SaveObjective(objective *Objective) (*Objective, error)
+	SaveObjectives(objectives []*Objective) ([]*Objective, error)
+	GetObjectiveById(objectiveId int, preloads ...string) (*Objective, error)
+	DeleteObjective(objectiveId int) error
+	DeleteObjectivesByEventId(eventId int) error
+	RemoveScoringPreset(scoringId int) error
+	AssociateScoringPresets(objectiveId int, presetIds []int) error
+	StartSync(objectiveIds []int) error
+	FinishSync(objectiveIds []int) error
+	GetObjectivesByEventId(eventId int, preloads ...string) (*Objective, error)
+	GetObjectivesByEventIdFlat(eventId int, preloads ...string) ([]*Objective, error)
+	GetAllObjectives(preloads ...string) ([]*Objective, error)
+}
+
+type ObjectiveRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewObjectiveRepository() *ObjectiveRepository {
-	return &ObjectiveRepository{DB: config.DatabaseConnection()}
+func NewObjectiveRepository() ObjectiveRepository {
+	return &ObjectiveRepositoryImpl{DB: config.DatabaseConnection()}
 }
 
-func (r *ObjectiveRepository) SaveObjective(objective *Objective) (*Objective, error) {
+func (r *ObjectiveRepositoryImpl) SaveObjective(objective *Objective) (*Objective, error) {
 	objective.SyncStatus = SyncStatusDesynced
 	result := r.DB.Save(objective)
 	if result.Error != nil {
@@ -205,12 +220,12 @@ func (r *ObjectiveRepository) SaveObjective(objective *Objective) (*Objective, e
 	return objective, nil
 }
 
-func (r *ObjectiveRepository) SaveObjectives(objectives []*Objective) ([]*Objective, error) {
+func (r *ObjectiveRepositoryImpl) SaveObjectives(objectives []*Objective) ([]*Objective, error) {
 	result := r.DB.Save(objectives)
 	return objectives, result.Error
 }
 
-func (r *ObjectiveRepository) GetObjectiveById(objectiveId int, preloads ...string) (*Objective, error) {
+func (r *ObjectiveRepositoryImpl) GetObjectiveById(objectiveId int, preloads ...string) (*Objective, error) {
 	var objective Objective
 	query := r.DB
 	for _, preload := range preloads {
@@ -223,22 +238,22 @@ func (r *ObjectiveRepository) GetObjectiveById(objectiveId int, preloads ...stri
 	return &objective, nil
 }
 
-func (r *ObjectiveRepository) DeleteObjective(objectiveId int) error {
+func (r *ObjectiveRepositoryImpl) DeleteObjective(objectiveId int) error {
 	result := r.DB.Delete(&Objective{Id: objectiveId})
 	return result.Error
 }
 
-func (r *ObjectiveRepository) DeleteObjectivesByEventId(eventId int) error {
+func (r *ObjectiveRepositoryImpl) DeleteObjectivesByEventId(eventId int) error {
 	result := r.DB.Where("event_id = ?", eventId).Delete(&Objective{})
 	return result.Error
 }
 
-func (r *ObjectiveRepository) RemoveScoringPreset(scoringId int) error {
+func (r *ObjectiveRepositoryImpl) RemoveScoringPreset(scoringId int) error {
 	// Remove all associations between objectives and this scoring preset
 	return r.DB.Where("scoring_preset_id = ?", scoringId).Delete(&ObjectiveScoringPreset{}).Error
 }
 
-func (r *ObjectiveRepository) AssociateScoringPresets(objectiveId int, presetIds []int) error {
+func (r *ObjectiveRepositoryImpl) AssociateScoringPresets(objectiveId int, presetIds []int) error {
 	if len(presetIds) == 0 {
 		return nil
 	}
@@ -260,14 +275,14 @@ func (r *ObjectiveRepository) AssociateScoringPresets(objectiveId int, presetIds
 	return r.DB.Create(&associations).Error
 }
 
-func (r *ObjectiveRepository) StartSync(objectiveIds []int) error {
+func (r *ObjectiveRepositoryImpl) StartSync(objectiveIds []int) error {
 	result := r.DB.
 		Model(&Objective{}).Where("id IN ? and sync_status = ?", objectiveIds, SyncStatusDesynced).
 		Update("sync_status", SyncStatusSyncing)
 	return result.Error
 }
 
-func (r *ObjectiveRepository) FinishSync(objectiveIds []int) error {
+func (r *ObjectiveRepositoryImpl) FinishSync(objectiveIds []int) error {
 	if len(objectiveIds) == 0 {
 		return nil
 	}
@@ -277,7 +292,7 @@ func (r *ObjectiveRepository) FinishSync(objectiveIds []int) error {
 	return result.Error
 }
 
-func (r *ObjectiveRepository) GetObjectivesByEventId(eventId int, preloads ...string) (*Objective, error) {
+func (r *ObjectiveRepositoryImpl) GetObjectivesByEventId(eventId int, preloads ...string) (*Objective, error) {
 	objectives, err := r.GetObjectivesByEventIdFlat(eventId, preloads...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get objectives for event %d: %w", eventId, err)
@@ -303,7 +318,7 @@ func (r *ObjectiveRepository) GetObjectivesByEventId(eventId int, preloads ...st
 	return rootObjective, nil
 }
 
-func (r *ObjectiveRepository) GetObjectivesByEventIdFlat(eventId int, preloads ...string) ([]*Objective, error) {
+func (r *ObjectiveRepositoryImpl) GetObjectivesByEventIdFlat(eventId int, preloads ...string) ([]*Objective, error) {
 	var objectives []*Objective
 	query := r.DB.Model(&Objective{}).Where("event_id = ?", eventId)
 	for _, preload := range preloads {
@@ -316,7 +331,7 @@ func (r *ObjectiveRepository) GetObjectivesByEventIdFlat(eventId int, preloads .
 	return objectives, nil
 }
 
-func (r *ObjectiveRepository) GetAllObjectives(preloads ...string) ([]*Objective, error) {
+func (r *ObjectiveRepositoryImpl) GetAllObjectives(preloads ...string) ([]*Objective, error) {
 	var objectives []*Objective
 	query := r.DB.Model(&Objective{})
 	for _, preload := range preloads {

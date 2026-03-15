@@ -7,18 +7,22 @@ import (
 	"log"
 )
 
-type StreamService struct {
-	teamRepository   *repository.TeamRepository
-	userRepository   *repository.UserRepository
-	ladderRepository *repository.LadderRepository
-	eventRepository  *repository.EventRepository
-	twitchClient     *client.TwitchClient
-	oauthService     *OauthService
+type StreamService interface {
+	GetStreamsForEvent(eventId int) ([]*client.TwitchStream, error)
 }
 
-func NewStreamService() *StreamService {
+type StreamServiceImpl struct {
+	teamRepository   repository.TeamRepository
+	userRepository   repository.UserRepository
+	ladderRepository repository.LadderRepository
+	eventRepository  repository.EventRepository
+	twitchClient     *client.TwitchClient
+	oauthService     OauthService
+}
+
+func NewStreamService() StreamService {
 	oauthService := NewOauthService()
-	s := &StreamService{
+	s := &StreamServiceImpl{
 		userRepository:   repository.NewUserRepository(),
 		teamRepository:   repository.NewTeamRepository(),
 		ladderRepository: repository.NewLadderRepository(),
@@ -35,7 +39,7 @@ func NewStreamService() *StreamService {
 
 }
 
-func (e *StreamService) GetStreamsForEvent(eventId int) ([]*client.TwitchStream, error) {
+func (e *StreamServiceImpl) GetStreamsForEvent(eventId int) ([]*client.TwitchStream, error) {
 	streamers, err := e.userRepository.GetStreamersForEvent(eventId)
 	if err != nil {
 		return nil, err

@@ -18,10 +18,10 @@ import (
 )
 
 type GuildStashController struct {
-	guildStashService *service.GuildStashService
-	userService       *service.UserService
-	objectiveService  *service.ObjectiveService
-	eventService      *service.EventService
+	guildStashService service.GuildStashService
+	userService       service.UserService
+	objectiveService  service.ObjectiveService
+	eventService      service.EventService
 	poeClient         *client.PoEClient
 }
 
