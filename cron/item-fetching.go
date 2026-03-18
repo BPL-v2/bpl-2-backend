@@ -83,28 +83,32 @@ func (f *FetchingService) FetchStashChanges() error {
 		case <-f.ctx.Done():
 			return nil
 		default:
-			response, err := f.poeClient.GetPublicStashes(token, "pc", changeId)
-			if err != nil {
+			response, clientErr := f.poeClient.GetPublicStashes(token, "pc", changeId)
+			if clientErr != nil {
 				consecutiveErrors++
 				if consecutiveErrors > 5 {
 					log.Print("Too many consecutive errors, exiting")
 					return fmt.Errorf("too many consecutive errors")
 				}
-				if err.StatusCode == 429 {
-					log.Print(err.ResponseHeaders)
-					retryAfter, err := strconv.Atoi(err.ResponseHeaders.Get("Retry-After"))
+				if clientErr.StatusCode == 429 {
+					log.Print(clientErr.ResponseHeaders)
+					retryAfter, err := strconv.Atoi(clientErr.ResponseHeaders.Get("Retry-After"))
 					if err != nil {
 						retryAfter = 60
 					}
 					<-time.After((time.Duration(retryAfter) + 1) * time.Second)
 				} else {
-					log.Print(err)
+					log.Print(clientErr)
 					<-time.After(60 * time.Second)
 				}
 				continue
 			}
 			consecutiveErrors = 0
-			f.stashChannel <- repository.StashChangeMessage{ChangeId: changeId, NextChangeId: response.NextChangeId, Stashes: response.Stashes}
+			select {
+			case f.stashChannel <- repository.StashChangeMessage{ChangeId: changeId, NextChangeId: response.NextChangeId, Stashes: response.Stashes}:
+			case <-f.ctx.Done():
+				return nil
+			}
 			changeId = response.NextChangeId
 			metrics.ChangeIdGauge.Set(float64(service.ChangeIdToInt(changeId)))
 			if count%20 == 0 {
@@ -269,14 +273,14 @@ func (f *FetchingService) FetchGuildStashTab(tab *repository.GuildStashTab) erro
 	}
 	wg := sync.WaitGroup{}
 	wg.Go(func() {
-		err := f.updateGuildStash(*tab, fetchers, kafkaWriter)
+		err := f.updateGuildStash(tab, fetchers, kafkaWriter)
 		if err != nil {
 			fmt.Printf("Failed to fetch stash %s for team %d: %v\n", tab.Id, tab.TeamId, err)
 		}
 	})
 	for _, child := range tab.Children {
 		wg.Go(func() {
-			err := f.updateGuildStash(*child, fetchers, kafkaWriter)
+			err := f.updateGuildStash(child, fetchers, kafkaWriter)
 			if err != nil {
 				fmt.Printf("Failed to fetch stash %s for team %d: %v\n", child.Id, child.TeamId, err)
 			}
@@ -323,15 +327,13 @@ func (f *FetchingService) DetermineStashAccess() error {
 	ch := make(chan stashResult, len(users))
 	wg := sync.WaitGroup{}
 	for _, user := range users {
-		wg.Add(1)
-		go func(user *repository.TeamUserWithPoEToken) {
-			defer wg.Done()
+		wg.Go(func() {
 			stashes, err := f.GetAvailableStashes(user)
 			if err != nil {
 				return
 			}
 			ch <- stashResult{userId: user.UserId, stashes: *stashes}
-		}(user)
+		})
 	}
 	go func() {
 		wg.Wait()
@@ -433,15 +435,14 @@ func (f *FetchingService) FetchGuildStashes() error {
 				continue
 			}
 			fmt.Printf("Fetching guild stash %s for team %d\n", stash.Id, stash.TeamId)
-			wg.Add(1)
-			go func(stash repository.GuildStashTab) {
+			wg.Go(func() {
 				defer wg.Done()
 				err := f.updateGuildStash(stash, fetchers, kafkaWriter)
 				if err != nil {
 					fmt.Println(err.Error())
 					return
 				}
-			}(*stash)
+			})
 		}
 		wg.Wait()
 		select {
@@ -452,8 +453,8 @@ func (f *FetchingService) FetchGuildStashes() error {
 	}
 }
 
-func (f *FetchingService) updateGuildStash(stash repository.GuildStashTab, fetchers *GuildStashFetchers, kafkaWriter *kafka.Writer) error {
-	token, err := fetchers.GetToken(&stash)
+func (f *FetchingService) updateGuildStash(stash *repository.GuildStashTab, fetchers *GuildStashFetchers, kafkaWriter *kafka.Writer) error {
+	token, err := fetchers.GetToken(stash)
 	if err != nil {
 		return fmt.Errorf("no token found for team %d: %w", stash.TeamId, err)
 	}
@@ -473,20 +474,13 @@ func (f *FetchingService) updateGuildStash(stash repository.GuildStashTab, fetch
 	if err != nil {
 		return err
 	}
-
-	raw, err := json.Marshal(response.Stash)
-	if err != nil {
-		return fmt.Errorf("failed to marshal items for stash %s: %w", stash.Id, err)
-	}
-
-	stash.Raw = string(raw)
 	if response.Stash.Children != nil {
 		stash.AddChildren(*response.Stash.Children)
 	}
-	return f.guildStashRepository.Save(&stash)
+	return f.guildStashRepository.Save(stash)
 }
 
-func (f *FetchingService) updateStashItems(stash repository.GuildStashTab, response *client.GetGuildStashResponse, kafkaWriter *kafka.Writer) error {
+func (f *FetchingService) updateStashItems(stash *repository.GuildStashTab, response *client.GetGuildStashResponse, kafkaWriter *kafka.Writer) error {
 	if stash.Raw != "" && stash.Raw != "{}" {
 		var existingStash client.GuildStashTabGGG
 		err := json.Unmarshal([]byte(stash.Raw), &existingStash)

@@ -62,12 +62,9 @@ func (t *TwitchClient) GetAllStreams(twitchIds []string) ([]*TwitchStream, error
 	streamChannel := make(chan []*TwitchStream)
 	var wg sync.WaitGroup
 	for userBatch := range utils.BatchIterator(twitchIds, 100) {
-		func(ids []string) {
-			wg.Go(func() {
-				streamChannel <- t.GetStreams(ids, nil, 10)
-			})
-		}(userBatch)
-
+		wg.Go(func() {
+			streamChannel <- t.GetStreams(userBatch, nil, 10)
+		})
 	}
 
 	go func() {

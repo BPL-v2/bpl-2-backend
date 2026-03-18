@@ -190,15 +190,13 @@ func (c *PoEClient) GetFullLadder(token string, league string) (*GetLeagueLadder
 	Total := response.Ladder.Total
 	wg := sync.WaitGroup{}
 	for i := 1; i < int(math.Ceil(float64(Total)/500)); i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
+		wg.Go(func() {
 			newResp, err := c.GetLeagueLadder(token, league, "pc", "xp", 500, i*500)
 			if err != nil {
 				return
 			}
 			response.Ladder.Entries = append(response.Ladder.Entries, newResp.Ladder.Entries...)
-		}(i)
+		})
 	}
 	wg.Wait()
 	return response, nil

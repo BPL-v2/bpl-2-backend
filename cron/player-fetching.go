@@ -426,28 +426,22 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			wg := sync.WaitGroup{}
 			for _, player := range players {
 				if player.ShouldUpdateCharacterName(service.timings) {
-					wg.Add(1)
-					go func(player *parser.PlayerUpdate) {
-						defer wg.Done()
+					wg.Go(func() {
 						service.UpdateCharacterName(player, event)
-					}(player)
+					})
 				}
 				if player.ShouldUpdateCharacter(service.timings) {
-					wg.Add(1)
-					go func(player *parser.PlayerUpdate) {
-						defer wg.Done()
+					wg.Go(func() {
 						_, err := service.UpdateCharacter(player, event)
 						if err != nil {
 							fmt.Printf("Error updating character for player %d: %v\n", player.UserId, err)
 						}
-					}(player)
+					})
 				}
 				if player.ShouldUpdateLeagueAccount(service.timings) {
-					wg.Add(1)
-					go func(player *parser.PlayerUpdate) {
-						defer wg.Done()
+					wg.Go(func() {
 						service.UpdateLeagueAccount(player, event)
-					}(player)
+					})
 				}
 			}
 			if service.shouldUpdateLadder(service.timings) {

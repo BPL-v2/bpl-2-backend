@@ -37,38 +37,34 @@ func TestPriorityMutex_PrioritySkipsQueue(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(3)
 
 	// Hold the mutex via Lock(). This holds both lowPriorityAccess and
 	// dataMutex (nextToAccess is released during Lock).
 	m.Lock()
 
 	// LP1 and LP2 both block on lowPriorityAccess (held by us).
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		m.Lock()
 		record("LP1")
 		m.Unlock()
-	}()
+	})
 	time.Sleep(20 * time.Millisecond)
 
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		m.Lock()
 		record("LP2")
 		m.Unlock()
-	}()
+	})
 	time.Sleep(20 * time.Millisecond)
 
 	// PRIO skips lowPriorityAccess entirely — it only needs nextToAccess
 	// (free) then dataMutex (held by us). So it waits directly on dataMutex,
 	// ahead of LP1/LP2 who are still stuck on lowPriorityAccess.
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		m.PriorityLock()
 		record("PRIO")
 		m.PriorityUnlock()
-	}()
+	})
 	time.Sleep(20 * time.Millisecond)
 
 	// Release: dataMutex.Unlock lets PRIO in immediately.
