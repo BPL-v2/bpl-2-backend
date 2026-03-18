@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE character_stats (
 	"time" timestamptz NOT NULL,
 	event_id int8 NOT NULL,
@@ -412,3 +413,39 @@ CREATE TABLE team_users (
 );
 CREATE INDEX idx_bpl2_team_users_team_id ON team_users USING btree (team_id);
 CREATE INDEX idx_bpl2_team_users_user_id ON team_users USING btree (user_id);
+
+-- +goose Down
+DROP TABLE IF EXISTS team_users CASCADE;
+DROP TABLE IF EXISTS team_suggestions CASCADE;
+DROP TABLE IF EXISTS submissions CASCADE;
+DROP TABLE IF EXISTS objective_validations CASCADE;
+DROP TABLE IF EXISTS objective_scoring_presets CASCADE;
+DROP TABLE IF EXISTS objective_matches CASCADE;
+DROP TABLE IF EXISTS item_wishes CASCADE;
+DROP TABLE IF EXISTS guilds CASCADE;
+DROP TABLE IF EXISTS guild_stash_tabs CASCADE;
+DROP TABLE IF EXISTS character_pobs CASCADE;
+DROP TABLE IF EXISTS stash_changes CASCADE;
+DROP TABLE IF EXISTS signups CASCADE;
+DROP TABLE IF EXISTS scoring_presets CASCADE;
+DROP TABLE IF EXISTS recurring_jobs CASCADE;
+DROP TABLE IF EXISTS objectives CASCADE;
+DROP TABLE IF EXISTS oauths CASCADE;
+DROP TABLE IF EXISTS ladder_entries CASCADE;
+DROP TABLE IF EXISTS guild_stash_changelogs CASCADE;
+DROP TABLE IF EXISTS change_ids CASCADE;
+DROP TABLE IF EXISTS cached_data CASCADE;
+DROP TABLE IF EXISTS atlas_trees CASCADE;
+DROP TABLE IF EXISTS activity CASCADE;
+DROP TABLE IF EXISTS achievements CASCADE;
+DROP TABLE IF EXISTS "characters" CASCADE;
+DROP TABLE IF EXISTS teams CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS timings CASCADE;
+DROP TABLE IF EXISTS scoringhistory CASCADE;
+DROP TABLE IF EXISTS kafka_consumers CASCADE;
+DROP TABLE IF EXISTS items CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+DROP TABLE IF EXISTS engagements CASCADE;
+DROP TABLE IF EXISTS client_credentials CASCADE;
+DROP TABLE IF EXISTS character_stats CASCADE;

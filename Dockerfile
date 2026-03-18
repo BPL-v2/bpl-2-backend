@@ -17,14 +17,14 @@ COPY . .
 RUN ./generate-spec.sh
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o server
-RUN CGO_ENABLED=0 GOOS=linux go build -C migrations -o migrate
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 # Final stage
 FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/migrations/migrate .
+COPY --from=builder /go/bin/goose /usr/local/bin/goose
 COPY --from=builder /app/server .
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/docs ./docs
@@ -32,4 +32,4 @@ COPY --from=builder /app/docs ./docs
 EXPOSE 8000
 
 ENV GIN_MODE=release
-CMD ["sh", "-c", "./migrate && ./server"]
+CMD ["sh", "-c", "goose -dir migrations postgres \"host=$DATABASE_HOST port=$DATABASE_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$DATABASE_NAME sslmode=disable search_path=bpl2\" up && ./server"]

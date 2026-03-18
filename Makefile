@@ -1,5 +1,8 @@
 # Makefile for BPL Backend
 
+-include .env
+export
+
 # Variables
 BINARY_NAME=server
 MAIN_FILE=main.go
@@ -18,7 +21,7 @@ GOLINT=golangci-lint
 
 # Database related
 DB_CONTAINER=db-local
-MIGRATE_UP=go run migrations/migrations.go
+GOOSE=goose -dir migrations postgres "host=$(DATABASE_HOST) port=$(DATABASE_PORT) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) dbname=$(DATABASE_NAME) sslmode=disable search_path=bpl2"
 
 # Default target
 .PHONY: all
@@ -45,6 +48,8 @@ help:
 	@echo ""
 	@echo "Database:"
 	@echo "  migrate       - Run database migrations up"
+	@echo "  migrate-status- Show migration status"
+	@echo "  migrate-down  - Roll back last migration"
 	@echo "  db-shell      - Connect to database shell"
 	@echo "  db-logs       - Show database logs"
 	@echo ""
@@ -135,7 +140,17 @@ swagger:
 .PHONY: migrate
 migrate:
 	@echo "Running database migrations up..."
-	$(MIGRATE_UP)
+	$(GOOSE) up
+
+.PHONY: migrate-status
+migrate-status:
+	@echo "Checking migration status..."
+	$(GOOSE) status
+
+.PHONY: migrate-down
+migrate-down:
+	@echo "Rolling back last migration..."
+	$(GOOSE) down
 
 
 .PHONY: db-shell
@@ -207,6 +222,7 @@ install-tools:
 	$(GOCMD) install github.com/air-verse/air@latest
 	$(GOCMD) install golang.org/x/vuln/cmd/govulncheck@latest
 	$(GOCMD) install github.com/sonatype-nexus-community/nancy@latest
+	$(GOCMD) install github.com/pressly/goose/v3/cmd/goose@latest
 
 
 # Security targets
