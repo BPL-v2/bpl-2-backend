@@ -17,7 +17,7 @@ COPY . .
 RUN ./generate-spec.sh
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o server
-RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+RUN CGO_ENABLED=0 GOOS=linux go install github.com/pressly/goose/v3/cmd/goose@latest
 
 # Final stage
 FROM alpine:latest
