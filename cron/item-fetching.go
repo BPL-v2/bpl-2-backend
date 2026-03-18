@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"sort"
 	"strconv"
 	"sync"
 	"time"
@@ -131,33 +130,22 @@ type GuildStashFetchers struct {
 	mu       sync.Mutex
 }
 
-func (f *GuildStashFetchers) GetToken(stash *repository.GuildStashTab) (*string, error) {
+func (f *GuildStashFetchers) GetToken(stash *repository.GuildStashTab) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	stashId := stash.Id
-	if stash.ParentId != nil {
-		stashId = *stash.ParentId
-	}
-	fetchersForStashTab := []*GuildStashFetcher{}
+	expiryThreshold := time.Now().Add(1 * time.Minute)
+	chosenFetcher := (*GuildStashFetcher)(nil)
 	for _, userId := range stash.UserIds {
-		if fetcher, exists := f.Fetchers[int(userId)]; exists {
-			fetchersForStashTab = append(fetchersForStashTab, fetcher)
+		fetcher, exists := f.Fetchers[int(userId)]
+		if exists && fetcher.TokenExpiry.After(expiryThreshold) && (chosenFetcher == nil || fetcher.LastUse.Before(chosenFetcher.LastUse)) {
+			chosenFetcher = fetcher
 		}
 	}
-	if len(fetchersForStashTab) > 0 {
-		// Return the token of the first fetcher for the team
-		sort.Slice(fetchersForStashTab, func(i, j int) bool {
-			return fetchersForStashTab[i].LastUse.Before(fetchersForStashTab[j].LastUse)
-		})
-		fetcher, found := utils.FindFirst(fetchersForStashTab, func(f *GuildStashFetcher) bool {
-			return f.TokenExpiry.After(time.Now())
-		})
-		if found {
-			fetcher.LastUse = time.Now()
-			return &fetcher.Token, nil
-		}
+	if chosenFetcher == nil {
+		return "", fmt.Errorf("no valid fetcher found for stash %s", stash.Id)
 	}
-	return nil, fmt.Errorf("no fetcher found for stash %s", stashId)
+	chosenFetcher.LastUse = time.Now()
+	return chosenFetcher.Token, nil
 }
 
 func InitFetchers(users []*repository.TeamUserWithPoEToken, stashes []*repository.GuildStashTab) *GuildStashFetchers {
@@ -327,7 +315,12 @@ func (f *FetchingService) DetermineStashAccess() error {
 	for _, user := range users {
 		userMap[user.UserId] = user
 	}
-	mu := sync.Mutex{}
+
+	type stashResult struct {
+		userId  int
+		stashes []client.GuildStashTabGGG
+	}
+	ch := make(chan stashResult, len(users))
 	wg := sync.WaitGroup{}
 	for _, user := range users {
 		wg.Add(1)
@@ -337,21 +330,25 @@ func (f *FetchingService) DetermineStashAccess() error {
 			if err != nil {
 				return
 			}
-			mu.Lock()
-			for _, stash := range *stashes {
-				stashToUsers[stash.Id] = append(stashToUsers[stash.Id], int32(user.UserId))
-				stashMap[stash.Id] = stash
-				if stash.Children != nil {
-					for _, stashChild := range *stash.Children {
-						stashToUsers[stashChild.Id] = append(stashToUsers[stashChild.Id], int32(user.UserId))
-						stashMap[stashChild.Id] = stashChild
-					}
-				}
-			}
-			mu.Unlock()
+			ch <- stashResult{userId: user.UserId, stashes: *stashes}
 		}(user)
 	}
-	wg.Wait()
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+	for result := range ch {
+		for _, stash := range result.stashes {
+			stashToUsers[stash.Id] = append(stashToUsers[stash.Id], int32(result.userId))
+			stashMap[stash.Id] = stash
+			if stash.Children != nil {
+				for _, stashChild := range *stash.Children {
+					stashToUsers[stashChild.Id] = append(stashToUsers[stashChild.Id], int32(result.userId))
+					stashMap[stashChild.Id] = stashChild
+				}
+			}
+		}
+	}
 
 	existingStashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
 	if err != nil {
@@ -460,7 +457,7 @@ func (f *FetchingService) updateGuildStash(stash repository.GuildStashTab, fetch
 	if err != nil {
 		return fmt.Errorf("no token found for team %d: %w", stash.TeamId, err)
 	}
-	response, httpError := f.poeClient.GetGuildStash(*token, f.event.Name, stash.Id, stash.ParentId)
+	response, httpError := f.poeClient.GetGuildStash(token, f.event.Name, stash.Id, stash.ParentId)
 	if httpError != nil {
 		return fmt.Errorf("failed to fetch guild stash %s for team %d: %d - %s", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
 	}
