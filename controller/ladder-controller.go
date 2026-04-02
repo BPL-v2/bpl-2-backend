@@ -275,6 +275,10 @@ func toLadderResponse(usersWithTeam map[int]*repository.UserWithTeam, ladderEntr
 			resp.Evasion = stats.Evasion
 			resp.MovementSpeed = stats.MovementSpeed
 			resp.ItemIndexes = stats.Items
+		} else {
+			resp.Level = character.Level
+			resp.Ascendancy = character.Ascendancy
+			resp.Mainskill = character.MainSkill
 		}
 		if lastActive, ok := lastActivities[*character.UserId]; ok {
 			resp.LastActive = lastActive.Unix()
