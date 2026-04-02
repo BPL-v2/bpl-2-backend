@@ -116,8 +116,8 @@ func getEvent(c *gin.Context) *repository.Event {
 		return nil
 	}
 	ev := event.(*repository.Event)
-	roles, ok := c.Get("userRoles")
-	if !ev.Public && (!ok || len(roles.([]repository.Permission)) == 0) {
+	userRoles := getUserRoles(c)
+	if !ev.Public && len(userRoles) == 0 {
 		c.AbortWithStatus(404)
 		return nil
 	}
