@@ -238,7 +238,7 @@ func toLadderResponse(usersWithTeam map[int]*repository.UserWithTeam, ladderEntr
 
 	for _, character := range characters {
 		stats := statsMap[character.Id]
-		if stats == nil || character.UserId == nil {
+		if character.UserId == nil {
 			continue
 		}
 		user := usersWithTeam[*character.UserId]
@@ -253,27 +253,28 @@ func toLadderResponse(usersWithTeam map[int]*repository.UserWithTeam, ladderEntr
 			AscendancyPoints: character.AscendancyPoints,
 			UserId:           *character.UserId,
 
-			Ascendancy:    stats.Ascendancy,
-			Level:         stats.Level,
-			XP:            stats.XP,
-			Mainskill:     stats.MainSkill,
-			DPS:           stats.DPS,
-			EHP:           stats.EHP,
-			PhysMaxHit:    stats.PhysMaxHit,
-			EleMaxHit:     stats.EleMaxHit,
-			HP:            stats.HP,
-			Mana:          stats.Mana,
-			ES:            stats.ES,
-			Armour:        stats.Armour,
-			Evasion:       stats.Evasion,
-			MovementSpeed: stats.MovementSpeed,
-			ItemIndexes:   stats.Items,
-
 			PoEAccount:  user.PoEAccount,
 			DiscordName: user.DiscordName,
 			DiscordId:   user.DiscordId,
 			TwitchName:  &user.TwitchName,
 			TeamId:      user.TeamId,
+		}
+		if stats != nil {
+			resp.Level = stats.Level
+			resp.XP = stats.XP
+			resp.Ascendancy = stats.Ascendancy
+			resp.Mainskill = stats.MainSkill
+			resp.DPS = stats.DPS
+			resp.EHP = stats.EHP
+			resp.PhysMaxHit = stats.PhysMaxHit
+			resp.EleMaxHit = stats.EleMaxHit
+			resp.HP = stats.HP
+			resp.Mana = stats.Mana
+			resp.ES = stats.ES
+			resp.Armour = stats.Armour
+			resp.Evasion = stats.Evasion
+			resp.MovementSpeed = stats.MovementSpeed
+			resp.ItemIndexes = stats.Items
 		}
 		if lastActive, ok := lastActivities[*character.UserId]; ok {
 			resp.LastActive = lastActive.Unix()

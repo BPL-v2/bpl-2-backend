@@ -226,6 +226,7 @@ func (r *CharacterRepositoryImpl) SaveCharacters(characters []*Character) error 
 func (r *CharacterRepositoryImpl) SavePoB(characterPoB *CharacterPob) error {
 	return r.DB.Save(&characterPoB).Error
 }
+
 func (r *CharacterRepositoryImpl) SavePoBs(characterPobs []*CharacterPob) error {
 	return r.DB.Save(&characterPobs).Error
 }
@@ -247,6 +248,7 @@ func (r *CharacterRepositoryImpl) GetCharactersForEvent(eventId int) ([]*Charact
 	}
 	return charData, nil
 }
+
 func (r *CharacterRepositoryImpl) GetCharactersForUser(user *User) ([]*Character, error) {
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharactersForUser"))
 	defer timer.ObserveDuration()
