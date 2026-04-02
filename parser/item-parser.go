@@ -752,7 +752,7 @@ type Discriminator struct {
 	value string
 }
 
-func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*dbModel.Condition, error) {
+func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*dbModel.Condition) {
 	for i, condition := range conditions {
 		if condition.Field == dbModel.BASE_TYPE || condition.Field == dbModel.NAME || condition.Field == dbModel.ITEM_CLASS {
 			if condition.Operator == dbModel.EQ {
@@ -760,7 +760,7 @@ func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*db
 					{field: toDiscriminatorField(condition.Field), value: condition.Value},
 				}
 				remainingConditions := append(conditions[:i], conditions[i+1:]...)
-				return discriminators, remainingConditions, nil
+				return discriminators, remainingConditions
 			}
 			if condition.Operator == dbModel.IN {
 				values := strings.Split(condition.Value, ",")
@@ -769,17 +769,14 @@ func GetDiscriminators(conditions []*dbModel.Condition) ([]*Discriminator, []*db
 					discriminators = append(discriminators, &Discriminator{field: toDiscriminatorField(condition.Field), value: value})
 				}
 				remainingConditions := append(conditions[:i], conditions[i+1:]...)
-				return discriminators, remainingConditions, nil
+				return discriminators, remainingConditions
 			}
 		}
 	}
-	return []*Discriminator{{field: NONE, value: ""}}, conditions, nil
+	return []*Discriminator{{field: NONE, value: ""}}, conditions
 }
 
 func ValidateConditions(conditions []*dbModel.Condition) error {
-	if _, _, err := GetDiscriminators(conditions); err != nil {
-		return err
-	}
 	for _, condition := range conditions {
 		if _, err := Comparator(condition); err != nil {
 			return err
@@ -823,12 +820,7 @@ func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChec
 		if objective.ObjectiveType != dbModel.ObjectiveTypeItem || objective.Conditions == nil {
 			continue
 		}
-		discriminators, remainingConditions, err := GetDiscriminators(objective.Conditions)
-		if err != nil {
-			fmt.Printf("Error getting discriminators for objective %d-%s: %s\n", objective.Id, objective.Name, err)
-			continue
-			// return nil, err
-		}
+		discriminators, remainingConditions := GetDiscriminators(objective.Conditions)
 		fn, err := ComperatorFromConditions(remainingConditions)
 		if err != nil {
 			fmt.Printf("Error getting comperator for objective %d: %s\n", objective.Id, err)

@@ -749,8 +749,7 @@ func TestGetDiscriminators(t *testing.T) {
 			makeCondition(dbModel.BASE_TYPE, dbModel.EQ, "Chaos Orb"),
 			makeCondition(dbModel.IS_CORRUPTED, dbModel.EQ, "true"),
 		}
-		discs, remaining, err := GetDiscriminators(conditions)
-		require.NoError(t, err)
+		discs, remaining := GetDiscriminators(conditions)
 		assert.Len(t, discs, 1)
 		assert.Equal(t, BASE_TYPE, discs[0].field)
 		assert.Equal(t, "Chaos Orb", discs[0].value)
@@ -761,8 +760,7 @@ func TestGetDiscriminators(t *testing.T) {
 		conditions := []*dbModel.Condition{
 			makeCondition(dbModel.NAME, dbModel.IN, "Headhunter,Mageblood"),
 		}
-		discs, remaining, err := GetDiscriminators(conditions)
-		require.NoError(t, err)
+		discs, remaining := GetDiscriminators(conditions)
 		assert.Len(t, discs, 2)
 		assert.Equal(t, NAME, discs[0].field)
 		assert.Equal(t, "Headhunter", discs[0].value)
@@ -774,8 +772,7 @@ func TestGetDiscriminators(t *testing.T) {
 		conditions := []*dbModel.Condition{
 			makeCondition(dbModel.ITEM_CLASS, dbModel.EQ, "Currency"),
 		}
-		discs, _, err := GetDiscriminators(conditions)
-		require.NoError(t, err)
+		discs, _ := GetDiscriminators(conditions)
 		assert.Len(t, discs, 1)
 		assert.Equal(t, ITEM_CLASS, discs[0].field)
 	})
@@ -784,8 +781,7 @@ func TestGetDiscriminators(t *testing.T) {
 		conditions := []*dbModel.Condition{
 			makeCondition(dbModel.IS_CORRUPTED, dbModel.EQ, "true"),
 		}
-		discs, remaining, err := GetDiscriminators(conditions)
-		require.NoError(t, err)
+		discs, remaining := GetDiscriminators(conditions)
 		assert.Len(t, discs, 1)
 		assert.Equal(t, NONE, discs[0].field)
 		assert.Len(t, remaining, 1)
@@ -795,8 +791,8 @@ func TestGetDiscriminators(t *testing.T) {
 		conditions := []*dbModel.Condition{
 			makeCondition(dbModel.BASE_TYPE, dbModel.CONTAINS, "Orb"),
 		}
-		discs, _, err := GetDiscriminators(conditions)
-		require.NoError(t, err)
+		discs, _ := GetDiscriminators(conditions)
+		assert.Equal(t, NONE, discs[0].field)
 		assert.Equal(t, NONE, discs[0].field)
 	})
 }
