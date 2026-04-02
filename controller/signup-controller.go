@@ -264,7 +264,7 @@ type Signup struct {
 	PartnerWish      *string
 	Partner          *NonSensitiveUser `json:"partner"`
 	PartnerId        *int              `json:"partner_id"`
-	Timestamp        time.Time         `json:"timestamp" binding:"required"`
+	Timestamp        time.Time         `json:"timestamp" binding:"required" format:"date-time"`
 	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
 	TeamId           *int              `json:"team_id"`
 	IsTeamLead       bool              `json:"team_lead" binding:"required"`
@@ -278,7 +278,7 @@ type ExtendedSignup struct {
 	PartnerWish      *string
 	Partner          *NonSensitiveUser `json:"partner"`
 	PartnerId        *int              `json:"partner_id"`
-	Timestamp        time.Time         `json:"timestamp" binding:"required"`
+	Timestamp        time.Time         `json:"timestamp" binding:"required" format:"date-time"`
 	ExpectedPlaytime int               `json:"expected_playtime" binding:"required"`
 	TeamId           *int              `json:"team_id"`
 	IsTeamLead       bool              `json:"team_lead" binding:"required"`

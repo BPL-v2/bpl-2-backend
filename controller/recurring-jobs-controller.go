@@ -20,7 +20,7 @@ type JobCreate struct {
 	SleepAfterEachRunSeconds int                `json:"sleep_after_each_run_seconds"`
 	EventId                  int                `json:"event_id"`
 	DurationInSeconds        *int               `json:"duration_in_seconds"`
-	EndDate                  *time.Time         `json:"end_date"`
+	EndDate                  *time.Time         `json:"end_date" format:"date-time"`
 }
 
 func (j *JobCreate) toJob() (*cron.RecurringJob, error) {

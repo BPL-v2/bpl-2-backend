@@ -275,7 +275,7 @@ type User struct {
 	DiscordName          *string    `json:"discord_name"`
 	TwitchId             *string    `json:"twitch_id"`
 	TwitchName           *string    `json:"twitch_name"`
-	TokenExpiryTimestamp *time.Time `json:"token_expiry_timestamp"`
+	TokenExpiryTimestamp *time.Time `json:"token_expiry_timestamp" format:"date-time"`
 
 	Permissions []repository.Permission `json:"permissions" binding:"required"`
 }

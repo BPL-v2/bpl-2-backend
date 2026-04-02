@@ -87,6 +87,7 @@ func addMetrics(r *gin.Engine) {
 }
 
 func addDocs(r *gin.Engine) {
+	docs.SwaggerInfo.Host = "bpl-poe.com"
 	docs.SwaggerInfo.BasePath = "/api"
 	r.GET("/api/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

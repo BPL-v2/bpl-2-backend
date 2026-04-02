@@ -424,7 +424,7 @@ type GuildStashTab struct {
 	ParentId      *string   `json:"parent_id"`
 	FetchEnabled  bool      `json:"fetch_enabled" binding:"required"`
 	PriorityFetch bool      `json:"priority_fetch" binding:"required"`
-	LastFetch     time.Time `json:"last_fetch" binding:"required"`
+	LastFetch     time.Time `json:"last_fetch" binding:"required" format:"date-time"`
 	UserIds       []int     `json:"user_ids" binding:"required"`
 }
 

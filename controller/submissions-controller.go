@@ -240,7 +240,7 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 type SubmissionCreate struct {
 	Id          *int      `json:"id"`
 	ObjectiveId int       `json:"objective_id" binding:"required"`
-	Timestamp   time.Time `json:"timestamp" binding:"required"`
+	Timestamp   time.Time `json:"timestamp" binding:"required" format:"date-time"`
 	Number      int       `json:"number"`
 	Proof       string    `json:"proof"`
 	Comment     string    `json:"comment"`
@@ -298,7 +298,7 @@ type Submission struct {
 	Id             int                       `json:"id" binding:"required"`
 	Number         int                       `json:"number" binding:"required"`
 	Proof          string                    `json:"proof" binding:"required"`
-	Timestamp      time.Time                 `json:"timestamp" binding:"required"`
+	Timestamp      time.Time                 `json:"timestamp" binding:"required" format:"date-time"`
 	ApprovalStatus repository.ApprovalStatus `json:"approval_status" binding:"required"`
 	Comment        string                    `json:"comment" binding:"required"`
 	TeamId         int                       `json:"team_id" binding:"required"`

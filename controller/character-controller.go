@@ -212,7 +212,7 @@ type PoB struct {
 	Level         int       `json:"level" binding:"required"`
 	Ascendancy    string    `json:"ascendancy" binding:"required"`
 	Mainskill     string    `json:"main_skill" binding:"required"`
-	Timestamp     time.Time `json:"timestamp" binding:"required"`
+	Timestamp     time.Time `json:"timestamp" binding:"required" format:"date-time"`
 	DPS           int64     `json:"dps" binding:"required"`
 	EHP           int32     `json:"ehp" binding:"required"`
 	PhysMaxHit    int32     `json:"phys_max_hit" binding:"required"`

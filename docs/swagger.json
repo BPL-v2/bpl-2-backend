@@ -4565,16 +4565,20 @@
             ],
             "properties": {
                 "application_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "application_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "game_version": {
                     "$ref": "#/definitions/GameVersion"
@@ -4631,16 +4635,20 @@
             ],
             "properties": {
                 "application_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "application_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "game_version": {
                     "$ref": "#/definitions/GameVersion"
@@ -4726,7 +4734,8 @@
                     "type": "boolean"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "user": {
                     "$ref": "#/definitions/NonSensitiveUser"
@@ -4885,7 +4894,8 @@
                     "type": "integer"
                 },
                 "last_fetch": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "name": {
                     "type": "string"
@@ -4949,7 +4959,8 @@
                     "type": "integer"
                 },
                 "end_date": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_id": {
                     "type": "integer"
@@ -5207,10 +5218,12 @@
                     }
                 },
                 "valid_from": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "valid_to": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5270,10 +5283,12 @@
                     }
                 },
                 "valid_from": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "valid_to": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5292,7 +5307,8 @@
                     "type": "integer"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5364,7 +5380,8 @@
                     "type": "integer"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "xp": {
                     "type": "integer"
@@ -5529,7 +5546,8 @@
                     "type": "boolean"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "user": {
                     "$ref": "#/definitions/NonSensitiveUser"
@@ -5604,7 +5622,8 @@
                     "type": "integer"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "user_id": {
                     "type": "integer"
@@ -5634,7 +5653,8 @@
                     "type": "string"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5861,7 +5881,8 @@
                     }
                 },
                 "token_expiry_timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "twitch_id": {
                     "type": "string"

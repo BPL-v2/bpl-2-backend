@@ -954,12 +954,16 @@ definitions:
   Event:
     properties:
       application_end_time:
+        format: date-time
         type: string
       application_start_time:
+        format: date-time
         type: string
       event_end_time:
+        format: date-time
         type: string
       event_start_time:
+        format: date-time
         type: string
       game_version:
         $ref: '#/definitions/GameVersion'
@@ -1007,12 +1011,16 @@ definitions:
   EventCreate:
     properties:
       application_end_time:
+        format: date-time
         type: string
       application_start_time:
+        format: date-time
         type: string
       event_end_time:
+        format: date-time
         type: string
       event_start_time:
+        format: date-time
         type: string
       game_version:
         $ref: '#/definitions/GameVersion'
@@ -1074,6 +1082,7 @@ definitions:
       team_lead:
         type: boolean
       timestamp:
+        format: date-time
         type: string
       user:
         $ref: '#/definitions/NonSensitiveUser'
@@ -1181,6 +1190,7 @@ definitions:
       index:
         type: integer
       last_fetch:
+        format: date-time
         type: string
       name:
         type: string
@@ -1233,6 +1243,7 @@ definitions:
       duration_in_seconds:
         type: integer
       end_date:
+        format: date-time
         type: string
       event_id:
         type: integer
@@ -1404,8 +1415,10 @@ definitions:
           $ref: '#/definitions/ScoringPreset'
         type: array
       valid_from:
+        format: date-time
         type: string
       valid_to:
+        format: date-time
         type: string
     required:
     - aggregation
@@ -1452,8 +1465,10 @@ definitions:
           type: integer
         type: array
       valid_from:
+        format: date-time
         type: string
       valid_to:
+        format: date-time
         type: string
     required:
     - aggregation
@@ -1472,6 +1487,7 @@ definitions:
       objective_id:
         type: integer
       timestamp:
+        format: date-time
         type: string
     required:
     - item
@@ -1511,6 +1527,7 @@ definitions:
       phys_max_hit:
         type: integer
       timestamp:
+        format: date-time
         type: string
       xp:
         type: integer
@@ -1637,6 +1654,7 @@ definitions:
       team_lead:
         type: boolean
       timestamp:
+        format: date-time
         type: string
       user:
         $ref: '#/definitions/NonSensitiveUser'
@@ -1684,6 +1702,7 @@ definitions:
       team_id:
         type: integer
       timestamp:
+        format: date-time
         type: string
       user_id:
         type: integer
@@ -1711,6 +1730,7 @@ definitions:
       proof:
         type: string
       timestamp:
+        format: date-time
         type: string
     required:
     - objective_id
@@ -1860,6 +1880,7 @@ definitions:
           $ref: '#/definitions/Permission'
         type: array
       token_expiry_timestamp:
+        format: date-time
         type: string
       twitch_id:
         type: string

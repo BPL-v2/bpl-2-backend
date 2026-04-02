@@ -236,10 +236,10 @@ type EventCreate struct {
 	Patch                *string                `json:"patch"`
 	MaxSize              int                    `json:"max_size" binding:"required"`
 	WaitlistSize         int                    `json:"waitlist_size" binding:"required"`
-	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
-	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
-	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
-	ApplicationEndTime   time.Time              `json:"application_end_time" binding:"required"`
+	EventStartTime       time.Time              `json:"event_start_time" binding:"required" format:"date-time"`
+	EventEndTime         time.Time              `json:"event_end_time" binding:"required" format:"date-time"`
+	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required" format:"date-time"`
+	ApplicationEndTime   time.Time              `json:"application_end_time" binding:"required" format:"date-time"`
 	Public               bool                   `json:"is_public"`
 	Locked               bool                   `json:"is_locked"`
 	IsMainEvent          bool                   `json:"is_main_event"`
@@ -255,10 +255,10 @@ type Event struct {
 	MaxSize              int                    `json:"max_size" binding:"required"`
 	WaitlistSize         int                    `json:"waitlist_size" binding:"required"`
 	Teams                []*Team                `json:"teams" binding:"required"`
-	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required"`
-	ApplicationEndTime   time.Time              `json:"application_end_time" binding:"required"`
-	EventStartTime       time.Time              `json:"event_start_time" binding:"required"`
-	EventEndTime         time.Time              `json:"event_end_time" binding:"required"`
+	ApplicationStartTime time.Time              `json:"application_start_time" binding:"required" format:"date-time"`
+	ApplicationEndTime   time.Time              `json:"application_end_time" binding:"required" format:"date-time"`
+	EventStartTime       time.Time              `json:"event_start_time" binding:"required" format:"date-time"`
+	EventEndTime         time.Time              `json:"event_end_time" binding:"required" format:"date-time"`
 	Public               bool                   `json:"is_public" binding:"required"`
 	Locked               bool                   `json:"is_locked" binding:"required"`
 	IsMainEvent          bool                   `json:"is_main_event" binding:"required"`

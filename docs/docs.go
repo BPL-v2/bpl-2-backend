@@ -4573,16 +4573,20 @@ const docTemplate = `{
             ],
             "properties": {
                 "application_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "application_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "game_version": {
                     "$ref": "#/definitions/GameVersion"
@@ -4639,16 +4643,20 @@ const docTemplate = `{
             ],
             "properties": {
                 "application_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "application_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_end_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_start_time": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "game_version": {
                     "$ref": "#/definitions/GameVersion"
@@ -4734,7 +4742,8 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "user": {
                     "$ref": "#/definitions/NonSensitiveUser"
@@ -4893,7 +4902,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "last_fetch": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "name": {
                     "type": "string"
@@ -4957,7 +4967,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "end_date": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "event_id": {
                     "type": "integer"
@@ -5215,10 +5226,12 @@ const docTemplate = `{
                     }
                 },
                 "valid_from": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "valid_to": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5278,10 +5291,12 @@ const docTemplate = `{
                     }
                 },
                 "valid_from": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "valid_to": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5300,7 +5315,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5372,7 +5388,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "xp": {
                     "type": "integer"
@@ -5537,7 +5554,8 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "user": {
                     "$ref": "#/definitions/NonSensitiveUser"
@@ -5612,7 +5630,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "user_id": {
                     "type": "integer"
@@ -5642,7 +5661,8 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 }
             }
         },
@@ -5869,7 +5889,8 @@ const docTemplate = `{
                     }
                 },
                 "token_expiry_timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "twitch_id": {
                     "type": "string"

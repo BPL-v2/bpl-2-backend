@@ -303,8 +303,8 @@ type ObjectiveCreate struct {
 	Aggregation            repository.AggregationType `json:"aggregation" binding:"required"`
 	ParentId               int                        `json:"parent_id" binding:"required"`
 	Conditions             []Condition                `json:"conditions" binding:"required"`
-	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty"`
-	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty"`
+	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty" format:"date-time"`
+	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty" format:"date-time"`
 	ScoringIds             []int                      `json:"scoring_preset_ids" binding:"required"`
 	HideProgress           bool                       `json:"hide_progress"`
 }
@@ -317,8 +317,8 @@ type Objective struct {
 	ParentId               *int                       `json:"parent_id" binding:"required"`
 	ObjectiveType          repository.ObjectiveType   `json:"objective_type" binding:"required"`
 	Conditions             []*Condition               `json:"conditions" binding:"required"`
-	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty"`
-	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty"`
+	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty" format:"date-time"`
+	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty" format:"date-time"`
 	ScoringPresets         []*ScoringPreset           `json:"scoring_presets" binding:"required"`
 	NumberField            repository.NumberField     `json:"number_field" binding:"required"`
 	NumberFieldExplanation *string                    `json:"number_field_explanation"`
@@ -383,7 +383,7 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 
 type ObjectiveValidation struct {
 	ObjectiveId int         `json:"objective_id" binding:"required"`
-	Timestamp   time.Time   `json:"timestamp" binding:"required"`
+	Timestamp   time.Time   `json:"timestamp" binding:"required" format:"date-time"`
 	Item        client.Item `json:"item" binding:"required"`
 }
 
