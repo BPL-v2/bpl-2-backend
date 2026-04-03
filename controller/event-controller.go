@@ -163,7 +163,6 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 // @id GetEventStatus
 // @Description Gets the status for an event including the user's application status
 // @Tags event
-// @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
 // @Security BearerAuth

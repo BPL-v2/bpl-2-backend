@@ -1,2406 +1,2442 @@
-definitions:
-  Character:
-    properties:
-      class:
-        type: string
-      current:
-        type: boolean
-      deleted:
-        type: boolean
-      equipment:
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-      experience:
-        type: integer
-      expired:
-        type: boolean
-      id:
-        type: string
-      inventory:
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-      jewels:
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-      league:
-        type: string
-      level:
-        type: integer
-      metadata:
-        $ref: '#/definitions/Metadata'
-      name:
-        type: string
-      passives:
-        $ref: '#/definitions/Passives'
-      realm:
-        $ref: '#/definitions/Realm'
-      rucksack:
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-      ruthless:
-        type: boolean
-      skills:
-        description: PoE2 only
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-    type: object
-  GemSocket:
-    enum:
-    - W
-    type: string
-    x-enum-varnames:
-    - W
-  GuildStashTabGGG:
-    properties:
-      children:
-        items:
-          $ref: '#/definitions/GuildStashTabGGG'
-        type: array
-      id:
-        type: string
-      index:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-      metadata:
-        $ref: '#/definitions/StashTabMetadata'
-      name:
-        type: string
-      parent:
-        type: string
-      type:
-        type: string
-    type: object
-  Item:
-    properties:
-      abyssJewel:
-        type: boolean
-      additionalProperties:
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      baseType:
-        type: string
-      bondedMods:
-        description: PoE2 only
-        items:
+components:
+  schemas:
+    Character:
+      properties:
+        class:
           type: string
-        type: array
-      colour:
-        type: string
-      corrupted:
-        type: boolean
-      cosmeticMods:
-        items:
-          type: string
-        type: array
-      craftedMods:
-        items:
-          type: string
-        type: array
-      delve:
-        type: boolean
-      desecrated:
-        description: PoE2 only
-        type: boolean
-      desecratedMods:
-        description: PoE2 only
-        items:
-          type: string
-        type: array
-      doubleCorrupted:
-        description: PoE2 only
-        type: boolean
-      duplicated:
-        type: boolean
-      elder:
-        type: boolean
-      enchantMods:
-        items:
-          type: string
-        type: array
-      explicitMods:
-        items:
-          type: string
-        type: array
-      extended:
-        $ref: '#/definitions/ItemExtended'
-      foilVariation:
-        type: integer
-      foreseeing:
-        type: boolean
-      fractured:
-        type: boolean
-      fracturedMods:
-        items:
-          type: string
-        type: array
-      frameType:
-        type: integer
-      gemSockets:
-        items:
-          $ref: '#/definitions/GemSocket'
-        type: array
-      grantedSkills:
-        description: PoE2 only
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      h:
-        type: integer
-      hybrid:
-        $ref: '#/definitions/ItemHybrid'
-      icon:
-        type: string
-      id:
-        type: string
-      identified:
-        type: boolean
-      ilvl:
-        type: integer
-      implicitMods:
-        items:
-          type: string
-        type: array
-      incubatedItem:
-        $ref: '#/definitions/ItemIncubatedItem'
-      influences:
-        additionalProperties:
+        current:
           type: boolean
-        type: object
-      inventoryId:
-        type: string
-      isRelic:
-        type: boolean
-      itemLevel:
-        type: integer
-      logbookMods:
-        items:
-          $ref: '#/definitions/ItemLogbookMod'
-        type: array
-      memoryItem:
-        type: boolean
-      mutated:
-        type: boolean
-      mutatedMods:
-        items:
-          type: string
-        type: array
-      name:
-        type: string
-      notableProperties:
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      objectiveId:
-        description: filled by us and not ggg
-        type: integer
-      properties:
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      rarity:
-        type: string
-      rewards:
-        items:
-          $ref: '#/definitions/ItemReward'
-        type: array
-      runeMods:
-        description: PoE2 only
-        items:
-          type: string
-        type: array
-      ruthless:
-        type: boolean
-      scourgeMods:
-        items:
-          type: string
-        type: array
-      searing:
-        type: boolean
-      shaper:
-        type: boolean
-      socket:
-        type: integer
-      socketedItems:
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-      sockets:
-        items:
-          $ref: '#/definitions/ItemSocket'
-        type: array
-      split:
-        type: boolean
-      stackSize:
-        type: integer
-      support:
-        type: boolean
-      supportGemRequirements:
-        description: PoE2 only
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      synthesised:
-        type: boolean
-      talismanTier:
-        type: integer
-      tangled:
-        type: boolean
-      typeLine:
-        type: string
-      ultimatumMods:
-        items:
-          $ref: '#/definitions/ItemUltimatumMod'
-        type: array
-      unmodifiable:
-        type: boolean
-      utilityMods:
-        items:
-          type: string
-        type: array
-      veiled:
-        type: boolean
-      veiledMods:
-        items:
-          type: string
-        type: array
-      w:
-        type: integer
-      weaponRequirements:
-        description: PoE2 only
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      x:
-        type: integer
-      "y":
-        type: integer
-    type: object
-  ItemExtended:
-    properties:
-      prefixes:
-        type: integer
-      suffixes:
-        type: integer
-    type: object
-  ItemHybrid:
-    properties:
-      baseTypeName:
-        type: string
-      explicitMods:
-        items:
-          type: string
-        type: array
-      isVaalGem:
-        type: boolean
-      properties:
-        items:
-          $ref: '#/definitions/ItemProperty'
-        type: array
-      secDescrText:
-        type: string
-    type: object
-  ItemIncubatedItem:
-    properties:
-      level:
-        type: integer
-      name:
-        type: string
-      progress:
-        type: integer
-      total:
-        type: integer
-    type: object
-  ItemJewelData:
-    properties:
-      radius:
-        type: integer
-      radiusMin:
-        type: integer
-      radiusVisual:
-        type: string
-      subgraph:
-        $ref: '#/definitions/ItemJewelDataSubgraph'
-      type:
-        type: string
-    type: object
-  ItemJewelDataSubgraph:
-    properties:
-      groups:
-        additionalProperties:
-          $ref: '#/definitions/PassiveGroup'
-        type: object
-      nodes:
-        additionalProperties:
-          $ref: '#/definitions/PassiveNode'
-        type: object
-    type: object
-  ItemLogbookMod:
-    properties:
-      faction:
-        $ref: '#/definitions/ItemLogbookModFaction'
-      mods:
-        items:
-          type: string
-        type: array
-      name:
-        type: string
-    type: object
-  ItemLogbookModFaction:
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  ItemProperty:
-    properties:
-      displayMode:
-        type: integer
-      icon:
-        description: PoE2 only
-        type: string
-      name:
-        type: string
-      progress:
-        type: number
-      suffix:
-        type: string
-      type:
-        type: integer
-      values:
-        items:
-          items: {}
+        deleted:
+          type: boolean
+        equipment:
+          items:
+            $ref: '#/components/schemas/Item'
           type: array
-        type: array
-    type: object
-  ItemReward:
-    properties:
-      label:
-        type: string
-      rewards:
+          uniqueItems: false
+        experience:
+          type: integer
+        expired:
+          type: boolean
+        id:
+          type: string
+        inventory:
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          uniqueItems: false
+        jewels:
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          uniqueItems: false
+        league:
+          type: string
+        level:
+          type: integer
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        name:
+          type: string
+        passives:
+          $ref: '#/components/schemas/Passives'
+        realm:
+          $ref: '#/components/schemas/Realm'
+        rucksack:
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          uniqueItems: false
+        ruthless:
+          type: boolean
+        skills:
+          description: PoE2 only
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          uniqueItems: false
+      type: object
+    GemSocket:
+      enum:
+      - W
+      type: string
+      x-enum-varnames:
+      - W
+    GuildStashTabGGG:
+      properties:
+        children:
+          items:
+            $ref: '#/components/schemas/GuildStashTabGGG'
+          type: array
+          uniqueItems: false
+        id:
+          type: string
+        index:
+          type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          uniqueItems: false
+        metadata:
+          $ref: '#/components/schemas/StashTabMetadata'
+        name:
+          type: string
+        parent:
+          type: string
+        type:
+          type: string
+      type: object
+    Item:
+      properties:
+        abyssJewel:
+          type: boolean
         additionalProperties:
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+          type: array
+          uniqueItems: false
+        baseType:
+          type: string
+        bondedMods:
+          description: PoE2 only
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        colour:
+          type: string
+        corrupted:
+          type: boolean
+        cosmeticMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        craftedMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        delve:
+          type: boolean
+        desecrated:
+          description: PoE2 only
+          type: boolean
+        desecratedMods:
+          description: PoE2 only
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        doubleCorrupted:
+          description: PoE2 only
+          type: boolean
+        duplicated:
+          type: boolean
+        elder:
+          type: boolean
+        enchantMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        explicitMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        extended:
+          $ref: '#/components/schemas/ItemExtended'
+        foilVariation:
           type: integer
-        type: object
-    type: object
-  ItemSocket:
-    properties:
-      attr:
-        type: string
-      group:
-        type: integer
-      item:
-        allOf:
-        - $ref: '#/definitions/ItemSocketItem'
-        description: PoE2 only
-      sColour:
-        type: string
-      type:
-        allOf:
-        - $ref: '#/definitions/ItemSocketType'
-        description: PoE2 only
-    type: object
-  ItemSocketItem:
-    enum:
-    - emerald
-    - sapphire
-    - ruby
-    - rune
-    - soulcore
-    - activegem
-    - supportgem
-    type: string
-    x-enum-varnames:
-    - ItemSocketItemEmerald
-    - ItemSocketItemSapphire
-    - ItemSocketItemRuby
-    - ItemSocketItemRune
-    - ItemSocketItemSoulcore
-    - ItemSocketItemActiveGem
-    - ItemSocketItemSupportGem
-  ItemSocketType:
-    enum:
-    - gem
-    - jewel
-    - rune
-    type: string
-    x-enum-varnames:
-    - ItemSocketTypeGem
-    - ItemSocketTypeJewel
-    - ItemSocketTypeRune
-  ItemUltimatumMod:
-    properties:
-      tier:
-        type: integer
-      type:
-        type: string
-    type: object
-  Metadata:
-    properties:
-      version:
-        type: string
-    type: object
-  PassiveGroup:
-    properties:
-      isProxy:
-        type: boolean
-      nodes:
-        items:
-          type: string
-        type: array
-      orbits:
-        items:
+        foreseeing:
+          type: boolean
+        fractured:
+          type: boolean
+        fracturedMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        frameType:
           type: integer
-        type: array
-      proxy:
-        type: string
-      x:
-        type: number
-      "y":
-        type: number
-    type: object
-  PassiveNode:
-    properties:
-      activeEffectImage:
-        type: string
-      activeIcon:
-        type: string
-      ascendancyName:
-        type: string
-      classStartIndex:
-        type: integer
-      expansionJewel:
-        $ref: '#/definitions/PassiveNodeExpansionJewel'
-      flavourText:
-        items:
-          type: string
-        type: array
-      grantedDexterity:
-        type: integer
-      grantedIntelligence:
-        type: integer
-      grantedPassivePoints:
-        type: integer
-      grantedStrength:
-        type: integer
-      group:
-        type: string
-      icon:
-        type: string
-      in:
-        items:
-          type: string
-        type: array
-      inactiveIcon:
-        type: string
-      isAscendancyStart:
-        type: boolean
-      isBlighted:
-        type: boolean
-      isJewelSocket:
-        type: boolean
-      isKeystone:
-        type: boolean
-      isMastery:
-        type: boolean
-      isMultipleChoice:
-        type: boolean
-      isMultipleChoiceOption:
-        type: boolean
-      isNotable:
-        type: boolean
-      isProxy:
-        type: boolean
-      isTattoo:
-        type: boolean
-      masteryEffects:
-        items:
-          $ref: '#/definitions/PassiveNodeMasteryEffect'
-        type: array
-      name:
-        type: string
-      orbit:
-        type: integer
-      orbitIndex:
-        type: integer
-      out:
-        items:
-          type: string
-        type: array
-      recipe:
-        items:
-          type: string
-        type: array
-      reminderText:
-        items:
-          type: string
-        type: array
-      skill:
-        description: actually an int but it's a string in the ggg response
-        type: string
-      stats:
-        items:
-          type: string
-        type: array
-    type: object
-  PassiveNodeExpansionJewel:
-    properties:
-      index:
-        type: integer
-      parent:
-        type: string
-      proxy:
-        type: string
-      size:
-        type: integer
-    type: object
-  PassiveNodeMasteryEffect:
-    properties:
-      effect:
-        type: integer
-      reminderText:
-        items:
-          type: string
-        type: array
-      stats:
-        items:
-          type: string
-        type: array
-    type: object
-  Passives:
-    properties:
-      alternate_ascendancy:
-        type: string
-      bandit_choice:
-        type: string
-      hashes:
-        items:
+        gemSockets:
+          items:
+            $ref: '#/components/schemas/GemSocket'
+          type: array
+          uniqueItems: false
+        grantedSkills:
+          description: PoE2 only
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+          type: array
+          uniqueItems: false
+        h:
           type: integer
-        type: array
-      hashes_ex:
-        items:
-          type: integer
-        type: array
-      jewel_data:
-        additionalProperties:
-          $ref: '#/definitions/ItemJewelData'
-        type: object
-      mastery_effects:
-        additionalProperties:
-          type: integer
-        type: object
-      pantheon_major:
-        type: string
-      pantheon_minor:
-        type: string
-      skill_overrides:
-        additionalProperties:
-          $ref: '#/definitions/PassiveNode'
-        type: object
-      specialisation:
-        allOf:
-        - $ref: '#/definitions/Specialisations'
-        description: PoE2 only
-    type: object
-  Realm:
-    enum:
-    - pc
-    - sony
-    - xbox
-    - poe2
-    type: string
-    x-enum-varnames:
-    - PC
-    - Sony
-    - Xbox
-    - PoE2
-  Specialisations:
-    properties:
-      set1:
-        items:
-          type: integer
-        type: array
-      set2:
-        items:
-          type: integer
-        type: array
-      shapeshift:
-        items:
-          type: integer
-        type: array
-    type: object
-  StashTab:
-    properties:
-      children:
-        items:
-          $ref: '#/definitions/StashTab'
-        type: array
-      id:
-        type: string
-      index:
-        type: integer
-      items:
-        items:
-          $ref: '#/definitions/Item'
-        type: array
-      metadata:
-        $ref: '#/definitions/StashTabMetadata'
-      name:
-        type: string
-      parent:
-        type: string
-      type:
-        type: string
-    type: object
-  StashTabMetadata:
-    properties:
-      colour:
-        type: string
-      folder:
-        type: boolean
-      items:
-        type: integer
-      layout: {}
-      public:
-        type: boolean
-    type: object
-  TwitchStream:
-    properties:
-      backend_user_id:
-        type: integer
-      game_id:
-        type: string
-      game_name:
-        type: string
-      id:
-        type: string
-      is_mature:
-        type: boolean
-      language:
-        type: string
-      started_at:
-        type: string
-      tag_ids:
-        items:
+        hybrid:
+          $ref: '#/components/schemas/ItemHybrid'
+        icon:
           type: string
-        type: array
-      tags:
-        items:
+        id:
           type: string
-        type: array
-      thumbnail_url:
-        type: string
-      title:
-        type: string
-      type:
-        type: string
-      user_id:
-        type: string
-      user_login:
-        type: string
-      user_name:
-        type: string
-      viewer_count:
-        type: integer
-    type: object
-  AchievementCreate:
-    properties:
-      name:
-        $ref: '#/definitions/AchievementName'
-      user_id:
-        type: integer
-    required:
-    - name
-    - user_id
-    type: object
-  Action:
-    enum:
-    - added
-    - modified
-    - removed
-    type: string
-    x-enum-varnames:
-    - ActionAdded
-    - ActionModified
-    - ActionRemoved
-  AddGuildStashHistoryResponse:
-    properties:
-      number_of_added_entries:
-        type: integer
-    required:
-    - number_of_added_entries
-    type: object
-  Atlas:
-    properties:
-      primary_index:
-        type: integer
-      trees:
-        additionalProperties:
+        identified:
+          type: boolean
+        ilvl:
+          type: integer
+        implicitMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        incubatedItem:
+          $ref: '#/components/schemas/ItemIncubatedItem'
+        influences:
+          additionalProperties:
+            type: boolean
+          type: object
+        inventoryId:
+          type: string
+        isRelic:
+          type: boolean
+        itemLevel:
+          type: integer
+        logbookMods:
+          items:
+            $ref: '#/components/schemas/ItemLogbookMod'
+          type: array
+          uniqueItems: false
+        memoryItem:
+          type: boolean
+        mutated:
+          type: boolean
+        mutatedMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        name:
+          type: string
+        notableProperties:
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+          type: array
+          uniqueItems: false
+        objectiveId:
+          description: filled by us and not ggg
+          type: integer
+        properties:
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+          type: array
+          uniqueItems: false
+        rarity:
+          type: string
+        rewards:
+          items:
+            $ref: '#/components/schemas/ItemReward'
+          type: array
+          uniqueItems: false
+        runeMods:
+          description: PoE2 only
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        ruthless:
+          type: boolean
+        scourgeMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        searing:
+          type: boolean
+        shaper:
+          type: boolean
+        socket:
+          type: integer
+        socketedItems:
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          uniqueItems: false
+        sockets:
+          items:
+            $ref: '#/components/schemas/ItemSocket'
+          type: array
+          uniqueItems: false
+        split:
+          type: boolean
+        stackSize:
+          type: integer
+        support:
+          type: boolean
+        supportGemRequirements:
+          description: PoE2 only
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+          type: array
+          uniqueItems: false
+        synthesised:
+          type: boolean
+        talismanTier:
+          type: integer
+        tangled:
+          type: boolean
+        typeLine:
+          type: string
+        ultimatumMods:
+          items:
+            $ref: '#/components/schemas/ItemUltimatumMod'
+          type: array
+          uniqueItems: false
+        unmodifiable:
+          type: boolean
+        utilityMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        veiled:
+          type: boolean
+        veiledMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        w:
+          type: integer
+        weaponRequirements:
+          description: PoE2 only
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+          type: array
+          uniqueItems: false
+        x:
+          type: integer
+        "y":
+          type: integer
+      type: object
+    ItemExtended:
+      properties:
+        prefixes:
+          type: integer
+        suffixes:
+          type: integer
+      type: object
+    ItemHybrid:
+      properties:
+        baseTypeName:
+          type: string
+        explicitMods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        isVaalGem:
+          type: boolean
+        properties:
+          items:
+            $ref: '#/components/schemas/ItemProperty'
+          type: array
+          uniqueItems: false
+        secDescrText:
+          type: string
+      type: object
+    ItemIncubatedItem:
+      properties:
+        level:
+          type: integer
+        name:
+          type: string
+        progress:
+          type: integer
+        total:
+          type: integer
+      type: object
+    ItemJewelData:
+      properties:
+        radius:
+          type: integer
+        radiusMin:
+          type: integer
+        radiusVisual:
+          type: string
+        subgraph:
+          $ref: '#/components/schemas/ItemJewelDataSubgraph'
+        type:
+          type: string
+      type: object
+    ItemJewelDataSubgraph:
+      properties:
+        groups:
+          additionalProperties:
+            $ref: '#/components/schemas/PassiveGroup'
+          type: object
+        nodes:
+          additionalProperties:
+            $ref: '#/components/schemas/PassiveNode'
+          type: object
+      type: object
+    ItemLogbookMod:
+      properties:
+        faction:
+          $ref: '#/components/schemas/ItemLogbookModFaction'
+        mods:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        name:
+          type: string
+      type: object
+    ItemLogbookModFaction:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    ItemProperty:
+      properties:
+        displayMode:
+          type: integer
+        icon:
+          description: PoE2 only
+          type: string
+        name:
+          type: string
+        progress:
+          type: number
+        suffix:
+          type: string
+        type:
+          type: integer
+        values:
+          items:
+            items: {}
+            type: array
+          type: array
+          uniqueItems: false
+      type: object
+    ItemReward:
+      properties:
+        label:
+          type: string
+        rewards:
+          additionalProperties:
+            type: integer
+          type: object
+      type: object
+    ItemSocket:
+      properties:
+        attr:
+          type: string
+        group:
+          type: integer
+        item:
+          $ref: '#/components/schemas/ItemSocketItem'
+        sColour:
+          type: string
+        type:
+          $ref: '#/components/schemas/ItemSocketType'
+      type: object
+    ItemSocketItem:
+      description: PoE2 only
+      enum:
+      - emerald
+      - sapphire
+      - ruby
+      - rune
+      - soulcore
+      - activegem
+      - supportgem
+      type: string
+      x-enum-varnames:
+      - ItemSocketItemEmerald
+      - ItemSocketItemSapphire
+      - ItemSocketItemRuby
+      - ItemSocketItemRune
+      - ItemSocketItemSoulcore
+      - ItemSocketItemActiveGem
+      - ItemSocketItemSupportGem
+    ItemSocketType:
+      description: PoE2 only
+      enum:
+      - gem
+      - jewel
+      - rune
+      type: string
+      x-enum-varnames:
+      - ItemSocketTypeGem
+      - ItemSocketTypeJewel
+      - ItemSocketTypeRune
+    ItemUltimatumMod:
+      properties:
+        tier:
+          type: integer
+        type:
+          type: string
+      type: object
+    Metadata:
+      properties:
+        version:
+          type: string
+      type: object
+    PassiveGroup:
+      properties:
+        isProxy:
+          type: boolean
+        nodes:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        orbits:
           items:
             type: integer
           type: array
-        type: object
-      user_id:
-        type: integer
-    required:
-    - primary_index
-    - trees
-    - user_id
-    type: object
-  AtlasProgression:
-    properties:
-      index:
-        type: integer
-      nodes:
-        items:
-          type: integer
-        type: array
-      timestamp:
-        type: integer
-    type: object
-  CallbackBody:
-    properties:
-      code:
-        type: string
-      referrer:
-        type: string
-      state:
-        type: string
-    required:
-    - code
-    - state
-    type: object
-  CallbackResponse:
-    properties:
-      auth_token:
-        type: string
-      last_path:
-        type: string
-      user:
-        $ref: '#/definitions/User'
-    required:
-    - auth_token
-    - last_path
-    - user
-    type: object
-  Character:
-    properties:
-      ascendancy:
-        type: string
-      ascendancy_points:
-        type: integer
-      atlas_node_count:
-        type: integer
-      event_id:
-        type: integer
-      id:
-        type: string
-      level:
-        type: integer
-      main_skill:
-        type: string
-      name:
-        type: string
-      pantheon:
-        type: boolean
-      user_id:
-        type: integer
-    required:
-    - ascendancy
-    - ascendancy_points
-    - atlas_node_count
-    - event_id
-    - id
-    - level
-    - main_skill
-    - name
-    - pantheon
-    type: object
-  CharacterStat:
-    properties:
-      armour:
-        type: integer
-      dps:
-        type: integer
-      ehp:
-        type: integer
-      ele_max_hit:
-        type: integer
-      es:
-        type: integer
-      evasion:
-        type: integer
-      hp:
-        type: integer
-      item_indexes:
-        items:
-          type: integer
-        type: array
-      main_skill:
-        type: string
-      mana:
-        type: integer
-      movement_speed:
-        type: integer
-      phys_max_hit:
-        type: integer
-      timestamp:
-        type: integer
-      xp:
-        type: integer
-    required:
-    - armour
-    - dps
-    - ehp
-    - ele_max_hit
-    - es
-    - evasion
-    - hp
-    - item_indexes
-    - main_skill
-    - mana
-    - movement_speed
-    - phys_max_hit
-    - timestamp
-    - xp
-    type: object
-  Completion:
-    properties:
-      finished:
-        type: boolean
-      number:
-        type: integer
-      points:
-        type: integer
-      preset_id:
-        type: integer
-      rank:
-        type: integer
-      timestamp:
-        type: integer
-      user_id:
-        type: integer
-    required:
-    - finished
-    - number
-    - points
-    - preset_id
-    - rank
-    - timestamp
-    type: object
-  Condition:
-    properties:
-      field:
-        $ref: '#/definitions/ItemField'
-      operator:
-        $ref: '#/definitions/Operator'
-      value:
-        type: string
-    required:
-    - field
-    - operator
-    - value
-    type: object
-  ConditionMappings:
-    properties:
-      field_to_type:
-        additionalProperties:
-          $ref: '#/definitions/FieldType'
-        type: object
-      objective_type_to_number_fields:
-        additionalProperties:
-          items:
-            $ref: '#/definitions/NumberField'
-          type: array
-        type: object
-      valid_operators:
-        additionalProperties:
-          items:
-            $ref: '#/definitions/Operator'
-          type: array
-        type: object
-    required:
-    - field_to_type
-    - objective_type_to_number_fields
-    - valid_operators
-    type: object
-  CreateItemWish:
-    properties:
-      build_enabling:
-        type: boolean
-      item_field:
-        $ref: '#/definitions/ItemField'
-      value:
-        type: string
-    required:
-    - item_field
-    - value
-    type: object
-  EngagementAdd:
-    properties:
-      name:
-        type: string
-    required:
-    - name
-    type: object
-  Event:
-    properties:
-      application_end_time:
-        format: date-time
-        type: string
-      application_start_time:
-        format: date-time
-        type: string
-      event_end_time:
-        format: date-time
-        type: string
-      event_start_time:
-        format: date-time
-        type: string
-      game_version:
-        $ref: '#/definitions/GameVersion'
-      id:
-        type: integer
-      is_current:
-        type: boolean
-      is_locked:
-        type: boolean
-      is_main_event:
-        type: boolean
-      is_public:
-        type: boolean
-      max_size:
-        type: integer
-      name:
-        type: string
-      patch:
-        type: string
-      teams:
-        items:
-          $ref: '#/definitions/Team'
-        type: array
-      uses_medals:
-        type: boolean
-      waitlist_size:
-        type: integer
-    required:
-    - application_end_time
-    - application_start_time
-    - event_end_time
-    - event_start_time
-    - game_version
-    - id
-    - is_current
-    - is_locked
-    - is_main_event
-    - is_public
-    - max_size
-    - name
-    - teams
-    - uses_medals
-    - waitlist_size
-    type: object
-  EventCreate:
-    properties:
-      application_end_time:
-        format: date-time
-        type: string
-      application_start_time:
-        format: date-time
-        type: string
-      event_end_time:
-        format: date-time
-        type: string
-      event_start_time:
-        format: date-time
-        type: string
-      game_version:
-        $ref: '#/definitions/GameVersion'
-      id:
-        type: integer
-      is_current:
-        type: boolean
-      is_locked:
-        type: boolean
-      is_main_event:
-        type: boolean
-      is_public:
-        type: boolean
-      max_size:
-        type: integer
-      name:
-        type: string
-      patch:
-        type: string
-      uses_medals:
-        type: boolean
-      waitlist_size:
-        type: integer
-    required:
-    - application_end_time
-    - application_start_time
-    - event_end_time
-    - event_start_time
-    - game_version
-    - max_size
-    - name
-    - waitlist_size
-    type: object
-  ExtendedSignup:
-    properties:
-      expected_playtime:
-        type: integer
-      extra:
-        type: string
-      highest_character_levels:
-        additionalProperties:
-          type: integer
-        type: object
-      needs_help:
-        type: boolean
-      partner:
-        $ref: '#/definitions/NonSensitiveUser'
-      partner_id:
-        type: integer
-      partnerWish:
-        type: string
-      playtimes_in_last_events_per_day_in_hours:
-        additionalProperties:
-          format: float64
+          uniqueItems: false
+        proxy:
+          type: string
+        x:
           type: number
-        type: object
-      team_id:
-        type: integer
-      team_lead:
-        type: boolean
-      timestamp:
-        format: date-time
-        type: string
-      user:
-        $ref: '#/definitions/NonSensitiveUser'
-      wants_to_help:
-        type: boolean
-    required:
-    - expected_playtime
-    - highest_character_levels
-    - playtimes_in_last_events_per_day_in_hours
-    - team_lead
-    - timestamp
-    - user
-    type: object
-  Guild:
-    properties:
-      event_id:
-        type: integer
-      id:
-        type: integer
-      name:
-        type: string
-      tag:
-        type: string
-      team_id:
-        type: integer
-    required:
-    - id
-    - name
-    - tag
-    type: object
-  GuildStashChangeResponse:
-    properties:
-      entries:
-        items:
-          properties:
-            account:
-              properties:
-                name:
-                  type: string
-              type: object
-            action:
-              type: string
-            id:
-              type: string
-            item:
-              type: string
-            league:
-              type: string
-            stash:
-              type: string
-            time:
-              type: integer
-            x:
-              type: integer
-            "y":
-              type: integer
+        "y":
+          type: number
+      type: object
+    PassiveNode:
+      properties:
+        activeEffectImage:
+          type: string
+        activeIcon:
+          type: string
+        ascendancyName:
+          type: string
+        classStartIndex:
+          type: integer
+        expansionJewel:
+          $ref: '#/components/schemas/PassiveNodeExpansionJewel'
+        flavourText:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        grantedDexterity:
+          type: integer
+        grantedIntelligence:
+          type: integer
+        grantedPassivePoints:
+          type: integer
+        grantedStrength:
+          type: integer
+        group:
+          type: string
+        icon:
+          type: string
+        in:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        inactiveIcon:
+          type: string
+        isAscendancyStart:
+          type: boolean
+        isBlighted:
+          type: boolean
+        isJewelSocket:
+          type: boolean
+        isKeystone:
+          type: boolean
+        isMastery:
+          type: boolean
+        isMultipleChoice:
+          type: boolean
+        isMultipleChoiceOption:
+          type: boolean
+        isNotable:
+          type: boolean
+        isProxy:
+          type: boolean
+        isTattoo:
+          type: boolean
+        masteryEffects:
+          items:
+            $ref: '#/components/schemas/PassiveNodeMasteryEffect'
+          type: array
+          uniqueItems: false
+        name:
+          type: string
+        orbit:
+          type: integer
+        orbitIndex:
+          type: integer
+        out:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        recipe:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        reminderText:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        skill:
+          description: actually an int but it's a string in the ggg response
+          type: string
+        stats:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      type: object
+    PassiveNodeExpansionJewel:
+      properties:
+        index:
+          type: integer
+        parent:
+          type: string
+        proxy:
+          type: string
+        size:
+          type: integer
+      type: object
+    PassiveNodeMasteryEffect:
+      properties:
+        effect:
+          type: integer
+        reminderText:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        stats:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      type: object
+    Passives:
+      properties:
+        alternate_ascendancy:
+          type: string
+        bandit_choice:
+          type: string
+        hashes:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        hashes_ex:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        jewel_data:
+          additionalProperties:
+            $ref: '#/components/schemas/ItemJewelData'
           type: object
-        type: array
-      truncated:
-        type: boolean
-    type: object
-  GuildStashChangelog:
-    properties:
-      account_name:
-        type: string
-      action:
-        $ref: '#/definitions/Action'
-      item_name:
-        type: string
-      number:
-        type: integer
-      stash_name:
-        type: string
-      timestamp:
-        type: integer
-    required:
-    - account_name
-    - action
-    - item_name
-    - number
-    - timestamp
-    type: object
-  GuildStashLogTimestampResponse:
-    properties:
-      earliest:
-        type: integer
-      latest:
-        type: integer
-      league_end:
-        type: integer
-      league_start:
-        type: integer
-    required:
-    - league_end
-    - league_start
-    type: object
-  GuildStashTab:
-    properties:
-      color:
-        type: string
-      fetch_enabled:
-        type: boolean
-      id:
-        type: string
-      index:
-        type: integer
-      last_fetch:
-        format: date-time
-        type: string
-      name:
-        type: string
-      parent_id:
-        type: string
-      priority_fetch:
-        type: boolean
-      type:
-        type: string
-      user_ids:
+        mastery_effects:
+          additionalProperties:
+            type: integer
+          type: object
+        pantheon_major:
+          type: string
+        pantheon_minor:
+          type: string
+        skill_overrides:
+          additionalProperties:
+            $ref: '#/components/schemas/PassiveNode'
+          type: object
+        specialisation:
+          $ref: '#/components/schemas/Specialisations'
+      type: object
+    Realm:
+      enum:
+      - pc
+      - sony
+      - xbox
+      - poe2
+      type: string
+      x-enum-varnames:
+      - PC
+      - Sony
+      - Xbox
+      - PoE2
+    Specialisations:
+      description: PoE2 only
+      properties:
+        set1:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        set2:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        shapeshift:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+      type: object
+    StashTab:
+      properties:
+        children:
+          items:
+            $ref: '#/components/schemas/StashTab'
+          type: array
+          uniqueItems: false
+        id:
+          type: string
+        index:
+          type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/Item'
+          type: array
+          uniqueItems: false
+        metadata:
+          $ref: '#/components/schemas/StashTabMetadata'
+        name:
+          type: string
+        parent:
+          type: string
+        type:
+          type: string
+      type: object
+    StashTabMetadata:
+      properties:
+        colour:
+          type: string
+        folder:
+          type: boolean
         items:
           type: integer
-        type: array
-    required:
-    - fetch_enabled
-    - id
-    - last_fetch
-    - name
-    - priority_fetch
-    - type
-    - user_ids
-    type: object
-  ItemWish:
-    properties:
-      build_enabling:
-        type: boolean
-      fulfilled:
-        type: boolean
-      id:
-        type: integer
-      item_field:
-        $ref: '#/definitions/ItemField'
-      priority:
-        type: integer
-      user_id:
-        type: integer
-      value:
-        type: string
-    required:
-    - build_enabling
-    - fulfilled
-    - id
-    - item_field
-    - priority
-    - user_id
-    - value
-    type: object
-  JobCreate:
-    properties:
-      duration_in_seconds:
-        type: integer
-      end_date:
-        format: date-time
-        type: string
-      event_id:
-        type: integer
-      job_type:
-        $ref: '#/definitions/JobType'
-      sleep_after_each_run_seconds:
-        type: integer
-    type: object
-  LadderEntry:
-    properties:
-      armour:
-        type: integer
-      ascendancy:
-        type: string
-      ascendancy_points:
-        type: integer
-      atlas_points:
-        type: integer
-      character_id:
-        type: string
-      character_name:
-        type: string
-      delve_depth:
-        type: integer
-      discord_id:
-        type: string
-      discord_name:
-        type: string
-      dps:
-        type: integer
-      ehp:
-        type: integer
-      ele_max_hit:
-        type: integer
-      es:
-        type: integer
-      evasion:
-        type: integer
-      hp:
-        type: integer
-      item_indexes:
-        items:
+        layout: {}
+        public:
+          type: boolean
+      type: object
+    TwitchStream:
+      properties:
+        backend_user_id:
           type: integer
-        type: array
-      last_active:
-        type: integer
-      level:
-        type: integer
-      main_skill:
-        type: string
-      mana:
-        type: integer
-      movement_speed:
-        type: integer
-      pantheon:
-        type: boolean
-      phys_max_hit:
-        type: integer
-      poe_account:
-        type: string
-      rank:
-        type: integer
-      team_id:
-        type: integer
-      twitch_name:
-        type: string
-      user_id:
-        type: integer
-      xp:
-        type: integer
-    required:
-    - armour
-    - ascendancy
-    - ascendancy_points
-    - atlas_points
-    - character_id
-    - character_name
-    - delve_depth
-    - discord_id
-    - discord_name
-    - dps
-    - ehp
-    - ele_max_hit
-    - es
-    - evasion
-    - hp
-    - item_indexes
-    - last_active
-    - level
-    - main_skill
-    - mana
-    - movement_speed
-    - pantheon
-    - phys_max_hit
-    - poe_account
-    - rank
-    - team_id
-    - user_id
-    - xp
-    type: object
-  MinimalUser:
-    properties:
-      discord_id:
-        type: string
-      discord_name:
-        type: string
-      display_name:
-        type: string
-      id:
-        type: integer
-      poe_account_name:
-        type: string
-    required:
-    - display_name
-    - id
-    type: object
-  NonSensitiveUser:
-    properties:
-      account_name:
-        type: string
-      discord_id:
-        type: string
-      discord_name:
-        type: string
-      display_name:
-        type: string
-      id:
-        type: integer
-      twitch_id:
-        type: string
-      twitch_name:
-        type: string
-    required:
-    - display_name
-    - id
-    type: object
-  Objective:
-    properties:
-      aggregation:
-        $ref: '#/definitions/AggregationType'
-      children:
-        items:
-          $ref: '#/definitions/Objective'
-        type: array
-      conditions:
-        items:
-          $ref: '#/definitions/Condition'
-        type: array
-      extra:
-        type: string
-      hide_progress:
-        type: boolean
-      id:
-        type: integer
-      name:
-        type: string
-      number_field:
-        $ref: '#/definitions/NumberField'
-      number_field_explanation:
-        type: string
-      objective_type:
-        $ref: '#/definitions/ObjectiveType'
-      parent_id:
-        type: integer
-      required_number:
-        type: integer
-      scoring_presets:
-        items:
-          $ref: '#/definitions/ScoringPreset'
-        type: array
-      valid_from:
-        format: date-time
-        type: string
-      valid_to:
-        format: date-time
-        type: string
-    required:
-    - aggregation
-    - children
-    - conditions
-    - extra
-    - hide_progress
-    - id
-    - name
-    - number_field
-    - objective_type
-    - parent_id
-    - required_number
-    - scoring_presets
-    type: object
-  ObjectiveCreate:
-    properties:
-      aggregation:
-        $ref: '#/definitions/AggregationType'
-      conditions:
-        items:
-          $ref: '#/definitions/Condition'
-        type: array
-      extra:
-        type: string
-      hide_progress:
-        type: boolean
-      id:
-        type: integer
-      name:
-        type: string
-      number_field:
-        $ref: '#/definitions/NumberField'
-      number_field_explanation:
-        type: string
-      objective_type:
-        $ref: '#/definitions/ObjectiveType'
-      parent_id:
-        type: integer
-      required_number:
-        type: integer
-      scoring_preset_ids:
-        items:
+        game_id:
+          type: string
+        game_name:
+          type: string
+        id:
+          type: string
+        is_mature:
+          type: boolean
+        language:
+          type: string
+        started_at:
+          type: string
+        tag_ids:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        tags:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        thumbnail_url:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        user_id:
+          type: string
+        user_login:
+          type: string
+        user_name:
+          type: string
+        viewer_count:
           type: integer
-        type: array
-      valid_from:
-        format: date-time
-        type: string
-      valid_to:
-        format: date-time
-        type: string
-    required:
-    - aggregation
-    - conditions
-    - name
-    - number_field
-    - objective_type
-    - parent_id
-    - required_number
-    - scoring_preset_ids
-    type: object
-  ObjectiveValidation:
-    properties:
-      item:
-        $ref: '#/definitions/Item'
-      objective_id:
-        type: integer
-      timestamp:
-        format: date-time
-        type: string
-    required:
-    - item
-    - objective_id
-    - timestamp
-    type: object
-  PoB:
-    properties:
-      armour:
-        type: integer
-      ascendancy:
-        type: string
-      dps:
-        type: integer
-      ehp:
-        type: integer
-      ele_max_hit:
-        type: integer
-      es:
-        type: integer
-      evasion:
-        type: integer
-      export_string:
-        type: string
-      hp:
-        type: integer
-      id:
-        type: integer
-      level:
-        type: integer
-      main_skill:
-        type: string
-      mana:
-        type: integer
-      movement_speed:
-        type: integer
-      phys_max_hit:
-        type: integer
-      timestamp:
-        format: date-time
-        type: string
-      xp:
-        type: integer
-    required:
-    - armour
-    - ascendancy
-    - dps
-    - ehp
-    - ele_max_hit
-    - es
-    - evasion
-    - export_string
-    - hp
-    - id
-    - level
-    - main_skill
-    - mana
-    - movement_speed
-    - phys_max_hit
-    - timestamp
-    - xp
-    type: object
-  Score:
-    properties:
-      bonus_points:
-        type: integer
-      completions:
-        items:
-          $ref: '#/definitions/Completion'
-        type: array
-    required:
-    - bonus_points
-    - completions
-    type: object
-  ScoreDiff:
-    properties:
-      diff_type:
-        $ref: '#/definitions/Difftype'
-      field_diff:
-        items:
-          type: string
-        type: array
-      objective_id:
-        type: integer
-      score:
-        $ref: '#/definitions/Score'
-      team_id:
-        type: integer
-    required:
-    - diff_type
-    - field_diff
-    - objective_id
-    - score
-    - team_id
-    type: object
-  ScoringPreset:
-    properties:
-      description:
-        type: string
-      extra:
-        additionalProperties:
-          type: string
-        type: object
-      id:
-        type: integer
-      name:
-        type: string
-      point_cap:
-        type: integer
-      points:
-        items:
-          type: number
-        type: array
-      scoring_method:
-        $ref: '#/definitions/ScoringMethod'
-    required:
-    - description
-    - id
-    - name
-    - points
-    - scoring_method
-    type: object
-  ScoringPresetCreate:
-    properties:
-      description:
-        type: string
-      extra:
-        additionalProperties:
-          type: string
-        type: object
-      id:
-        type: integer
-      name:
-        type: string
-      point_cap:
-        type: integer
-      points:
-        items:
-          type: number
-        type: array
-      scoring_method:
-        $ref: '#/definitions/ScoringMethod'
-    required:
-    - name
-    - points
-    - scoring_method
-    type: object
-  Signup:
-    properties:
-      expected_playtime:
-        type: integer
-      extra:
-        type: string
-      needs_help:
-        type: boolean
-      partner:
-        $ref: '#/definitions/NonSensitiveUser'
-      partner_id:
-        type: integer
-      partnerWish:
-        type: string
-      team_id:
-        type: integer
-      team_lead:
-        type: boolean
-      timestamp:
-        format: date-time
-        type: string
-      user:
-        $ref: '#/definitions/NonSensitiveUser'
-      wants_to_help:
-        type: boolean
-    required:
-    - expected_playtime
-    - team_lead
-    - timestamp
-    - user
-    type: object
-  SignupCreate:
-    properties:
-      expected_playtime:
-        type: integer
-      extra:
-        type: string
-      needs_help:
-        type: boolean
-      partner_account_name:
-        type: string
-      wants_to_help:
-        type: boolean
-    required:
-    - expected_playtime
-    type: object
-  Submission:
-    properties:
-      approval_status:
-        $ref: '#/definitions/ApprovalStatus'
-      comment:
-        type: string
-      id:
-        type: integer
-      number:
-        type: integer
-      objective_id:
-        type: integer
-      proof:
-        type: string
-      review_comment:
-        type: string
-      reviewer_id:
-        type: integer
-      team_id:
-        type: integer
-      timestamp:
-        format: date-time
-        type: string
-      user_id:
-        type: integer
-    required:
-    - approval_status
-    - comment
-    - id
-    - number
-    - objective_id
-    - proof
-    - team_id
-    - timestamp
-    - user_id
-    type: object
-  SubmissionCreate:
-    properties:
-      comment:
-        type: string
-      id:
-        type: integer
-      number:
-        type: integer
-      objective_id:
-        type: integer
-      proof:
-        type: string
-      timestamp:
-        format: date-time
-        type: string
-    required:
-    - objective_id
-    - timestamp
-    type: object
-  SubmissionReview:
-    properties:
-      approval_status:
-        allOf:
-        - $ref: '#/definitions/ApprovalStatus'
-        enum:
-        - APPROVED
-        - PENDING
-        - REJECTED
-      review_comment:
-        type: string
-    required:
-    - approval_status
-    type: object
-  TabSwitchRequest:
-    properties:
-      fetch_enabled:
-        type: boolean
-      priority_fetch:
-        type: boolean
-    type: object
-  Team:
-    properties:
-      abbreviation:
-        type: string
-      allowed_classes:
-        items:
-          type: string
-        type: array
-      color:
-        type: string
-      discord_role_id:
-        type: string
-      event_id:
-        type: integer
-      id:
-        type: integer
-      name:
-        type: string
-    required:
-    - allowed_classes
-    - event_id
-    - id
-    - name
-    type: object
-  TeamCreate:
-    properties:
-      abbreviation:
-        type: string
-      allowed_classes:
-        items:
-          type: string
-        type: array
-      color:
-        type: string
-      discord_role_id:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    required:
-    - allowed_classes
-    - name
-    type: object
-  TeamSubmissionCreate:
-    properties:
-      objective_id:
-        type: integer
-      team_ids:
-        items:
+      type: object
+    AchievementCreate:
+      properties:
+        name:
+          $ref: '#/components/schemas/AchievementName'
+        user_id:
           type: integer
-        type: array
-    required:
-    - objective_id
-    - team_ids
-    type: object
-  TeamSuggestion:
-    properties:
-      extra:
-        type: string
-      objective_id:
-        type: integer
-    type: object
-  TeamUserCreate:
-    properties:
-      is_team_lead:
-        type: boolean
-      team_id:
-        type: integer
-      user_id:
-        type: integer
-    required:
-    - user_id
-    type: object
-  Timing:
-    properties:
-      description:
-        type: string
-      duration_seconds:
-        type: integer
-      key:
-        $ref: '#/definitions/TimingKey'
-    required:
-    - description
-    - duration_seconds
-    - key
-    type: object
-  TimingCreate:
-    properties:
-      duration_seconds:
-        type: integer
-      key:
-        $ref: '#/definitions/TimingKey'
-    required:
-    - duration_seconds
-    - key
-    type: object
-  UpdateItemWish:
-    properties:
-      build_enabling:
-        type: boolean
-      fulfilled:
-        type: boolean
-      priority:
-        type: integer
-    type: object
-  User:
-    properties:
-      account_name:
-        type: string
-      discord_id:
-        type: string
-      discord_name:
-        type: string
-      display_name:
-        type: string
-      id:
-        type: integer
-      permissions:
-        items:
-          $ref: '#/definitions/Permission'
-        type: array
-      token_expiry_timestamp:
-        format: date-time
-        type: string
-      twitch_id:
-        type: string
-      twitch_name:
-        type: string
-    required:
-    - display_name
-    - id
-    - permissions
-    type: object
-  UserUpdate:
-    properties:
-      display_name:
-        type: string
-    required:
-    - display_name
-    type: object
-  ValidationRequest:
-    properties:
-      timeout_seconds:
-        type: integer
-    required:
-    - timeout_seconds
-    type: object
-  RecurringJob:
-    properties:
-      end_date:
-        type: string
-      event_id:
-        type: integer
-      job_type:
-        $ref: '#/definitions/JobType'
-      sleep_after_each_run_seconds:
-        type: integer
-    required:
-    - end_date
-    - event_id
-    - job_type
-    - sleep_after_each_run_seconds
-    type: object
-  AchievementName:
-    enum:
-    - Participated in an event
-    - Won an event
-    - Teamlead
-    - MVP
-    - Played 5 leagues
-    - Played 10 leagues
-    - Reached level 90
-    - Reached level 95
-    - Reached level 100
-    - Submitted a bounty
-    - Submitted a point unique
-    - Played 5 different ascendancies
-    - Played 10 different ascendancies
-    type: string
-    x-enum-varnames:
-    - AchievementParticipated
-    - AchievementWinner
-    - AchievementTeamlead
-    - AchievementMVP
-    - AchievementPlayed5Leagues
-    - AchievementPlayed10Leagues
-    - AchievementReachedLvl90
-    - AchievementReachedLvl95
-    - AchievementReachedLvl100
-    - AchievementSubmittedABounty
-    - AchievementSubmittedAPointUnique
-    - AchievementPlayed5DifferentAscendancies
-    - AchievementPlayed10DifferentAscendancies
-  AggregationType:
-    enum:
-    - SUM_LATEST
-    - LATEST
-    - EARLIEST
-    - EARLIEST_FRESH_ITEM
-    - MAXIMUM
-    - MINIMUM
-    - DIFFERENCE_BETWEEN
-    - NONE
-    type: string
-    x-enum-varnames:
-    - AggregationTypeSumLatest
-    - AggregationTypeLatest
-    - AggregationTypeEarliest
-    - AggregationTypeEarliestFreshItem
-    - AggregationTypeMaximum
-    - AggregationTypeMinimum
-    - AggregationTypeDifferenceBetween
-    - AggregationTypeNone
-  ApprovalStatus:
-    enum:
-    - APPROVED
-    - REJECTED
-    - PENDING
-    type: string
-    x-enum-varnames:
-    - APPROVED
-    - REJECTED
-    - PENDING
-  FieldType:
-    enum:
-    - string
-    - int
-    - bool
-    - string[]
-    type: string
-    x-enum-varnames:
-    - String
-    - Int
-    - Bool
-    - StringArray
-  GameVersion:
-    enum:
-    - poe1
-    - poe2
-    type: string
-    x-enum-varnames:
-    - PoE1
-    - PoE2
-  ItemField:
-    enum:
-    - BASE_TYPE
-    - NAME
-    - ITEM_CLASS
-    - ICON_NAME
-    - TYPE_LINE
-    - QUALITY
-    - LEVEL
-    - RARITY
-    - ILVL
-    - FRAME_TYPE
-    - TALISMAN_TIER
-    - MAP_TIER
-    - MAP_QUANT
-    - MAP_RARITY
-    - MAP_PACK_SIZE
-    - HEIST_TARGET
-    - HEIST_ROGUE_REQUIREMENT
-    - ENCHANT_MODS
-    - EXPLICIT_MODS
-    - IMPLICIT_MODS
-    - CRAFTED_MODS
-    - FRACTURED_MODS
-    - INFLUENCES
-    - MAX_LINKS
-    - SOCKETS
-    - INCUBATOR_KILLS
-    - IS_CORRUPTED
-    - IS_VAAL
-    - IS_SPLIT
-    - IS_IDENTIFIED
-    - IS_MIRRORED
-    - SANCTUM_AFFLICTIONS
-    - TEMPLE_ROOMS
-    - TEMPLE_ROOMS_T3
-    - RITUAL_VESSEL_BOSSES
-    - RITUAL_VESSEL_MAP
-    - FACETOR_LENS_EXP
-    - MEMORY_STRANDS
-    - IS_FOULBORN
-    - FOULBORN_MODS
-    - GRAFT_SKILL_NAME
-    - GRAFT_SKILL_LEVEL
-    type: string
-    x-enum-comments:
-      SOCKETS: as string like "RGBW"
-    x-enum-descriptions:
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - as string like "RGBW"
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    - ""
-    x-enum-varnames:
-    - BASE_TYPE
-    - NAME
-    - ITEM_CLASS
-    - ICON_NAME
-    - TYPE_LINE
-    - QUALITY
-    - LEVEL
-    - RARITY
-    - ILVL
-    - FRAME_TYPE
-    - TALISMAN_TIER
-    - MAP_TIER
-    - MAP_QUANT
-    - MAP_RARITY
-    - MAP_PACK_SIZE
-    - HEIST_TARGET
-    - HEIST_ROGUE_REQUIREMENT
-    - ENCHANTS
-    - EXPLICITS
-    - IMPLICITS
-    - CRAFTED_MODS
-    - FRACTURED_MODS
-    - INFLUENCES
-    - MAX_LINKS
-    - SOCKETS
-    - INCUBATOR_KILLS
-    - IS_CORRUPTED
-    - IS_VAAL
-    - IS_SPLIT
-    - IS_IDENTIFIED
-    - IS_MIRRORED
-    - SANCTUM_MODS
-    - TEMPLE_ROOMS
-    - TEMPLE_ROOMS_T3
-    - RITUAL_BOSSES
-    - RITUAL_MAP
-    - FACETOR_LENS_EXP
-    - MEMORY_STRANDS
-    - IS_FOULBORN
-    - FOULBORN_MODS
-    - GRAFT_SKILL_NAME
-    - GRAFT_SKILL_LEVEL
-  JobType:
-    enum:
-    - FetchStashChanges
-    - EvaluateStashChanges
-    - FetchCharacterData
-    - FetchGuildStashes
-    type: string
-    x-enum-varnames:
-    - FetchStashChanges
-    - EvaluateStashChanges
-    - FetchCharacterData
-    - FetchGuildStashes
-  NumberField:
-    enum:
-    - STACK_SIZE
-    - PLAYER_LEVEL
-    - DELVE_DEPTH
-    - DELVE_DEPTH_PAST_100
-    - PANTHEON
-    - ASCENDANCY
-    - FULLY_ASCENDED
-    - BLOODLINE_ASCENDANCY_POINTS
-    - BLOODLINE_ASCENDANCY
-    - PLAYER_SCORE
-    - HAS_RARE_ASCENDANCY_PAST_90
-    - WEAPON_QUALITY
-    - ARMOUR_QUALITY
-    - FLASK_QUALITY
-    - EVASION
-    - ENERGY_SHIELD
-    - ARMOUR
-    - HP
-    - MANA
-    - FULL_DPS
-    - EHP
-    - INC_MOVEMENT_SPEED
-    - PHYS_MAX_HIT
-    - ELE_MAX_HIT
-    - ATLAS_POINTS
-    - INFLUENCE_EQUIPPED
-    - FOULBORN_EQUIPPED
-    - GEMS_EQUIPPED
-    - CORRUPTED_ITEMS_EQUIPPED
-    - JEWELS_WITH_IMPLICITS_EQUIPPED
-    - ENCHANTED_ITEMS_EQUIPPED
-    - SUBMISSION_VALUE
-    - FINISHED_OBJECTIVES
-    type: string
-    x-enum-varnames:
-    - NumberFieldStackSize
-    - NumberFieldPlayerLevel
-    - NumberFieldDelveDepth
-    - NumberFieldDelveDepthPast100
-    - NumberFieldPantheon
-    - NumberFieldAscendancy
-    - NumberFieldFullyAscended
-    - NumberFieldBloodlineAscendancyPoints
-    - NumberFieldBloodlineAscendancy
-    - NumberFieldPlayerScore
-    - NumberFieldHasRareAscendancyPast90
-    - NumberFieldWeaponQuality
-    - NumberFieldArmourQuality
-    - NumberFieldFlaskQuality
-    - NumberFieldEvasion
-    - NumberFieldEnergyShield
-    - NumberFieldArmour
-    - NumberFieldHP
-    - NumberFieldMana
-    - NumberFieldFullDPS
-    - NumberFieldEHP
-    - NumberFieldIncMovementSpeed
-    - NumberFieldPhysMaxHit
-    - NumberFieldEleMaxHit
-    - NumberFieldAtlasPoints
-    - NumberFieldInfluenceEquipped
-    - NumberFieldFoulbornEquipped
-    - NumberFieldGemsEquipped
-    - NumberFieldCorruptedItemsEquipped
-    - NumberFieldJewelsWithImplicitsEquipped
-    - NumberFieldEnchantedItemsEquipped
-    - NumberFieldSubmissionValue
-    - NumberFieldFinishedObjectives
-  ObjectiveType:
-    enum:
-    - ITEM
-    - PLAYER
-    - TEAM
-    - SUBMISSION
-    - CATEGORY
-    type: string
-    x-enum-varnames:
-    - ObjectiveTypeItem
-    - ObjectiveTypePlayer
-    - ObjectiveTypeTeam
-    - ObjectiveTypeSubmission
-    - ObjectiveTypeCategory
-  Operator:
-    enum:
-    - EQ
-    - NEQ
-    - GT
-    - LT
-    - IN
-    - NOT_IN
-    - MATCHES
-    - CONTAINS
-    - CONTAINS_ALL
-    - CONTAINS_MATCH
-    - LENGTH_EQ
-    - LENGTH_GT
-    - LENGTH_LT
-    - DOES_NOT_MATCH
-    type: string
-    x-enum-varnames:
-    - EQ
-    - NEQ
-    - GT
-    - LT
-    - IN
-    - NOT_IN
-    - MATCHES
-    - CONTAINS
-    - CONTAINS_ALL
-    - CONTAINS_MATCH
-    - LENGTH_EQ
-    - LENGTH_GT
-    - LENGTH_LT
-    - DOES_NOT_MATCH
-  Permission:
-    enum:
-    - admin
-    - manager
-    - objective_designer
-    - submission_judge
-    type: string
-    x-enum-varnames:
-    - PermissionAdmin
-    - PermissionManager
-    - PermissionObjectiveDesigner
-    - PermissionSubmissionJudge
-  ScoringMethod:
-    enum:
-    - PRESENCE
-    - POINTS_FROM_VALUE
-    - RANKED_TIME
-    - RANKED_VALUE
-    - RANKED_REVERSE
-    - RANKED_COMPLETION_TIME
-    - BONUS_PER_COMPLETION
-    - BINGO_3
-    - BINGO_BOARD
-    - CHILD_NUMBER_SUM
-    type: string
-    x-enum-varnames:
-    - PRESENCE
-    - POINTS_FROM_VALUE
-    - RANKED_TIME
-    - RANKED_VALUE
-    - RANKED_REVERSE
-    - RANKED_COMPLETION
-    - BONUS_PER_COMPLETION
-    - BINGO_3
-    - BINGO_BOARD
-    - MAX_CHILD_NUMBER_SUM
-  TimingKey:
-    enum:
-    - delay_after_character_is_refetched
-    - delay_after_po_relevant_character_is_refetched
-    - delay_after_inactive_character_is_refetched
-    - delay_after_league_account_is_refetched
-    - delay_after_po_relevant_league_account_is_refetched
-    - delay_after_inactive_league_account_is_refetched
-    - delay_after_pob_is_recalculated
-    - delay_after_character_name_is_refetched
-    - character_inactivity_duration
-    - ladder_update_interval
-    - guildstash_update_interval
-    - guildstash_priority_fetch_interval
-    - public_stash_update_interval
-    type: string
-    x-enum-varnames:
-    - CharacterRefetchDelay
-    - CharacterRefetchDelayImportant
-    - CharacterRefetchDelayInactive
-    - LeagueAccountRefetchDelay
-    - LeagueAccountRefetchDelayImportant
-    - LeagueAccountRefetchDelayInactive
-    - PoBRecalculationDelay
-    - CharacterNameRefetchDelay
-    - InactivityDuration
-    - LadderUpdateInterval
-    - GuildstashUpdateInterval
-    - GuildstashPriorityFetchInterval
-    - PublicStashUpdateInterval
-  ApplicationStatus:
-    enum:
-    - applied
-    - accepted
-    - waitlisted
-    - none
-    type: string
-    x-enum-varnames:
-    - ApplicationStatusApplied
-    - ApplicationStatusAccepted
-    - ApplicationStatusWaitlisted
-    - ApplicationStatusNone
-  Difftype:
-    enum:
-    - Added
-    - Removed
-    - Changed
-    - Unchanged
-    type: string
-    x-enum-varnames:
-    - Added
-    - Removed
-    - Changed
-    - Unchanged
-  EventStatus:
-    properties:
-      application_status:
-        $ref: '#/definitions/ApplicationStatus'
-      is_team_lead:
-        type: boolean
-      number_of_signups:
-        type: integer
-      number_of_signups_before:
-        type: integer
-      partner_wish:
-        type: string
-      team_id:
-        type: integer
-      users_who_want_to_sign_up_with_you:
-        items:
+      required:
+      - name
+      - user_id
+      type: object
+    Action:
+      enum:
+      - added
+      - modified
+      - removed
+      type: string
+      x-enum-varnames:
+      - ActionAdded
+      - ActionModified
+      - ActionRemoved
+    AddGuildStashHistoryResponse:
+      properties:
+        number_of_added_entries:
+          type: integer
+      required:
+      - number_of_added_entries
+      type: object
+    Atlas:
+      properties:
+        primary_index:
+          type: integer
+        trees:
+          additionalProperties:
+            items:
+              type: integer
+            type: array
+          type: object
+        user_id:
+          type: integer
+      required:
+      - primary_index
+      - trees
+      - user_id
+      type: object
+    AtlasProgression:
+      properties:
+        index:
+          type: integer
+        nodes:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        timestamp:
+          type: integer
+      type: object
+    CallbackBody:
+      properties:
+        code:
           type: string
-        type: array
-    required:
-    - application_status
-    - is_team_lead
-    - number_of_signups
-    - number_of_signups_before
-    type: object
-  SortedUser:
-    properties:
-      discord_id:
-        type: string
-      discord_name:
-        type: string
-      display_name:
-        type: string
-      is_team_lead:
-        type: boolean
-      poe_name:
-        type: string
-      team_id:
-        type: integer
-      user_id:
-        type: integer
-    required:
-    - discord_id
-    - discord_name
-    - display_name
-    - is_team_lead
-    - poe_name
-    - team_id
-    - user_id
-    type: object
+        referrer:
+          type: string
+        state:
+          type: string
+      required:
+      - code
+      - state
+      type: object
+    CallbackResponse:
+      properties:
+        auth_token:
+          type: string
+        last_path:
+          type: string
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+      - auth_token
+      - last_path
+      - user
+      type: object
+    Character:
+      properties:
+        ascendancy:
+          type: string
+        ascendancy_points:
+          type: integer
+        atlas_node_count:
+          type: integer
+        event_id:
+          type: integer
+        id:
+          type: string
+        level:
+          type: integer
+        main_skill:
+          type: string
+        name:
+          type: string
+        pantheon:
+          type: boolean
+        user_id:
+          type: integer
+      required:
+      - ascendancy
+      - ascendancy_points
+      - atlas_node_count
+      - event_id
+      - id
+      - level
+      - main_skill
+      - name
+      - pantheon
+      type: object
+    CharacterStat:
+      properties:
+        armour:
+          type: integer
+        dps:
+          type: integer
+        ehp:
+          type: integer
+        ele_max_hit:
+          type: integer
+        es:
+          type: integer
+        evasion:
+          type: integer
+        hp:
+          type: integer
+        item_indexes:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        main_skill:
+          type: string
+        mana:
+          type: integer
+        movement_speed:
+          type: integer
+        phys_max_hit:
+          type: integer
+        timestamp:
+          type: integer
+        xp:
+          type: integer
+      required:
+      - armour
+      - dps
+      - ehp
+      - ele_max_hit
+      - es
+      - evasion
+      - hp
+      - item_indexes
+      - main_skill
+      - mana
+      - movement_speed
+      - phys_max_hit
+      - timestamp
+      - xp
+      type: object
+    Completion:
+      properties:
+        finished:
+          type: boolean
+        number:
+          type: integer
+        points:
+          type: integer
+        preset_id:
+          type: integer
+        rank:
+          type: integer
+        timestamp:
+          type: integer
+        user_id:
+          type: integer
+      required:
+      - finished
+      - number
+      - points
+      - preset_id
+      - rank
+      - timestamp
+      type: object
+    Condition:
+      properties:
+        field:
+          $ref: '#/components/schemas/ItemField'
+        operator:
+          $ref: '#/components/schemas/Operator'
+        value:
+          type: string
+      required:
+      - field
+      - operator
+      - value
+      type: object
+    ConditionMappings:
+      properties:
+        field_to_type:
+          additionalProperties:
+            $ref: '#/components/schemas/FieldType'
+          type: object
+        objective_type_to_number_fields:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/NumberField'
+            type: array
+          type: object
+        valid_operators:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/Operator'
+            type: array
+          type: object
+      required:
+      - field_to_type
+      - objective_type_to_number_fields
+      - valid_operators
+      type: object
+    CreateItemWish:
+      properties:
+        build_enabling:
+          type: boolean
+        item_field:
+          $ref: '#/components/schemas/ItemField'
+        value:
+          type: string
+      required:
+      - item_field
+      - value
+      type: object
+    EngagementAdd:
+      properties:
+        name:
+          type: string
+      required:
+      - name
+      type: object
+    Event:
+      properties:
+        application_end_time:
+          format: date-time
+          type: string
+        application_start_time:
+          format: date-time
+          type: string
+        event_end_time:
+          format: date-time
+          type: string
+        event_start_time:
+          format: date-time
+          type: string
+        game_version:
+          $ref: '#/components/schemas/GameVersion'
+        id:
+          type: integer
+        is_current:
+          type: boolean
+        is_locked:
+          type: boolean
+        is_main_event:
+          type: boolean
+        is_public:
+          type: boolean
+        max_size:
+          type: integer
+        name:
+          type: string
+        patch:
+          type: string
+        teams:
+          items:
+            $ref: '#/components/schemas/Team'
+          type: array
+          uniqueItems: false
+        uses_medals:
+          type: boolean
+        waitlist_size:
+          type: integer
+      required:
+      - application_end_time
+      - application_start_time
+      - event_end_time
+      - event_start_time
+      - game_version
+      - id
+      - is_current
+      - is_locked
+      - is_main_event
+      - is_public
+      - max_size
+      - name
+      - teams
+      - uses_medals
+      - waitlist_size
+      type: object
+    EventCreate:
+      properties:
+        application_end_time:
+          format: date-time
+          type: string
+        application_start_time:
+          format: date-time
+          type: string
+        event_end_time:
+          format: date-time
+          type: string
+        event_start_time:
+          format: date-time
+          type: string
+        game_version:
+          $ref: '#/components/schemas/GameVersion'
+        id:
+          type: integer
+        is_current:
+          type: boolean
+        is_locked:
+          type: boolean
+        is_main_event:
+          type: boolean
+        is_public:
+          type: boolean
+        max_size:
+          type: integer
+        name:
+          type: string
+        patch:
+          type: string
+        uses_medals:
+          type: boolean
+        waitlist_size:
+          type: integer
+      required:
+      - application_end_time
+      - application_start_time
+      - event_end_time
+      - event_start_time
+      - game_version
+      - max_size
+      - name
+      - waitlist_size
+      type: object
+    ExtendedSignup:
+      properties:
+        expected_playtime:
+          type: integer
+        extra:
+          type: string
+        highest_character_levels:
+          additionalProperties:
+            type: integer
+          type: object
+        needs_help:
+          type: boolean
+        partner:
+          $ref: '#/components/schemas/NonSensitiveUser'
+        partner_id:
+          type: integer
+        partnerWish:
+          type: string
+        playtimes_in_last_events_per_day_in_hours:
+          additionalProperties:
+            type: number
+          type: object
+        team_id:
+          type: integer
+        team_lead:
+          type: boolean
+        timestamp:
+          format: date-time
+          type: string
+        user:
+          $ref: '#/components/schemas/NonSensitiveUser'
+        wants_to_help:
+          type: boolean
+      required:
+      - expected_playtime
+      - highest_character_levels
+      - playtimes_in_last_events_per_day_in_hours
+      - team_lead
+      - timestamp
+      - user
+      type: object
+    Guild:
+      properties:
+        event_id:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+        tag:
+          type: string
+        team_id:
+          type: integer
+      required:
+      - id
+      - name
+      - tag
+      type: object
+    GuildStashChangeResponse:
+      properties:
+        entries:
+          items:
+            properties:
+              account:
+                properties:
+                  name:
+                    type: string
+                type: object
+              action:
+                type: string
+              id:
+                type: string
+              item:
+                type: string
+              league:
+                type: string
+              stash:
+                type: string
+              time:
+                type: integer
+              x:
+                type: integer
+              "y":
+                type: integer
+            type: object
+          type: array
+          uniqueItems: false
+        truncated:
+          type: boolean
+      type: object
+    GuildStashChangelog:
+      properties:
+        account_name:
+          type: string
+        action:
+          $ref: '#/components/schemas/Action'
+        item_name:
+          type: string
+        number:
+          type: integer
+        stash_name:
+          type: string
+        timestamp:
+          type: integer
+      required:
+      - account_name
+      - action
+      - item_name
+      - number
+      - timestamp
+      type: object
+    GuildStashLogTimestampResponse:
+      properties:
+        earliest:
+          type: integer
+        latest:
+          type: integer
+        league_end:
+          type: integer
+        league_start:
+          type: integer
+      required:
+      - league_end
+      - league_start
+      type: object
+    GuildStashTab:
+      properties:
+        color:
+          type: string
+        fetch_enabled:
+          type: boolean
+        id:
+          type: string
+        index:
+          type: integer
+        last_fetch:
+          format: date-time
+          type: string
+        name:
+          type: string
+        parent_id:
+          type: string
+        priority_fetch:
+          type: boolean
+        type:
+          type: string
+        user_ids:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+      required:
+      - fetch_enabled
+      - id
+      - last_fetch
+      - name
+      - priority_fetch
+      - type
+      - user_ids
+      type: object
+    ItemWish:
+      properties:
+        build_enabling:
+          type: boolean
+        fulfilled:
+          type: boolean
+        id:
+          type: integer
+        item_field:
+          $ref: '#/components/schemas/ItemField'
+        priority:
+          type: integer
+        user_id:
+          type: integer
+        value:
+          type: string
+      required:
+      - build_enabling
+      - fulfilled
+      - id
+      - item_field
+      - priority
+      - user_id
+      - value
+      type: object
+    JobCreate:
+      properties:
+        duration_in_seconds:
+          type: integer
+        end_date:
+          format: date-time
+          type: string
+        event_id:
+          type: integer
+        job_type:
+          $ref: '#/components/schemas/JobType'
+        sleep_after_each_run_seconds:
+          type: integer
+      type: object
+    LadderEntry:
+      properties:
+        armour:
+          type: integer
+        ascendancy:
+          type: string
+        ascendancy_points:
+          type: integer
+        atlas_points:
+          type: integer
+        character_id:
+          type: string
+        character_name:
+          type: string
+        delve_depth:
+          type: integer
+        discord_id:
+          type: string
+        discord_name:
+          type: string
+        dps:
+          type: integer
+        ehp:
+          type: integer
+        ele_max_hit:
+          type: integer
+        es:
+          type: integer
+        evasion:
+          type: integer
+        hp:
+          type: integer
+        item_indexes:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        last_active:
+          type: integer
+        level:
+          type: integer
+        main_skill:
+          type: string
+        mana:
+          type: integer
+        movement_speed:
+          type: integer
+        pantheon:
+          type: boolean
+        phys_max_hit:
+          type: integer
+        poe_account:
+          type: string
+        rank:
+          type: integer
+        team_id:
+          type: integer
+        twitch_name:
+          type: string
+        user_id:
+          type: integer
+        xp:
+          type: integer
+      required:
+      - armour
+      - ascendancy
+      - ascendancy_points
+      - atlas_points
+      - character_id
+      - character_name
+      - delve_depth
+      - discord_id
+      - discord_name
+      - dps
+      - ehp
+      - ele_max_hit
+      - es
+      - evasion
+      - hp
+      - item_indexes
+      - last_active
+      - level
+      - main_skill
+      - mana
+      - movement_speed
+      - pantheon
+      - phys_max_hit
+      - poe_account
+      - rank
+      - team_id
+      - user_id
+      - xp
+      type: object
+    MinimalUser:
+      properties:
+        discord_id:
+          type: string
+        discord_name:
+          type: string
+        display_name:
+          type: string
+        id:
+          type: integer
+        poe_account_name:
+          type: string
+      required:
+      - display_name
+      - id
+      type: object
+    NonSensitiveUser:
+      properties:
+        account_name:
+          type: string
+        discord_id:
+          type: string
+        discord_name:
+          type: string
+        display_name:
+          type: string
+        id:
+          type: integer
+        twitch_id:
+          type: string
+        twitch_name:
+          type: string
+      required:
+      - display_name
+      - id
+      type: object
+    Objective:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/AggregationType'
+        children:
+          items:
+            $ref: '#/components/schemas/Objective'
+          type: array
+          uniqueItems: false
+        conditions:
+          items:
+            $ref: '#/components/schemas/Condition'
+          type: array
+          uniqueItems: false
+        extra:
+          type: string
+        hide_progress:
+          type: boolean
+        id:
+          type: integer
+        name:
+          type: string
+        number_field:
+          $ref: '#/components/schemas/NumberField'
+        number_field_explanation:
+          type: string
+        objective_type:
+          $ref: '#/components/schemas/ObjectiveType'
+        parent_id:
+          type: integer
+        required_number:
+          type: integer
+        scoring_presets:
+          items:
+            $ref: '#/components/schemas/ScoringPreset'
+          type: array
+          uniqueItems: false
+        valid_from:
+          format: date-time
+          type: string
+        valid_to:
+          format: date-time
+          type: string
+      required:
+      - aggregation
+      - children
+      - conditions
+      - extra
+      - hide_progress
+      - id
+      - name
+      - number_field
+      - objective_type
+      - parent_id
+      - required_number
+      - scoring_presets
+      type: object
+    ObjectiveCreate:
+      properties:
+        aggregation:
+          $ref: '#/components/schemas/AggregationType'
+        conditions:
+          items:
+            $ref: '#/components/schemas/Condition'
+          type: array
+          uniqueItems: false
+        extra:
+          type: string
+        hide_progress:
+          type: boolean
+        id:
+          type: integer
+        name:
+          type: string
+        number_field:
+          $ref: '#/components/schemas/NumberField'
+        number_field_explanation:
+          type: string
+        objective_type:
+          $ref: '#/components/schemas/ObjectiveType'
+        parent_id:
+          type: integer
+        required_number:
+          type: integer
+        scoring_preset_ids:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        valid_from:
+          format: date-time
+          type: string
+        valid_to:
+          format: date-time
+          type: string
+      required:
+      - aggregation
+      - conditions
+      - name
+      - number_field
+      - objective_type
+      - parent_id
+      - required_number
+      - scoring_preset_ids
+      type: object
+    ObjectiveValidation:
+      properties:
+        item:
+          $ref: '#/components/schemas/Item'
+        objective_id:
+          type: integer
+        timestamp:
+          format: date-time
+          type: string
+      required:
+      - item
+      - objective_id
+      - timestamp
+      type: object
+    PoB:
+      properties:
+        armour:
+          type: integer
+        ascendancy:
+          type: string
+        dps:
+          type: integer
+        ehp:
+          type: integer
+        ele_max_hit:
+          type: integer
+        es:
+          type: integer
+        evasion:
+          type: integer
+        export_string:
+          type: string
+        hp:
+          type: integer
+        id:
+          type: integer
+        level:
+          type: integer
+        main_skill:
+          type: string
+        mana:
+          type: integer
+        movement_speed:
+          type: integer
+        phys_max_hit:
+          type: integer
+        timestamp:
+          format: date-time
+          type: string
+        xp:
+          type: integer
+      required:
+      - armour
+      - ascendancy
+      - dps
+      - ehp
+      - ele_max_hit
+      - es
+      - evasion
+      - export_string
+      - hp
+      - id
+      - level
+      - main_skill
+      - mana
+      - movement_speed
+      - phys_max_hit
+      - timestamp
+      - xp
+      type: object
+    Score:
+      properties:
+        bonus_points:
+          type: integer
+        completions:
+          items:
+            $ref: '#/components/schemas/Completion'
+          type: array
+          uniqueItems: false
+      required:
+      - bonus_points
+      - completions
+      type: object
+    ScoreDiff:
+      properties:
+        diff_type:
+          $ref: '#/components/schemas/Difftype'
+        field_diff:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        objective_id:
+          type: integer
+        score:
+          $ref: '#/components/schemas/Score'
+        team_id:
+          type: integer
+      required:
+      - diff_type
+      - field_diff
+      - objective_id
+      - score
+      - team_id
+      type: object
+    ScoringPreset:
+      properties:
+        description:
+          type: string
+        extra:
+          additionalProperties:
+            type: string
+          type: object
+        id:
+          type: integer
+        name:
+          type: string
+        point_cap:
+          type: integer
+        points:
+          items:
+            type: number
+          type: array
+          uniqueItems: false
+        scoring_method:
+          $ref: '#/components/schemas/ScoringMethod'
+      required:
+      - description
+      - id
+      - name
+      - points
+      - scoring_method
+      type: object
+    ScoringPresetCreate:
+      properties:
+        description:
+          type: string
+        extra:
+          additionalProperties:
+            type: string
+          type: object
+        id:
+          type: integer
+        name:
+          type: string
+        point_cap:
+          type: integer
+        points:
+          items:
+            type: number
+          type: array
+          uniqueItems: false
+        scoring_method:
+          $ref: '#/components/schemas/ScoringMethod'
+      required:
+      - name
+      - points
+      - scoring_method
+      type: object
+    Signup:
+      properties:
+        expected_playtime:
+          type: integer
+        extra:
+          type: string
+        needs_help:
+          type: boolean
+        partner:
+          $ref: '#/components/schemas/NonSensitiveUser'
+        partner_id:
+          type: integer
+        partnerWish:
+          type: string
+        team_id:
+          type: integer
+        team_lead:
+          type: boolean
+        timestamp:
+          format: date-time
+          type: string
+        user:
+          $ref: '#/components/schemas/NonSensitiveUser'
+        wants_to_help:
+          type: boolean
+      required:
+      - expected_playtime
+      - team_lead
+      - timestamp
+      - user
+      type: object
+    SignupCreate:
+      properties:
+        expected_playtime:
+          type: integer
+        extra:
+          type: string
+        needs_help:
+          type: boolean
+        partner_account_name:
+          type: string
+        wants_to_help:
+          type: boolean
+      required:
+      - expected_playtime
+      type: object
+    Submission:
+      properties:
+        approval_status:
+          $ref: '#/components/schemas/ApprovalStatus'
+        comment:
+          type: string
+        id:
+          type: integer
+        number:
+          type: integer
+        objective_id:
+          type: integer
+        proof:
+          type: string
+        review_comment:
+          type: string
+        reviewer_id:
+          type: integer
+        team_id:
+          type: integer
+        timestamp:
+          format: date-time
+          type: string
+        user_id:
+          type: integer
+      required:
+      - approval_status
+      - comment
+      - id
+      - number
+      - objective_id
+      - proof
+      - team_id
+      - timestamp
+      - user_id
+      type: object
+    SubmissionCreate:
+      properties:
+        comment:
+          type: string
+        id:
+          type: integer
+        number:
+          type: integer
+        objective_id:
+          type: integer
+        proof:
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+      required:
+      - objective_id
+      - timestamp
+      type: object
+    SubmissionReview:
+      properties:
+        approval_status:
+          $ref: '#/components/schemas/ApprovalStatus'
+        review_comment:
+          type: string
+      required:
+      - approval_status
+      type: object
+    TabSwitchRequest:
+      properties:
+        fetch_enabled:
+          type: boolean
+        priority_fetch:
+          type: boolean
+      type: object
+    Team:
+      properties:
+        abbreviation:
+          type: string
+        allowed_classes:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        color:
+          type: string
+        discord_role_id:
+          type: string
+        event_id:
+          type: integer
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - allowed_classes
+      - event_id
+      - id
+      - name
+      type: object
+    TeamCreate:
+      properties:
+        abbreviation:
+          type: string
+        allowed_classes:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        color:
+          type: string
+        discord_role_id:
+          type: string
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+      - allowed_classes
+      - name
+      type: object
+    TeamSubmissionCreate:
+      properties:
+        objective_id:
+          type: integer
+        team_ids:
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+      required:
+      - objective_id
+      - team_ids
+      type: object
+    TeamSuggestion:
+      properties:
+        extra:
+          type: string
+        objective_id:
+          type: integer
+      type: object
+    TeamUserCreate:
+      properties:
+        is_team_lead:
+          type: boolean
+        team_id:
+          type: integer
+        user_id:
+          type: integer
+      required:
+      - user_id
+      type: object
+    Timing:
+      properties:
+        description:
+          type: string
+        duration_seconds:
+          type: integer
+        key:
+          $ref: '#/components/schemas/TimingKey'
+      required:
+      - description
+      - duration_seconds
+      - key
+      type: object
+    TimingCreate:
+      properties:
+        duration_seconds:
+          type: integer
+        key:
+          $ref: '#/components/schemas/TimingKey'
+      required:
+      - duration_seconds
+      - key
+      type: object
+    UpdateItemWish:
+      properties:
+        build_enabling:
+          type: boolean
+        fulfilled:
+          type: boolean
+        priority:
+          type: integer
+      type: object
+    User:
+      properties:
+        account_name:
+          type: string
+        discord_id:
+          type: string
+        discord_name:
+          type: string
+        display_name:
+          type: string
+        id:
+          type: integer
+        permissions:
+          items:
+            $ref: '#/components/schemas/Permission'
+          type: array
+          uniqueItems: false
+        token_expiry_timestamp:
+          format: date-time
+          type: string
+        twitch_id:
+          type: string
+        twitch_name:
+          type: string
+      required:
+      - display_name
+      - id
+      - permissions
+      type: object
+    UserUpdate:
+      properties:
+        display_name:
+          type: string
+      required:
+      - display_name
+      type: object
+    ValidationRequest:
+      properties:
+        timeout_seconds:
+          type: integer
+      required:
+      - timeout_seconds
+      type: object
+    RecurringJob:
+      properties:
+        end_date:
+          type: string
+        event_id:
+          type: integer
+        job_type:
+          $ref: '#/components/schemas/JobType'
+        sleep_after_each_run_seconds:
+          type: integer
+      required:
+      - end_date
+      - event_id
+      - job_type
+      - sleep_after_each_run_seconds
+      type: object
+    AchievementName:
+      enum:
+      - Participated in an event
+      - Won an event
+      - Teamlead
+      - MVP
+      - Played 5 leagues
+      - Played 10 leagues
+      - Reached level 90
+      - Reached level 95
+      - Reached level 100
+      - Submitted a bounty
+      - Submitted a point unique
+      - Played 5 different ascendancies
+      - Played 10 different ascendancies
+      type: string
+      x-enum-varnames:
+      - AchievementParticipated
+      - AchievementWinner
+      - AchievementTeamlead
+      - AchievementMVP
+      - AchievementPlayed5Leagues
+      - AchievementPlayed10Leagues
+      - AchievementReachedLvl90
+      - AchievementReachedLvl95
+      - AchievementReachedLvl100
+      - AchievementSubmittedABounty
+      - AchievementSubmittedAPointUnique
+      - AchievementPlayed5DifferentAscendancies
+      - AchievementPlayed10DifferentAscendancies
+    AggregationType:
+      enum:
+      - SUM_LATEST
+      - LATEST
+      - EARLIEST
+      - EARLIEST_FRESH_ITEM
+      - MAXIMUM
+      - MINIMUM
+      - DIFFERENCE_BETWEEN
+      - NONE
+      type: string
+      x-enum-varnames:
+      - AggregationTypeSumLatest
+      - AggregationTypeLatest
+      - AggregationTypeEarliest
+      - AggregationTypeEarliestFreshItem
+      - AggregationTypeMaximum
+      - AggregationTypeMinimum
+      - AggregationTypeDifferenceBetween
+      - AggregationTypeNone
+    ApprovalStatus:
+      enum:
+      - APPROVED
+      - REJECTED
+      - PENDING
+      - APPROVED
+      - PENDING
+      - REJECTED
+      type: string
+      x-enum-varnames:
+      - APPROVED
+      - REJECTED
+      - PENDING
+    FieldType:
+      enum:
+      - string
+      - int
+      - bool
+      - string[]
+      type: string
+      x-enum-varnames:
+      - String
+      - Int
+      - Bool
+      - StringArray
+    GameVersion:
+      enum:
+      - poe1
+      - poe2
+      type: string
+      x-enum-varnames:
+      - PoE1
+      - PoE2
+    ItemField:
+      enum:
+      - BASE_TYPE
+      - NAME
+      - ITEM_CLASS
+      - ICON_NAME
+      - TYPE_LINE
+      - QUALITY
+      - LEVEL
+      - RARITY
+      - ILVL
+      - FRAME_TYPE
+      - TALISMAN_TIER
+      - MAP_TIER
+      - MAP_QUANT
+      - MAP_RARITY
+      - MAP_PACK_SIZE
+      - HEIST_TARGET
+      - HEIST_ROGUE_REQUIREMENT
+      - ENCHANT_MODS
+      - EXPLICIT_MODS
+      - IMPLICIT_MODS
+      - CRAFTED_MODS
+      - FRACTURED_MODS
+      - INFLUENCES
+      - MAX_LINKS
+      - SOCKETS
+      - INCUBATOR_KILLS
+      - IS_CORRUPTED
+      - IS_VAAL
+      - IS_SPLIT
+      - IS_IDENTIFIED
+      - IS_MIRRORED
+      - SANCTUM_AFFLICTIONS
+      - TEMPLE_ROOMS
+      - TEMPLE_ROOMS_T3
+      - RITUAL_VESSEL_BOSSES
+      - RITUAL_VESSEL_MAP
+      - FACETOR_LENS_EXP
+      - MEMORY_STRANDS
+      - IS_FOULBORN
+      - FOULBORN_MODS
+      - GRAFT_SKILL_NAME
+      - GRAFT_SKILL_LEVEL
+      type: string
+      x-enum-comments:
+        SOCKETS: as string like "RGBW"
+      x-enum-varnames:
+      - BASE_TYPE
+      - NAME
+      - ITEM_CLASS
+      - ICON_NAME
+      - TYPE_LINE
+      - QUALITY
+      - LEVEL
+      - RARITY
+      - ILVL
+      - FRAME_TYPE
+      - TALISMAN_TIER
+      - MAP_TIER
+      - MAP_QUANT
+      - MAP_RARITY
+      - MAP_PACK_SIZE
+      - HEIST_TARGET
+      - HEIST_ROGUE_REQUIREMENT
+      - ENCHANTS
+      - EXPLICITS
+      - IMPLICITS
+      - CRAFTED_MODS
+      - FRACTURED_MODS
+      - INFLUENCES
+      - MAX_LINKS
+      - SOCKETS
+      - INCUBATOR_KILLS
+      - IS_CORRUPTED
+      - IS_VAAL
+      - IS_SPLIT
+      - IS_IDENTIFIED
+      - IS_MIRRORED
+      - SANCTUM_MODS
+      - TEMPLE_ROOMS
+      - TEMPLE_ROOMS_T3
+      - RITUAL_BOSSES
+      - RITUAL_MAP
+      - FACETOR_LENS_EXP
+      - MEMORY_STRANDS
+      - IS_FOULBORN
+      - FOULBORN_MODS
+      - GRAFT_SKILL_NAME
+      - GRAFT_SKILL_LEVEL
+    JobType:
+      enum:
+      - FetchStashChanges
+      - EvaluateStashChanges
+      - FetchCharacterData
+      - FetchGuildStashes
+      type: string
+      x-enum-varnames:
+      - FetchStashChanges
+      - EvaluateStashChanges
+      - FetchCharacterData
+      - FetchGuildStashes
+    NumberField:
+      enum:
+      - STACK_SIZE
+      - PLAYER_LEVEL
+      - DELVE_DEPTH
+      - DELVE_DEPTH_PAST_100
+      - PANTHEON
+      - ASCENDANCY
+      - FULLY_ASCENDED
+      - BLOODLINE_ASCENDANCY_POINTS
+      - BLOODLINE_ASCENDANCY
+      - PLAYER_SCORE
+      - HAS_RARE_ASCENDANCY_PAST_90
+      - WEAPON_QUALITY
+      - ARMOUR_QUALITY
+      - FLASK_QUALITY
+      - EVASION
+      - ENERGY_SHIELD
+      - ARMOUR
+      - HP
+      - MANA
+      - FULL_DPS
+      - EHP
+      - INC_MOVEMENT_SPEED
+      - PHYS_MAX_HIT
+      - ELE_MAX_HIT
+      - ATLAS_POINTS
+      - INFLUENCE_EQUIPPED
+      - FOULBORN_EQUIPPED
+      - GEMS_EQUIPPED
+      - CORRUPTED_ITEMS_EQUIPPED
+      - JEWELS_WITH_IMPLICITS_EQUIPPED
+      - ENCHANTED_ITEMS_EQUIPPED
+      - SUBMISSION_VALUE
+      - FINISHED_OBJECTIVES
+      type: string
+      x-enum-varnames:
+      - NumberFieldStackSize
+      - NumberFieldPlayerLevel
+      - NumberFieldDelveDepth
+      - NumberFieldDelveDepthPast100
+      - NumberFieldPantheon
+      - NumberFieldAscendancy
+      - NumberFieldFullyAscended
+      - NumberFieldBloodlineAscendancyPoints
+      - NumberFieldBloodlineAscendancy
+      - NumberFieldPlayerScore
+      - NumberFieldHasRareAscendancyPast90
+      - NumberFieldWeaponQuality
+      - NumberFieldArmourQuality
+      - NumberFieldFlaskQuality
+      - NumberFieldEvasion
+      - NumberFieldEnergyShield
+      - NumberFieldArmour
+      - NumberFieldHP
+      - NumberFieldMana
+      - NumberFieldFullDPS
+      - NumberFieldEHP
+      - NumberFieldIncMovementSpeed
+      - NumberFieldPhysMaxHit
+      - NumberFieldEleMaxHit
+      - NumberFieldAtlasPoints
+      - NumberFieldInfluenceEquipped
+      - NumberFieldFoulbornEquipped
+      - NumberFieldGemsEquipped
+      - NumberFieldCorruptedItemsEquipped
+      - NumberFieldJewelsWithImplicitsEquipped
+      - NumberFieldEnchantedItemsEquipped
+      - NumberFieldSubmissionValue
+      - NumberFieldFinishedObjectives
+    ObjectiveType:
+      enum:
+      - ITEM
+      - PLAYER
+      - TEAM
+      - SUBMISSION
+      - CATEGORY
+      type: string
+      x-enum-varnames:
+      - ObjectiveTypeItem
+      - ObjectiveTypePlayer
+      - ObjectiveTypeTeam
+      - ObjectiveTypeSubmission
+      - ObjectiveTypeCategory
+    Operator:
+      enum:
+      - EQ
+      - NEQ
+      - GT
+      - LT
+      - IN
+      - NOT_IN
+      - MATCHES
+      - CONTAINS
+      - CONTAINS_ALL
+      - CONTAINS_MATCH
+      - LENGTH_EQ
+      - LENGTH_GT
+      - LENGTH_LT
+      - DOES_NOT_MATCH
+      type: string
+      x-enum-varnames:
+      - EQ
+      - NEQ
+      - GT
+      - LT
+      - IN
+      - NOT_IN
+      - MATCHES
+      - CONTAINS
+      - CONTAINS_ALL
+      - CONTAINS_MATCH
+      - LENGTH_EQ
+      - LENGTH_GT
+      - LENGTH_LT
+      - DOES_NOT_MATCH
+    Permission:
+      enum:
+      - admin
+      - manager
+      - objective_designer
+      - submission_judge
+      type: string
+      x-enum-varnames:
+      - PermissionAdmin
+      - PermissionManager
+      - PermissionObjectiveDesigner
+      - PermissionSubmissionJudge
+    ScoringMethod:
+      enum:
+      - PRESENCE
+      - POINTS_FROM_VALUE
+      - RANKED_TIME
+      - RANKED_VALUE
+      - RANKED_REVERSE
+      - RANKED_COMPLETION_TIME
+      - BONUS_PER_COMPLETION
+      - BINGO_3
+      - BINGO_BOARD
+      - CHILD_NUMBER_SUM
+      type: string
+      x-enum-varnames:
+      - PRESENCE
+      - POINTS_FROM_VALUE
+      - RANKED_TIME
+      - RANKED_VALUE
+      - RANKED_REVERSE
+      - RANKED_COMPLETION
+      - BONUS_PER_COMPLETION
+      - BINGO_3
+      - BINGO_BOARD
+      - MAX_CHILD_NUMBER_SUM
+    TimingKey:
+      enum:
+      - delay_after_character_is_refetched
+      - delay_after_po_relevant_character_is_refetched
+      - delay_after_inactive_character_is_refetched
+      - delay_after_league_account_is_refetched
+      - delay_after_po_relevant_league_account_is_refetched
+      - delay_after_inactive_league_account_is_refetched
+      - delay_after_pob_is_recalculated
+      - delay_after_character_name_is_refetched
+      - character_inactivity_duration
+      - ladder_update_interval
+      - guildstash_update_interval
+      - guildstash_priority_fetch_interval
+      - public_stash_update_interval
+      type: string
+      x-enum-varnames:
+      - CharacterRefetchDelay
+      - CharacterRefetchDelayImportant
+      - CharacterRefetchDelayInactive
+      - LeagueAccountRefetchDelay
+      - LeagueAccountRefetchDelayImportant
+      - LeagueAccountRefetchDelayInactive
+      - PoBRecalculationDelay
+      - CharacterNameRefetchDelay
+      - InactivityDuration
+      - LadderUpdateInterval
+      - GuildstashUpdateInterval
+      - GuildstashPriorityFetchInterval
+      - PublicStashUpdateInterval
+    ApplicationStatus:
+      enum:
+      - applied
+      - accepted
+      - waitlisted
+      - none
+      type: string
+      x-enum-varnames:
+      - ApplicationStatusApplied
+      - ApplicationStatusAccepted
+      - ApplicationStatusWaitlisted
+      - ApplicationStatusNone
+    Difftype:
+      enum:
+      - Added
+      - Removed
+      - Changed
+      - Unchanged
+      type: string
+      x-enum-varnames:
+      - Added
+      - Removed
+      - Changed
+      - Unchanged
+    EventStatus:
+      properties:
+        application_status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        is_team_lead:
+          type: boolean
+        number_of_signups:
+          type: integer
+        number_of_signups_before:
+          type: integer
+        partner_wish:
+          type: string
+        team_id:
+          type: integer
+        users_who_want_to_sign_up_with_you:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+      required:
+      - application_status
+      - is_team_lead
+      - number_of_signups
+      - number_of_signups_before
+      type: object
+    SortedUser:
+      properties:
+        discord_id:
+          type: string
+        discord_name:
+          type: string
+        display_name:
+          type: string
+        is_team_lead:
+          type: boolean
+        poe_name:
+          type: string
+        team_id:
+          type: integer
+        user_id:
+          type: integer
+      required:
+      - discord_id
+      - discord_name
+      - display_name
+      - is_team_lead
+      - poe_name
+      - team_id
+      - user_id
+      type: object
+  securitySchemes:
+    BearerAuth:
+      in: header
+      name: Authorization
+      type: apiKey
+externalDocs:
+  description: ""
+  url: ""
 info:
   contact:
     email: Liberatorist@gmail.com
@@ -2408,6 +2444,7 @@ info:
   description: This is the backend API for the BPL project.
   title: BPL Backend API
   version: "2.0"
+openapi: 3.1.0
 paths:
   /{eventId}/guilds:
     get:
@@ -2418,16 +2455,17 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Guild'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Guild'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -2441,25 +2479,30 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Guild Id
         in: path
         name: guildId
         required: true
-        type: integer
-      - description: Guild
-        in: body
-        name: guild
-        required: true
         schema:
-          $ref: '#/definitions/Guild'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Guild'
+              description: Guild
+              summary: guild
+        description: Guild
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
           description: OK
-          schema:
-            $ref: '#/definitions/Guild'
       security:
       - BearerAuth: []
       tags:
@@ -2473,42 +2516,49 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Guild Id
         in: path
         name: guildId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Limit
         in: query
         name: limit
-        type: integer
+        schema:
+          type: integer
       - description: Offset
         in: query
         name: offset
-        type: integer
+        schema:
+          type: integer
       - description: Name of the user doing the action (Make sure to replace the pound
           sign with a minus)
         in: query
         name: username
-        type: string
+        schema:
+          type: string
       - description: Name of the item (Can be partial)
         in: query
         name: itemname
-        type: string
+        schema:
+          type: string
       - description: Name of the stash tab
         in: query
         name: stashname
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GuildStashChangelog'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/GuildStashChangelog'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -2521,25 +2571,30 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Guild Id
         in: path
         name: guildId
         required: true
-        type: integer
-      - description: Request body
-        in: body
-        name: guildStashChanges
-        required: true
         schema:
-          $ref: '#/definitions/GuildStashChangeResponse'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuildStashChangeResponse'
+              description: Request body
+              summary: guildStashChanges
+        description: Request body
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddGuildStashHistoryResponse'
           description: Created
-          schema:
-            $ref: '#/definitions/AddGuildStashHistoryResponse'
       security:
       - BearerAuth: []
       tags:
@@ -2553,19 +2608,21 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Guild Id
         in: path
         name: guildId
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildStashLogTimestampResponse'
           description: OK
-          schema:
-            $ref: '#/definitions/GuildStashLogTimestampResponse'
       security:
       - BearerAuth: []
       tags:
@@ -2579,21 +2636,23 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: teamId
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/GuildStashTab'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/GuildStashTab'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -2607,24 +2666,27 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: teamId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Stash Tab Id
         in: path
         name: stash_id
         required: true
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildStashTabGGG'
           description: OK
-          schema:
-            $ref: '#/definitions/GuildStashTabGGG'
       security:
       - BearerAuth: []
       tags:
@@ -2637,25 +2699,29 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: teamId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Stash Tab Id
         in: path
         name: stash_id
         required: true
-        type: string
-      - description: Request body
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/TabSwitchRequest'
-      produces:
-      - application/json
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TabSwitchRequest'
+              description: Request body
+              summary: body
+        description: Request body
+        required: true
       responses:
         "204":
           description: No Content
@@ -2672,19 +2738,20 @@ paths:
         in: path
         name: eventId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: teamId
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Stash Tab Id
         in: path
         name: stash_id
         required: true
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "204":
           description: No Content
@@ -2696,25 +2763,23 @@ paths:
     get:
       description: Retrieve all user achievements in the system.
       operationId: getAchievements
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  items:
+                    type: integer
+                  type: array
+                type: object
           description: OK
-          schema:
-            additionalProperties:
-              items:
-                type: integer
-              type: array
-            type: object
       summary: Get achievements
       tags:
       - Achievement
     patch:
       description: Update achievements for all users based on their current progress.
       operationId: updateAchievements
-      produces:
-      - application/json
       responses:
         "204":
           description: No Content
@@ -2724,21 +2789,25 @@ paths:
       tags:
       - Achievement
     post:
-      consumes:
-      - application/json
       description: Add new achievement to the system.
       operationId: addAchievement
-      parameters:
-      - description: Achievement to add
-        in: body
-        name: achievements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/AchievementCreate'
+                description: Achievement to add
+                summary: achievements
+        description: Achievement to add
         required: true
-        schema:
-          $ref: '#/definitions/AchievementCreate'
-      produces:
-      - application/json
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                type: object
           description: Created
       security:
       - BearerAuth: []
@@ -2747,17 +2816,19 @@ paths:
       - Achievement
   /engagement:
     post:
-      consumes:
-      - application/json
       description: Add a new engagement or increment existing engagement number
       operationId: AddEngagement
-      parameters:
-      - description: Engagement to add
-        in: body
-        name: engagement
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/EngagementAdd'
+                description: Engagement to add
+                summary: engagement
+        description: Engagement to add
         required: true
-        schema:
-          $ref: '#/definitions/EngagementAdd'
       responses:
         "204":
           description: No Content
@@ -2769,38 +2840,40 @@ paths:
     get:
       description: Fetches all events
       operationId: GetEvents
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Event'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Event'
-            type: array
       security:
       - BearerAuth: []
       tags:
       - event
     put:
-      consumes:
-      - application/json
       description: Creates or updates an event
       operationId: CreateEvent
-      parameters:
-      - description: Event to create
-        in: body
-        name: event
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/EventCreate'
+                description: Event to create
+                summary: event
+        description: Event to create
         required: true
-        schema:
-          $ref: '#/definitions/EventCreate'
-      produces:
-      - application/json
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
           description: Created
-          schema:
-            $ref: '#/definitions/Event'
       security:
       - BearerAuth: []
       tags:
@@ -2814,7 +2887,8 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
@@ -2830,14 +2904,15 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
           description: OK
-          schema:
-            $ref: '#/definitions/Event'
       security:
       - BearerAuth: []
       tags:
@@ -2851,21 +2926,23 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: 'Threshold in seconds to consider a user active before and after
           an activity (default: 300)'
         in: query
         name: threshold_seconds
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: integer
+                type: object
           description: OK
-          schema:
-            additionalProperties:
-              type: integer
-            type: object
       security:
       - BearerAuth: []
       tags:
@@ -2879,32 +2956,33 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: User ID
         in: path
         name: user_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: 'Threshold in seconds to consider a user active before and after
           an activity (default: 300)'
         in: query
         name: threshold_seconds
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                type: integer
           description: OK
-          schema:
-            type: integer
       security:
       - BearerAuth: []
       tags:
       - activity
   /events/{event_id}/characters:
     get:
-      consumes:
-      - application/json
       description: Get all characters for an event
       operationId: GetCharactersForEvent
       parameters:
@@ -2912,22 +2990,21 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Character'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Character'
-            type: array
       tags:
       - characters
   /events/{event_id}/duplicate:
     post:
-      consumes:
-      - application/json
       description: Duplicates an event's configuration
       operationId: DuplicateEvent
       parameters:
@@ -2935,28 +3012,32 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Event to create
-        in: body
-        name: event
-        required: true
         schema:
-          $ref: '#/definitions/EventCreate'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/EventCreate'
+                description: Event to create
+                summary: event
+        description: Event to create
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
           description: Created
-          schema:
-            $ref: '#/definitions/Event'
       security:
       - BearerAuth: []
       tags:
       - event
   /events/{event_id}/ladder:
     get:
-      consumes:
-      - application/json
       description: Get the ladder for an event
       operationId: GetLadder
       parameters:
@@ -2964,20 +3045,22 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: only show ladder entries from this timestamp after event start
         in: query
         name: hours_after_event_start
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LadderEntry'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/LadderEntry'
-            type: array
       tags:
       - ladder
   /events/{event_id}/objectives:
@@ -2989,19 +3072,18 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Objective'
           description: OK
-          schema:
-            $ref: '#/definitions/Objective'
       tags:
       - objective
     put:
-      consumes:
-      - application/json
       description: Creates a new objective
       operationId: CreateObjective
       parameters:
@@ -3009,20 +3091,26 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Objective to create
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/ObjectiveCreate'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/ObjectiveCreate'
+                description: Objective to create
+                summary: objectiveCreate
+        description: Objective to create
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Objective'
           description: Created
-          schema:
-            $ref: '#/definitions/Objective'
       security:
       - BearerAuth: []
       tags:
@@ -3036,14 +3124,14 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Objective Id
         in: path
         name: id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
@@ -3059,19 +3147,21 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Objective Id
         in: path
         name: id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Objective'
           description: OK
-          schema:
-            $ref: '#/definitions/Objective'
       security:
       - BearerAuth: []
       tags:
@@ -3085,14 +3175,15 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConditionMappings'
           description: OK
-          schema:
-            $ref: '#/definitions/ConditionMappings'
       security:
       - BearerAuth: []
       tags:
@@ -3106,21 +3197,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ObjectiveValidation'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/ObjectiveValidation'
-            type: array
       tags:
       - objective
     post:
-      consumes:
-      - application/json
       description: Validates item objectives for an event seeing if there are completions
         on trade
       operationId: ValidateObjectives
@@ -3129,15 +3219,19 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Validation request
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/ValidationRequest'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/ValidationRequest'
+                description: Validation request
+                summary: validationRequest
+        description: Validation request
+        required: true
       responses:
         "204":
           description: No Content
@@ -3152,16 +3246,17 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ScoreDiff'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/ScoreDiff'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -3175,14 +3270,17 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: integer
+                type: object
           description: OK
-          schema:
-            additionalProperties:
-              type: integer
-            type: object
       security:
       - BearerAuth: []
       tags:
@@ -3197,12 +3295,15 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoreDiff'
           description: OK
-          schema:
-            $ref: '#/definitions/ScoreDiff'
       security:
       - BearerAuth: []
       tags:
@@ -3216,21 +3317,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ScoringPreset'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/ScoringPreset'
-            type: array
       tags:
       - scoring
     put:
-      consumes:
-      - application/json
       description: Creates a new scoring preset
       operationId: CreateScoringPreset
       parameters:
@@ -3238,20 +3338,26 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Preset to create
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/ScoringPresetCreate'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/ScoringPresetCreate'
+                description: Preset to create
+                summary: scoringPresetCreate
+        description: Preset to create
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScoringPreset'
           description: OK
-          schema:
-            $ref: '#/definitions/ScoringPreset'
       security:
       - BearerAuth: []
       tags:
@@ -3265,16 +3371,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Preset Id
         in: path
         name: id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                type: object
           description: OK
       security:
       - BearerAuth: []
@@ -3289,16 +3399,17 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ExtendedSignup'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/ExtendedSignup'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -3312,14 +3423,14 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: User Id
         in: path
         name: user_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
@@ -3336,21 +3447,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signup'
           description: OK
-          schema:
-            $ref: '#/definitions/Signup'
       security:
       - BearerAuth: []
       tags:
       - signup
     put:
-      consumes:
-      - application/json
       description: Creates a signup for the authenticated user
       operationId: CreateSignup
       parameters:
@@ -3358,28 +3468,32 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Signup
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/SignupCreate'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/SignupCreate'
+                description: Signup
+                summary: signupCreate
+        description: Signup
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Signup'
           description: Created
-          schema:
-            $ref: '#/definitions/Signup'
       security:
       - BearerAuth: []
       tags:
       - signup
   /events/{event_id}/status:
     get:
-      consumes:
-      - application/json
       description: Gets the status for an event including the user's application status
       operationId: GetEventStatus
       parameters:
@@ -3387,14 +3501,15 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStatus'
           description: OK
-          schema:
-            $ref: '#/definitions/EventStatus'
       security:
       - BearerAuth: []
       tags:
@@ -3408,16 +3523,17 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TwitchStream'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/TwitchStream'
-            type: array
       tags:
       - streams
   /events/{event_id}/submissions:
@@ -3429,21 +3545,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Submission'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Submission'
-            type: array
       tags:
       - submission
     put:
-      consumes:
-      - application/json
       description: Submits a bounty for an event
       operationId: SubmitBounty
       parameters:
@@ -3451,20 +3566,26 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Submission to create
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/SubmissionCreate'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/SubmissionCreate'
+                description: Submission to create
+                summary: submissionCreate
+        description: Submission to create
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
           description: Created
-          schema:
-            $ref: '#/definitions/Submission'
       security:
       - BearerAuth: []
       tags:
@@ -3478,14 +3599,14 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Submission Id
         in: path
         name: submission_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
@@ -3495,8 +3616,6 @@ paths:
       - submission
   /events/{event_id}/submissions/{submission_id}/review:
     put:
-      consumes:
-      - application/json
       description: Reviews a submission
       operationId: ReviewSubmission
       parameters:
@@ -3504,33 +3623,38 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Submission Id
         in: path
         name: submission_id
         required: true
-        type: integer
-      - description: Submission review
-        in: body
-        name: submission
-        required: true
         schema:
-          $ref: '#/definitions/SubmissionReview'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/SubmissionReview'
+                description: Submission review
+                summary: submission
+        description: Submission review
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Submission'
           description: OK
-          schema:
-            $ref: '#/definitions/Submission'
       security:
       - BearerAuth: []
       tags:
       - submission
   /events/{event_id}/submissions/admin:
     put:
-      consumes:
-      - application/json
       description: Sets submissions for teams
       operationId: SetBulkSubmissionForAdmin
       parameters:
@@ -3538,30 +3662,34 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Submissions to create
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/TeamSubmissionCreate'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/TeamSubmissionCreate'
+                description: Submissions to create
+                summary: teamSubmissionCreate
+        description: Submissions to create
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Submission'
+                type: array
           description: Created
-          schema:
-            items:
-              $ref: '#/definitions/Submission'
-            type: array
       security:
       - BearerAuth: []
       tags:
       - submission
   /events/{event_id}/team/{team_id}/atlas:
     get:
-      consumes:
-      - application/json
       description: Get atlas trees for your team for an event
       operationId: GetTeamAtlasesForEvent
       parameters:
@@ -3569,21 +3697,23 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team ID
         in: path
         name: team_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Atlas'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Atlas'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -3597,21 +3727,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Team'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Team'
-            type: array
       tags:
       - team
     put:
-      consumes:
-      - application/json
       description: Creates a team for an event
       operationId: CreateTeam
       parameters:
@@ -3619,20 +3748,26 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Team to create
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/TeamCreate'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/TeamCreate'
+                description: Team to create
+                summary: teamCreate
+        description: Team to create
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
           description: Created
-          schema:
-            $ref: '#/definitions/Team'
       security:
       - BearerAuth: []
       tags:
@@ -3646,14 +3781,14 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: team_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
@@ -3669,19 +3804,21 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: team_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
           description: OK
-          schema:
-            $ref: '#/definitions/Team'
       tags:
       - team
   /events/{event_id}/teams/{team_id}/item_wishes:
@@ -3693,26 +3830,26 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team ID
         in: path
         name: team_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ItemWish'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/ItemWish'
-            type: array
       tags:
       - item_wishes
     post:
-      consumes:
-      - application/json
       description: Create an item wish for a user in a team
       operationId: CreateItemWish
       parameters:
@@ -3720,25 +3857,32 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team ID
         in: path
         name: team_id
         required: true
-        type: integer
-      - description: Item Wish
-        in: body
-        name: item_wish
-        required: true
         schema:
-          $ref: '#/definitions/CreateItemWish'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/CreateItemWish'
+                description: Item Wish
+                summary: item_wish
+        description: Item Wish
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemWish'
           description: Created
-          schema:
-            $ref: '#/definitions/ItemWish'
       tags:
       - item_wishes
   /events/{event_id}/teams/{team_id}/item_wishes/{wish_id}:
@@ -3750,25 +3894,26 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team ID
         in: path
         name: team_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Wish ID
         in: path
         name: wish_id
         required: true
-        type: integer
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
       tags:
       - item_wishes
     patch:
-      consumes:
-      - application/json
       description: Change an item wish for a user in a team
       operationId: ChangeItemWish
       parameters:
@@ -3776,30 +3921,38 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team ID
         in: path
         name: team_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Wish ID
         in: path
         name: wish_id
         required: true
-        type: integer
-      - description: Item Wish
-        in: body
-        name: item_wish
-        required: true
         schema:
-          $ref: '#/definitions/UpdateItemWish'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/UpdateItemWish'
+                description: Item Wish
+                summary: item_wish
+        description: Item Wish
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemWish'
           description: OK
-          schema:
-            $ref: '#/definitions/ItemWish'
       tags:
       - item_wishes
   /events/{event_id}/teams/{team_id}/suggestions:
@@ -3811,21 +3964,23 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: team_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TeamSuggestion'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/TeamSuggestion'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -3839,19 +3994,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: team_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Objective Id
         in: path
         name: objective_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
@@ -3860,8 +4016,6 @@ paths:
       tags:
       - team
     put:
-      consumes:
-      - application/json
       description: Creates a suggestion for an objective for your team for an event
       operationId: CreateObjectiveTeamSuggestion
       parameters:
@@ -3869,27 +4023,37 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Team Id
         in: path
         name: team_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Objective Id
         in: path
         name: objective_id
         required: true
-        type: integer
-      - description: Suggestion data
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/TeamSuggestion'
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/TeamSuggestion'
+                description: Suggestion data
+                summary: teamSuggestion
+        description: Suggestion data
+        required: true
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                type: object
           description: Created
       security:
       - BearerAuth: []
@@ -3904,22 +4068,21 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SortedUser'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/SortedUser'
-            type: array
       tags:
       - team
       - user
     put:
-      consumes:
-      - application/json
       description: Adds users to teams
       operationId: AddUsersToTeams
       parameters:
@@ -3927,17 +4090,20 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      - description: Users to add to teams
-        in: body
-        name: body
-        required: true
         schema:
-          items:
-            $ref: '#/definitions/TeamUserCreate'
-          type: array
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - items:
+                  $ref: '#/components/schemas/TeamUserCreate'
+                title: teamUsers
+                type: array
+        description: Users to add to teams
+        required: true
       responses:
         "204":
           description: No Content
@@ -3955,18 +4121,19 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  items:
+                    $ref: '#/components/schemas/MinimalUser'
+                  type: array
+                type: object
           description: OK
-          schema:
-            additionalProperties:
-              items:
-                $ref: '#/definitions/MinimalUser'
-              type: array
-            type: object
       tags:
       - user
   /events/{event_id}/users/{user_id}/atlas:
@@ -3978,109 +4145,117 @@ paths:
         in: path
         name: event_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: User Id
         in: path
         name: user_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/AtlasProgression'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/AtlasProgression'
-            type: array
       tags:
       - user
   /items/map:
     get:
       description: Returns a map of item types to item-name-to-ID maps
       operationId: GetItemMap
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  additionalProperties:
+                    type: integer
+                  type: object
+                type: object
           description: OK
-          schema:
-            additionalProperties:
-              additionalProperties:
-                type: integer
-              type: object
-            type: object
       tags:
       - items
   /jobs:
     get:
-      consumes:
-      - application/json
       description: Get all recurring jobs
       operationId: GetJobs
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/RecurringJob'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/RecurringJob'
-            type: array
       security:
       - BearerAuth: []
       tags:
       - jobs
     post:
-      consumes:
-      - application/json
       description: Start a recurring job
       operationId: StartJob
-      parameters:
-      - description: Job to create
-        in: body
-        name: job
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/JobCreate'
+                description: Job to create
+                summary: job
+        description: Job to create
         required: true
-        schema:
-          $ref: '#/definitions/JobCreate'
-      produces:
-      - application/json
       responses:
         "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecurringJob'
           description: Created
-          schema:
-            $ref: '#/definitions/RecurringJob'
       security:
       - BearerAuth: []
       tags:
       - jobs
   /oauth2/{provider}/callback:
     post:
-      consumes:
-      - application/json
       description: Callback handler for oauth
       operationId: OauthCallback
       parameters:
       - description: Provider name
-        enum:
-        - poe
-        - twitch
-        - discord
         in: path
         name: provider
         required: true
-        type: string
-      - description: Callback body
-        in: body
-        name: body
-        required: true
         schema:
-          $ref: '#/definitions/CallbackBody'
+          enum:
+          - poe
+          - twitch
+          - discord
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/CallbackBody'
+                description: Callback body
+                summary: callbackBody
+        description: Callback body
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallbackResponse'
           description: OK
-          schema:
-            $ref: '#/definitions/CallbackResponse'
       tags:
       - oauth
   /oauth2/{provider}/redirect:
@@ -4089,74 +4264,75 @@ paths:
       operationId: OauthRedirect
       parameters:
       - description: Provider name
-        enum:
-        - poe
-        - twitch
-        - discord
         in: path
         name: provider
         required: true
-        type: string
+        schema:
+          enum:
+          - poe
+          - twitch
+          - discord
+          type: string
       - description: Last URL to redirect to after oauth is finished
         in: query
         name: last_url
-        type: string
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                type: string
           description: OK
-          schema:
-            type: string
       security:
       - BearerAuth: []
       tags:
       - oauth
   /oauth2/discord/bot-login:
     post:
-      consumes:
-      - application/json
       description: Logs in the discord bot (only for internal use)
       operationId: LoginDiscordBot
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                type: string
           description: OK
-          schema:
-            type: string
       tags:
       - oauth
   /timings:
     get:
       description: Retrieve the current timing configurations for various operations.
       operationId: getTimings
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Timing'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Timing'
-            type: array
       summary: Get timing configurations
       tags:
       - Timing
     put:
-      consumes:
-      - application/json
       description: Update the timing configurations for various operations.
       operationId: setTimings
-      parameters:
-      - description: List of timing configurations
-        in: body
-        name: timings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - items:
+                  $ref: '#/components/schemas/TimingCreate'
+                title: timings
+                type: array
+        description: List of timing configurations
         required: true
-        schema:
-          items:
-            $ref: '#/definitions/TimingCreate'
-          type: array
-      produces:
-      - application/json
       responses:
         "204":
           description: No Content
@@ -4169,15 +4345,15 @@ paths:
     get:
       description: Fetches all users
       operationId: GetAllUsers
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/User'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/User'
-            type: array
       security:
       - BearerAuth: []
       tags:
@@ -4191,19 +4367,18 @@ paths:
         in: path
         name: user_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
           description: OK
-          schema:
-            $ref: '#/definitions/User'
       tags:
       - user
     patch:
-      consumes:
-      - application/json
       description: Changes the permissions of a user
       operationId: ChangePermissions
       parameters:
@@ -4211,22 +4386,27 @@ paths:
         in: path
         name: user_id
         required: true
-        type: integer
-      - description: Permissions
-        in: body
-        name: permissions
-        required: true
         schema:
-          items:
-            $ref: '#/definitions/Permission'
-          type: array
-      produces:
-      - application/json
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - items:
+                  $ref: '#/components/schemas/Permission'
+                title: permissions
+                type: array
+        description: Permissions
+        required: true
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
           description: OK
-          schema:
-            $ref: '#/definitions/User'
       security:
       - BearerAuth: []
       tags:
@@ -4240,22 +4420,21 @@ paths:
         in: path
         name: user_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Character'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/Character'
-            type: array
       tags:
       - characters
   /users/{user_id}/characters/{character_id}:
     get:
-      consumes:
-      - application/json
       description: Get all character data for an event for a user
       operationId: GetCharacterHistory
       parameters:
@@ -4263,21 +4442,23 @@ paths:
         in: path
         name: user_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Character ID
         in: path
         name: character_id
         required: true
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CharacterStat'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/CharacterStat'
-            type: array
       tags:
       - characters
     patch:
@@ -4288,19 +4469,21 @@ paths:
         in: path
         name: user_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Character ID
         in: path
         name: character_id
         required: true
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Character'
           description: OK
-          schema:
-            $ref: '#/definitions/Character'
       tags:
       - characters
   /users/{user_id}/characters/{character_id}/pobs:
@@ -4312,27 +4495,27 @@ paths:
         in: path
         name: user_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Character ID
         in: path
         name: character_id
         required: true
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PoB'
+                type: array
           description: OK
-          schema:
-            items:
-              $ref: '#/definitions/PoB'
-            type: array
       tags:
       - characters
   /users/{user_id}/characters/{character_id}/pobs/{pob_id}:
     delete:
-      consumes:
-      - application/json
       description: Delete a PoB export for a character
       operationId: DeletePoBExport
       parameters:
@@ -4340,19 +4523,20 @@ paths:
         in: path
         name: user_id
         required: true
-        type: integer
+        schema:
+          type: integer
       - description: Character ID
         in: path
         name: character_id
         required: true
-        type: string
+        schema:
+          type: string
       - description: PoB Export ID
         in: path
         name: pob_id
         required: true
-        type: integer
-      produces:
-      - application/json
+        schema:
+          type: integer
       responses:
         "204":
           description: No Content
@@ -4367,14 +4551,15 @@ paths:
         in: query
         name: provider
         required: true
-        type: string
-      produces:
-      - application/json
+        schema:
+          type: string
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
           description: OK
-          schema:
-            $ref: '#/definitions/User'
       security:
       - BearerAuth: []
       tags:
@@ -4383,43 +4568,39 @@ paths:
     get:
       description: Fetches the authenticated user
       operationId: GetUser
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
           description: OK
-          schema:
-            $ref: '#/definitions/User'
       security:
       - BearerAuth: []
       tags:
       - user
     patch:
-      consumes:
-      - application/json
       description: Updates the authenticated users display name
       operationId: UpdateUser
-      parameters:
-      - description: User
-        in: body
-        name: user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/UserUpdate'
+                description: User
+                summary: user
+        description: User
         required: true
-        schema:
-          $ref: '#/definitions/UserUpdate'
-      produces:
-      - application/json
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
           description: OK
-          schema:
-            $ref: '#/definitions/User'
       security:
       - BearerAuth: []
       tags:
       - user
-securityDefinitions:
-  BearerAuth:
-    in: header
-    name: Authorization
-    type: apiKey
-swagger: "2.0"

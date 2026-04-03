@@ -76,7 +76,6 @@ func setupRecurringJobsController(poeClient *client.PoEClient) []RouteInfo {
 // @Description Get all recurring jobs
 // @Security BearerAuth
 // @Tags jobs
-// @Accept json
 // @Produce json
 // @Success 200 {array} cron.RecurringJob
 // @Router /jobs [get]

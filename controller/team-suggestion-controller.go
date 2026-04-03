@@ -88,7 +88,7 @@ func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 // @Param event_id path int true "Event Id"
 // @Param team_id path int true "Team Id"
 // @Param objective_id path int true "Objective Id"
-// @Param body body TeamSuggestion true "Suggestion data"
+// @Param teamSuggestion body TeamSuggestion true "Suggestion data"
 // @Success 201
 // @Router /events/{event_id}/teams/{team_id}/suggestions/{objective_id} [PUT]
 func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc {

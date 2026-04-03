@@ -61,7 +61,7 @@ func (e *ScoringPresetController) getScoringPresetsForEventHandler() gin.Handler
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Param body body ScoringPresetCreate true "Preset to create"
+// @Param scoringPresetCreate body ScoringPresetCreate true "Preset to create"
 // @Success 200 {object} ScoringPreset
 // @Router /events/{event_id}/scoring-presets [put]
 func (e *ScoringPresetController) createScoringPresetHandler() gin.HandlerFunc {

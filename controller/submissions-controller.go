@@ -51,7 +51,7 @@ func setupSubmissionController() []RouteInfo {
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Param body body TeamSubmissionCreate true "Submissions to create"
+// @Param teamSubmissionCreate body TeamSubmissionCreate true "Submissions to create"
 // @Success 201 {array} Submission
 // @Router /events/{event_id}/submissions/admin [put]
 func (e *SubmissionController) setBulkSubmissionForAdmin() gin.HandlerFunc {
@@ -120,7 +120,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 // @Security BearerAuth
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Param body body SubmissionCreate true "Submission to create"
+// @Param submissionCreate body SubmissionCreate true "Submission to create"
 // @Success 201 {object} Submission
 // @Router /events/{event_id}/submissions [put]
 func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {

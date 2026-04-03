@@ -103,7 +103,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 // @Security BearerAuth
 // @Success 201 {object} Signup
 // @Param event_id path int true "Event Id"
-// @Param body body SignupCreate true "Signup"
+// @Param signupCreate body SignupCreate true "Signup"
 // @Router /events/{event_id}/signups/self [put]
 func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

@@ -80,7 +80,7 @@ type ValidationRequest struct {
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Param body body ValidationRequest true "Validation request"
+// @Param validationRequest body ValidationRequest true "Validation request"
 // @Success 204
 // @Router /events/{event_id}/objectives/validations [post]
 func (e *ObjectiveController) validateObjectivesHandler() gin.HandlerFunc {
@@ -163,7 +163,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 // @Accept json
 // @Produce json
 // @Param event_id path int true "Event Id"
-// @Param body body ObjectiveCreate true "Objective to create"
+// @Param objectiveCreate body ObjectiveCreate true "Objective to create"
 // @Success 201 {object} Objective
 // @Router /events/{event_id}/objectives [put]
 func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {

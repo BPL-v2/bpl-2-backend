@@ -48,7 +48,6 @@ func setupLadderController(poeClient *client.PoEClient) []RouteInfo {
 // @id GetLadder
 // @Description Get the ladder for an event
 // @Tags ladder
-// @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
 // @Param hours_after_event_start query int false "only show ladder entries from this timestamp after event start"
@@ -102,7 +101,6 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 // @id GetCharactersForEvent
 // @Description Get all characters for an event
 // @Tags characters
-// @Accept json
 // @Produce json
 // @Param event_id path int true "Event ID"
 // @Success 200 {array} Character
@@ -126,7 +124,6 @@ func (c *LadderController) GetCharactersForEvent() gin.HandlerFunc {
 // @id GetTeamAtlasesForEvent
 // @Description Get atlas trees for your team for an event
 // @Tags atlas
-// @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param event_id path int true "Event ID"

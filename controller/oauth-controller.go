@@ -49,7 +49,6 @@ type DiscordBotLoginBody struct {
 // @id LoginDiscordBot
 // @Description Logs in the discord bot (only for internal use)
 // @Tags oauth
-// @Accept json
 // @Produce json
 // @Success 200 {string} authToken
 // @Router /oauth2/discord/bot-login [post]
@@ -104,7 +103,7 @@ func (e *OauthController) oauthRedirectHandler() gin.HandlerFunc {
 // @Tags oauth
 // @Accept json
 // @Param provider path repository.Provider true "Provider name"
-// @Param body body CallbackBody true "Callback body"
+// @Param callbackBody body CallbackBody true "Callback body"
 // @Success 200 {object} CallbackResponse
 // @Router /oauth2/{provider}/callback [post]
 func (e *OauthController) callbackHandler() gin.HandlerFunc {

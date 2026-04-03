@@ -135,7 +135,6 @@ func (e *CharacterController) getUserCharactersHandler() gin.HandlerFunc {
 // @id GetCharacterHistory
 // @Description Get all character data for an event for a user
 // @Tags characters
-// @Accept json
 // @Produce json
 // @Param user_id path int true "User ID"
 // @Param character_id path string true "Character ID"
@@ -156,7 +155,6 @@ func (c *CharacterController) getCharacterHistoryHandler() gin.HandlerFunc {
 // @id DeletePoBExport
 // @Description Delete a PoB export for a character
 // @Tags characters
-// @Accept json
 // @Produce json
 // @Param user_id path int true "User ID"
 // @Param character_id path string true "Character ID"
