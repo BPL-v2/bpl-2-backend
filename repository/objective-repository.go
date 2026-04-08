@@ -35,7 +35,10 @@ const (
 type NumberField string
 
 const (
-	NumberFieldStackSize NumberField = "STACK_SIZE"
+	NumberFieldStackSize      NumberField = "STACK_SIZE"
+	NumberFieldHighTierFossil NumberField = "HIGH_TIER_FOSSIL"
+	NumberFieldMidTierFossil  NumberField = "MID_TIER_FOSSIL"
+	NumberFieldLowTierFossil  NumberField = "LOW_TIER_FOSSIL"
 
 	NumberFieldPlayerLevel               NumberField = "PLAYER_LEVEL"
 	NumberFieldDelveDepth                NumberField = "DELVE_DEPTH"
@@ -78,7 +81,7 @@ const (
 )
 
 var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
-	ObjectiveTypeItem: {NumberFieldStackSize},
+	ObjectiveTypeItem: {NumberFieldStackSize, NumberFieldHighTierFossil, NumberFieldMidTierFossil, NumberFieldLowTierFossil},
 	ObjectiveTypePlayer: {
 		NumberFieldPlayerLevel,
 		NumberFieldDelveDepth,

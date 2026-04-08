@@ -3077,6 +3077,9 @@ const docTemplate = `{
             "NumberField": {
                 "enum": [
                     "STACK_SIZE",
+                    "HIGH_TIER_FOSSIL",
+                    "MID_TIER_FOSSIL",
+                    "LOW_TIER_FOSSIL",
                     "PLAYER_LEVEL",
                     "DELVE_DEPTH",
                     "DELVE_DEPTH_PAST_100",
@@ -3113,6 +3116,9 @@ const docTemplate = `{
                 "type": "string",
                 "x-enum-varnames": [
                     "NumberFieldStackSize",
+                    "NumberFieldHighTierFossil",
+                    "NumberFieldMidTierFossil",
+                    "NumberFieldLowTierFossil",
                     "NumberFieldPlayerLevel",
                     "NumberFieldDelveDepth",
                     "NumberFieldDelveDepthPast100",
