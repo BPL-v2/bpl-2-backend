@@ -148,60 +148,6 @@ func handleBingoN(n int) func(objective *repository.Objective, scoringPreset *re
 	}
 }
 
-// func handleBingoN(n int) func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) (map[int]map[int]*Score, error) {
-// 	// Handles a category of collection goals where a team must finish n goals to score, but does not get more points for finishing more than n.
-// 	return func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) (map[int]map[int]*Score, error) {
-// 		sc := make(map[int][]*Score, 0)
-
-// 		for _, score := range childScores {
-// 			if score.Points > 0 {
-// 				sc[score.TeamId] = append(sc[score.TeamId], score)
-// 			}
-// 		}
-// 		timeToFinish := make(map[int]time.Time, 0)
-// 		for teamId, scores := range sc {
-// 			if len(scores) < n {
-// 				continue
-// 			}
-// 			sort.Slice(scores, func(i, j int) bool {
-// 				return scores[i].Timestamp.Before(scores[j].Timestamp)
-// 			})
-// 			timeToFinish[teamId] = scores[n-1].Timestamp
-// 			for i := n; i < len(scores); i++ {
-// 				scores[i].Points = 0
-// 			}
-// 		}
-// 		finishes := make([]TeamCompletion, 0, len(timeToFinish))
-// 		for teamId, ts := range timeToFinish {
-// 			finishes = append(finishes, TeamCompletion{TeamId: teamId, LatestTimestamp: ts})
-// 		}
-// 		sort.Slice(finishes, func(i, j int) bool {
-// 			return finishes[i].LatestTimestamp.Before(finishes[j].LatestTimestamp)
-// 		})
-
-// 		placements := make(map[int]int, len(finishes))
-// 		scores := make([]*Score, 0)
-// 		rank := 1
-// 		for i, f := range finishes {
-// 			if i > 0 && f.LatestTimestamp.After(finishes[i-1].LatestTimestamp) {
-// 				rank = i + 1
-// 			}
-// 			placements[f.TeamId] = rank
-// 			scores = append(scores, &Score{
-// 				ObjectiveId: objective.Id,
-// 				TeamId:      f.TeamId,
-// 				Timestamp:   f.LatestTimestamp,
-// 				Number:      n,
-// 				Finished:    true,
-// 				Points:      int(scoringPreset.Points.Get(rank - 1)),
-// 				Rank:        rank,
-// 			})
-// 		}
-// 		return scores, nil
-// 	}
-
-// }
-
 func handleRankedTime(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	rankFun := func(a, b *Match) bool {
 		if a.Finished && b.Finished {

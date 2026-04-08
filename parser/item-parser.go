@@ -786,10 +786,10 @@ func ValidateConditions(conditions []*dbModel.Condition) error {
 }
 
 type ItemObjectiveChecker struct {
-	ObjectiveId int
-	Function    itemChecker
-	ValidFrom   *time.Time
-	ValidTo     *time.Time
+	Objective *dbModel.Objective
+	Function  itemChecker
+	ValidFrom *time.Time
+	ValidTo   *time.Time
 }
 
 func (oc *ItemObjectiveChecker) Check(item *clientModel.Item) bool {
@@ -830,8 +830,8 @@ func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChec
 		for _, discriminator := range discriminators {
 			if valueToChecker, ok := funcMap[discriminator.field]; ok {
 				checker := &ItemObjectiveChecker{
-					ObjectiveId: objective.Id,
-					Function:    fn,
+					Objective: objective,
+					Function:  fn,
 				}
 				if !ignoreTime {
 					checker.ValidFrom = objective.ValidFrom
@@ -876,15 +876,28 @@ func applyCheckers(checkers []*ItemObjectiveChecker, item *clientModel.Item) []*
 	}
 	for _, checker := range checkers {
 		if checker.Check(item) {
-			number := 1
-			if item.StackSize != nil {
-				number = *item.StackSize
-			}
 			results = append(results, &CheckResult{
-				ObjectiveId: checker.ObjectiveId,
-				Number:      number,
+				ObjectiveId: checker.Objective.Id,
+				Number:      getNumber(item, checker.Objective),
 			})
 		}
 	}
 	return results
+}
+
+func getNumber(item *clientModel.Item, objective *dbModel.Objective) int {
+	multiplier := getMultiplier(objective)
+	if item.StackSize == nil {
+		return multiplier
+	}
+	return *item.StackSize * multiplier
+}
+
+func getMultiplier(objective *dbModel.Objective) int {
+	switch objective.NumberField {
+	case dbModel.NumberFieldStackSize:
+		return 1
+	default:
+		return 1
+	}
 }
