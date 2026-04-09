@@ -13,6 +13,7 @@ type ObjectiveType string
 
 const (
 	ObjectiveTypeItem       ObjectiveType = "ITEM"
+	ObjectiveTypeStashTab   ObjectiveType = "STASH_TAB"
 	ObjectiveTypePlayer     ObjectiveType = "PLAYER"
 	ObjectiveTypeTeam       ObjectiveType = "TEAM"
 	ObjectiveTypeSubmission ObjectiveType = "SUBMISSION"
@@ -36,6 +37,8 @@ type NumberField string
 
 const (
 	NumberFieldStackSize NumberField = "STACK_SIZE"
+
+	NumberFieldFossilFuel NumberField = "FOSSIL_FUEL"
 
 	NumberFieldPlayerLevel               NumberField = "PLAYER_LEVEL"
 	NumberFieldDelveDepth                NumberField = "DELVE_DEPTH"
@@ -78,7 +81,8 @@ const (
 )
 
 var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
-	ObjectiveTypeItem: {NumberFieldStackSize},
+	ObjectiveTypeItem:     {NumberFieldStackSize},
+	ObjectiveTypeStashTab: {NumberFieldFossilFuel},
 	ObjectiveTypePlayer: {
 		NumberFieldPlayerLevel,
 		NumberFieldDelveDepth,

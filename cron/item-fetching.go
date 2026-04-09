@@ -536,7 +536,7 @@ func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient
 			fmt.Printf("Failed to fetch guild stashes: %v\n", err)
 		}
 	}()
-	// go fetchingService.AccessDeterminationLoop()
+	go fetchingService.AccessDeterminationLoop()
 }
 
 func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {

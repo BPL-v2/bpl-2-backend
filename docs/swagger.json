@@ -3071,6 +3071,7 @@
             "NumberField": {
                 "enum": [
                     "STACK_SIZE",
+                    "FOSSIL_FUEL",
                     "PLAYER_LEVEL",
                     "DELVE_DEPTH",
                     "DELVE_DEPTH_PAST_100",
@@ -3107,6 +3108,7 @@
                 "type": "string",
                 "x-enum-varnames": [
                     "NumberFieldStackSize",
+                    "NumberFieldFossilFuel",
                     "NumberFieldPlayerLevel",
                     "NumberFieldDelveDepth",
                     "NumberFieldDelveDepthPast100",
@@ -3144,6 +3146,7 @@
             "ObjectiveType": {
                 "enum": [
                     "ITEM",
+                    "STASH_TAB",
                     "PLAYER",
                     "TEAM",
                     "SUBMISSION",
@@ -3152,6 +3155,7 @@
                 "type": "string",
                 "x-enum-varnames": [
                     "ObjectiveTypeItem",
+                    "ObjectiveTypeStashTab",
                     "ObjectiveTypePlayer",
                     "ObjectiveTypeTeam",
                     "ObjectiveTypeSubmission",

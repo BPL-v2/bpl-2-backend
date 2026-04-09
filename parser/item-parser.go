@@ -792,6 +792,94 @@ type ItemObjectiveChecker struct {
 	ValidTo   *time.Time
 }
 
+type StashTabObjectiveChecker struct {
+	Objective *dbModel.Objective
+	Function  func(items *[]clientModel.Item) int
+	ValidFrom *time.Time
+	ValidTo   *time.Time
+}
+
+type StashTabChecker struct {
+	checkers []*StashTabObjectiveChecker
+}
+
+func (stc *StashTabChecker) Check(items *[]clientModel.Item) []*CheckResult {
+	results := make([]*CheckResult, 0)
+	for _, checker := range stc.checkers {
+		now := time.Now()
+		if (checker.ValidFrom != nil && checker.ValidFrom.After(now)) || (checker.ValidTo != nil && checker.ValidTo.Before(now)) {
+			continue
+		}
+		number := checker.Function(items)
+		if number > 0 {
+			results = append(results, &CheckResult{
+				ObjectiveId: checker.Objective.Id,
+				Number:      number,
+			})
+		}
+	}
+	return results
+}
+
+func fossilMultiplier(item clientModel.Item) int {
+	switch item.BaseType {
+	case "Sanctified Fossil", "Gilded Fossil", "Aetheric Fossil", "Fundamental Fossil", "Shuddering Fossil", "Serrated Fossil", "Lucent Fossil", "Deft Fossil", "Prismatic Fossil", "Opulent Fossil", "Corroded Fossil", "Bound Fossil":
+		return 1
+	case "Jagged Fossil", "Dense Fossil", "Frigid Fossil", "Aberrant Fossil", "Scorched Fossil", "Metallic Fossil", "Pristine Fossil":
+		return 2
+	case "Faceted Fossil", "Tangled Fossil", "Bloodstained Fossil", "Hollow Fossil", "Fractured Fossil", "Glyphic Fossil":
+		return 10
+	default:
+		return 0
+	}
+}
+
+func getStackSize(item clientModel.Item) int {
+	if item.StackSize != nil {
+		return *item.StackSize
+	}
+	return 1
+}
+
+func FossilFuelStashTabCheckerTemporary(items *[]clientModel.Item) int {
+	count := 0
+	for _, item := range *items {
+		count += getStackSize(item) * fossilMultiplier(item)
+	}
+	return count
+}
+
+func NewStashTabChecker(objectives []*dbModel.Objective, ignoreTime bool) (*StashTabChecker, error) {
+	checkers := make([]*StashTabObjectiveChecker, 0)
+	for _, objective := range objectives {
+		if objective.ObjectiveType != dbModel.ObjectiveTypeStashTab {
+			continue
+		}
+		if objective.NumberField != dbModel.NumberFieldFossilFuel {
+			return nil, fmt.Errorf("invalid number field for stash tab objective %d: %s", objective.Id, objective.NumberField)
+		}
+		checkers = append(checkers, &StashTabObjectiveChecker{
+			Objective: objective,
+			Function:  FossilFuelStashTabCheckerTemporary,
+			ValidFrom: func() *time.Time {
+				if !ignoreTime {
+					return objective.ValidFrom
+				} else {
+					return nil
+				}
+			}(),
+			ValidTo: func() *time.Time {
+				if !ignoreTime {
+					return objective.ValidTo
+				} else {
+					return nil
+				}
+			}(),
+		})
+	}
+	return &StashTabChecker{checkers: checkers}, nil
+}
+
 func (oc *ItemObjectiveChecker) Check(item *clientModel.Item) bool {
 	now := time.Now()
 	if (oc.ValidFrom != nil && oc.ValidFrom.After(now)) || (oc.ValidTo != nil && oc.ValidTo.Before(now)) {

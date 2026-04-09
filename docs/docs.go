@@ -3077,6 +3077,7 @@ const docTemplate = `{
             "NumberField": {
                 "enum": [
                     "STACK_SIZE",
+                    "FOSSIL_FUEL",
                     "PLAYER_LEVEL",
                     "DELVE_DEPTH",
                     "DELVE_DEPTH_PAST_100",
@@ -3113,6 +3114,7 @@ const docTemplate = `{
                 "type": "string",
                 "x-enum-varnames": [
                     "NumberFieldStackSize",
+                    "NumberFieldFossilFuel",
                     "NumberFieldPlayerLevel",
                     "NumberFieldDelveDepth",
                     "NumberFieldDelveDepthPast100",
@@ -3150,6 +3152,7 @@ const docTemplate = `{
             "ObjectiveType": {
                 "enum": [
                     "ITEM",
+                    "STASH_TAB",
                     "PLAYER",
                     "TEAM",
                     "SUBMISSION",
@@ -3158,6 +3161,7 @@ const docTemplate = `{
                 "type": "string",
                 "x-enum-varnames": [
                     "ObjectiveTypeItem",
+                    "ObjectiveTypeStashTab",
                     "ObjectiveTypePlayer",
                     "ObjectiveTypeTeam",
                     "ObjectiveTypeSubmission",

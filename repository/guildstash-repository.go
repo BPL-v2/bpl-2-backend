@@ -190,6 +190,9 @@ func (r *GuildStashRepositoryImpl) GetById(stashId string, eventId int) (tab *Gu
 			children = append(children, t)
 		}
 	}
+	if tab == nil {
+		return nil, gorm.ErrRecordNotFound
+	}
 	tab.Children = children
 	return tab, err
 }
