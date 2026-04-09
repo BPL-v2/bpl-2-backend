@@ -43,6 +43,7 @@ const (
 	NumberFieldPlayerLevel               NumberField = "PLAYER_LEVEL"
 	NumberFieldDelveDepth                NumberField = "DELVE_DEPTH"
 	NumberFieldDelveDepthPast100         NumberField = "DELVE_DEPTH_PAST_100"
+	NumberFieldProgressiveDelveDepth     NumberField = "PROGRESSIVE_DELVE_DEPTH"
 	NumberFieldPantheon                  NumberField = "PANTHEON"
 	NumberFieldAscendancy                NumberField = "ASCENDANCY"
 	NumberFieldFullyAscended             NumberField = "FULLY_ASCENDED"
@@ -87,6 +88,7 @@ var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
 		NumberFieldPlayerLevel,
 		NumberFieldDelveDepth,
 		NumberFieldDelveDepthPast100,
+		NumberFieldProgressiveDelveDepth,
 		NumberFieldPantheon,
 		NumberFieldAscendancy,
 		NumberFieldBloodlineAscendancy,
@@ -119,6 +121,7 @@ var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
 		NumberFieldPlayerLevel,
 		NumberFieldDelveDepth,
 		NumberFieldDelveDepthPast100,
+		NumberFieldProgressiveDelveDepth,
 		NumberFieldPantheon,
 		NumberFieldAscendancy,
 		NumberFieldBloodlineAscendancy,

@@ -112,6 +112,32 @@ var rareAscendancies = []string{
 	"Ascendant",
 }
 
+func progressiveDelveMultiplier(depth int) float64 {
+	if depth < 100 {
+		return 0
+	}
+	if depth < 150 {
+		return 1
+	}
+	if depth < 250 {
+		return 1.2
+	}
+	if depth < 350 {
+		return 1.4
+	}
+	if depth < 450 {
+		return 1.6
+	}
+	if depth < 550 {
+		return 1.8
+	}
+	return 2
+}
+
+func progressiveDelveDepth(p *Player) int {
+	return int(float64(p.DelveDepth) * progressiveDelveMultiplier(p.DelveDepth))
+}
+
 func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, error) {
 	if (objective.ObjectiveType != repository.ObjectiveTypePlayer) && (objective.ObjectiveType != repository.ObjectiveTypeTeam) {
 		return nil, fmt.Errorf("not a player objective")
@@ -132,6 +158,8 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 		return func(p *Player) int {
 			return max(p.DelveDepth-100, 0)
 		}, nil
+	case repository.NumberFieldProgressiveDelveDepth:
+		return progressiveDelveDepth, nil
 	case repository.NumberFieldPantheon:
 		return func(p *Player) int {
 			count := 0

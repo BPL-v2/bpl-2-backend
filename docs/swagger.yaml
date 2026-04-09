@@ -2180,6 +2180,7 @@ components:
       - PLAYER_LEVEL
       - DELVE_DEPTH
       - DELVE_DEPTH_PAST_100
+      - PROGRESSIVE_DELVE_DEPTH
       - PANTHEON
       - ASCENDANCY
       - FULLY_ASCENDED
@@ -2216,6 +2217,7 @@ components:
       - NumberFieldPlayerLevel
       - NumberFieldDelveDepth
       - NumberFieldDelveDepthPast100
+      - NumberFieldProgressiveDelveDepth
       - NumberFieldPantheon
       - NumberFieldAscendancy
       - NumberFieldFullyAscended
