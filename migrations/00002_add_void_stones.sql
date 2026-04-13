@@ -1,4 +1,9 @@
 -- +goose Up
+CREATE SEQUENCE IF NOT EXISTS goose_db_version_id_seq;
+ALTER TABLE goose_db_version ALTER COLUMN id SET DEFAULT nextval('goose_db_version_id_seq');
+SELECT setval('goose_db_version_id_seq', COALESCE((SELECT MAX(id) FROM goose_db_version), 0) + 1, false);
+ALTER TABLE goose_db_version ALTER COLUMN tstamp SET DEFAULT now();
+
 ALTER TABLE characters ADD COLUMN void_stones text[] NOT NULL DEFAULT '{}';
 ALTER TABLE character_pobs ADD COLUMN attack_block int2 NOT NULL DEFAULT 0;
 ALTER TABLE character_pobs ADD COLUMN spell_block int2 NOT NULL DEFAULT 0;

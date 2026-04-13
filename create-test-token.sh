@@ -13,7 +13,7 @@ show_usage() {
     echo "Examples:"
     echo "  $0 -id=1"
     echo "  $0 -id=1 -permissions=admin,manager"
-    echo "  $0 -id=5 -permissions=admin,objective_designer,submission_judge,manager"
+    echo "  $0 -id=1 -permissions=admin,objective_designer,submission_judge,manager"
     exit 1
 }
 
