@@ -28,7 +28,7 @@ func setupItemWishController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getItemWishesForTeamHandler(), Authenticated: true, RequiresTeamSelf: true},
 		{Method: "POST", Path: "", HandlerFunc: e.creatItemWishHandler(), Authenticated: true, RequiresTeamSelf: true},
-		{Method: "PATCH", Path: "/:wish_id", HandlerFunc: e.changeItemWishHandler(), Authenticated: true, RequiresTeamLeader: true},
+		{Method: "PATCH", Path: "/:wish_id", HandlerFunc: e.changeItemWishHandler(), Authenticated: true},
 		{Method: "DELETE", Path: "/:wish_id", HandlerFunc: e.deleteItemWishHandler(), Authenticated: true},
 	}
 	for i, route := range routes {
