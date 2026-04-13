@@ -1607,15 +1607,15 @@ func TestCharacterPob_UpdateStats(t *testing.T) {
 		Build: client.Build{
 			PlayerStats: client.PlayerStats{
 				TotalDPS:                  1000.5,
-				CombinedDPS:              2000.7,
-				TotalEHP:                 50000.3,
+				CombinedDPS:               2000.7,
+				TotalEHP:                  50000.3,
 				PhysicalMaximumHitTaken:   30000.0,
 				FireMaximumHitTaken:       25000.0,
 				ColdMaximumHitTaken:       20000.0,
 				LightningMaximumHitTaken:  22000.0,
 				Life:                      5000.0,
 				Mana:                      2000.0,
-				EnergyShield:             1500.0,
+				EnergyShield:              1500.0,
 				Armour:                    10000.0,
 				Evasion:                   8000.0,
 				EffectiveMovementSpeedMod: 1.35,
@@ -1725,7 +1725,7 @@ func TestCharacterRepository_SaveAndGetCharacters(t *testing.T) {
 	users := createTestUsers(1)
 
 	chars := []*Character{
-		{Id: "char1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "TestChar", Level: 50},
+		{Id: "char1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "TestChar", Level: 50, VoidStones: pq.StringArray{}},
 	}
 	err := repo.SaveCharacters(chars)
 	require.NoError(t, err)
@@ -1804,9 +1804,9 @@ func TestCharacterRepository_GetCharactersForUser(t *testing.T) {
 	users := createTestUsers(2)
 
 	repo.SaveCharacters([]*Character{
-		{Id: "cu-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "Char1", Level: 10},
-		{Id: "cu-2", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "Char2", Level: 20},
-		{Id: "cu-3", UserId: intPtr(users[1].Id), EventId: event.Id, Name: "Char3", Level: 30},
+		{Id: "cu-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "Char1", Level: 10, VoidStones: pq.StringArray{}},
+		{Id: "cu-2", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "Char2", Level: 20, VoidStones: pq.StringArray{}},
+		{Id: "cu-3", UserId: intPtr(users[1].Id), EventId: event.Id, Name: "Char3", Level: 30, VoidStones: pq.StringArray{}},
 	})
 
 	found, err := repo.GetCharactersForUser(users[0])
@@ -1821,8 +1821,8 @@ func TestCharacterRepository_SavePoBs(t *testing.T) {
 	users := createTestUsers(1)
 
 	repo.SaveCharacters([]*Character{
-		{Id: "spob-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "C1", Level: 50},
-		{Id: "spob-2", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "C2", Level: 60},
+		{Id: "spob-1", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "C1", Level: 50, VoidStones: pq.StringArray{}},
+		{Id: "spob-2", UserId: intPtr(users[0].Id), EventId: event.Id, Name: "C2", Level: 60, VoidStones: pq.StringArray{}},
 	})
 
 	dummyExport := PoBExport([]byte{0x01})
