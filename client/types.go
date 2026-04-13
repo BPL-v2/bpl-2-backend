@@ -730,6 +730,19 @@ func (c *Character) GetAllItems() []Item {
 	return items
 }
 
+func (c *Character) GetVoidStones() utils.Set[string] {
+	voidStones := utils.Set[string]{}
+	if c.Inventory == nil {
+		return voidStones
+	}
+	for _, item := range *c.Inventory {
+		if strings.Contains(item.BaseType, "Voidstone") {
+			voidStones.Add(item.BaseType)
+		}
+	}
+	return voidStones
+}
+
 func (c *Character) HasSameEquipment(other *Character) bool {
 	if other == nil {
 		return false

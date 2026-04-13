@@ -138,6 +138,20 @@ func ToSet[T comparable](a []T) Set[T] {
 	return set
 }
 
+func (s Set[T]) ToSlice() []T {
+	slice := make([]T, 0, len(s))
+	for k := range s {
+		slice = append(slice, k)
+	}
+	return slice
+}
+
+func (s Set[T]) Add(items ...T) {
+	for _, item := range items {
+		s[item] = true
+	}
+}
+
 func (s1 Set[T]) Intersection(s2 Set[T]) Set[T] {
 	intersection := make(map[T]bool)
 	for k := range s1 {

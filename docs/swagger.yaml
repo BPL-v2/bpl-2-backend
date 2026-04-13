@@ -868,6 +868,8 @@ components:
           type: boolean
         user_id:
           type: integer
+        void_stones:
+          type: integer
       required:
       - ascendancy
       - ascendancy_points
@@ -878,10 +880,13 @@ components:
       - main_skill
       - name
       - pantheon
+      - void_stones
       type: object
     CharacterStat:
       properties:
         armour:
+          type: integer
+        attack_block:
           type: integer
         dps:
           type: integer
@@ -900,6 +905,8 @@ components:
             type: integer
           type: array
           uniqueItems: false
+        lowest_ele_res:
+          type: integer
         main_skill:
           type: string
         mana:
@@ -908,12 +915,15 @@ components:
           type: integer
         phys_max_hit:
           type: integer
+        spell_block:
+          type: integer
         timestamp:
           type: integer
         xp:
           type: integer
       required:
       - armour
+      - attack_block
       - dps
       - ehp
       - ele_max_hit
@@ -921,10 +931,12 @@ components:
       - evasion
       - hp
       - item_indexes
+      - lowest_ele_res
       - main_skill
       - mana
       - movement_speed
       - phys_max_hit
+      - spell_block
       - timestamp
       - xp
       type: object
@@ -2188,6 +2200,7 @@ components:
       - BLOODLINE_ASCENDANCY
       - PLAYER_SCORE
       - HAS_RARE_ASCENDANCY_PAST_90
+      - VOID_STONES
       - WEAPON_QUALITY
       - ARMOUR_QUALITY
       - FLASK_QUALITY
@@ -2201,6 +2214,10 @@ components:
       - INC_MOVEMENT_SPEED
       - PHYS_MAX_HIT
       - ELE_MAX_HIT
+      - ATTACK_BLOCK
+      - SPELL_BLOCK
+      - HIGH_ILVL_FLASKS
+      - ELE_MAX_RES
       - ATLAS_POINTS
       - INFLUENCE_EQUIPPED
       - FOULBORN_EQUIPPED
@@ -2225,6 +2242,7 @@ components:
       - NumberFieldBloodlineAscendancy
       - NumberFieldPlayerScore
       - NumberFieldHasRareAscendancyPast90
+      - NumberFieldVoidStones
       - NumberFieldWeaponQuality
       - NumberFieldArmourQuality
       - NumberFieldFlaskQuality
@@ -2238,6 +2256,10 @@ components:
       - NumberFieldIncMovementSpeed
       - NumberFieldPhysMaxHit
       - NumberFieldEleMaxHit
+      - NumberFieldAttackBlock
+      - NumberFieldSpellBlock
+      - NumberFieldHighIlvlFlasks
+      - NumberFieldEleMaxRes
       - NumberFieldAtlasPoints
       - NumberFieldInfluenceEquipped
       - NumberFieldFoulbornEquipped

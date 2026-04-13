@@ -51,6 +51,7 @@ const (
 	NumberFieldBloodlineAscendancy       NumberField = "BLOODLINE_ASCENDANCY"
 	NumberFieldPlayerScore               NumberField = "PLAYER_SCORE"
 	NumberFieldHasRareAscendancyPast90   NumberField = "HAS_RARE_ASCENDANCY_PAST_90"
+	NumberFieldVoidStones                NumberField = "VOID_STONES"
 
 	NumberFieldWeaponQuality NumberField = "WEAPON_QUALITY"
 	NumberFieldArmourQuality NumberField = "ARMOUR_QUALITY"
@@ -66,6 +67,10 @@ const (
 	NumberFieldIncMovementSpeed NumberField = "INC_MOVEMENT_SPEED"
 	NumberFieldPhysMaxHit       NumberField = "PHYS_MAX_HIT"
 	NumberFieldEleMaxHit        NumberField = "ELE_MAX_HIT"
+	NumberFieldAttackBlock      NumberField = "ATTACK_BLOCK"
+	NumberFieldSpellBlock       NumberField = "SPELL_BLOCK"
+	NumberFieldHighIlvlFlasks   NumberField = "HIGH_ILVL_FLASKS"
+	NumberFieldEleMaxRes        NumberField = "ELE_MAX_RES"
 
 	NumberFieldAtlasPoints NumberField = "ATLAS_POINTS"
 

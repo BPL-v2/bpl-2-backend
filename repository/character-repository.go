@@ -21,17 +21,18 @@ import (
 )
 
 type Character struct {
-	Id               string  `gorm:"not null;primaryKey"`
-	UserId           *int    `gorm:"null;index"`
-	EventId          int     `gorm:"not null;index"`
-	Name             string  `gorm:"not null"`
-	Level            int     `gorm:"not null"`
-	MainSkill        string  `gorm:"not null"`
-	Ascendancy       string  `gorm:"not null"`
-	AscendancyPoints int     `gorm:"not null"`
-	Pantheon         bool    `gorm:"not null"`
-	AtlasPoints      int     `gorm:"not null"`
-	OldAccountName   *string `gorm:"null;index"`
+	Id               string         `gorm:"not null;primaryKey"`
+	UserId           *int           `gorm:"null;index"`
+	EventId          int            `gorm:"not null;index"`
+	Name             string         `gorm:"not null"`
+	Level            int            `gorm:"not null"`
+	MainSkill        string         `gorm:"not null"`
+	Ascendancy       string         `gorm:"not null"`
+	AscendancyPoints int            `gorm:"not null"`
+	Pantheon         bool           `gorm:"not null"`
+	AtlasPoints      int            `gorm:"not null"`
+	OldAccountName   *string        `gorm:"null;index"`
+	VoidStones       pq.StringArray `gorm:"type:text[];not null"`
 }
 
 var fullDpsSkillMultiplierRegex = regexp.MustCompile(`^\(?\s*\d+x\s+(.+?)\s*\)?$`)
@@ -54,6 +55,16 @@ func float2Int32(f float64) int32 {
 		return int32(^uint32(0) >> 1) // max int32 value
 	}
 	return int32(f)
+}
+
+func float2Int8(f float64) int8 {
+	if f < 0 {
+		return -float2Int8(-f) // handle negative values
+	}
+	if f > float64(int8(^uint8(0)>>1)) {
+		return int8(^uint8(0) >> 1) // max int8 value
+	}
+	return int8(f)
 }
 
 type PoBExport []byte
@@ -122,6 +133,9 @@ type CharacterPob struct {
 	Evasion       int32 `gorm:"not null"`
 	XP            int64 `gorm:"not null"`
 	MovementSpeed int32 `gorm:"not null"`
+	AttackBlock   int8  `gorm:"not null"`
+	SpellBlock    int8  `gorm:"not null"`
+	LowestEleRes  int8  `gorm:"not null"`
 }
 
 func (c *CharacterPob) HasEqualStats(other *CharacterPob) bool {
@@ -138,7 +152,10 @@ func (c *CharacterPob) HasEqualStats(other *CharacterPob) bool {
 		c.Armour == other.Armour &&
 		c.Evasion == other.Evasion &&
 		c.XP == other.XP &&
-		c.MovementSpeed == other.MovementSpeed
+		c.MovementSpeed == other.MovementSpeed &&
+		c.AttackBlock == other.AttackBlock &&
+		c.SpellBlock == other.SpellBlock &&
+		c.LowestEleRes == other.LowestEleRes
 }
 
 func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {
@@ -166,6 +183,9 @@ func (p *CharacterPob) UpdateStats(pob *client.PathOfBuilding) {
 	p.Evasion = float2Int32(pob.Build.PlayerStats.Evasion)
 	p.MovementSpeed = float2Int32(pob.Build.PlayerStats.EffectiveMovementSpeedMod * 100)
 	p.MainSkill = pob.GetMainSkill()
+	p.AttackBlock = float2Int8(pob.Build.PlayerStats.EffectiveBlockChance)
+	p.SpellBlock = float2Int8(pob.Build.PlayerStats.EffectiveSpellBlockChance)
+	p.LowestEleRes = float2Int8(min(pob.Build.PlayerStats.FireResist, pob.Build.PlayerStats.ColdResist, pob.Build.PlayerStats.LightningResist))
 }
 
 type CharacterRepository interface {

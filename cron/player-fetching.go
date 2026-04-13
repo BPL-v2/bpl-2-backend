@@ -13,6 +13,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 var (
@@ -123,6 +125,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		charQueue <- characterResponse.Character
 		player.LastUpdateTimes.PoB = time.Now()
 	}
+	player.New.VoidStones = player.Old.VoidStones.Union(player.New.Character.GetVoidStones())
 	character := &repository.Character{
 		Id:               player.New.Character.Id,
 		UserId:           &player.UserId,
@@ -133,6 +136,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		Ascendancy:       player.New.Character.Class,
 		AscendancyPoints: player.New.Character.GetAscendancyPoints(),
 		AtlasPoints:      player.New.MaxAtlasTreeNodes(),
+		VoidStones:       pq.StringArray(player.New.VoidStones.ToSlice()),
 	}
 	err = s.characterRepository.Save(character)
 	if err != nil {

@@ -1269,6 +1269,9 @@ const docTemplate = `{
                     },
                     "user_id": {
                         "type": "integer"
+                    },
+                    "void_stones": {
+                        "type": "integer"
                     }
                 },
                 "required": [
@@ -1280,13 +1283,17 @@ const docTemplate = `{
                     "level",
                     "main_skill",
                     "name",
-                    "pantheon"
+                    "pantheon",
+                    "void_stones"
                 ],
                 "type": "object"
             },
             "CharacterStat": {
                 "properties": {
                     "armour": {
+                        "type": "integer"
+                    },
+                    "attack_block": {
                         "type": "integer"
                     },
                     "dps": {
@@ -1314,6 +1321,9 @@ const docTemplate = `{
                         "type": "array",
                         "uniqueItems": false
                     },
+                    "lowest_ele_res": {
+                        "type": "integer"
+                    },
                     "main_skill": {
                         "type": "string"
                     },
@@ -1326,6 +1336,9 @@ const docTemplate = `{
                     "phys_max_hit": {
                         "type": "integer"
                     },
+                    "spell_block": {
+                        "type": "integer"
+                    },
                     "timestamp": {
                         "type": "integer"
                     },
@@ -1335,6 +1348,7 @@ const docTemplate = `{
                 },
                 "required": [
                     "armour",
+                    "attack_block",
                     "dps",
                     "ehp",
                     "ele_max_hit",
@@ -1342,10 +1356,12 @@ const docTemplate = `{
                     "evasion",
                     "hp",
                     "item_indexes",
+                    "lowest_ele_res",
                     "main_skill",
                     "mana",
                     "movement_speed",
                     "phys_max_hit",
+                    "spell_block",
                     "timestamp",
                     "xp"
                 ],
@@ -3089,6 +3105,7 @@ const docTemplate = `{
                     "BLOODLINE_ASCENDANCY",
                     "PLAYER_SCORE",
                     "HAS_RARE_ASCENDANCY_PAST_90",
+                    "VOID_STONES",
                     "WEAPON_QUALITY",
                     "ARMOUR_QUALITY",
                     "FLASK_QUALITY",
@@ -3102,6 +3119,10 @@ const docTemplate = `{
                     "INC_MOVEMENT_SPEED",
                     "PHYS_MAX_HIT",
                     "ELE_MAX_HIT",
+                    "ATTACK_BLOCK",
+                    "SPELL_BLOCK",
+                    "HIGH_ILVL_FLASKS",
+                    "ELE_MAX_RES",
                     "ATLAS_POINTS",
                     "INFLUENCE_EQUIPPED",
                     "FOULBORN_EQUIPPED",
@@ -3127,6 +3148,7 @@ const docTemplate = `{
                     "NumberFieldBloodlineAscendancy",
                     "NumberFieldPlayerScore",
                     "NumberFieldHasRareAscendancyPast90",
+                    "NumberFieldVoidStones",
                     "NumberFieldWeaponQuality",
                     "NumberFieldArmourQuality",
                     "NumberFieldFlaskQuality",
@@ -3140,6 +3162,10 @@ const docTemplate = `{
                     "NumberFieldIncMovementSpeed",
                     "NumberFieldPhysMaxHit",
                     "NumberFieldEleMaxHit",
+                    "NumberFieldAttackBlock",
+                    "NumberFieldSpellBlock",
+                    "NumberFieldHighIlvlFlasks",
+                    "NumberFieldEleMaxRes",
                     "NumberFieldAtlasPoints",
                     "NumberFieldInfluenceEquipped",
                     "NumberFieldFoulbornEquipped",

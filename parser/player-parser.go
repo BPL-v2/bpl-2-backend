@@ -17,6 +17,7 @@ type Player struct {
 	DelveDepth        int
 	Character         *client.Character
 	PoB               *repository.CharacterPob
+	VoidStones        utils.Set[string]
 }
 
 type PlayerUpdate struct {
@@ -138,11 +139,224 @@ func progressiveDelveDepth(p *Player) int {
 	return int(float64(p.DelveDepth) * progressiveDelveMultiplier(p.DelveDepth))
 }
 
-func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, error) {
-	if (objective.ObjectiveType != repository.ObjectiveTypePlayer) && (objective.ObjectiveType != repository.ObjectiveTypeTeam) {
-		return nil, fmt.Errorf("not a player objective")
+func calculateOldPO(p *Player) int {
+	score := 0
+	if p.Character == nil {
+		return 0
 	}
-	switch objective.NumberField {
+	ascendancyPoints := p.Character.GetAscendancyPoints()
+	if p.Character.Level >= 40 {
+		score += 1
+	}
+	if p.Character.Level >= 60 {
+		score += 1
+	}
+	if p.Character.Level >= 80 {
+		score += 1
+	}
+	if p.Character.Level >= 90 {
+		score += 3
+	}
+	if ascendancyPoints >= 4 {
+		score += 1
+	}
+	if ascendancyPoints >= 6 {
+		score += 1
+	}
+	if ascendancyPoints >= 8 {
+		score += 1
+	}
+	if p.MaxAtlasTreeNodes() >= 40 {
+		score += 3
+	}
+	if score > 9 {
+		return 9
+	}
+	return score
+}
+
+func poChecker() (PlayerObjectiveChecker, error) {
+	levelFunc, err := parserForNumberField(repository.NumberFieldPlayerLevel)
+	ascendancyFunc, err := parserForNumberField(repository.NumberFieldAscendancy)
+
+	armourFunc, err := parserForNumberField(repository.NumberFieldArmour)
+	evasionFunc, err := parserForNumberField(repository.NumberFieldEvasion)
+	movementSpeedFunc, err := parserForNumberField(repository.NumberFieldIncMovementSpeed)
+	esFunc, err := parserForNumberField(repository.NumberFieldEnergyShield)
+	hpFunc, err := parserForNumberField(repository.NumberFieldHP)
+	manaFunc, err := parserForNumberField(repository.NumberFieldMana)
+	dpsFunc, err := parserForNumberField(repository.NumberFieldFullDPS)
+	ehpFunc, err := parserForNumberField(repository.NumberFieldEHP)
+	blockFunc, err := parserForNumberField(repository.NumberFieldAttackBlock)
+	maxResFunc, err := parserForNumberField(repository.NumberFieldEleMaxRes)
+	eleMaxHitFunc, err := parserForNumberField(repository.NumberFieldEleMaxHit)
+	physMaxHitFunc, err := parserForNumberField(repository.NumberFieldPhysMaxHit)
+	voidStonesFunc, err := parserForNumberField(repository.NumberFieldVoidStones)
+	if err != nil {
+		return nil, err
+	}
+	return func(p *Player) int {
+		level := levelFunc(p)
+		ascendancy := ascendancyFunc(p)
+		armour := armourFunc(p)
+		evasion := evasionFunc(p)
+		movementSpeed := movementSpeedFunc(p)
+		es := esFunc(p)
+		hp := hpFunc(p)
+		mana := manaFunc(p)
+		dps := dpsFunc(p)
+		ehp := ehpFunc(p)
+		block := blockFunc(p)
+		maxRes := maxResFunc(p)
+		eleMaxHit := eleMaxHitFunc(p)
+		physMaxHit := physMaxHitFunc(p)
+		voidStones := voidStonesFunc(p)
+		score := 0
+		// general progression
+		if level >= 40 {
+			score += 1
+		}
+		if level >= 60 {
+			score += 1
+		}
+		if level >= 80 {
+			score += 1
+		}
+		if level >= 90 {
+			score += 3
+		}
+		if ascendancy >= 4 {
+			score += 1
+		}
+		if ascendancy >= 6 {
+			score += 1
+		}
+		if ascendancy >= 8 {
+			score += 1
+		}
+		score = min(score, 9)
+
+		// custom progression
+		if armour >= 30000 {
+			score += 1
+		}
+		if armour >= 60000 {
+			score += 1
+		}
+		if armour >= 150000 {
+			score += 2
+		}
+		if evasion >= 30000 {
+			score += 1
+		}
+		if evasion >= 60000 {
+			score += 1
+		}
+		if evasion >= 150000 {
+			score += 2
+		}
+		if level >= 95 {
+			score += 2
+		}
+		if level >= 98 {
+			score += 2
+		}
+		if voidStones >= 4 {
+			score += 4
+		}
+		if movementSpeed >= 50 {
+			score += 1
+		}
+		if movementSpeed >= 100 {
+			score += 1
+		}
+		if movementSpeed >= 150 {
+			score += 2
+		}
+		if es >= 9000 {
+			score += 1
+		}
+		if es >= 12000 {
+			score += 1
+		}
+		if es >= 15000 {
+			score += 2
+		}
+		if hp >= 5500 {
+			score += 1
+		}
+		if hp >= 6250 {
+			score += 1
+		}
+		if hp >= 7000 {
+			score += 2
+		}
+		if mana >= 8000 {
+			score += 1
+		}
+		if mana >= 11000 {
+			score += 1
+		}
+		if mana >= 14000 {
+			score += 2
+		}
+		if dps >= 5000000 {
+			score += 1
+		}
+		if dps >= 10000000 {
+			score += 1
+		}
+		if dps >= 32000000 {
+			score += 2
+		}
+		if ehp >= 50000 {
+			score += 1
+		}
+		if ehp >= 150000 {
+			score += 1
+		}
+		if ehp >= 400000 {
+			score += 2
+		}
+		if block >= 50 {
+			score += 1
+		}
+		if block >= 80 {
+			score += 1
+		}
+		if block >= 83 {
+			score += 2
+		}
+		if maxRes >= 84 {
+			score += 1
+		}
+		if maxRes >= 90 {
+			score += 1
+		}
+		if eleMaxHit >= 40000 {
+			score += 1
+		}
+		if eleMaxHit >= 80000 {
+			score += 1
+		}
+		if eleMaxHit >= 120000 {
+			score += 2
+		}
+		if physMaxHit >= 12000 {
+			score += 1
+		}
+		if physMaxHit >= 16000 {
+			score += 1
+		}
+		if physMaxHit >= 20000 {
+			score += 2
+		}
+		return min(score, 17)
+	}, nil
+}
+
+func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveChecker, error) {
+	switch numberField {
 	case repository.NumberFieldPlayerLevel:
 		return func(p *Player) int {
 			if p.Character == nil {
@@ -189,41 +403,7 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 			return 1
 		}, nil
 	case repository.NumberFieldPlayerScore:
-		return func(p *Player) int {
-			score := 0
-			if p.Character == nil {
-				return 0
-			}
-			ascendancyPoints := p.Character.GetAscendancyPoints()
-			if p.Character.Level >= 40 {
-				score += 1
-			}
-			if p.Character.Level >= 60 {
-				score += 1
-			}
-			if p.Character.Level >= 80 {
-				score += 1
-			}
-			if p.Character.Level >= 90 {
-				score += 3
-			}
-			if ascendancyPoints >= 4 {
-				score += 1
-			}
-			if ascendancyPoints >= 6 {
-				score += 1
-			}
-			if ascendancyPoints >= 8 {
-				score += 1
-			}
-			if p.MaxAtlasTreeNodes() >= 40 {
-				score += 3
-			}
-			if score > 9 {
-				return 9
-			}
-			return score
-		}, nil
+		return poChecker()
 	case repository.NumberFieldInfluenceEquipped:
 		return func(p *Player) int {
 			return itemCount(p.Character, func(item client.Item) bool {
@@ -359,6 +539,37 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 			}
 			return int(p.PoB.EleMaxHit)
 		}, nil
+	case repository.NumberFieldAttackBlock:
+		return func(p *Player) int {
+			if p.PoB == nil {
+				return 0
+			}
+			return int(p.PoB.AttackBlock)
+		}, nil
+	case repository.NumberFieldSpellBlock:
+		return func(p *Player) int {
+			if p.PoB == nil {
+				return 0
+			}
+			return int(p.PoB.SpellBlock)
+		}, nil
+	case repository.NumberFieldEleMaxRes:
+		return func(p *Player) int {
+			if p.PoB == nil {
+				return 0
+			}
+			return int(p.PoB.LowestEleRes)
+		}, nil
+	case repository.NumberFieldVoidStones:
+		return func(p *Player) int {
+			return len(p.VoidStones)
+		}, nil
+	case repository.NumberFieldHighIlvlFlasks:
+		return func(p *Player) int {
+			return itemCount(p.Character, func(item client.Item) bool {
+				return strings.Contains(item.BaseType, "Flask") && item.Ilvl >= 84
+			})
+		}, nil
 	case repository.NumberFieldIncMovementSpeed:
 		return func(p *Player) int {
 			if p.PoB == nil {
@@ -398,6 +609,13 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 	default:
 		return nil, fmt.Errorf("unsupported number field")
 	}
+}
+
+func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, error) {
+	if (objective.ObjectiveType != repository.ObjectiveTypePlayer) && (objective.ObjectiveType != repository.ObjectiveTypeTeam) {
+		return nil, fmt.Errorf("not a player objective")
+	}
+	return parserForNumberField(objective.NumberField)
 }
 
 func quality(character *client.Character, superclass string) int {

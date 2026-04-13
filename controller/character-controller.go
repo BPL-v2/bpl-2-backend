@@ -202,6 +202,7 @@ type Character struct {
 	AscendancyPoints int    `json:"ascendancy_points" binding:"required"`
 	AtlasNodeCount   int    `json:"atlas_node_count" binding:"required"`
 	Pantheon         bool   `json:"pantheon" binding:"required"`
+	VoidStones       int    `json:"void_stones" binding:"required"`
 }
 
 type PoB struct {
@@ -262,6 +263,9 @@ type CharacterStat struct {
 	Evasion       int32   `json:"evasion" binding:"required"`
 	XP            int64   `json:"xp" binding:"required"`
 	MovementSpeed int32   `json:"movement_speed" binding:"required"`
+	AttackBlock   int8    `json:"attack_block" binding:"required"`
+	SpellBlock    int8    `json:"spell_block" binding:"required"`
+	LowestEleRes  int8    `json:"lowest_ele_res" binding:"required"`
 	MainSkill     string  `json:"main_skill" binding:"required"`
 	ItemIndexes   []int32 `json:"item_indexes" binding:"required"`
 }
@@ -281,6 +285,7 @@ func toCharacterResponse(character *repository.Character) *Character {
 		AscendancyPoints: character.AscendancyPoints,
 		AtlasNodeCount:   character.AtlasPoints,
 		Pantheon:         character.Pantheon,
+		VoidStones:       len(character.VoidStones),
 	}
 }
 
@@ -303,5 +308,8 @@ func toCharacterStatResponse(pob *repository.CharacterPob) *CharacterStat {
 		MovementSpeed: pob.MovementSpeed,
 		MainSkill:     pob.MainSkill,
 		ItemIndexes:   pob.Items,
+		AttackBlock:   pob.AttackBlock,
+		SpellBlock:    pob.SpellBlock,
+		LowestEleRes:  pob.LowestEleRes,
 	}
 }
