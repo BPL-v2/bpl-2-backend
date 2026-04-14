@@ -251,23 +251,24 @@ func toPoBResponse(pob *repository.CharacterPob) *PoB {
 }
 
 type CharacterStat struct {
-	TimeStamp     int     `json:"timestamp" binding:"required"`
-	DPS           int64   `json:"dps" binding:"required"`
-	EHP           int32   `json:"ehp" binding:"required"`
-	PhysMaxHit    int32   `json:"phys_max_hit" binding:"required"`
-	EleMaxHit     int32   `json:"ele_max_hit" binding:"required"`
-	HP            int32   `json:"hp" binding:"required"`
-	Mana          int32   `json:"mana" binding:"required"`
-	ES            int32   `json:"es" binding:"required"`
-	Armour        int32   `json:"armour" binding:"required"`
-	Evasion       int32   `json:"evasion" binding:"required"`
-	XP            int64   `json:"xp" binding:"required"`
-	MovementSpeed int32   `json:"movement_speed" binding:"required"`
-	AttackBlock   int8    `json:"attack_block" binding:"required"`
-	SpellBlock    int8    `json:"spell_block" binding:"required"`
-	LowestEleRes  int8    `json:"lowest_ele_res" binding:"required"`
-	MainSkill     string  `json:"main_skill" binding:"required"`
-	ItemIndexes   []int32 `json:"item_indexes" binding:"required"`
+	TimeStamp       int     `json:"timestamp" binding:"required"`
+	DPS             int64   `json:"dps" binding:"required"`
+	EHP             int32   `json:"ehp" binding:"required"`
+	PhysMaxHit      int32   `json:"phys_max_hit" binding:"required"`
+	EleMaxHit       int32   `json:"ele_max_hit" binding:"required"`
+	HP              int32   `json:"hp" binding:"required"`
+	Mana            int32   `json:"mana" binding:"required"`
+	ES              int32   `json:"es" binding:"required"`
+	Armour          int32   `json:"armour" binding:"required"`
+	Evasion         int32   `json:"evasion" binding:"required"`
+	XP              int64   `json:"xp" binding:"required"`
+	MovementSpeed   int32   `json:"movement_speed" binding:"required"`
+	AttackBlock     int8    `json:"attack_block" binding:"required"`
+	SpellBlock      int8    `json:"spell_block" binding:"required"`
+	LowestEleRes    int8    `json:"lowest_ele_res" binding:"required"`
+	HighLevelFlasks int8    `json:"high_level_flasks" binding:"required"`
+	MainSkill       string  `json:"main_skill" binding:"required"`
+	ItemIndexes     []int32 `json:"item_indexes" binding:"required"`
 }
 
 func toCharacterResponse(character *repository.Character) *Character {
@@ -294,22 +295,23 @@ func toCharacterStatResponse(pob *repository.CharacterPob) *CharacterStat {
 		return nil
 	}
 	return &CharacterStat{
-		TimeStamp:     int(pob.CreatedAt.Unix()),
-		DPS:           pob.DPS,
-		EHP:           pob.EHP,
-		PhysMaxHit:    pob.PhysMaxHit,
-		EleMaxHit:     pob.EleMaxHit,
-		HP:            pob.HP,
-		Mana:          pob.Mana,
-		ES:            pob.ES,
-		Armour:        pob.Armour,
-		Evasion:       pob.Evasion,
-		XP:            pob.XP,
-		MovementSpeed: pob.MovementSpeed,
-		MainSkill:     pob.MainSkill,
-		ItemIndexes:   pob.Items,
-		AttackBlock:   pob.AttackBlock,
-		SpellBlock:    pob.SpellBlock,
-		LowestEleRes:  pob.LowestEleRes,
+		TimeStamp:       int(pob.CreatedAt.Unix()),
+		DPS:             pob.DPS,
+		EHP:             pob.EHP,
+		PhysMaxHit:      pob.PhysMaxHit,
+		EleMaxHit:       pob.EleMaxHit,
+		HP:              pob.HP,
+		Mana:            pob.Mana,
+		ES:              pob.ES,
+		Armour:          pob.Armour,
+		Evasion:         pob.Evasion,
+		XP:              pob.XP,
+		MovementSpeed:   pob.MovementSpeed,
+		MainSkill:       pob.MainSkill,
+		ItemIndexes:     pob.Items,
+		AttackBlock:     pob.AttackBlock,
+		SpellBlock:      pob.SpellBlock,
+		LowestEleRes:    pob.LowestEleRes,
+		HighLevelFlasks: pob.HighLevelFlasks,
 	}
 }

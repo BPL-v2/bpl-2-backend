@@ -898,6 +898,8 @@ components:
           type: integer
         evasion:
           type: integer
+        high_level_flasks:
+          type: integer
         hp:
           type: integer
         item_indexes:
@@ -929,6 +931,7 @@ components:
       - ele_max_hit
       - es
       - evasion
+      - high_level_flasks
       - hp
       - item_indexes
       - lowest_ele_res
@@ -1332,6 +1335,8 @@ components:
           type: integer
         atlas_points:
           type: integer
+        attack_block:
+          type: integer
         character_id:
           type: string
         character_name:
@@ -1352,6 +1357,8 @@ components:
           type: integer
         evasion:
           type: integer
+        high_level_flasks:
+          type: integer
         hp:
           type: integer
         item_indexes:
@@ -1362,6 +1369,8 @@ components:
         last_active:
           type: integer
         level:
+          type: integer
+        lowest_ele_res:
           type: integer
         main_skill:
           type: string
@@ -1377,11 +1386,15 @@ components:
           type: string
         rank:
           type: integer
+        spell_block:
+          type: integer
         team_id:
           type: integer
         twitch_name:
           type: string
         user_id:
+          type: integer
+        voidstones:
           type: integer
         xp:
           type: integer
@@ -1390,6 +1403,7 @@ components:
       - ascendancy
       - ascendancy_points
       - atlas_points
+      - attack_block
       - character_id
       - character_name
       - delve_depth
@@ -1400,10 +1414,12 @@ components:
       - ele_max_hit
       - es
       - evasion
+      - high_level_flasks
       - hp
       - item_indexes
       - last_active
       - level
+      - lowest_ele_res
       - main_skill
       - mana
       - movement_speed
@@ -1411,8 +1427,10 @@ components:
       - phys_max_hit
       - poe_account
       - rank
+      - spell_block
       - team_id
       - user_id
+      - voidstones
       - xp
       type: object
     MinimalUser:

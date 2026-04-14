@@ -743,6 +743,19 @@ func (c *Character) GetVoidStones() utils.Set[string] {
 	return voidStones
 }
 
+func (c *Character) GetNumberOfHighIlvlFlasks() int {
+	if c.Equipment == nil {
+		return 0
+	}
+	count := 0
+	for _, item := range *c.Equipment {
+		if strings.Contains(item.BaseType, "Flask") && item.Ilvl >= 84 {
+			count++
+		}
+	}
+	return count
+}
+
 func (c *Character) HasSameEquipment(other *Character) bool {
 	if other == nil {
 		return false

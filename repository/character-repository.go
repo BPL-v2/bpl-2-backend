@@ -112,15 +112,16 @@ func (p PoBExport) Value() (driver.Value, error) {
 }
 
 type CharacterPob struct {
-	Id          int           `gorm:"not null;primaryKey"`
-	CharacterId string        `gorm:"not null;index"`
-	Level       int           `gorm:"not null"`
-	MainSkill   string        `gorm:"not null"`
-	Ascendancy  string        `gorm:"not null"`
-	Export      PoBExport     `gorm:"not null;type:bytea"`
-	CreatedAt   time.Time     `gorm:"not null;index"`
-	UpdatedAt   time.Time     `gorm:"not null"`
-	Items       pq.Int32Array `gorm:"not null;type:int2[]"`
+	Id              int           `gorm:"not null;primaryKey"`
+	CharacterId     string        `gorm:"not null;index"`
+	Level           int           `gorm:"not null"`
+	MainSkill       string        `gorm:"not null"`
+	Ascendancy      string        `gorm:"not null"`
+	Export          PoBExport     `gorm:"not null;type:bytea"`
+	CreatedAt       time.Time     `gorm:"not null;index"`
+	UpdatedAt       time.Time     `gorm:"not null"`
+	Items           pq.Int32Array `gorm:"not null;type:int2[]"`
+	HighLevelFlasks int8          `gorm:"not null"`
 
 	DPS           int64 `gorm:"not null"`
 	EHP           int32 `gorm:"not null"`
@@ -155,7 +156,8 @@ func (c *CharacterPob) HasEqualStats(other *CharacterPob) bool {
 		c.MovementSpeed == other.MovementSpeed &&
 		c.AttackBlock == other.AttackBlock &&
 		c.SpellBlock == other.SpellBlock &&
-		c.LowestEleRes == other.LowestEleRes
+		c.LowestEleRes == other.LowestEleRes &&
+		c.HighLevelFlasks == other.HighLevelFlasks
 }
 
 func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {

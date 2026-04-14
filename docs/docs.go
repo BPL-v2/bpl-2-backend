@@ -1311,6 +1311,9 @@ const docTemplate = `{
                     "evasion": {
                         "type": "integer"
                     },
+                    "high_level_flasks": {
+                        "type": "integer"
+                    },
                     "hp": {
                         "type": "integer"
                     },
@@ -1354,6 +1357,7 @@ const docTemplate = `{
                     "ele_max_hit",
                     "es",
                     "evasion",
+                    "high_level_flasks",
                     "hp",
                     "item_indexes",
                     "lowest_ele_res",
@@ -1928,6 +1932,9 @@ const docTemplate = `{
                     "atlas_points": {
                         "type": "integer"
                     },
+                    "attack_block": {
+                        "type": "integer"
+                    },
                     "character_id": {
                         "type": "string"
                     },
@@ -1958,6 +1965,9 @@ const docTemplate = `{
                     "evasion": {
                         "type": "integer"
                     },
+                    "high_level_flasks": {
+                        "type": "integer"
+                    },
                     "hp": {
                         "type": "integer"
                     },
@@ -1972,6 +1982,9 @@ const docTemplate = `{
                         "type": "integer"
                     },
                     "level": {
+                        "type": "integer"
+                    },
+                    "lowest_ele_res": {
                         "type": "integer"
                     },
                     "main_skill": {
@@ -1995,6 +2008,9 @@ const docTemplate = `{
                     "rank": {
                         "type": "integer"
                     },
+                    "spell_block": {
+                        "type": "integer"
+                    },
                     "team_id": {
                         "type": "integer"
                     },
@@ -2002,6 +2018,9 @@ const docTemplate = `{
                         "type": "string"
                     },
                     "user_id": {
+                        "type": "integer"
+                    },
+                    "voidstones": {
                         "type": "integer"
                     },
                     "xp": {
@@ -2013,6 +2032,7 @@ const docTemplate = `{
                     "ascendancy",
                     "ascendancy_points",
                     "atlas_points",
+                    "attack_block",
                     "character_id",
                     "character_name",
                     "delve_depth",
@@ -2023,10 +2043,12 @@ const docTemplate = `{
                     "ele_max_hit",
                     "es",
                     "evasion",
+                    "high_level_flasks",
                     "hp",
                     "item_indexes",
                     "last_active",
                     "level",
+                    "lowest_ele_res",
                     "main_skill",
                     "mana",
                     "movement_speed",
@@ -2034,8 +2056,10 @@ const docTemplate = `{
                     "phys_max_hit",
                     "poe_account",
                     "rank",
+                    "spell_block",
                     "team_id",
                     "user_id",
+                    "voidstones",
                     "xp"
                 ],
                 "type": "object"
