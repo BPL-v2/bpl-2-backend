@@ -269,7 +269,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		parser, err := e.objectiveService.GetParser(event.Id)
+		parser, err := e.objectiveService.GetParser(event.Id, true)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

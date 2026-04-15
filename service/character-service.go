@@ -6,6 +6,7 @@ import (
 	"bpl/metrics"
 	"bpl/parser"
 	"bpl/repository"
+	"bpl/utils"
 	"fmt"
 	"strings"
 	"sync"
@@ -160,8 +161,17 @@ func (ci *CharacterInfo) ToPlayerUpdate() (*parser.PlayerUpdate, error) {
 						Class: ci.Character.Ascendancy,
 						Level: ci.Character.Level,
 					},
+					VoidStones: utils.ToSet(ci.Character.VoidStones),
 				},
-				Old: parser.Player{},
+				Old: parser.Player{
+					Character: &client.Character{
+						Id:    ci.Character.Id,
+						Name:  ci.Character.Name,
+						Class: ci.Character.Ascendancy,
+						Level: ci.Character.Level,
+					},
+					VoidStones: utils.ToSet(ci.Character.VoidStones),
+				},
 				LastUpdateTimes: struct {
 					CharacterName time.Time
 					Character     time.Time

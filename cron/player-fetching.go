@@ -329,15 +329,15 @@ func updateStats(character *client.Character, characterRepo repository.Character
 		fmt.Printf("Error getting item ids for character %s: %v\n", character.Name, err)
 	}
 	pobEntity := &repository.CharacterPob{
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		CharacterId:     character.Id,
-		Level:           character.Level,
-		Ascendancy:      character.Class,
-		Export:          p,
-		XP:              int64(character.Experience),
-		Items:           itemIds,
-		HighLevelFlasks: int8(character.GetNumberOfHighIlvlFlasks()),
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		CharacterId:      character.Id,
+		Level:            character.Level,
+		Ascendancy:       character.Class,
+		Export:           p,
+		XP:               int64(character.Experience),
+		Items:            itemIds,
+		HighIlevelFlasks: int8(character.GetNumberOfHighIlvlFlasks()),
 	}
 	pobEntity.UpdateStats(pob)
 	pobQueue <- pobEntity

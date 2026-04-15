@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/lib/pq"
 )
@@ -136,6 +138,14 @@ func ToSet[T comparable](a []T) Set[T] {
 		set[v] = true
 	}
 	return set
+}
+
+func (s Set[T]) String() string {
+	parts := make([]string, 0, len(s))
+	for k := range s {
+		parts = append(parts, fmt.Sprintf("%v", k))
+	}
+	return "set[" + strings.Join(parts, ", ") + "]"
 }
 
 func (s Set[T]) ToSlice() []T {

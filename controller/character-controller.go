@@ -312,6 +312,6 @@ func toCharacterStatResponse(pob *repository.CharacterPob) *CharacterStat {
 		AttackBlock:     pob.AttackBlock,
 		SpellBlock:      pob.SpellBlock,
 		LowestEleRes:    pob.LowestEleRes,
-		HighLevelFlasks: pob.HighLevelFlasks,
+		HighLevelFlasks: pob.HighIlevelFlasks,
 	}
 }

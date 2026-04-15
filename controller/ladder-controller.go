@@ -281,7 +281,7 @@ func toLadderResponse(usersWithTeam map[int]*repository.UserWithTeam, ladderEntr
 			resp.AttackBlock = stats.AttackBlock
 			resp.SpellBlock = stats.SpellBlock
 			resp.LowestEleRes = stats.LowestEleRes
-			resp.HighLevelFlasks = stats.HighLevelFlasks
+			resp.HighLevelFlasks = stats.HighIlevelFlasks
 		} else {
 			resp.Level = character.Level
 			resp.Ascendancy = character.Ascendancy

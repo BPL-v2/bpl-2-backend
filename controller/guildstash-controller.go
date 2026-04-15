@@ -404,7 +404,7 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 			c.JSON(404, gin.H{"error": "stash tab not found"})
 			return
 		}
-		parser, err := e.objectiveService.GetParser(event.Id)
+		parser, err := e.objectiveService.GetParser(event.Id, false)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

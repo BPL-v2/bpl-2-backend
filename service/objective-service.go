@@ -10,7 +10,7 @@ type ObjectiveService interface {
 	CreateObjective(objective *repository.Objective, presetIds []int) (*repository.Objective, error)
 	DeleteObjective(objectiveId int) error
 	GetObjectiveById(objectiveId int, preloads ...string) (*repository.Objective, error)
-	GetParser(eventId int) (*parser.ItemChecker, error)
+	GetParser(eventId int, ignoreTime bool) (*parser.ItemChecker, error)
 	StartSync(objectiveIds []int) error
 	SetSynced(objectiveIds []int) error
 	GetObjectiveTreeForEvent(eventId int, preloads ...string) (*repository.Objective, error)
@@ -52,12 +52,12 @@ func (e *ObjectiveServiceImpl) GetObjectiveById(objectiveId int, preloads ...str
 	return e.objectiveRepository.GetObjectiveById(objectiveId, preloads...)
 }
 
-func (e *ObjectiveServiceImpl) GetParser(eventId int) (*parser.ItemChecker, error) {
+func (e *ObjectiveServiceImpl) GetParser(eventId int, ignoreTime bool) (*parser.ItemChecker, error) {
 	objectives, err := e.GetObjectivesForEvent(eventId, "ScoringPresets")
 	if err != nil {
 		return nil, err
 	}
-	return parser.NewItemChecker(objectives, false)
+	return parser.NewItemChecker(objectives, ignoreTime)
 }
 
 func (e *ObjectiveServiceImpl) StartSync(objectiveIds []int) error {
