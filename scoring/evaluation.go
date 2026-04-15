@@ -117,7 +117,7 @@ func handlePointsFromValue(objective *repository.Objective, scoringPreset *repos
 		completion.UserId = match.UserId
 		completion.Finished = match.Finished
 		completion.Timestamp = match.Timestamp
-		completion.Points = int(scoringPreset.Points.Get(0) * float64(match.Number))
+		completion.Points = int(scoringPreset.Points.GetScoreFromNumber(match.Number))
 		if scoringPreset.PointCap != 0 && completion.Points > scoringPreset.PointCap {
 			completion.Points = scoringPreset.PointCap
 		}

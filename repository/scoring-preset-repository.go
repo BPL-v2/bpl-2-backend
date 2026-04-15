@@ -21,6 +21,19 @@ func (e ExtendingNumberSlice) Get(i int) float64 {
 	return e[i]
 }
 
+func (e ExtendingNumberSlice) GetScoreFromNumber(number int) float64 {
+	if len(e) == 0 {
+		return 0
+	}
+	capped := min(number, len(e))
+	score := 0.0
+	for i := range capped {
+		score += e[i]
+	}
+	score += float64(number-capped) * e[len(e)-1]
+	return score
+}
+
 func (e *ExtendingNumberSlice) Scan(value any) error {
 	var floatArray pq.Float64Array
 	if err := floatArray.Scan(value); err != nil {
