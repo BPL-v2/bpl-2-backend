@@ -16,6 +16,16 @@ func Map[A any, B any](input []A, mapper func(A) B) []B {
 	return output
 }
 
+func FilterNull[A any](input []*A) []*A {
+	output := make([]*A, 0)
+	for _, item := range input {
+		if item != nil {
+			output = append(output, item)
+		}
+	}
+	return output
+}
+
 func Reduce[A any](input []*A, reducer func(*A, *A) *A) *A {
 	if len(input) == 0 {
 		return nil

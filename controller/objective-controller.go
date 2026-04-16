@@ -152,7 +152,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		}
 		roles := getUserRoles(c)
 		public := !(slices.Contains(roles, repository.PermissionAdmin) || slices.Contains(roles, repository.PermissionObjectiveDesigner))
-		c.JSON(200, toObjectiveResponse(rootObjective, public))
+		c.JSON(200, toObjectiveResponse(rootObjective, public, event.EventEndTime))
 	}
 }
 
@@ -192,7 +192,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(201, toObjectiveResponse(objective, false))
+		c.JSON(201, toObjectiveResponse(objective, false, event.EventEndTime))
 	}
 }
 
@@ -250,6 +250,10 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
 		objective, err := e.objectiveService.GetObjectiveById(id, "ScoringPresets")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
@@ -259,7 +263,7 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(200, toObjectiveResponse(objective, true))
+		c.JSON(200, toObjectiveResponse(objective, true, event.EventEndTime))
 	}
 }
 
@@ -345,8 +349,8 @@ func (e *ObjectiveCreate) toModel() *repository.Objective {
 	}
 }
 
-func toObjectiveResponse(objective *repository.Objective, public bool) *Objective {
-	if objective == nil {
+func toObjectiveResponse(objective *repository.Objective, public bool, eventEnd time.Time) *Objective {
+	if objective == nil || (public && objective.ValidTo != nil && (*objective.ValidTo).After(eventEnd)) {
 		return nil
 	}
 	if public && objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
@@ -371,12 +375,12 @@ func toObjectiveResponse(objective *repository.Objective, public bool) *Objectiv
 		ObjectiveType:          objective.ObjectiveType,
 		ValidFrom:              objective.ValidFrom,
 		ValidTo:                objective.ValidTo,
-		Conditions:             utils.Map(objective.Conditions, toConditionResponse),
+		Conditions:             utils.FilterNull(utils.Map(objective.Conditions, toConditionResponse)),
 		NumberField:            objective.NumberField,
 		NumberFieldExplanation: objective.NumberFieldExplanation,
 		Aggregation:            objective.Aggregation,
-		ScoringPresets:         utils.Map(objective.ScoringPresets, toScoringPresetResponse),
-		Children:               utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public) }),
+		ScoringPresets:         utils.FilterNull(utils.Map(objective.ScoringPresets, toScoringPresetResponse)),
+		Children:               utils.FilterNull(utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public, eventEnd) })),
 		HideProgress:           objective.HideProgress,
 	}
 }
