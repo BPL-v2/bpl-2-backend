@@ -496,12 +496,16 @@ func (f *FetchingService) updateStashItems(stash *repository.GuildStashTab, resp
 		return fmt.Errorf("failed to marshal new stash data for stash %s: %v", stash.Id, err)
 	}
 	stash.Raw = string(raw)
+	items := []client.Item{}
+	if response.Stash.Items != nil {
+		items = *response.Stash.Items
+	}
 	newStashChange := &client.PublicStashChange{
 		Id:        stash.Id,
 		Public:    true,
 		League:    &f.event.Name,
 		TeamId:    stash.TeamId,
-		Items:     *response.Stash.Items,
+		Items:     items,
 		StashType: stash.Type,
 	}
 	err = addGuildStashesToQueue(kafkaWriter, newStashChange)
