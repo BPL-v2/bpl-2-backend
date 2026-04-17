@@ -584,7 +584,9 @@ func (g *GuildStashTabGGG) FlatMap() []*GuildStashTabGGG {
 
 func (g *GuildStashTabGGG) GetHash() [32]byte {
 	var idAggregate strings.Builder
-	idAggregate.WriteString(g.Id)
+	if g.StashTab != nil {
+		idAggregate.WriteString(g.Id)
+	}
 	for _, item := range utils.Deref(g.Items) {
 		idAggregate.WriteString(item.Id)
 		if item.StackSize != nil {
