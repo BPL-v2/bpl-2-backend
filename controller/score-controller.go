@@ -196,7 +196,7 @@ func (e *ScoreController) StartScoreUpdater() {
 				}
 				simpleScore, err := json.Marshal(e.scoreService.GetLatestScores(eventId).GetSimpleScore())
 				if err != nil {
-					log.Fatal(err)
+					fmt.Printf("Failed to marshal simple score: %v", err)
 					continue
 				}
 
@@ -204,7 +204,7 @@ func (e *ScoreController) StartScoreUpdater() {
 				for conn, teamId := range e.connections[eventId] {
 					serializedDiff, err := json.Marshal(toScoreMapResponse(diff, teamId))
 					if err != nil {
-						log.Fatal(err)
+						fmt.Printf("Failed to marshal score diff: %v", err)
 						continue
 					}
 					if err := conn.WriteMessage(websocket.TextMessage, serializedDiff); err != nil {

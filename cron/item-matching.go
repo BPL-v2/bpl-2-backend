@@ -157,7 +157,7 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, stashtabChecker *parser.StashTabChecker, objectives []*repository.Objective) {
 	users, err := m.userService.GetUsersForEvent(m.event.Id)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to get users for event %d: %v", m.event.Id, err)
 		return
 	}
 	userMap := make(map[string]*repository.TeamUserWithPoEToken)
@@ -209,8 +209,8 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, s
 		default:
 			stashChange, err := m.GetStashChange(reader)
 			if err != nil {
-				log.Fatal(err)
-				return
+				fmt.Printf("Failed to get stash change: %v", err)
+				continue
 			}
 			if m.lastTimestamp != nil && stashChange.Timestamp.Truncate(time.Millisecond).Equal(m.lastTimestamp.Truncate(time.Millisecond)) {
 				log.Println("Sync finished")
@@ -226,7 +226,8 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, s
 			if !syncing {
 				err = m.objectiveMatchService.SaveMatches(matches, desyncedObjectiveIds)
 				if err != nil {
-					log.Fatal(err)
+					fmt.Printf("Failed to save matches: %v", err)
+					continue
 				}
 				desyncedObjectiveIds = make([]int, 0)
 				matches = make([]*repository.ObjectiveMatch, 0)
