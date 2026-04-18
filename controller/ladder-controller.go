@@ -233,6 +233,9 @@ func toAtlasResponses(atlases []*repository.AtlasTree) []*Atlas {
 func toLadderResponse(usersWithTeam map[int]*repository.UserWithTeam, ladderEntries []*repository.LadderEntry, characters []*repository.Character, stats map[string]*repository.CharacterPob, lastActivities map[int]time.Time) []*LadderEntry {
 	response := make([]*LadderEntry, 0, len(ladderEntries))
 	ladderMap := make(map[string]*repository.LadderEntry)
+	for _, entry := range ladderEntries {
+		ladderMap[entry.Character] = entry
+	}
 	statsMap := make(map[string]*repository.CharacterPob)
 	for _, stat := range stats {
 		statsMap[stat.CharacterId] = stat
