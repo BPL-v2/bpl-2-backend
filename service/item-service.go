@@ -24,11 +24,19 @@ type ItemServiceImpl struct {
 	mu             sync.RWMutex
 }
 
+var (
+	itemServiceInstance ItemService
+	itemServiceOnce     sync.Once
+)
+
 func NewItemService() ItemService {
-	return &ItemServiceImpl{
-		itemRepository: repository.NewItemRepository(),
-		itemMap:        make(map[repository.ItemType]map[string]int),
-	}
+	itemServiceOnce.Do(func() {
+		itemServiceInstance = &ItemServiceImpl{
+			itemRepository: repository.NewItemRepository(),
+			itemMap:        make(map[repository.ItemType]map[string]int),
+		}
+	})
+	return itemServiceInstance
 }
 
 func (s *ItemServiceImpl) SaveItems(itemNames []string, itemType repository.ItemType) error {

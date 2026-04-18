@@ -23,18 +23,19 @@ var (
 )
 
 type PlayerFetchingService struct {
-	userRepository        repository.UserRepository
-	objectiveMatchService service.ObjectiveMatchService
-	objectiveService      service.ObjectiveService
-	characterService      service.CharacterService
-	ladderService         service.LadderService
-	atlasService          service.AtlasService
-	oauthService          service.OauthService
-	timingRepository      repository.TimingRepository
-	characterRepository   repository.CharacterRepository
-	activityRepository    repository.ActivityRepository
-	itemWishService       service.ItemWishService
-	timings               map[repository.TimingKey]time.Duration
+	userRepository            repository.UserRepository
+	objectiveMatchService     service.ObjectiveMatchService
+	objectiveService          service.ObjectiveService
+	characterService          service.CharacterService
+	ladderService             service.LadderService
+	atlasService              service.AtlasService
+	oauthService              service.OauthService
+	timingRepository          repository.TimingRepository
+	characterRepository       repository.CharacterRepository
+	activityRepository        repository.ActivityRepository
+	itemWishService           service.ItemWishService
+	uniqueItemTrackingService service.UniqueItemTrackingService
+	timings                   map[repository.TimingKey]time.Duration
 
 	lastLadderUpdate time.Time
 	poeClient        *client.PoEClient
@@ -51,19 +52,20 @@ func (s *PlayerFetchingService) ReloadTimings() error {
 
 func NewPlayerFetchingService(poeClient *client.PoEClient) *PlayerFetchingService {
 	return &PlayerFetchingService{
-		userRepository:        repository.NewUserRepository(),
-		objectiveMatchService: service.NewObjectiveMatchService(),
-		objectiveService:      service.NewObjectiveService(),
-		ladderService:         service.NewLadderService(),
-		characterService:      service.NewCharacterService(poeClient),
-		atlasService:          service.NewAtlasService(),
-		oauthService:          service.NewOauthService(),
-		itemWishService:       service.NewItemWishService(),
-		timingRepository:      repository.NewTimingRepository(),
-		characterRepository:   repository.NewCharacterRepository(),
-		activityRepository:    repository.NewActivityRepository(),
-		lastLadderUpdate:      time.Now().Add(-1 * time.Hour),
-		poeClient:             poeClient,
+		userRepository:            repository.NewUserRepository(),
+		objectiveMatchService:     service.NewObjectiveMatchService(),
+		objectiveService:          service.NewObjectiveService(),
+		ladderService:             service.NewLadderService(),
+		characterService:          service.NewCharacterService(poeClient),
+		atlasService:              service.NewAtlasService(),
+		oauthService:              service.NewOauthService(),
+		itemWishService:           service.NewItemWishService(),
+		uniqueItemTrackingService: service.NewUniqueItemTrackingService(),
+		timingRepository:          repository.NewTimingRepository(),
+		characterRepository:       repository.NewCharacterRepository(),
+		activityRepository:        repository.NewActivityRepository(),
+		lastLadderUpdate:          time.Now().Add(-1 * time.Hour),
+		poeClient:                 poeClient,
 	}
 }
 
@@ -120,6 +122,16 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	}
 	player.SuccessiveErrors = 0
 	player.New.Character = characterResponse.Character
+	if err := s.uniqueItemTrackingService.TrackUniqueItems(
+		characterResponse.Character.GetAllItems(),
+		player.TeamId,
+		&player.UserId,
+		event.Id,
+		repository.UniqueItemSourceCharacter,
+		time.Now(),
+	); err != nil {
+		log.Printf("Failed to track unique items for character %s: %v", characterResponse.Character.Name, err)
+	}
 	if !player.New.Character.HasSameEquipment(player.Old.Character) {
 		log.Printf("Character equipment changed for player %d, queuing for PoB processing", player.UserId)
 		charQueue <- characterResponse.Character
@@ -364,7 +376,7 @@ func PlayerStatsLoop(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			character, ok := <-charQueue
+			entry, ok := <-charQueue
 			metrics.PobQueueGauge.Set(float64(len(charQueue)))
 			if !ok {
 				log.Println("PoB queue closed, stopping player stats loop")
@@ -374,7 +386,7 @@ func PlayerStatsLoop(ctx context.Context) {
 			go func(character *client.Character) {
 				defer func() { <-semaphore }() // Release the slot when done
 				updateStats(character, characterRepo, itemService)
-			}(character)
+			}(entry)
 		}
 	}
 }

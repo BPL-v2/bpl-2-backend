@@ -35,7 +35,10 @@ func NewItemRepository() ItemRepository {
 }
 
 func (r *ItemRepositoryImpl) SaveItem(item *Item) (*Item, error) {
-	if err := r.DB.Create(&item).Error; err != nil {
+	err := r.DB.
+		Where(Item{Name: item.Name, ItemType: item.ItemType}).
+		FirstOrCreate(item).Error
+	if err != nil {
 		return nil, err
 	}
 	return item, nil

@@ -19,24 +19,27 @@ import (
 )
 
 type MatchingService struct {
-	ctx                   context.Context
-	objectiveMatchService service.ObjectiveMatchService
-	objectiveService      service.ObjectiveService
-	userService           service.UserService
-	lastTimestamp         *time.Time
-	event                 *repository.Event
+	ctx                       context.Context
+	objectiveMatchService     service.ObjectiveMatchService
+	objectiveService          service.ObjectiveService
+	userService               service.UserService
+	uniqueItemTrackingService service.UniqueItemTrackingService
+	lastTimestamp             *time.Time
+	event                     *repository.Event
 }
 
 func NewMatchingService(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) (*MatchingService, error) {
 	objectiveMatchService := service.NewObjectiveMatchService()
 	objectiveService := service.NewObjectiveService()
 	userService := service.NewUserService()
+	uniqueItemTrackingService := service.NewUniqueItemTrackingService()
 	matchingService := &MatchingService{
-		objectiveMatchService: objectiveMatchService,
-		objectiveService:      objectiveService,
-		userService:           userService,
-		event:                 event,
-		ctx:                   ctx,
+		objectiveMatchService:     objectiveMatchService,
+		objectiveService:          objectiveService,
+		userService:               userService,
+		uniqueItemTrackingService: uniqueItemTrackingService,
+		event:                     event,
+		ctx:                       ctx,
 	}
 	timestamp, err := service.NewStashChangeService().GetLatestTimestamp(event.Id)
 	if err == nil {
@@ -92,6 +95,9 @@ func (m *MatchingService) getItemMatches(
 		fmt.Printf("Processing stash %s for team %d\n", stash.Id, teamId)
 		completions := make(map[int]int)
 		if stash.Items != nil {
+			if err := m.uniqueItemTrackingService.TrackUniqueItems(stash.Items, teamId, userId, m.event.Id, stashChange.Source, stashChange.Timestamp); err != nil {
+				log.Printf("Failed to track unique items for stash %s: %v", stash.Id, err)
+			}
 			for _, result := range stashtabChecker.Check(&stash.Items) {
 				if syncFinished || slices.Contains(desyncedObjectiveIds, result.ObjectiveId) {
 					completions[result.ObjectiveId] += result.Number
