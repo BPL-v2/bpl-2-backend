@@ -296,6 +296,9 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 			player.Old.Character.Level = character.Level
 			player.New.Character.Class = character.Ascendancy
 			player.Old.Character.Class = character.Ascendancy
+			savedVoidStones := utils.ToSet([]string(character.VoidStones))
+			player.New.VoidStones = savedVoidStones
+			player.Old.VoidStones = savedVoidStones
 			player.LastUpdateTimes.CharacterName = time.Now()
 			if pob, ok := pobMap[character.Id]; ok {
 				player.New.PoB = pob
