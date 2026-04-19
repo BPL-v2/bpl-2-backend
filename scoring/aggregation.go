@@ -318,19 +318,18 @@ func getFreshMatches(db *gorm.DB, objectives []*repository.Objective, teamIds []
 	t := time.Now()
 	query := `
     WITH latest AS (
-        SELECT 
-            MAX(id) AS id
+        SELECT DISTINCT ON (stash_id) id
         FROM stash_changes
-		WHERE event_id = @eventId
-        GROUP BY stash_id
+        WHERE event_id = @eventId
+        ORDER BY stash_id, id DESC
     )
-    SELECT 
+    SELECT
         objective_matches.objective_id,
         objective_matches.team_id
     FROM objective_matches
 	JOIN latest ON objective_matches.stash_change_id = latest.id AND
      	objective_matches.objective_id IN @objectiveIds
-    GROUP BY 
+    GROUP BY
         objective_matches.objective_id,
         objective_matches.team_id
     `
