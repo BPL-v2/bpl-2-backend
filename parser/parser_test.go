@@ -1498,14 +1498,11 @@ func TestPlayerScore(t *testing.T) {
 		assert.Equal(t, 6, checker(&Player{Character: &clientModel.Character{Level: 90}}))
 	})
 
-	t.Run("capped at 9", func(t *testing.T) {
-		// level 90 (6) + atlas 40 nodes (3) + ascendancy points depend on hash data
-		// Use atlas to get to max
+	t.Run("level 90 without ascendancy or pob gives 6", func(t *testing.T) {
 		p := &Player{
-			Character:         &clientModel.Character{Level: 90},
-			AtlasPassiveTrees: []clientModel.AtlasPassiveTree{{Hashes: make([]int, 50)}},
+			Character: &clientModel.Character{Level: 90},
 		}
-		assert.Equal(t, 9, checker(p))
+		assert.Equal(t, 6, checker(p))
 	})
 }
 

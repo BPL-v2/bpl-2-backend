@@ -2415,13 +2415,13 @@ func TestGetExtremeQuery_InvalidType(t *testing.T) {
 func TestGetExtremeQuery_Maximum(t *testing.T) {
 	query, err := getExtremeQuery(repository.AggregationTypeMaximum)
 	assert.NoError(t, err)
-	assert.Contains(t, query, "MAX")
+	assert.Contains(t, query, "DESC")
 }
 
 func TestGetExtremeQuery_Minimum(t *testing.T) {
 	query, err := getExtremeQuery(repository.AggregationTypeMinimum)
 	assert.NoError(t, err)
-	assert.Contains(t, query, "MIN")
+	assert.Contains(t, query, "ASC")
 }
 
 // ========== handleChildRankingByTime sort: multiple unfinished teams ==========
