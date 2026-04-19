@@ -962,12 +962,12 @@ func applyCheckers(checkers []*ItemObjectiveChecker, item *clientModel.Item) []*
 	if item.FrameType != nil && *item.FrameType == 10 {
 		return results
 	}
-	// sort out split items
-	if item.Split != nil && *item.Split {
-		return results
-	}
 	for _, checker := range checkers {
 		if checker.Check(item) {
+			if item.Split != nil && *item.Split && checker.Objective.RequiredAmount > 1 {
+				// ignore split items for collections
+				continue
+			}
 			results = append(results, &CheckResult{
 				ObjectiveId: checker.Objective.Id,
 				Number:      getNumber(item, checker.Objective),
