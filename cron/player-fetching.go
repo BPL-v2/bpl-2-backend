@@ -282,8 +282,13 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 		pobMap[pob.CharacterId] = pob
 	}
 	characterMap := make(map[int]*repository.Character, len(latestCharacters))
+	voidStonesMap := make(map[int]utils.Set[string], len(latestCharacters))
 	for _, character := range latestCharacters {
-		characterMap[*character.UserId] = character
+		existing := characterMap[*character.UserId]
+		if existing == nil || character.Level > existing.Level {
+			characterMap[*character.UserId] = character
+		}
+		voidStonesMap[*character.UserId] = voidStonesMap[*character.UserId].Union(utils.ToSet([]string(character.VoidStones)))
 	}
 
 	for _, player := range players {
@@ -296,7 +301,7 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 			player.Old.Character.Level = character.Level
 			player.New.Character.Class = character.Ascendancy
 			player.Old.Character.Class = character.Ascendancy
-			savedVoidStones := utils.ToSet([]string(character.VoidStones))
+			savedVoidStones := voidStonesMap[player.UserId]
 			player.New.VoidStones = savedVoidStones
 			player.Old.VoidStones = savedVoidStones
 			player.LastUpdateTimes.CharacterName = time.Now()
