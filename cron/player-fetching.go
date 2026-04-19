@@ -18,9 +18,18 @@ import (
 )
 
 var (
-	charQueue = make(chan *client.Character, 2000)
-	pobQueue  = make(chan *repository.CharacterPob, 2000)
+	charQueue      = make(chan *client.Character, 2000)
+	pobQueue       = make(chan *repository.CharacterPob, 2000)
+	activeServices sync.Map // eventId int -> *PlayerFetchingService
 )
+
+func GetActiveServiceForEvent(eventId int) (*PlayerFetchingService, bool) {
+	v, ok := activeServices.Load(eventId)
+	if !ok {
+		return nil, false
+	}
+	return v.(*PlayerFetchingService), true
+}
 
 type PlayerFetchingService struct {
 	userRepository            repository.UserRepository
@@ -39,6 +48,12 @@ type PlayerFetchingService struct {
 
 	lastLadderUpdate time.Time
 	poeClient        *client.PoEClient
+	playersByUserId  map[int]*parser.PlayerUpdate
+}
+
+func (s *PlayerFetchingService) GetPlayerByUserId(userId int) (*parser.PlayerUpdate, bool) {
+	p, ok := s.playersByUserId[userId]
+	return p, ok
 }
 
 func (s *PlayerFetchingService) ReloadTimings() error {
@@ -311,6 +326,10 @@ func (service *PlayerFetchingService) initPlayerUpdates(event *repository.Event)
 			}
 		}
 	}
+	service.playersByUserId = make(map[int]*parser.PlayerUpdate, len(players))
+	for _, p := range players {
+		service.playersByUserId[p.UserId] = p
+	}
 	return players, nil
 }
 
@@ -432,6 +451,8 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 		log.Print(err)
 		return
 	}
+	activeServices.Store(event.Id, service)
+	defer activeServices.Delete(event.Id)
 	fmt.Printf("Starting PlayerFetchLoop for event: %s with %d players\n", event.Name, len(players))
 	for {
 		select {
@@ -512,7 +533,9 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				log.Print(err)
 			}
 			for _, player := range players {
+				player.Mu.Lock()
 				player.Old = player.New
+				player.Mu.Unlock()
 			}
 			players = service.UpdatePlayerTokens(players, event)
 			time.Sleep(1 * time.Second)

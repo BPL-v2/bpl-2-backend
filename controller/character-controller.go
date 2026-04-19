@@ -3,6 +3,7 @@ package controller
 import (
 	"bpl/client"
 	"bpl/cron"
+	"bpl/parser"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
@@ -63,12 +64,23 @@ func (e *CharacterController) updateCharacterHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		playerUpdate, err := characterInfo.ToPlayerUpdate()
-		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
-			return
+		var playerUpdate *parser.PlayerUpdate
+		var fetchingService *cron.PlayerFetchingService
+		if activeService, ok := cron.GetActiveServiceForEvent(characterInfo.Event.Id); ok {
+			if loopPlayer, ok := activeService.GetPlayerByUserId(*characterInfo.Character.UserId); ok {
+				playerUpdate = loopPlayer
+				fetchingService = activeService
+			}
 		}
-		character, err := e.playerFetchingService.UpdateCharacter(playerUpdate, characterInfo.Event)
+		if playerUpdate == nil {
+			playerUpdate, err = characterInfo.ToPlayerUpdate()
+			if err != nil {
+				c.JSON(500, gin.H{"error": err.Error()})
+				return
+			}
+			fetchingService = e.playerFetchingService
+		}
+		character, err := fetchingService.UpdateCharacter(playerUpdate, characterInfo.Event)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
