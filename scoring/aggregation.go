@@ -192,57 +192,26 @@ func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, te
 }
 
 func getExtremeQuery(aggregationType repository.AggregationType) (string, error) {
-	var operator string
+	var order string
 	switch aggregationType {
 	case repository.AggregationTypeMaximum:
-		operator = "MAX"
+		order = "DESC"
 	case repository.AggregationTypeMinimum:
-		operator = "MIN"
+		order = "ASC"
 	default:
 		return "", fmt.Errorf("invalid aggregation type")
 	}
 	return fmt.Sprintf(`
-    WITH extreme_numbers AS (
-        SELECT
-            match.objective_id,
-            match.team_id,
-            %s(match.number) AS number
-        FROM
-            objective_matches AS match
-        WHERE
-			match.objective_id IN @objectiveIds
-        GROUP BY
-            match.objective_id, match.team_id
-    ),
-    extreme_with_timestamp AS (
-        SELECT
-            en.objective_id,
-            en.team_id,
-            en.number,
-            MIN(match.timestamp) AS timestamp
-        FROM
-            extreme_numbers en
-        JOIN
-            objective_matches AS match ON match.objective_id = en.objective_id
-            AND match.number = en.number
-            AND match.team_id = en.team_id
-        GROUP BY
-            en.objective_id, en.team_id, en.number
-    )
-    SELECT
-        extreme.objective_id,
-        extreme.team_id,
-        match.user_id,
-        extreme.number,
-		extreme.timestamp
-    FROM
-        extreme_with_timestamp AS extreme
-    JOIN
-        objective_matches AS match ON match.objective_id = extreme.objective_id
-        AND match.number = extreme.number
-        AND match.team_id = extreme.team_id
-        AND match.timestamp = extreme.timestamp
- 	`, operator), nil
+    SELECT DISTINCT ON (objective_id, team_id)
+        objective_id,
+        team_id,
+        user_id,
+        number,
+        timestamp
+    FROM objective_matches
+    WHERE objective_id IN @objectiveIds
+    ORDER BY objective_id, team_id, number %s, timestamp ASC
+	`, order), nil
 
 }
 
