@@ -460,6 +460,13 @@ func (f *FetchingService) updateGuildStash(stash *repository.GuildStashTab, fetc
 	}
 	response, httpError := f.poeClient.GetGuildStash(token, f.event.Name, stash.Id, stash.ParentId)
 	if httpError != nil {
+		if httpError.StatusCode == 404 {
+			fmt.Printf("Stash %s not found (404), deleting from database\n", stash.Id)
+			if err := f.guildStashRepository.Delete(stash.Id, stash.EventId); err != nil {
+				return fmt.Errorf("failed to delete stash %s after 404: %w", stash.Id, err)
+			}
+			return nil
+		}
 		return fmt.Errorf("failed to fetch guild stash %s for team %d: %d - %s", stash.Id, stash.TeamId, httpError.StatusCode, httpError.Description)
 	}
 	stash.LastFetch = time.Now()

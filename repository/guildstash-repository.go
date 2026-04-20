@@ -120,6 +120,7 @@ func ActionFromString(action string) Action {
 
 type GuildStashRepository interface {
 	DeleteAll(tabs []*GuildStashTab) error
+	Delete(stashId string, eventId int) error
 	SaveAll(tabs []*GuildStashTab) (err error)
 	Save(tab *GuildStashTab) error
 	GetById(stashId string, eventId int) (tab *GuildStashTab, err error)
@@ -152,6 +153,10 @@ func (r *GuildStashRepositoryImpl) DeleteAll(tabs []*GuildStashTab) error {
 		return nil
 	}
 	return r.db.Delete(tabs).Error
+}
+
+func (r *GuildStashRepositoryImpl) Delete(stashId string, eventId int) error {
+	return r.db.Where("(id = ? OR parent_id = ?) AND event_id = ?", stashId, stashId, eventId).Delete(&GuildStashTab{}).Error
 }
 
 func (r *GuildStashRepositoryImpl) SaveAll(tabs []*GuildStashTab) (err error) {
