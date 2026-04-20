@@ -114,29 +114,29 @@ var rareAscendancies = []string{
 }
 
 func progressiveDelveMultiplier(depth int) float64 {
-	if depth < 100 {
+	if depth < 0 {
 		return 0
 	}
-	if depth < 150 {
+	if depth < 50 {
 		return 1
 	}
-	if depth < 250 {
+	if depth < 150 {
 		return 1.2
 	}
-	if depth < 350 {
+	if depth < 250 {
 		return 1.4
 	}
-	if depth < 450 {
+	if depth < 350 {
 		return 1.6
 	}
-	if depth < 550 {
+	if depth < 450 {
 		return 1.8
 	}
 	return 2
 }
 
 func progressiveDelveDepth(p *Player) int {
-	return int(float64(p.DelveDepth) * progressiveDelveMultiplier(p.DelveDepth))
+	return int(float64(p.DelveDepth-100) * progressiveDelveMultiplier(p.DelveDepth-100))
 }
 
 func calculateOldPO(p *Player) int {
