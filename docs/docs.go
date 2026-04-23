@@ -1432,10 +1432,10 @@ const docTemplate = `{
                         },
                         "type": "object"
                     },
-                    "objective_type_to_number_fields": {
+                    "objective_type_to_tracked_values": {
                         "additionalProperties": {
                             "items": {
-                                "$ref": "#/components/schemas/NumberField"
+                                "$ref": "#/components/schemas/TrackedValue"
                             },
                             "type": "array"
                         },
@@ -1453,7 +1453,7 @@ const docTemplate = `{
                 },
                 "required": [
                     "field_to_type",
-                    "objective_type_to_number_fields",
+                    "objective_type_to_tracked_values",
                     "valid_operators"
                 ],
                 "type": "object"
@@ -2120,9 +2120,6 @@ const docTemplate = `{
             },
             "Objective": {
                 "properties": {
-                    "aggregation": {
-                        "$ref": "#/components/schemas/AggregationType"
-                    },
                     "children": {
                         "items": {
                             "$ref": "#/components/schemas/Objective"
@@ -2137,6 +2134,9 @@ const docTemplate = `{
                         "type": "array",
                         "uniqueItems": false
                     },
+                    "counting_method": {
+                        "$ref": "#/components/schemas/CountingMethod"
+                    },
                     "extra": {
                         "type": "string"
                     },
@@ -2149,12 +2149,6 @@ const docTemplate = `{
                     "name": {
                         "type": "string"
                     },
-                    "number_field": {
-                        "$ref": "#/components/schemas/NumberField"
-                    },
-                    "number_field_explanation": {
-                        "type": "string"
-                    },
                     "objective_type": {
                         "$ref": "#/components/schemas/ObjectiveType"
                     },
@@ -2164,12 +2158,18 @@ const docTemplate = `{
                     "required_number": {
                         "type": "integer"
                     },
-                    "scoring_presets": {
+                    "scoring_rules": {
                         "items": {
-                            "$ref": "#/components/schemas/ScoringPreset"
+                            "$ref": "#/components/schemas/ScoringRule"
                         },
                         "type": "array",
                         "uniqueItems": false
+                    },
+                    "tracked_value": {
+                        "$ref": "#/components/schemas/TrackedValue"
+                    },
+                    "tracked_value_explanation": {
+                        "type": "string"
                     },
                     "valid_from": {
                         "format": "date-time",
@@ -2181,26 +2181,23 @@ const docTemplate = `{
                     }
                 },
                 "required": [
-                    "aggregation",
                     "children",
                     "conditions",
+                    "counting_method",
                     "extra",
                     "hide_progress",
                     "id",
                     "name",
-                    "number_field",
                     "objective_type",
                     "parent_id",
                     "required_number",
-                    "scoring_presets"
+                    "scoring_rules",
+                    "tracked_value"
                 ],
                 "type": "object"
             },
             "ObjectiveCreate": {
                 "properties": {
-                    "aggregation": {
-                        "$ref": "#/components/schemas/AggregationType"
-                    },
                     "conditions": {
                         "items": {
                             "$ref": "#/components/schemas/Condition"
@@ -2208,6 +2205,9 @@ const docTemplate = `{
                         "type": "array",
                         "uniqueItems": false
                     },
+                    "counting_method": {
+                        "$ref": "#/components/schemas/CountingMethod"
+                    },
                     "extra": {
                         "type": "string"
                     },
@@ -2220,12 +2220,6 @@ const docTemplate = `{
                     "name": {
                         "type": "string"
                     },
-                    "number_field": {
-                        "$ref": "#/components/schemas/NumberField"
-                    },
-                    "number_field_explanation": {
-                        "type": "string"
-                    },
                     "objective_type": {
                         "$ref": "#/components/schemas/ObjectiveType"
                     },
@@ -2235,12 +2229,18 @@ const docTemplate = `{
                     "required_number": {
                         "type": "integer"
                     },
-                    "scoring_preset_ids": {
+                    "scoring_rule_ids": {
                         "items": {
                             "type": "integer"
                         },
                         "type": "array",
                         "uniqueItems": false
+                    },
+                    "tracked_value": {
+                        "$ref": "#/components/schemas/TrackedValue"
+                    },
+                    "tracked_value_explanation": {
+                        "type": "string"
                     },
                     "valid_from": {
                         "format": "date-time",
@@ -2252,14 +2252,14 @@ const docTemplate = `{
                     }
                 },
                 "required": [
-                    "aggregation",
                     "conditions",
+                    "counting_method",
                     "name",
-                    "number_field",
                     "objective_type",
                     "parent_id",
                     "required_number",
-                    "scoring_preset_ids"
+                    "scoring_rule_ids",
+                    "tracked_value"
                 ],
                 "type": "object"
             },
@@ -2409,7 +2409,7 @@ const docTemplate = `{
                 ],
                 "type": "object"
             },
-            "ScoringPreset": {
+            "ScoringRule": {
                 "properties": {
                     "description": {
                         "type": "string"
@@ -2436,8 +2436,8 @@ const docTemplate = `{
                         "type": "array",
                         "uniqueItems": false
                     },
-                    "scoring_method": {
-                        "$ref": "#/components/schemas/ScoringMethod"
+                    "scoring_rule": {
+                        "$ref": "#/components/schemas/ScoringRuleType"
                     }
                 },
                 "required": [
@@ -2445,11 +2445,11 @@ const docTemplate = `{
                     "id",
                     "name",
                     "points",
-                    "scoring_method"
+                    "scoring_rule"
                 ],
                 "type": "object"
             },
-            "ScoringPresetCreate": {
+            "ScoringRuleCreate": {
                 "properties": {
                     "description": {
                         "type": "string"
@@ -2476,14 +2476,14 @@ const docTemplate = `{
                         "type": "array",
                         "uniqueItems": false
                     },
-                    "scoring_method": {
-                        "$ref": "#/components/schemas/ScoringMethod"
+                    "scoring_rule": {
+                        "$ref": "#/components/schemas/ScoringRuleType"
                     }
                 },
                 "required": [
                     "name",
                     "points",
-                    "scoring_method"
+                    "scoring_rule"
                 ],
                 "type": "object"
             },
@@ -2940,29 +2940,6 @@ const docTemplate = `{
                     "AchievementPlayed10DifferentAscendancies"
                 ]
             },
-            "AggregationType": {
-                "enum": [
-                    "SUM_LATEST",
-                    "LATEST",
-                    "EARLIEST",
-                    "EARLIEST_FRESH_ITEM",
-                    "MAXIMUM",
-                    "MINIMUM",
-                    "DIFFERENCE_BETWEEN",
-                    "NONE"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "AggregationTypeSumLatest",
-                    "AggregationTypeLatest",
-                    "AggregationTypeEarliest",
-                    "AggregationTypeEarliestFreshItem",
-                    "AggregationTypeMaximum",
-                    "AggregationTypeMinimum",
-                    "AggregationTypeDifferenceBetween",
-                    "AggregationTypeNone"
-                ]
-            },
             "ApprovalStatus": {
                 "enum": [
                     "APPROVED",
@@ -2977,6 +2954,27 @@ const docTemplate = `{
                     "APPROVED",
                     "REJECTED",
                     "PENDING"
+                ]
+            },
+            "CountingMethod": {
+                "enum": [
+                    "LATEST_VALUE",
+                    "FIRST_COMPLETION",
+                    "FIRST_FRESH_COMPLETION",
+                    "HIGHEST_VALUE",
+                    "LOWEST_VALUE",
+                    "VALUE_CHANGE_IN_WINDOW",
+                    "CHILD_RESULT"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "CountingMethodLatestValue",
+                    "CountingMethodFirstCompletion",
+                    "CountingMethodFirstFreshCompletion",
+                    "CountingMethodHighestValue",
+                    "CountingMethodLowestValue",
+                    "CountingMethodValueChangeInWindow",
+                    "CountingMethodChildResult"
                 ]
             },
             "FieldType": {
@@ -3114,93 +3112,6 @@ const docTemplate = `{
                     "FetchGuildStashes"
                 ]
             },
-            "NumberField": {
-                "enum": [
-                    "STACK_SIZE",
-                    "FOSSIL_FUEL",
-                    "PLAYER_LEVEL",
-                    "DELVE_DEPTH",
-                    "DELVE_DEPTH_PAST_100",
-                    "PROGRESSIVE_DELVE_DEPTH",
-                    "PANTHEON",
-                    "ASCENDANCY",
-                    "FULLY_ASCENDED",
-                    "BLOODLINE_ASCENDANCY_POINTS",
-                    "BLOODLINE_ASCENDANCY",
-                    "PLAYER_SCORE",
-                    "HAS_RARE_ASCENDANCY_PAST_90",
-                    "VOID_STONES",
-                    "WEAPON_QUALITY",
-                    "ARMOUR_QUALITY",
-                    "FLASK_QUALITY",
-                    "EVASION",
-                    "ENERGY_SHIELD",
-                    "ARMOUR",
-                    "HP",
-                    "MANA",
-                    "FULL_DPS",
-                    "EHP",
-                    "INC_MOVEMENT_SPEED",
-                    "PHYS_MAX_HIT",
-                    "ELE_MAX_HIT",
-                    "ATTACK_BLOCK",
-                    "SPELL_BLOCK",
-                    "HIGH_ILVL_FLASKS",
-                    "ELE_MAX_RES",
-                    "ATLAS_POINTS",
-                    "INFLUENCE_EQUIPPED",
-                    "FOULBORN_EQUIPPED",
-                    "GEMS_EQUIPPED",
-                    "CORRUPTED_ITEMS_EQUIPPED",
-                    "JEWELS_WITH_IMPLICITS_EQUIPPED",
-                    "ENCHANTED_ITEMS_EQUIPPED",
-                    "SUBMISSION_VALUE",
-                    "FINISHED_OBJECTIVES"
-                ],
-                "type": "string",
-                "x-enum-varnames": [
-                    "NumberFieldStackSize",
-                    "NumberFieldFossilFuel",
-                    "NumberFieldPlayerLevel",
-                    "NumberFieldDelveDepth",
-                    "NumberFieldDelveDepthPast100",
-                    "NumberFieldProgressiveDelveDepth",
-                    "NumberFieldPantheon",
-                    "NumberFieldAscendancy",
-                    "NumberFieldFullyAscended",
-                    "NumberFieldBloodlineAscendancyPoints",
-                    "NumberFieldBloodlineAscendancy",
-                    "NumberFieldPlayerScore",
-                    "NumberFieldHasRareAscendancyPast90",
-                    "NumberFieldVoidStones",
-                    "NumberFieldWeaponQuality",
-                    "NumberFieldArmourQuality",
-                    "NumberFieldFlaskQuality",
-                    "NumberFieldEvasion",
-                    "NumberFieldEnergyShield",
-                    "NumberFieldArmour",
-                    "NumberFieldHP",
-                    "NumberFieldMana",
-                    "NumberFieldFullDPS",
-                    "NumberFieldEHP",
-                    "NumberFieldIncMovementSpeed",
-                    "NumberFieldPhysMaxHit",
-                    "NumberFieldEleMaxHit",
-                    "NumberFieldAttackBlock",
-                    "NumberFieldSpellBlock",
-                    "NumberFieldHighIlvlFlasks",
-                    "NumberFieldEleMaxRes",
-                    "NumberFieldAtlasPoints",
-                    "NumberFieldInfluenceEquipped",
-                    "NumberFieldFoulbornEquipped",
-                    "NumberFieldGemsEquipped",
-                    "NumberFieldCorruptedItemsEquipped",
-                    "NumberFieldJewelsWithImplicitsEquipped",
-                    "NumberFieldEnchantedItemsEquipped",
-                    "NumberFieldSubmissionValue",
-                    "NumberFieldFinishedObjectives"
-                ]
-            },
             "ObjectiveType": {
                 "enum": [
                     "ITEM",
@@ -3270,31 +3181,29 @@ const docTemplate = `{
                     "PermissionSubmissionJudge"
                 ]
             },
-            "ScoringMethod": {
+            "ScoringRuleType": {
                 "enum": [
-                    "PRESENCE",
-                    "POINTS_FROM_VALUE",
-                    "RANKED_TIME",
-                    "RANKED_VALUE",
-                    "RANKED_REVERSE",
-                    "RANKED_COMPLETION_TIME",
-                    "BONUS_PER_COMPLETION",
-                    "BINGO_3",
-                    "BINGO_BOARD",
-                    "CHILD_NUMBER_SUM"
+                    "FIXED_POINTS_ON_COMPLETION",
+                    "POINTS_BY_VALUE",
+                    "RANK_BY_COMPLETION_TIME",
+                    "RANK_BY_HIGHEST_VALUE",
+                    "RANK_BY_LOWEST_VALUE",
+                    "RANK_BY_CHILD_COMPLETION_TIME",
+                    "BONUS_PER_CHILD_COMPLETION",
+                    "BINGO_BOARD_RANKING",
+                    "RANK_BY_CHILD_VALUE_SUM"
                 ],
                 "type": "string",
                 "x-enum-varnames": [
-                    "PRESENCE",
-                    "POINTS_FROM_VALUE",
-                    "RANKED_TIME",
-                    "RANKED_VALUE",
-                    "RANKED_REVERSE",
-                    "RANKED_COMPLETION",
-                    "BONUS_PER_COMPLETION",
-                    "BINGO_3",
-                    "BINGO_BOARD",
-                    "MAX_CHILD_NUMBER_SUM"
+                    "FIXED_POINTS_ON_COMPLETION",
+                    "POINTS_BY_VALUE",
+                    "RANK_BY_COMPLETION_TIME",
+                    "RANK_BY_HIGHEST_VALUE",
+                    "RANK_BY_LOWEST_VALUE",
+                    "RANK_BY_CHILD_COMPLETION_TIME",
+                    "BONUS_PER_CHILD_COMPLETION",
+                    "BINGO_BOARD_RANKING",
+                    "RANK_BY_CHILD_VALUE_SUM"
                 ]
             },
             "TimingKey": {
@@ -3328,6 +3237,93 @@ const docTemplate = `{
                     "GuildstashUpdateInterval",
                     "GuildstashPriorityFetchInterval",
                     "PublicStashUpdateInterval"
+                ]
+            },
+            "TrackedValue": {
+                "enum": [
+                    "STACK_SIZE",
+                    "FOSSIL_FUEL",
+                    "CHARACTER_LEVEL",
+                    "DELVE_DEPTH",
+                    "DELVE_DEPTH_AFTER_100",
+                    "WEIGHTED_DELVE_DEPTH",
+                    "TEAM_PLAYERS_WITH_PANTHEON_UNLOCKED",
+                    "ASCENDANCY_POINTS",
+                    "TEAM_PLAYERS_WITH_ALL_LABS_COMPLETED",
+                    "BLOODLINE_ASCENDANCY_POINTS",
+                    "BLOODLINE_ASCENDANCY_UNLOCKED",
+                    "PERSONAL_OBJECTIVE_SCORE",
+                    "HAS_RARE_ASCENDANCY_PAST_90",
+                    "VOID_STONE_COUNT",
+                    "WEAPON_QUALITY",
+                    "ARMOUR_QUALITY",
+                    "FLASK_QUALITY",
+                    "EVASION",
+                    "ENERGY_SHIELD",
+                    "ARMOUR",
+                    "HP",
+                    "MANA",
+                    "FULL_DPS",
+                    "EHP",
+                    "MOVEMENT_SPEED_BONUS",
+                    "PHYSICAL_MAX_HIT",
+                    "ELEMENTAL_MAX_HIT",
+                    "ATTACK_BLOCK_CHANCE",
+                    "SPELL_BLOCK_CHANCE",
+                    "HIGH_ITEM_LEVEL_FLASK_COUNT",
+                    "LOWEST_ELEMENTAL_RESISTANCE",
+                    "ATLAS_POINTS",
+                    "INFLUENCED_ITEM_COUNT",
+                    "FOULBORN_ITEM_COUNT",
+                    "SOCKETED_GEM_COUNT",
+                    "CORRUPTED_ITEM_COUNT",
+                    "JEWELS_WITH_IMPLICITS_COUNT",
+                    "ENCHANTED_ITEM_COUNT",
+                    "SUBMITTED_VALUE",
+                    "COMPLETED_CHILD_OBJECTIVE_COUNT"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "TrackedValueStackSize",
+                    "TrackedValueFossilFuel",
+                    "TrackedValueCharacterLevel",
+                    "TrackedValueDelveDepth",
+                    "TrackedValueDelveDepthAfter100",
+                    "TrackedValueWeightedDelveDepth",
+                    "TrackedValueTeamPlayersWithPantheonUnlocked",
+                    "TrackedValueAscendancyPoints",
+                    "TrackedValueTeamPlayersWithAllLabsCompleted",
+                    "TrackedValueBloodlineAscendancyPoints",
+                    "TrackedValueBloodlineAscendancyUnlocked",
+                    "TrackedValuePersonalObjectiveScore",
+                    "TrackedValueHasRareAscendancyPast90",
+                    "TrackedValueVoidStoneCount",
+                    "TrackedValueWeaponQuality",
+                    "TrackedValueArmourQuality",
+                    "TrackedValueFlaskQuality",
+                    "TrackedValueEvasion",
+                    "TrackedValueEnergyShield",
+                    "TrackedValueArmour",
+                    "TrackedValueHP",
+                    "TrackedValueMana",
+                    "TrackedValueFullDPS",
+                    "TrackedValueEHP",
+                    "TrackedValueMovementSpeedBonus",
+                    "TrackedValuePhysicalMaxHit",
+                    "TrackedValueElementalMaxHit",
+                    "TrackedValueAttackBlockChance",
+                    "TrackedValueSpellBlockChance",
+                    "TrackedValueHighItemLevelFlaskCount",
+                    "TrackedValueLowestElementalResistance",
+                    "TrackedValueAtlasPoints",
+                    "TrackedValueInfluencedItemCount",
+                    "TrackedValueFoulbornItemCount",
+                    "TrackedValueSocketedGemCount",
+                    "TrackedValueCorruptedItemCount",
+                    "TrackedValueJewelsWithImplicitsCount",
+                    "TrackedValueEnchantedItemCount",
+                    "TrackedValueSubmittedValue",
+                    "TrackedValueCompletedChildObjectiveCount"
                 ]
             },
             "ApplicationStatus": {
@@ -4361,10 +4357,10 @@ const docTemplate = `{
                 ]
             }
         },
-        "/events/{event_id}/scoring-presets": {
+        "/events/{event_id}/scoring-rules": {
             "get": {
-                "description": "Fetches the scoring presets for the current event",
-                "operationId": "GetScoringPresetsForEvent",
+                "description": "Fetches the scoring rules for the current event",
+                "operationId": "GetScoringRulesForEvent",
                 "parameters": [
                     {
                         "description": "Event Id",
@@ -4382,7 +4378,7 @@ const docTemplate = `{
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/ScoringPreset"
+                                        "$ref": "#/components/schemas/ScoringRule"
                                     },
                                     "type": "array"
                                 }
@@ -4396,8 +4392,8 @@ const docTemplate = `{
                 ]
             },
             "put": {
-                "description": "Creates a new scoring preset",
-                "operationId": "CreateScoringPreset",
+                "description": "Creates a new scoring rule",
+                "operationId": "CreateScoringRule",
                 "parameters": [
                     {
                         "description": "Event Id",
@@ -4418,15 +4414,15 @@ const docTemplate = `{
                                         "type": "object"
                                     },
                                     {
-                                        "$ref": "#/components/schemas/ScoringPresetCreate",
-                                        "summary": "scoringPresetCreate",
-                                        "description": "Preset to create"
+                                        "$ref": "#/components/schemas/ScoringRuleCreate",
+                                        "summary": "scoringRuleCreate",
+                                        "description": "Rule to create"
                                     }
                                 ]
                             }
                         }
                     },
-                    "description": "Preset to create",
+                    "description": "Rule to create",
                     "required": true
                 },
                 "responses": {
@@ -4434,7 +4430,7 @@ const docTemplate = `{
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ScoringPreset"
+                                    "$ref": "#/components/schemas/ScoringRule"
                                 }
                             }
                         },
@@ -4451,10 +4447,10 @@ const docTemplate = `{
                 ]
             }
         },
-        "/events/{event_id}/scoring-presets/{id}": {
+        "/events/{event_id}/scoring-rules/{id}": {
             "delete": {
-                "description": "Deletes a scoring preset by id",
-                "operationId": "DeleteScoringPreset",
+                "description": "Deletes a scoring rule by id",
+                "operationId": "DeleteScoringRule",
                 "parameters": [
                     {
                         "description": "Event Id",
@@ -4466,7 +4462,7 @@ const docTemplate = `{
                         }
                     },
                     {
-                        "description": "Preset Id",
+                        "description": "Rule Id",
                         "in": "path",
                         "name": "id",
                         "required": true,

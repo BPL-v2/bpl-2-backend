@@ -158,17 +158,17 @@ func SetUp() *repository.Event {
 }
 
 func TestAggregateMatchesEarliestFresh(t *testing.T) {
-	// this tests that an objective that has the aggregation type of EARLIEST_FRESH_ITEM will only be counted as finished if the item
+	// this tests that an objective that has the counting method FIRST_FRESH_COMPLETION will only be counted as finished if the item
 	// stays with the team that found it until the end
 	event := SetUp()
 	defer TearDown()
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.AggregationTypeEarliestFreshItem,
+		CountingMethod: repository.CountingMethodFirstFreshCompletion,
 		RequiredAmount: 1,
 		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
-		NumberField:    repository.NumberFieldStackSize,
+		TrackedValue:   repository.TrackedValueStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 		EventId:        event.Id,
 	}
@@ -249,11 +249,11 @@ func TestAggregateMatchesEarliestFreshStashMixup(t *testing.T) {
 	// defer TearDown()
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.AggregationTypeEarliestFreshItem,
+		CountingMethod: repository.CountingMethodFirstFreshCompletion,
 		RequiredAmount: 1,
 		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
-		NumberField:    repository.NumberFieldStackSize,
+		TrackedValue:   repository.TrackedValueStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 		EventId:        event.Id,
 	}
@@ -322,11 +322,11 @@ func TestAggregateMatchesEarliestFreshGetCorrectCompletionTime(t *testing.T) {
 	// defer TearDown()
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.AggregationTypeEarliestFreshItem,
+		CountingMethod: repository.CountingMethodFirstFreshCompletion,
 		RequiredAmount: 100,
 		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
-		NumberField:    repository.NumberFieldStackSize,
+		TrackedValue:   repository.TrackedValueStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 		EventId:        event.Id,
 	}
@@ -406,11 +406,11 @@ func TestAggregateMatchesInBetweenTimestamps(t *testing.T) {
 
 	objective := &repository.Objective{
 		Name:           "objective1",
-		Aggregation:    repository.AggregationTypeDifferenceBetween,
+		CountingMethod: repository.CountingMethodValueChangeInWindow,
 		RequiredAmount: 1,
 		ParentId:       &event.Objectives[0].Id,
 		ObjectiveType:  repository.ObjectiveTypeItem,
-		NumberField:    repository.NumberFieldStackSize,
+		TrackedValue:   repository.TrackedValueStackSize,
 		SyncStatus:     repository.SyncStatusSynced,
 		ValidFrom:      &timeStart,
 		ValidTo:        &timeEnd,

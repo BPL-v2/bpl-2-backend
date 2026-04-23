@@ -35,16 +35,17 @@ func setupObjectiveController(poeClient *client.PoEClient) []RouteInfo {
 	e := NewObjectiveController()
 	e.poeClient = poeClient
 	baseUrl := "/events/:event_id/objectives"
+	editorRoles := []repository.Permission{repository.PermissionAdmin, repository.PermissionManager, repository.PermissionObjectiveDesigner}
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.GetObjectiveTreeForEventHandler()},
-		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
-		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
-		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "PUT", Path: "", HandlerFunc: e.createObjectiveHandler(), Authenticated: true, RequiredRoles: editorRoles},
+		{Method: "GET", Path: "/:id", HandlerFunc: e.getObjectiveByIdHandler(), Authenticated: true, RequiredRoles: editorRoles},
+		{Method: "DELETE", Path: "/:id", HandlerFunc: e.deleteObjectiveHandler(), Authenticated: true, RequiredRoles: editorRoles},
 		// todo: move this somewhere else
-		{Method: "POST", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
-		{Method: "POST", Path: "/validations", HandlerFunc: e.validateObjectivesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
-		{Method: "GET", Path: "/validations", HandlerFunc: e.getObjectiveValidationsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
-		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "POST", Path: "/parser", HandlerFunc: e.getObjectiveParserHandler(), Authenticated: true, RequiredRoles: editorRoles},
+		{Method: "POST", Path: "/validations", HandlerFunc: e.validateObjectivesHandler(), Authenticated: true, RequiredRoles: editorRoles},
+		{Method: "GET", Path: "/validations", HandlerFunc: e.getObjectiveValidationsHandler(), Authenticated: true, RequiredRoles: editorRoles},
+		{Method: "GET", Path: "/valid-mappings", HandlerFunc: e.getValidMappingsHandler(), Authenticated: true, RequiredRoles: editorRoles},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -63,9 +64,9 @@ func setupObjectiveController(poeClient *client.PoEClient) []RouteInfo {
 func (e *ObjectiveController) getValidMappingsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(200, ConditionMappings{
-			FieldToType:                 repository.FieldToType,
-			ValidOperators:              repository.OperatorsForTypes,
-			ObjectiveTypeToNumberFields: repository.ObjectiveTypeToNumberFields,
+			FieldToType:                  repository.FieldToType,
+			ValidOperators:               repository.OperatorsForTypes,
+			ObjectiveTypeToTrackedValues: repository.ObjectiveTypeToTrackedValues,
 		})
 	}
 }
@@ -137,7 +138,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		if event == nil {
 			return
 		}
-		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPresets")
+		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringRules")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objectives not found"})
@@ -151,7 +152,9 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 			return
 		}
 		roles := getUserRoles(c)
-		public := !(slices.Contains(roles, repository.PermissionAdmin) || slices.Contains(roles, repository.PermissionObjectiveDesigner))
+		public := !(slices.Contains(roles, repository.PermissionAdmin) ||
+			slices.Contains(roles, repository.PermissionManager) ||
+			slices.Contains(roles, repository.PermissionObjectiveDesigner))
 		c.JSON(200, toObjectiveResponse(rootObjective, public, event.EventEndTime))
 	}
 }
@@ -183,7 +186,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 		}
 		model := objectiveCreate.toModel()
 		model.EventId = event.Id
-		objective, err := e.objectiveService.CreateObjective(model, objectiveCreate.ScoringIds)
+		objective, err := e.objectiveService.CreateObjective(model, objectiveCreate.ScoringRuleIds)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Category not found"})
@@ -254,7 +257,7 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 		if event == nil {
 			return
 		}
-		objective, err := e.objectiveService.GetObjectiveById(id, "ScoringPresets")
+		objective, err := e.objectiveService.GetObjectiveById(id, "ScoringRules")
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				c.JSON(404, gin.H{"error": "Objective not found"})
@@ -263,7 +266,7 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 			}
 			return
 		}
-		c.JSON(200, toObjectiveResponse(objective, true, event.EventEndTime))
+		c.JSON(200, toObjectiveResponse(objective, false, event.EventEndTime))
 	}
 }
 
@@ -297,55 +300,55 @@ type ObjectiveConditionCreate struct {
 }
 
 type ObjectiveCreate struct {
-	Id                     int                        `json:"id"`
-	Name                   string                     `json:"name" binding:"required"`
-	Extra                  string                     `json:"extra"`
-	RequiredNumber         int                        `json:"required_number" binding:"required"`
-	ObjectiveType          repository.ObjectiveType   `json:"objective_type" binding:"required"`
-	NumberField            repository.NumberField     `json:"number_field" binding:"required"`
-	NumberFieldExplanation *string                    `json:"number_field_explanation"`
-	Aggregation            repository.AggregationType `json:"aggregation" binding:"required"`
-	ParentId               int                        `json:"parent_id" binding:"required"`
-	Conditions             []Condition                `json:"conditions" binding:"required"`
-	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty" format:"date-time"`
-	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty" format:"date-time"`
-	ScoringIds             []int                      `json:"scoring_preset_ids" binding:"required"`
-	HideProgress           bool                       `json:"hide_progress"`
+	Id                      int                       `json:"id"`
+	Name                    string                    `json:"name" binding:"required"`
+	Extra                   string                    `json:"extra"`
+	RequiredNumber          int                       `json:"required_number" binding:"required"`
+	ObjectiveType           repository.ObjectiveType  `json:"objective_type" binding:"required"`
+	TrackedValue            repository.TrackedValue   `json:"tracked_value" binding:"required"`
+	TrackedValueExplanation *string                   `json:"tracked_value_explanation"`
+	CountingMethod          repository.CountingMethod `json:"counting_method" binding:"required"`
+	ParentId                int                       `json:"parent_id" binding:"required"`
+	Conditions              []Condition               `json:"conditions" binding:"required"`
+	ValidFrom               *time.Time                `json:"valid_from" binding:"omitempty" format:"date-time"`
+	ValidTo                 *time.Time                `json:"valid_to" binding:"omitempty" format:"date-time"`
+	ScoringRuleIds          []int                     `json:"scoring_rule_ids" binding:"required"`
+	HideProgress            bool                      `json:"hide_progress"`
 }
 
 type Objective struct {
-	Id                     int                        `json:"id" binding:"required"`
-	Name                   string                     `json:"name" binding:"required"`
-	Extra                  string                     `json:"extra" binding:"required"`
-	RequiredNumber         int                        `json:"required_number" binding:"required"`
-	ParentId               *int                       `json:"parent_id" binding:"required"`
-	ObjectiveType          repository.ObjectiveType   `json:"objective_type" binding:"required"`
-	Conditions             []*Condition               `json:"conditions" binding:"required"`
-	ValidFrom              *time.Time                 `json:"valid_from" binding:"omitempty" format:"date-time"`
-	ValidTo                *time.Time                 `json:"valid_to" binding:"omitempty" format:"date-time"`
-	ScoringPresets         []*ScoringPreset           `json:"scoring_presets" binding:"required"`
-	NumberField            repository.NumberField     `json:"number_field" binding:"required"`
-	NumberFieldExplanation *string                    `json:"number_field_explanation"`
-	Aggregation            repository.AggregationType `json:"aggregation" binding:"required"`
-	Children               []*Objective               `json:"children" binding:"required"`
-	HideProgress           bool                       `json:"hide_progress" binding:"required"`
+	Id                      int                       `json:"id" binding:"required"`
+	Name                    string                    `json:"name" binding:"required"`
+	Extra                   string                    `json:"extra" binding:"required"`
+	RequiredNumber          int                       `json:"required_number" binding:"required"`
+	ParentId                *int                      `json:"parent_id" binding:"required"`
+	ObjectiveType           repository.ObjectiveType  `json:"objective_type" binding:"required"`
+	Conditions              []*Condition              `json:"conditions" binding:"required"`
+	ValidFrom               *time.Time                `json:"valid_from" binding:"omitempty" format:"date-time"`
+	ValidTo                 *time.Time                `json:"valid_to" binding:"omitempty" format:"date-time"`
+	ScoringRules            []*ScoringRule          `json:"scoring_rules" binding:"required"`
+	TrackedValue            repository.TrackedValue   `json:"tracked_value" binding:"required"`
+	TrackedValueExplanation *string                   `json:"tracked_value_explanation"`
+	CountingMethod          repository.CountingMethod `json:"counting_method" binding:"required"`
+	Children                []*Objective              `json:"children" binding:"required"`
+	HideProgress            bool                      `json:"hide_progress" binding:"required"`
 }
 
 func (e *ObjectiveCreate) toModel() *repository.Objective {
 	return &repository.Objective{
-		Id:                     e.Id,
-		Name:                   e.Name,
-		Extra:                  e.Extra,
-		RequiredAmount:         e.RequiredNumber,
-		ObjectiveType:          e.ObjectiveType,
-		NumberField:            e.NumberField,
-		NumberFieldExplanation: e.NumberFieldExplanation,
-		Aggregation:            e.Aggregation,
-		Conditions:             utils.Map(e.Conditions, func(c Condition) *repository.Condition { return c.toModel() }),
-		ValidFrom:              e.ValidFrom,
-		ValidTo:                e.ValidTo,
-		ParentId:               &e.ParentId,
-		HideProgress:           e.HideProgress,
+		Id:                      e.Id,
+		Name:                    e.Name,
+		Extra:                   e.Extra,
+		RequiredAmount:          e.RequiredNumber,
+		ObjectiveType:           e.ObjectiveType,
+		TrackedValue:            e.TrackedValue,
+		TrackedValueExplanation: e.TrackedValueExplanation,
+		CountingMethod:          e.CountingMethod,
+		Conditions:              utils.Map(e.Conditions, func(c Condition) *repository.Condition { return c.toModel() }),
+		ValidFrom:               e.ValidFrom,
+		ValidTo:                 e.ValidTo,
+		ParentId:                &e.ParentId,
+		HideProgress:            e.HideProgress,
 	}
 }
 
@@ -355,33 +358,33 @@ func toObjectiveResponse(objective *repository.Objective, public bool, eventEnd 
 	}
 	if public && objective.ValidFrom != nil && time.Now().Before(*objective.ValidFrom) {
 		return &Objective{
-			Id:             objective.Id,
-			ParentId:       objective.ParentId,
-			ValidFrom:      objective.ValidFrom,
-			ValidTo:        objective.ValidTo,
-			ScoringPresets: utils.Map(objective.ScoringPresets, toScoringPresetResponse),
-			HideProgress:   objective.HideProgress,
-			Children:       make([]*Objective, 0),
-			Conditions:     make([]*Condition, 0),
+			Id:           objective.Id,
+			ParentId:     objective.ParentId,
+			ValidFrom:    objective.ValidFrom,
+			ValidTo:      objective.ValidTo,
+			ScoringRules: utils.Map(objective.ScoringRules, toScoringRuleResponse),
+			HideProgress: objective.HideProgress,
+			Children:     make([]*Objective, 0),
+			Conditions:   make([]*Condition, 0),
 		}
 	}
 
 	return &Objective{
-		Id:                     objective.Id,
-		Name:                   objective.Name,
-		Extra:                  objective.Extra,
-		RequiredNumber:         objective.RequiredAmount,
-		ParentId:               objective.ParentId,
-		ObjectiveType:          objective.ObjectiveType,
-		ValidFrom:              objective.ValidFrom,
-		ValidTo:                objective.ValidTo,
-		Conditions:             utils.FilterNull(utils.Map(objective.Conditions, toConditionResponse)),
-		NumberField:            objective.NumberField,
-		NumberFieldExplanation: objective.NumberFieldExplanation,
-		Aggregation:            objective.Aggregation,
-		ScoringPresets:         utils.FilterNull(utils.Map(objective.ScoringPresets, toScoringPresetResponse)),
-		Children:               utils.FilterNull(utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public, eventEnd) })),
-		HideProgress:           objective.HideProgress,
+		Id:                      objective.Id,
+		Name:                    objective.Name,
+		Extra:                   objective.Extra,
+		RequiredNumber:          objective.RequiredAmount,
+		ParentId:                objective.ParentId,
+		ObjectiveType:           objective.ObjectiveType,
+		ValidFrom:               objective.ValidFrom,
+		ValidTo:                 objective.ValidTo,
+		Conditions:              utils.FilterNull(utils.Map(objective.Conditions, toConditionResponse)),
+		TrackedValue:            objective.TrackedValue,
+		TrackedValueExplanation: objective.TrackedValueExplanation,
+		CountingMethod:          objective.CountingMethod,
+		ScoringRules:            utils.FilterNull(utils.Map(objective.ScoringRules, toScoringRuleResponse)),
+		Children:                utils.FilterNull(utils.Map(objective.Children, func(o *repository.Objective) *Objective { return toObjectiveResponse(o, public, eventEnd) })),
+		HideProgress:            objective.HideProgress,
 	}
 }
 
@@ -428,7 +431,7 @@ func toConditionResponse(condition *repository.Condition) *Condition {
 }
 
 type ConditionMappings struct {
-	FieldToType                 map[repository.ItemField]repository.FieldType         `json:"field_to_type" binding:"required"`
-	ValidOperators              map[repository.FieldType][]repository.Operator        `json:"valid_operators" binding:"required"`
-	ObjectiveTypeToNumberFields map[repository.ObjectiveType][]repository.NumberField `json:"objective_type_to_number_fields" binding:"required"`
+	FieldToType                  map[repository.ItemField]repository.FieldType          `json:"field_to_type" binding:"required"`
+	ValidOperators               map[repository.FieldType][]repository.Operator         `json:"valid_operators" binding:"required"`
+	ObjectiveTypeToTrackedValues map[repository.ObjectiveType][]repository.TrackedValue `json:"objective_type_to_tracked_values" binding:"required"`
 }

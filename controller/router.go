@@ -37,7 +37,7 @@ func SetRoutes(r *gin.Engine) {
 	routes = append(routes, setupObjectiveController(poeClient)...)
 	routes = append(routes, setupOauthController()...)
 	routes = append(routes, setupUserController(poeClient)...)
-	routes = append(routes, setupScoringPresetController()...)
+	routes = append(routes, setupScoringRuleController()...)
 	routes = append(routes, setupSignupController()...)
 	routes = append(routes, setupSubmissionController()...)
 	routes = append(routes, setupScoreController(poeClient)...)

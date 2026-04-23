@@ -121,21 +121,21 @@ func makeObjective(id int, objType dbModel.ObjectiveType, conditions ...*dbModel
 	}
 }
 
-func makePlayerObjective(id int, numberField dbModel.NumberField) *dbModel.Objective {
+func makePlayerObjective(id int, numberField dbModel.TrackedValue) *dbModel.Objective {
 	return &dbModel.Objective{
 		Id:            id,
 		Name:          "player-obj",
 		ObjectiveType: dbModel.ObjectiveTypePlayer,
-		NumberField:   numberField,
+		TrackedValue:  numberField,
 	}
 }
 
-func makeTeamObjective(id int, numberField dbModel.NumberField) *dbModel.Objective {
+func makeTeamObjective(id int, numberField dbModel.TrackedValue) *dbModel.Objective {
 	return &dbModel.Objective{
 		Id:            id,
 		Name:          "team-obj",
 		ObjectiveType: dbModel.ObjectiveTypeTeam,
-		NumberField:   numberField,
+		TrackedValue:  numberField,
 	}
 }
 
@@ -832,7 +832,7 @@ func TestNewItemChecker(t *testing.T) {
 
 	t.Run("skips non-item objectives", func(t *testing.T) {
 		objectives := []*dbModel.Objective{
-			{Id: 1, ObjectiveType: dbModel.ObjectiveTypePlayer, NumberField: dbModel.NumberFieldPlayerLevel},
+			{Id: 1, ObjectiveType: dbModel.ObjectiveTypePlayer, TrackedValue: dbModel.TrackedValueCharacterLevel},
 		}
 		checker, err := NewItemChecker(objectives, true)
 		require.NoError(t, err)
@@ -1245,7 +1245,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("player level", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldPlayerLevel)
+		obj := makePlayerObjective(1, dbModel.TrackedValueCharacterLevel)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 90, checker(&Player{Character: &clientModel.Character{Level: 90}}))
@@ -1253,14 +1253,14 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("delve depth", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldDelveDepth)
+		obj := makePlayerObjective(1, dbModel.TrackedValueDelveDepth)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 200, checker(&Player{DelveDepth: 200}))
 	})
 
 	t.Run("delve depth past 100", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldDelveDepthPast100)
+		obj := makePlayerObjective(1, dbModel.TrackedValueDelveDepthAfter100)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 50, checker(&Player{DelveDepth: 150}))
@@ -1268,7 +1268,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("pantheon", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldPantheon)
+		obj := makePlayerObjective(1, dbModel.TrackedValueTeamPlayersWithPantheonUnlocked)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1286,7 +1286,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("fully ascended", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldFullyAscended)
+		obj := makePlayerObjective(1, dbModel.TrackedValueTeamPlayersWithAllLabsCompleted)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1297,11 +1297,11 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("PoB stats return 0 with nil PoB", func(t *testing.T) {
-		fields := []dbModel.NumberField{
-			dbModel.NumberFieldEvasion, dbModel.NumberFieldArmour, dbModel.NumberFieldEnergyShield,
-			dbModel.NumberFieldMana, dbModel.NumberFieldHP, dbModel.NumberFieldEHP,
-			dbModel.NumberFieldPhysMaxHit, dbModel.NumberFieldEleMaxHit,
-			dbModel.NumberFieldIncMovementSpeed, dbModel.NumberFieldFullDPS,
+		fields := []dbModel.TrackedValue{
+			dbModel.TrackedValueEvasion, dbModel.TrackedValueArmour, dbModel.TrackedValueEnergyShield,
+			dbModel.TrackedValueMana, dbModel.TrackedValueHP, dbModel.TrackedValueEHP,
+			dbModel.TrackedValuePhysicalMaxHit, dbModel.TrackedValueElementalMaxHit,
+			dbModel.TrackedValueMovementSpeedBonus, dbModel.TrackedValueFullDPS,
 		}
 		for _, field := range fields {
 			obj := makePlayerObjective(1, field)
@@ -1312,14 +1312,14 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("PoB evasion", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldEvasion)
+		obj := makePlayerObjective(1, dbModel.TrackedValueEvasion)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 5000, checker(&Player{PoB: &dbModel.CharacterPob{Evasion: 5000}}))
 	})
 
 	t.Run("PoB movement speed", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldIncMovementSpeed)
+		obj := makePlayerObjective(1, dbModel.TrackedValueMovementSpeedBonus)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		// MovementSpeed 130 means +30% inc movement speed (130 - 100)
@@ -1327,7 +1327,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("influence equipped", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldInfluenceEquipped)
+		obj := makePlayerObjective(1, dbModel.TrackedValueInfluencedItemCount)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1341,7 +1341,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("foulborn equipped", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldFoulbornEquipped)
+		obj := makePlayerObjective(1, dbModel.TrackedValueFoulbornItemCount)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1354,7 +1354,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("gems equipped", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldGemsEquipped)
+		obj := makePlayerObjective(1, dbModel.TrackedValueSocketedGemCount)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1367,7 +1367,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("gems equipped excludes abyss jewels", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldGemsEquipped)
+		obj := makePlayerObjective(1, dbModel.TrackedValueSocketedGemCount)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1382,7 +1382,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("corrupted items equipped", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldCorruptedItemsEquipped)
+		obj := makePlayerObjective(1, dbModel.TrackedValueCorruptedItemCount)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1395,7 +1395,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("jewels with implicits", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldJewelsWithImplicitsEquipped)
+		obj := makePlayerObjective(1, dbModel.TrackedValueJewelsWithImplicitsCount)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1408,7 +1408,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("atlas points subtracts node 65225", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldAtlasPoints)
+		obj := makePlayerObjective(1, dbModel.TrackedValueAtlasPoints)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1426,7 +1426,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("enchanted items equipped", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldEnchantedItemsEquipped)
+		obj := makePlayerObjective(1, dbModel.TrackedValueEnchantedItemCount)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1440,7 +1440,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("has rare ascendancy past 90", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldHasRareAscendancyPast90)
+		obj := makePlayerObjective(1, dbModel.TrackedValueHasRareAscendancyPast90)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1451,7 +1451,7 @@ func TestGetPlayerChecker(t *testing.T) {
 	})
 
 	t.Run("bloodline ascendancy", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldBloodlineAscendancy)
+		obj := makePlayerObjective(1, dbModel.TrackedValueBloodlineAscendancyUnlocked)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -1470,7 +1470,7 @@ func TestGetPlayerChecker(t *testing.T) {
 }
 
 func TestPlayerScore(t *testing.T) {
-	obj := makePlayerObjective(1, dbModel.NumberFieldPlayerScore)
+	obj := makePlayerObjective(1, dbModel.TrackedValuePersonalObjectiveScore)
 	checker, err := GetPlayerChecker(obj)
 	require.NoError(t, err)
 
@@ -1510,13 +1510,13 @@ func TestPlayerScore(t *testing.T) {
 
 func TestGetTeamChecker(t *testing.T) {
 	t.Run("rejects non-team objective", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldPlayerLevel)
+		obj := makePlayerObjective(1, dbModel.TrackedValueCharacterLevel)
 		_, err := GetTeamChecker(obj)
 		assert.Error(t, err)
 	})
 
 	t.Run("sums player values", func(t *testing.T) {
-		obj := makeTeamObjective(1, dbModel.NumberFieldPlayerLevel)
+		obj := makeTeamObjective(1, dbModel.TrackedValueCharacterLevel)
 		checker, err := GetTeamChecker(obj)
 		require.NoError(t, err)
 
@@ -1533,8 +1533,8 @@ func TestGetTeamChecker(t *testing.T) {
 func TestNewPlayerChecker(t *testing.T) {
 	t.Run("skips non-player objectives", func(t *testing.T) {
 		objectives := []*dbModel.Objective{
-			makeTeamObjective(1, dbModel.NumberFieldPlayerLevel),
-			makePlayerObjective(2, dbModel.NumberFieldPlayerLevel),
+			makeTeamObjective(1, dbModel.TrackedValueCharacterLevel),
+			makePlayerObjective(2, dbModel.TrackedValueCharacterLevel),
 		}
 		checker, err := NewPlayerChecker(objectives)
 		require.NoError(t, err)
@@ -1543,7 +1543,7 @@ func TestNewPlayerChecker(t *testing.T) {
 
 	t.Run("detects changes", func(t *testing.T) {
 		objectives := []*dbModel.Objective{
-			makePlayerObjective(1, dbModel.NumberFieldPlayerLevel),
+			makePlayerObjective(1, dbModel.TrackedValueCharacterLevel),
 		}
 		checker, err := NewPlayerChecker(objectives)
 		require.NoError(t, err)
@@ -1560,7 +1560,7 @@ func TestNewPlayerChecker(t *testing.T) {
 
 	t.Run("no change produces no results", func(t *testing.T) {
 		objectives := []*dbModel.Objective{
-			makePlayerObjective(1, dbModel.NumberFieldPlayerLevel),
+			makePlayerObjective(1, dbModel.TrackedValueCharacterLevel),
 		}
 		checker, err := NewPlayerChecker(objectives)
 		require.NoError(t, err)
@@ -1579,8 +1579,8 @@ func TestNewPlayerChecker(t *testing.T) {
 func TestNewTeamChecker(t *testing.T) {
 	t.Run("skips non-team objectives", func(t *testing.T) {
 		objectives := []*dbModel.Objective{
-			makePlayerObjective(1, dbModel.NumberFieldPlayerLevel),
-			makeTeamObjective(2, dbModel.NumberFieldPlayerLevel),
+			makePlayerObjective(1, dbModel.TrackedValueCharacterLevel),
+			makeTeamObjective(2, dbModel.TrackedValueCharacterLevel),
 		}
 		checker, err := NewTeamChecker(objectives)
 		require.NoError(t, err)
@@ -1589,7 +1589,7 @@ func TestNewTeamChecker(t *testing.T) {
 
 	t.Run("detects team-level changes", func(t *testing.T) {
 		objectives := []*dbModel.Objective{
-			makeTeamObjective(1, dbModel.NumberFieldPlayerLevel),
+			makeTeamObjective(1, dbModel.TrackedValueCharacterLevel),
 		}
 		checker, err := NewTeamChecker(objectives)
 		require.NoError(t, err)
@@ -1612,7 +1612,7 @@ func TestNewTeamChecker(t *testing.T) {
 
 	t.Run("no team change produces no results", func(t *testing.T) {
 		objectives := []*dbModel.Objective{
-			makeTeamObjective(1, dbModel.NumberFieldPlayerLevel),
+			makeTeamObjective(1, dbModel.TrackedValueCharacterLevel),
 		}
 		checker, err := NewTeamChecker(objectives)
 		require.NoError(t, err)
@@ -2213,7 +2213,7 @@ func TestShouldUpdateLeagueAccountAdditional(t *testing.T) {
 
 func TestQuality(t *testing.T) {
 	t.Run("armour quality", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueArmourQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -2231,28 +2231,28 @@ func TestQuality(t *testing.T) {
 	})
 
 	t.Run("weapon quality", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldWeaponQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueWeaponQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 0, checker(&Player{Character: nil}))
 	})
 
 	t.Run("flask quality", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldFlaskQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueFlaskQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 0, checker(&Player{Character: nil}))
 	})
 
 	t.Run("quality nil equipment", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueArmourQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 		assert.Equal(t, 0, checker(&Player{Character: &clientModel.Character{Equipment: nil}}))
 	})
 
 	t.Run("quality skips non-matching superclass", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldWeaponQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueWeaponQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -2267,7 +2267,7 @@ func TestQuality(t *testing.T) {
 	})
 
 	t.Run("quality skips items without properties", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueArmourQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -2278,7 +2278,7 @@ func TestQuality(t *testing.T) {
 	})
 
 	t.Run("quality parse error", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueArmourQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 
@@ -2292,7 +2292,7 @@ func TestQuality(t *testing.T) {
 	})
 
 	t.Run("quality sums multiple items", func(t *testing.T) {
-		obj := makePlayerObjective(1, dbModel.NumberFieldArmourQuality)
+		obj := makePlayerObjective(1, dbModel.TrackedValueArmourQuality)
 		checker, err := GetPlayerChecker(obj)
 		require.NoError(t, err)
 

@@ -37,20 +37,20 @@ type EventService interface {
 }
 
 type EventServiceImpl struct {
-	eventRepository         repository.EventRepository
-	scoringPresetRepository repository.ScoringPresetRepository
-	objectiveRepository     repository.ObjectiveRepository
-	teamService             TeamService
-	signupService           SignupService
+	eventRepository       repository.EventRepository
+	scoringRuleRepository repository.ScoringRuleRepository
+	objectiveRepository   repository.ObjectiveRepository
+	teamService           TeamService
+	signupService         SignupService
 }
 
 func NewEventService() EventService {
 	return &EventServiceImpl{
-		eventRepository:         repository.NewEventRepository(),
-		scoringPresetRepository: repository.NewScoringPresetRepository(),
-		objectiveRepository:     repository.NewObjectiveRepository(),
-		teamService:             NewTeamService(),
-		signupService:           NewSignupService(),
+		eventRepository:       repository.NewEventRepository(),
+		scoringRuleRepository: repository.NewScoringRuleRepository(),
+		objectiveRepository:   repository.NewObjectiveRepository(),
+		teamService:           NewTeamService(),
+		signupService:         NewSignupService(),
 	}
 }
 
@@ -99,7 +99,7 @@ func (e *EventServiceImpl) DeleteEvent(event *repository.Event) error {
 	if err != nil {
 		return err
 	}
-	return e.scoringPresetRepository.DeletePresetsForEvent(event.Id)
+	return e.scoringRuleRepository.DeleteRulesForEvent(event.Id)
 }
 
 func (e *EventServiceImpl) GetEventByConditionId(conditionId int) (*repository.Event, error) {

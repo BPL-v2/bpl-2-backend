@@ -77,8 +77,8 @@ func EvaluateAggregations(objective *repository.Objective, aggregations Objectiv
 			return err
 		}
 	}
-	for _, preset := range objective.ScoringPresets {
-		if fun, ok := scoringFunctions[preset.ScoringMethod]; ok {
+	for _, preset := range objective.ScoringRules {
+		if fun, ok := scoringFunctions[preset.RuleType]; ok {
 			err := fun(objective, preset, aggregations, scoreMap)
 			if err != nil {
 				return err
@@ -94,88 +94,80 @@ type TeamCompletion struct {
 	LatestTimestamp     int64
 }
 
-var scoringFunctions = map[repository.ScoringMethod]func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error{
-	repository.PRESENCE:             handlePresence,
-	repository.RANKED_TIME:          handleRankedTime,
-	repository.RANKED_VALUE:         handleRankedValue,
-	repository.RANKED_REVERSE:       handleRankedReverse,
-	repository.POINTS_FROM_VALUE:    handlePointsFromValue,
-	repository.RANKED_COMPLETION:    handleChildRankingByTime,
-	repository.BONUS_PER_COMPLETION: handleChildBonus,
-	repository.BINGO_3:              handleBingoN(3),
-	repository.BINGO_BOARD:          handleBingoBoard,
-	repository.MAX_CHILD_NUMBER_SUM: handleChildRankingByNumber,
+var scoringFunctions = map[repository.ScoringRuleType]func(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error{
+	repository.FIXED_POINTS_ON_COMPLETION:    handlePresence,
+	repository.RANK_BY_COMPLETION_TIME:       handleRankedTime,
+	repository.RANK_BY_HIGHEST_VALUE:         handleRankedValue,
+	repository.RANK_BY_LOWEST_VALUE:          handleRankedReverse,
+	repository.POINTS_BY_VALUE:               handlePointsFromValue,
+	repository.RANK_BY_CHILD_COMPLETION_TIME: handleChildRankingByTime,
+	repository.BONUS_PER_CHILD_COMPLETION:    handleChildBonus,
+	repository.BINGO_BOARD_RANKING:           handleBingoBoard,
+	repository.RANK_BY_CHILD_VALUE_SUM:       handleChildRankingByNumber,
 }
 
-func handlePointsFromValue(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handlePointsFromValue(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	for teamId, match := range aggregations[objective.Id] {
-		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id] == nil {
 			continue
 		}
-		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id]
 		completion.Number = match.Number
 		completion.UserId = match.UserId
 		completion.Finished = match.Finished
 		completion.Timestamp = match.Timestamp
-		completion.Points = int(scoringPreset.Points.GetScoreFromNumber(match.Number))
-		if scoringPreset.PointCap != 0 && completion.Points > scoringPreset.PointCap {
-			completion.Points = scoringPreset.PointCap
+		completion.Points = int(scoringRule.Points.GetScoreFromNumber(match.Number))
+		if scoringRule.PointCap != 0 && completion.Points > scoringRule.PointCap {
+			completion.Points = scoringRule.PointCap
 		}
 	}
 	return nil
 }
 
-func handlePresence(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handlePresence(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	for teamId, match := range aggregations[objective.Id] {
-		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id] == nil {
 			continue
 		}
-		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id]
 		completion.Number = match.Number
 		completion.UserId = match.UserId
 		completion.Finished = match.Finished
 		completion.Timestamp = match.Timestamp
 		if match.Finished {
-			completion.Points = int(scoringPreset.Points.Get(0))
+			completion.Points = int(scoringRule.Points.Get(0))
 		}
 	}
 	return nil
 }
-func handleBingoN(n int) func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
-	// can't be assed to fix this right now
-	return func(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
-		return nil
-	}
-}
-
-func handleRankedTime(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleRankedTime(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	rankFun := func(a, b *Match) bool {
 		if a.Finished && b.Finished {
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Finished
 	}
-	return handleRanked(objective, scoringPreset, aggregations, rankFun, scoreMap)
+	return handleRanked(objective, scoringRule, aggregations, rankFun, scoreMap)
 }
 
-func handleRankedValue(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleRankedValue(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	rankFun := func(a, b *Match) bool {
 		if a.Number == b.Number {
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Number > b.Number
 	}
-	return handleRanked(objective, scoringPreset, aggregations, rankFun, scoreMap)
+	return handleRanked(objective, scoringRule, aggregations, rankFun, scoreMap)
 }
 
-func handleRankedReverse(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleRankedReverse(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	rankFun := func(a, b *Match) bool {
 		if a.Number == b.Number {
 			return a.Timestamp.Before(b.Timestamp)
 		}
 		return a.Number < b.Number
 	}
-	return handleRanked(objective, scoringPreset, aggregations, rankFun, scoreMap)
+	return handleRanked(objective, scoringRule, aggregations, rankFun, scoreMap)
 }
 
 func isTiedWithNext(index int, matches []*Match, rankFun func(a, b *Match) bool) bool {
@@ -185,7 +177,7 @@ func isTiedWithNext(index int, matches []*Match, rankFun func(a, b *Match) bool)
 	return rankFun(matches[index], matches[index+1]) == rankFun(matches[index+1], matches[index])
 }
 
-func handleRanked(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, rankFun func(a, b *Match) bool, scoreMap map[int]map[int]*Score) error {
+func handleRanked(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, rankFun func(a, b *Match) bool, scoreMap map[int]map[int]*Score) error {
 	matches := make([]*Match, 0)
 	for _, match := range aggregations[objective.Id] {
 		matches = append(matches, match)
@@ -193,10 +185,10 @@ func handleRanked(objective *repository.Objective, scoringPreset *repository.Sco
 	sort.Slice(matches, func(i, j int) bool { return rankFun(matches[i], matches[j]) })
 	i := 0
 	for j, match := range matches {
-		if scoreMap[match.TeamId] == nil || scoreMap[match.TeamId][objective.Id] == nil || scoreMap[match.TeamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+		if scoreMap[match.TeamId] == nil || scoreMap[match.TeamId][objective.Id] == nil || scoreMap[match.TeamId][objective.Id].PresetCompletions[scoringRule.Id] == nil {
 			continue
 		}
-		completion := scoreMap[match.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion := scoreMap[match.TeamId][objective.Id].PresetCompletions[scoringRule.Id]
 		completion.UserId = match.UserId
 		completion.Timestamp = match.Timestamp
 		completion.Number = match.Number
@@ -204,7 +196,7 @@ func handleRanked(objective *repository.Objective, scoringPreset *repository.Sco
 
 		if match.Finished {
 			completion.Rank = i + 1
-			completion.Points = int(scoringPreset.Points.Get(i))
+			completion.Points = int(scoringRule.Points.Get(i))
 		}
 		if !isTiedWithNext(j, matches, rankFun) {
 			i++
@@ -223,9 +215,9 @@ type GridFinish struct {
 	Time time.Time
 }
 
-func handleBingoBoard(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleBingoBoard(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	numberOfBingosRequired := 1
-	if val, ok := scoringPreset.Extra["required_number_of_bingos"]; ok {
+	if val, ok := scoringRule.Extra["required_bingo_count"]; ok {
 		parsed, err := strconv.Atoi(val)
 		if err == nil {
 			numberOfBingosRequired = parsed
@@ -269,10 +261,10 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 			}
 			gridTimestamps[cellPos.X][cellPos.Y] = completion.Time
 		}
-		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id] == nil {
 			continue
 		}
-		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id]
 		finishTime := getBingoCompletionTime(numberOfBingosRequired, gridTimestamps, gridSize)
 		if !finishTime.IsZero() {
 			completion.Finished = true
@@ -294,7 +286,7 @@ func handleBingoBoard(objective *repository.Objective, scoringPreset *repository
 				rank = i + 1
 			}
 			score.Rank = rank
-			score.Points = int(scoringPreset.Points.Get(rank - 1))
+			score.Points = int(scoringRule.Points.Get(rank - 1))
 		}
 	}
 	return nil
@@ -349,7 +341,7 @@ func getBingoCompletionTime(numberOfBingosRequired int, girdTimestamps map[int]m
 	return time.Unix(0, finishTime)
 }
 
-func handleChildBonus(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleChildBonus(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	finishCounts := make(map[int]int)
 	teamIds := make(map[int]bool)
 	childIds := utils.Map(objective.Children, func(o *repository.Objective) int { return o.Id })
@@ -371,16 +363,16 @@ func handleChildBonus(objective *repository.Objective, scoringPreset *repository
 	for teamId, childScores := range teamChildScores {
 		latestTimestamp := time.Time{}
 		for i, childScore := range childScores {
-			childScore.BonusPoints += int(scoringPreset.Points.Get(i))
+			childScore.BonusPoints += int(scoringRule.Points.Get(i))
 			currentTimestamp := childScore.Timestamp()
 			if currentTimestamp.After(latestTimestamp) {
 				latestTimestamp = currentTimestamp
 			}
 		}
-		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+		if scoreMap[teamId] == nil || scoreMap[teamId][objective.Id] == nil || scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id] == nil {
 			continue
 		}
-		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		completion := scoreMap[teamId][objective.Id].PresetCompletions[scoringRule.Id]
 		completion.Finished = finishCounts[teamId] == len(objective.Children)
 		completion.Number = finishCounts[teamId]
 		completion.Timestamp = latestTimestamp
@@ -388,15 +380,15 @@ func handleChildBonus(objective *repository.Objective, scoringPreset *repository
 	return nil
 }
 
-func handleChildRankingByTime(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleChildRankingByTime(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	requiredChildCompletions := len(objective.Children)
-	if val, ok := scoringPreset.Extra["required_child_completions"]; ok {
+	if val, ok := scoringRule.Extra["required_completed_children"]; ok {
 		parsed, err := strconv.Atoi(val)
 		if err == nil {
 			requiredChildCompletions = parsed
 		}
 	}
-	if val, ok := scoringPreset.Extra["required_child_completions_percent"]; ok {
+	if val, ok := scoringRule.Extra["required_completed_children_percent"]; ok {
 		parsed, err := strconv.Atoi(val)
 		if err == nil {
 			requiredChildCompletions = (len(objective.Children) * parsed) / 100
@@ -447,14 +439,14 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 		return rankedTeams[i].ObjectivesCompleted > rankedTeams[j].ObjectivesCompleted
 	})
 	for i, completion := range rankedTeams {
-		if scoreMap[completion.TeamId] == nil || scoreMap[completion.TeamId][objective.Id] == nil || scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+		if scoreMap[completion.TeamId] == nil || scoreMap[completion.TeamId][objective.Id] == nil || scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringRule.Id] == nil {
 			continue
 		}
-		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringRule.Id]
 		comp.Number = completion.ObjectivesCompleted
 		if completion.ObjectivesCompleted >= requiredChildCompletions {
 			comp.Finished = true
-			comp.Points = int(scoringPreset.Points.Get(i))
+			comp.Points = int(scoringRule.Points.Get(i))
 			comp.Rank = i + 1
 			comp.Timestamp = time.Unix(0, completion.LatestTimestamp)
 		}
@@ -462,7 +454,7 @@ func handleChildRankingByTime(objective *repository.Objective, scoringPreset *re
 	return nil
 }
 
-func handleChildRankingByNumber(objective *repository.Objective, scoringPreset *repository.ScoringPreset, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
+func handleChildRankingByNumber(objective *repository.Objective, scoringRule *repository.ScoringRule, aggregations ObjectiveTeamMatches, scoreMap map[int]map[int]*Score) error {
 	teamCompletions := make(map[int]*TeamCompletion)
 	for teamId := range scoreMap {
 		teamCompletions[teamId] = &TeamCompletion{TeamId: teamId}
@@ -496,15 +488,15 @@ func handleChildRankingByNumber(objective *repository.Objective, scoringPreset *
 	sort.Slice(rankedTeams, rankfun)
 	rank := 1
 	for i, completion := range rankedTeams {
-		if scoreMap[completion.TeamId] == nil || scoreMap[completion.TeamId][objective.Id] == nil || scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id] == nil {
+		if scoreMap[completion.TeamId] == nil || scoreMap[completion.TeamId][objective.Id] == nil || scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringRule.Id] == nil {
 			continue
 		}
-		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringPreset.Id]
+		comp := scoreMap[completion.TeamId][objective.Id].PresetCompletions[scoringRule.Id]
 		comp.Number = completion.ObjectivesCompleted
 		if comp.Number == 0 {
 			continue
 		}
-		comp.Points = int(scoringPreset.Points.Get(rank - 1))
+		comp.Points = int(scoringRule.Points.Get(rank - 1))
 		comp.Rank = rank
 		if i+1 < len(rankedTeams) && (rankfun(i, i+1) != rankfun(i+1, i)) {
 			rank++

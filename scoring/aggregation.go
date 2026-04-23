@@ -42,14 +42,13 @@ type ObjectiveTeamMatches = map[int]TeamMatches
 
 type AggregationHandler func(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error)
 
-var aggregationMap = map[repository.AggregationType]AggregationHandler{
-	repository.AggregationTypeEarliestFreshItem: handleEarliestFreshItem,
-	repository.AggregationTypeEarliest:          handleEarliest,
-	repository.AggregationTypeSumLatest:         handleLatestSum,
-	repository.AggregationTypeLatest:            handleLatest,
-	repository.AggregationTypeMaximum:           handleMaximum,
-	repository.AggregationTypeMinimum:           handleMinimum,
-	repository.AggregationTypeDifferenceBetween: handleDifferenceBetween,
+var aggregationMap = map[repository.CountingMethod]AggregationHandler{
+	repository.CountingMethodFirstFreshCompletion: handleEarliestFreshItem,
+	repository.CountingMethodFirstCompletion:      handleEarliest,
+	repository.CountingMethodLatestValue:          handleLatest,
+	repository.CountingMethodHighestValue:         handleMaximum,
+	repository.CountingMethodLowestValue:          handleMinimum,
+	repository.CountingMethodValueChangeInWindow:  handleDifferenceBetween,
 }
 
 func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*repository.Objective) ObjectiveTeamMatches {
@@ -59,20 +58,19 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 		return team.Id
 	})
 	objectiveMap := make(map[int]repository.Objective)
-	objectivesByAggregation := make(map[repository.AggregationType][]*repository.Objective)
+	objectivesByAggregation := make(map[repository.CountingMethod][]*repository.Objective)
 	for _, objective := range objectives {
-		objectivesByAggregation[objective.Aggregation] = append(objectivesByAggregation[objective.Aggregation], objective)
+		objectivesByAggregation[objective.CountingMethod] = append(objectivesByAggregation[objective.CountingMethod], objective)
 		objectiveMap[objective.Id] = *objective
 		aggregations[objective.Id] = make(TeamMatches)
 	}
-	for _, aggregation := range []repository.AggregationType{
-		repository.AggregationTypeEarliestFreshItem,
-		repository.AggregationTypeEarliest,
-		repository.AggregationTypeMaximum,
-		repository.AggregationTypeMinimum,
-		repository.AggregationTypeSumLatest,
-		repository.AggregationTypeLatest,
-		repository.AggregationTypeDifferenceBetween,
+	for _, aggregation := range []repository.CountingMethod{
+		repository.CountingMethodFirstFreshCompletion,
+		repository.CountingMethodFirstCompletion,
+		repository.CountingMethodHighestValue,
+		repository.CountingMethodLowestValue,
+		repository.CountingMethodLatestValue,
+		repository.CountingMethodValueChangeInWindow,
 	} {
 		if handler, ok := aggregationMap[aggregation]; ok {
 			t := time.Now()
@@ -83,7 +81,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 			}
 			for _, match := range matches {
 				// todo: maybe move this into the aggregation steps
-				if aggregation != repository.AggregationTypeDifferenceBetween {
+				if aggregation != repository.CountingMethodValueChangeInWindow {
 					match.Finished = objectiveMap[match.ObjectiveId].RequiredAmount <= match.Number
 				}
 				aggregations[match.ObjectiveId][match.TeamId] = match
@@ -191,12 +189,12 @@ func handleEarliestFreshItem(db *gorm.DB, objectives []*repository.Objective, te
 	return matches, nil
 }
 
-func getExtremeQuery(aggregationType repository.AggregationType) (string, error) {
+func getExtremeQuery(aggregationType repository.CountingMethod) (string, error) {
 	var order string
 	switch aggregationType {
-	case repository.AggregationTypeMaximum:
+	case repository.CountingMethodHighestValue:
 		order = "DESC"
-	case repository.AggregationTypeMinimum:
+	case repository.CountingMethodLowestValue:
 		order = "ASC"
 	default:
 		return "", fmt.Errorf("invalid aggregation type")
@@ -217,7 +215,7 @@ func getExtremeQuery(aggregationType repository.AggregationType) (string, error)
 
 func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
 	t := time.Now()
-	query, err := getExtremeQuery(repository.AggregationTypeMaximum)
+	query, err := getExtremeQuery(repository.CountingMethodHighestValue)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +229,7 @@ func handleMaximum(db *gorm.DB, objectives []*repository.Objective, teamIds []in
 }
 
 func handleMinimum(db *gorm.DB, objectives []*repository.Objective, teamIds []int, eventId int) ([]*Match, error) {
-	query, err := getExtremeQuery(repository.AggregationTypeMinimum)
+	query, err := getExtremeQuery(repository.CountingMethodLowestValue)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +371,7 @@ func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, te
 	matches := make([]*Match, 0)
 	for _, objective := range objectives {
 		if objective.ValidFrom == nil || objective.ValidTo == nil {
-			fmt.Printf("DIFFERENCE_BETWEEN objective %d does not have timestamps set\n", objective.Id)
+			fmt.Printf("VALUE_CHANGE_IN_WINDOW objective %d does not have timestamps set\n", objective.Id)
 			continue
 		}
 

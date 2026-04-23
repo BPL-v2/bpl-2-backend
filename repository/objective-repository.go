@@ -20,143 +20,142 @@ const (
 	ObjectiveTypeCategory   ObjectiveType = "CATEGORY"
 )
 
-type AggregationType string
+type CountingMethod string
 
 const (
-	AggregationTypeSumLatest         AggregationType = "SUM_LATEST"
-	AggregationTypeLatest            AggregationType = "LATEST"
-	AggregationTypeEarliest          AggregationType = "EARLIEST"
-	AggregationTypeEarliestFreshItem AggregationType = "EARLIEST_FRESH_ITEM"
-	AggregationTypeMaximum           AggregationType = "MAXIMUM"
-	AggregationTypeMinimum           AggregationType = "MINIMUM"
-	AggregationTypeDifferenceBetween AggregationType = "DIFFERENCE_BETWEEN"
-	AggregationTypeNone              AggregationType = "NONE"
+	CountingMethodLatestValue          CountingMethod = "LATEST_VALUE"
+	CountingMethodFirstCompletion      CountingMethod = "FIRST_COMPLETION"
+	CountingMethodFirstFreshCompletion CountingMethod = "FIRST_FRESH_COMPLETION"
+	CountingMethodHighestValue         CountingMethod = "HIGHEST_VALUE"
+	CountingMethodLowestValue          CountingMethod = "LOWEST_VALUE"
+	CountingMethodValueChangeInWindow  CountingMethod = "VALUE_CHANGE_IN_WINDOW"
+	CountingMethodChildResult          CountingMethod = "CHILD_RESULT"
 )
 
-type NumberField string
+type TrackedValue string
 
 const (
-	NumberFieldStackSize NumberField = "STACK_SIZE"
+	TrackedValueStackSize TrackedValue = "STACK_SIZE"
 
-	NumberFieldFossilFuel NumberField = "FOSSIL_FUEL"
+	TrackedValueFossilFuel TrackedValue = "FOSSIL_FUEL"
 
-	NumberFieldPlayerLevel               NumberField = "PLAYER_LEVEL"
-	NumberFieldDelveDepth                NumberField = "DELVE_DEPTH"
-	NumberFieldDelveDepthPast100         NumberField = "DELVE_DEPTH_PAST_100"
-	NumberFieldProgressiveDelveDepth     NumberField = "PROGRESSIVE_DELVE_DEPTH"
-	NumberFieldPantheon                  NumberField = "PANTHEON"
-	NumberFieldAscendancy                NumberField = "ASCENDANCY"
-	NumberFieldFullyAscended             NumberField = "FULLY_ASCENDED"
-	NumberFieldBloodlineAscendancyPoints NumberField = "BLOODLINE_ASCENDANCY_POINTS"
-	NumberFieldBloodlineAscendancy       NumberField = "BLOODLINE_ASCENDANCY"
-	NumberFieldPlayerScore               NumberField = "PLAYER_SCORE"
-	NumberFieldHasRareAscendancyPast90   NumberField = "HAS_RARE_ASCENDANCY_PAST_90"
-	NumberFieldVoidStones                NumberField = "VOID_STONES"
+	TrackedValueCharacterLevel                  TrackedValue = "CHARACTER_LEVEL"
+	TrackedValueDelveDepth                      TrackedValue = "DELVE_DEPTH"
+	TrackedValueDelveDepthAfter100              TrackedValue = "DELVE_DEPTH_AFTER_100"
+	TrackedValueWeightedDelveDepth              TrackedValue = "WEIGHTED_DELVE_DEPTH"
+	TrackedValueTeamPlayersWithPantheonUnlocked TrackedValue = "TEAM_PLAYERS_WITH_PANTHEON_UNLOCKED"
+	TrackedValueAscendancyPoints                TrackedValue = "ASCENDANCY_POINTS"
+	TrackedValueTeamPlayersWithAllLabsCompleted TrackedValue = "TEAM_PLAYERS_WITH_ALL_LABS_COMPLETED"
+	TrackedValueBloodlineAscendancyPoints       TrackedValue = "BLOODLINE_ASCENDANCY_POINTS"
+	TrackedValueBloodlineAscendancyUnlocked     TrackedValue = "BLOODLINE_ASCENDANCY_UNLOCKED"
+	TrackedValuePersonalObjectiveScore          TrackedValue = "PERSONAL_OBJECTIVE_SCORE"
+	TrackedValueHasRareAscendancyPast90         TrackedValue = "HAS_RARE_ASCENDANCY_PAST_90"
+	TrackedValueVoidStoneCount                  TrackedValue = "VOID_STONE_COUNT"
 
-	NumberFieldWeaponQuality NumberField = "WEAPON_QUALITY"
-	NumberFieldArmourQuality NumberField = "ARMOUR_QUALITY"
-	NumberFieldFlaskQuality  NumberField = "FLASK_QUALITY"
+	TrackedValueWeaponQuality TrackedValue = "WEAPON_QUALITY"
+	TrackedValueArmourQuality TrackedValue = "ARMOUR_QUALITY"
+	TrackedValueFlaskQuality  TrackedValue = "FLASK_QUALITY"
 
-	NumberFieldEvasion          NumberField = "EVASION"
-	NumberFieldEnergyShield     NumberField = "ENERGY_SHIELD"
-	NumberFieldArmour           NumberField = "ARMOUR"
-	NumberFieldHP               NumberField = "HP"
-	NumberFieldMana             NumberField = "MANA"
-	NumberFieldFullDPS          NumberField = "FULL_DPS"
-	NumberFieldEHP              NumberField = "EHP"
-	NumberFieldIncMovementSpeed NumberField = "INC_MOVEMENT_SPEED"
-	NumberFieldPhysMaxHit       NumberField = "PHYS_MAX_HIT"
-	NumberFieldEleMaxHit        NumberField = "ELE_MAX_HIT"
-	NumberFieldAttackBlock      NumberField = "ATTACK_BLOCK"
-	NumberFieldSpellBlock       NumberField = "SPELL_BLOCK"
-	NumberFieldHighIlvlFlasks   NumberField = "HIGH_ILVL_FLASKS"
-	NumberFieldEleMaxRes        NumberField = "ELE_MAX_RES"
+	TrackedValueEvasion                   TrackedValue = "EVASION"
+	TrackedValueEnergyShield              TrackedValue = "ENERGY_SHIELD"
+	TrackedValueArmour                    TrackedValue = "ARMOUR"
+	TrackedValueHP                        TrackedValue = "HP"
+	TrackedValueMana                      TrackedValue = "MANA"
+	TrackedValueFullDPS                   TrackedValue = "FULL_DPS"
+	TrackedValueEHP                       TrackedValue = "EHP"
+	TrackedValueMovementSpeedBonus        TrackedValue = "MOVEMENT_SPEED_BONUS"
+	TrackedValuePhysicalMaxHit            TrackedValue = "PHYSICAL_MAX_HIT"
+	TrackedValueElementalMaxHit           TrackedValue = "ELEMENTAL_MAX_HIT"
+	TrackedValueAttackBlockChance         TrackedValue = "ATTACK_BLOCK_CHANCE"
+	TrackedValueSpellBlockChance          TrackedValue = "SPELL_BLOCK_CHANCE"
+	TrackedValueHighItemLevelFlaskCount   TrackedValue = "HIGH_ITEM_LEVEL_FLASK_COUNT"
+	TrackedValueLowestElementalResistance TrackedValue = "LOWEST_ELEMENTAL_RESISTANCE"
 
-	NumberFieldAtlasPoints NumberField = "ATLAS_POINTS"
+	TrackedValueAtlasPoints TrackedValue = "ATLAS_POINTS"
 
-	NumberFieldInfluenceEquipped           NumberField = "INFLUENCE_EQUIPPED"
-	NumberFieldFoulbornEquipped            NumberField = "FOULBORN_EQUIPPED"
-	NumberFieldGemsEquipped                NumberField = "GEMS_EQUIPPED"
-	NumberFieldCorruptedItemsEquipped      NumberField = "CORRUPTED_ITEMS_EQUIPPED"
-	NumberFieldJewelsWithImplicitsEquipped NumberField = "JEWELS_WITH_IMPLICITS_EQUIPPED"
-	NumberFieldEnchantedItemsEquipped      NumberField = "ENCHANTED_ITEMS_EQUIPPED"
+	TrackedValueInfluencedItemCount      TrackedValue = "INFLUENCED_ITEM_COUNT"
+	TrackedValueFoulbornItemCount        TrackedValue = "FOULBORN_ITEM_COUNT"
+	TrackedValueSocketedGemCount         TrackedValue = "SOCKETED_GEM_COUNT"
+	TrackedValueCorruptedItemCount       TrackedValue = "CORRUPTED_ITEM_COUNT"
+	TrackedValueJewelsWithImplicitsCount TrackedValue = "JEWELS_WITH_IMPLICITS_COUNT"
+	TrackedValueEnchantedItemCount       TrackedValue = "ENCHANTED_ITEM_COUNT"
 
-	NumberFieldSubmissionValue NumberField = "SUBMISSION_VALUE"
+	TrackedValueSubmittedValue TrackedValue = "SUBMITTED_VALUE"
 
-	NumberFieldFinishedObjectives NumberField = "FINISHED_OBJECTIVES"
+	TrackedValueCompletedChildObjectiveCount TrackedValue = "COMPLETED_CHILD_OBJECTIVE_COUNT"
 )
 
-var ObjectiveTypeToNumberFields = map[ObjectiveType][]NumberField{
-	ObjectiveTypeItem:     {NumberFieldStackSize},
-	ObjectiveTypeStashTab: {NumberFieldFossilFuel},
+var ObjectiveTypeToTrackedValues = map[ObjectiveType][]TrackedValue{
+	ObjectiveTypeItem:     {TrackedValueStackSize},
+	ObjectiveTypeStashTab: {TrackedValueFossilFuel},
 	ObjectiveTypePlayer: {
-		NumberFieldPlayerLevel,
-		NumberFieldDelveDepth,
-		NumberFieldDelveDepthPast100,
-		NumberFieldProgressiveDelveDepth,
-		NumberFieldPantheon,
-		NumberFieldAscendancy,
-		NumberFieldBloodlineAscendancy,
-		NumberFieldBloodlineAscendancyPoints,
-		NumberFieldFullyAscended,
-		NumberFieldPlayerScore,
-		NumberFieldWeaponQuality,
-		NumberFieldArmourQuality,
-		NumberFieldFlaskQuality,
-		NumberFieldEvasion,
-		NumberFieldEnergyShield,
-		NumberFieldArmour,
-		NumberFieldHP,
-		NumberFieldMana,
-		NumberFieldFullDPS,
-		NumberFieldEHP,
-		NumberFieldIncMovementSpeed,
-		NumberFieldPhysMaxHit,
-		NumberFieldEleMaxHit,
-		NumberFieldAtlasPoints,
-		NumberFieldInfluenceEquipped,
-		NumberFieldFoulbornEquipped,
-		NumberFieldGemsEquipped,
-		NumberFieldCorruptedItemsEquipped,
-		NumberFieldJewelsWithImplicitsEquipped,
-		NumberFieldHasRareAscendancyPast90,
-		NumberFieldEnchantedItemsEquipped,
+		TrackedValueCharacterLevel,
+		TrackedValueDelveDepth,
+		TrackedValueDelveDepthAfter100,
+		TrackedValueWeightedDelveDepth,
+		TrackedValueTeamPlayersWithPantheonUnlocked,
+		TrackedValueAscendancyPoints,
+		TrackedValueBloodlineAscendancyUnlocked,
+		TrackedValueBloodlineAscendancyPoints,
+		TrackedValueTeamPlayersWithAllLabsCompleted,
+		TrackedValuePersonalObjectiveScore,
+		TrackedValueWeaponQuality,
+		TrackedValueArmourQuality,
+		TrackedValueFlaskQuality,
+		TrackedValueEvasion,
+		TrackedValueEnergyShield,
+		TrackedValueArmour,
+		TrackedValueHP,
+		TrackedValueMana,
+		TrackedValueFullDPS,
+		TrackedValueEHP,
+		TrackedValueMovementSpeedBonus,
+		TrackedValuePhysicalMaxHit,
+		TrackedValueElementalMaxHit,
+		TrackedValueAtlasPoints,
+		TrackedValueInfluencedItemCount,
+		TrackedValueFoulbornItemCount,
+		TrackedValueSocketedGemCount,
+		TrackedValueCorruptedItemCount,
+		TrackedValueJewelsWithImplicitsCount,
+		TrackedValueHasRareAscendancyPast90,
+		TrackedValueEnchantedItemCount,
 	},
 	ObjectiveTypeTeam: {
-		NumberFieldPlayerLevel,
-		NumberFieldDelveDepth,
-		NumberFieldDelveDepthPast100,
-		NumberFieldProgressiveDelveDepth,
-		NumberFieldPantheon,
-		NumberFieldAscendancy,
-		NumberFieldBloodlineAscendancy,
-		NumberFieldBloodlineAscendancyPoints,
-		NumberFieldFullyAscended,
-		NumberFieldPlayerScore,
-		NumberFieldWeaponQuality,
-		NumberFieldArmourQuality,
-		NumberFieldFlaskQuality,
-		NumberFieldEvasion,
-		NumberFieldEnergyShield,
-		NumberFieldArmour,
-		NumberFieldHP,
-		NumberFieldMana,
-		NumberFieldFullDPS,
-		NumberFieldEHP,
-		NumberFieldIncMovementSpeed,
-		NumberFieldPhysMaxHit,
-		NumberFieldEleMaxHit,
-		NumberFieldAtlasPoints,
-		NumberFieldInfluenceEquipped,
-		NumberFieldFoulbornEquipped,
-		NumberFieldGemsEquipped,
-		NumberFieldCorruptedItemsEquipped,
-		NumberFieldJewelsWithImplicitsEquipped,
-		NumberFieldHasRareAscendancyPast90,
-		NumberFieldEnchantedItemsEquipped,
+		TrackedValueCharacterLevel,
+		TrackedValueDelveDepth,
+		TrackedValueDelveDepthAfter100,
+		TrackedValueWeightedDelveDepth,
+		TrackedValueTeamPlayersWithPantheonUnlocked,
+		TrackedValueAscendancyPoints,
+		TrackedValueBloodlineAscendancyUnlocked,
+		TrackedValueBloodlineAscendancyPoints,
+		TrackedValueTeamPlayersWithAllLabsCompleted,
+		TrackedValuePersonalObjectiveScore,
+		TrackedValueWeaponQuality,
+		TrackedValueArmourQuality,
+		TrackedValueFlaskQuality,
+		TrackedValueEvasion,
+		TrackedValueEnergyShield,
+		TrackedValueArmour,
+		TrackedValueHP,
+		TrackedValueMana,
+		TrackedValueFullDPS,
+		TrackedValueEHP,
+		TrackedValueMovementSpeedBonus,
+		TrackedValuePhysicalMaxHit,
+		TrackedValueElementalMaxHit,
+		TrackedValueAtlasPoints,
+		TrackedValueInfluencedItemCount,
+		TrackedValueFoulbornItemCount,
+		TrackedValueSocketedGemCount,
+		TrackedValueCorruptedItemCount,
+		TrackedValueJewelsWithImplicitsCount,
+		TrackedValueHasRareAscendancyPast90,
+		TrackedValueEnchantedItemCount,
 	},
-	ObjectiveTypeSubmission: {NumberFieldSubmissionValue},
-	ObjectiveTypeCategory:   {NumberFieldFinishedObjectives},
+	ObjectiveTypeSubmission: {TrackedValueSubmittedValue},
+	ObjectiveTypeCategory:   {TrackedValueCompletedChildObjectiveCount},
 }
 
 type SyncStatus string
@@ -167,29 +166,29 @@ const (
 	SyncStatusDesynced SyncStatus = "DESYNCED"
 )
 
-type ObjectiveScoringPreset struct {
-	ObjectiveId     int `gorm:"primaryKey"`
-	ScoringPresetId int `gorm:"primaryKey"`
+type ObjectiveScoringRule struct {
+	ObjectiveId   int `gorm:"primaryKey"`
+	ScoringRuleId int `gorm:"primaryKey"`
 }
 
 type Objective struct {
-	Id                     int              `gorm:"primaryKey"`
-	Name                   string           `gorm:"not null"`
-	Extra                  string           `gorm:"null"`
-	RequiredAmount         int              `gorm:"not null"`
-	Conditions             Conditions       `gorm:"type:jsonb"`
-	ParentId               *int             `gorm:"null"`
-	EventId                int              `gorm:"not null;references:events(id)"`
-	ObjectiveType          ObjectiveType    `gorm:"not null"`
-	NumberField            NumberField      `gorm:"not null"`
-	Aggregation            AggregationType  `gorm:"not null"`
-	ValidFrom              *time.Time       `gorm:"null"`
-	ValidTo                *time.Time       `gorm:"null"`
-	ScoringPresets         []*ScoringPreset `gorm:"many2many:objective_scoring_presets;joinForeignKey:objective_id;joinReferences:scoring_preset_id"`
-	HideProgress           bool             `gorm:"not null;default:false"`
-	SyncStatus             SyncStatus       `gorm:"not null;default:DESYNCED"`
-	NumberFieldExplanation *string          `gorm:"null"`
-	Children               []*Objective     `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
+	Id                      int            `gorm:"primaryKey"`
+	Name                    string         `gorm:"not null"`
+	Extra                   string         `gorm:"null"`
+	RequiredAmount          int            `gorm:"not null"`
+	Conditions              Conditions     `gorm:"type:jsonb"`
+	ParentId                *int           `gorm:"null"`
+	EventId                 int            `gorm:"not null;references:events(id)"`
+	ObjectiveType           ObjectiveType  `gorm:"not null"`
+	TrackedValue            TrackedValue   `gorm:"not null"`
+	CountingMethod          CountingMethod `gorm:"not null"`
+	ValidFrom               *time.Time     `gorm:"null"`
+	ValidTo                 *time.Time     `gorm:"null"`
+	ScoringRules            []*ScoringRule `gorm:"many2many:objective_scoring_rules;joinForeignKey:objective_id;joinReferences:scoring_rule_id"`
+	HideProgress            bool           `gorm:"not null;default:false"`
+	SyncStatus              SyncStatus     `gorm:"not null;default:DESYNCED"`
+	TrackedValueExplanation *string        `gorm:"null"`
+	Children                []*Objective   `gorm:"foreignKey:ParentId;constraint:OnDelete:CASCADE"`
 }
 
 func (o *Objective) FlatMap() []*Objective {
@@ -206,8 +205,8 @@ type ObjectiveRepository interface {
 	GetObjectiveById(objectiveId int, preloads ...string) (*Objective, error)
 	DeleteObjective(objectiveId int) error
 	DeleteObjectivesByEventId(eventId int) error
-	RemoveScoringPreset(scoringId int) error
-	AssociateScoringPresets(objectiveId int, presetIds []int) error
+	RemoveScoringRule(scoringId int) error
+	AssociateScoringRules(objectiveId int, presetIds []int) error
 	StartSync(objectiveIds []int) error
 	FinishSync(objectiveIds []int) error
 	GetObjectivesByEventId(eventId int, preloads ...string) (*Objective, error)
@@ -260,27 +259,26 @@ func (r *ObjectiveRepositoryImpl) DeleteObjectivesByEventId(eventId int) error {
 	return result.Error
 }
 
-func (r *ObjectiveRepositoryImpl) RemoveScoringPreset(scoringId int) error {
-	// Remove all associations between objectives and this scoring preset
-	return r.DB.Where("scoring_preset_id = ?", scoringId).Delete(&ObjectiveScoringPreset{}).Error
+func (r *ObjectiveRepositoryImpl) RemoveScoringRule(scoringId int) error {
+	return r.DB.Where("scoring_rule_id = ?", scoringId).Delete(&ObjectiveScoringRule{}).Error
 }
 
-func (r *ObjectiveRepositoryImpl) AssociateScoringPresets(objectiveId int, presetIds []int) error {
-	if len(presetIds) == 0 {
+func (r *ObjectiveRepositoryImpl) AssociateScoringRules(objectiveId int, ruleIds []int) error {
+	if len(ruleIds) == 0 {
 		return nil
 	}
-	err := r.DB.Where("objective_id = ?", objectiveId).Delete(&ObjectiveScoringPreset{}).Error
+	err := r.DB.Where("objective_id = ?", objectiveId).Delete(&ObjectiveScoringRule{}).Error
 	if err != nil {
 		return err
 	}
-	if len(presetIds) == 0 {
+	if len(ruleIds) == 0 {
 		return nil
 	}
-	associations := make([]ObjectiveScoringPreset, len(presetIds))
-	for i, presetId := range presetIds {
-		associations[i] = ObjectiveScoringPreset{
-			ObjectiveId:     objectiveId,
-			ScoringPresetId: presetId,
+	associations := make([]ObjectiveScoringRule, len(ruleIds))
+	for i, ruleId := range ruleIds {
+		associations[i] = ObjectiveScoringRule{
+			ObjectiveId:   objectiveId,
+			ScoringRuleId: ruleId,
 		}
 	}
 

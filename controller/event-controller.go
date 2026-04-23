@@ -12,22 +12,22 @@ import (
 )
 
 type EventController struct {
-	eventService         service.EventService
-	teamService          service.TeamService
-	userService          service.UserService
-	signupService        service.SignupService
-	scoringPresetService service.ScoringPresetService
-	objectiveService     service.ObjectiveService
+	eventService       service.EventService
+	teamService        service.TeamService
+	userService        service.UserService
+	signupService      service.SignupService
+	scoringRuleService service.ScoringRuleService
+	objectiveService   service.ObjectiveService
 }
 
 func NewEventController() *EventController {
 	return &EventController{
-		eventService:         service.NewEventService(),
-		teamService:          service.NewTeamService(),
-		userService:          service.NewUserService(),
-		signupService:        service.NewSignupService(),
-		scoringPresetService: service.NewScoringPresetsService(),
-		objectiveService:     service.NewObjectiveService(),
+		eventService:       service.NewEventService(),
+		teamService:        service.NewTeamService(),
+		userService:        service.NewUserService(),
+		signupService:      service.NewSignupService(),
+		scoringRuleService: service.NewScoringRulesService(),
+		objectiveService:   service.NewObjectiveService(),
 	}
 }
 
@@ -212,12 +212,12 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		presetIdMap, err := e.scoringPresetService.DuplicatePresets(oldEvent.Id, event.Id)
+		ruleIdMap, err := e.scoringRuleService.DuplicateRules(oldEvent.Id, event.Id)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return
 		}
-		err = e.objectiveService.DuplicateObjectives(oldEvent.Id, event.Id, presetIdMap)
+		err = e.objectiveService.DuplicateObjectives(oldEvent.Id, event.Id, ruleIdMap)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
 			return

@@ -70,8 +70,8 @@ func TestMain(m *testing.M) {
 			&Signup{},
 			&Oauth{},
 			&KafkaConsumer{},
-			&ScoringPreset{},
-			&ObjectiveScoringPreset{},
+			&ScoringRule{},
+			&ObjectiveScoringRule{},
 			&Character{},
 			&CharacterPob{},
 			&ChangeId{},
@@ -93,8 +93,8 @@ func TestMain(m *testing.M) {
 }
 
 func tearDown() {
-	db.Exec("DELETE FROM bpl2.objective_scoring_presets")
-	db.Exec("DELETE FROM bpl2.scoring_presets")
+	db.Exec("DELETE FROM bpl2.objective_scoring_rules")
+	db.Exec("DELETE FROM bpl2.scoring_rules")
 	db.Exec("DELETE FROM bpl2.submissions")
 	db.Exec("DELETE FROM bpl2.objective_matches")
 	db.Exec("DELETE FROM bpl2.objectives")
@@ -540,8 +540,8 @@ func TestObjectiveRepository_SaveAndGetObjective(t *testing.T) {
 		Name:           "test-objective",
 		EventId:        event.Id,
 		ObjectiveType:  ObjectiveTypeItem,
-		NumberField:    NumberFieldStackSize,
-		Aggregation:    AggregationTypeEarliest,
+		TrackedValue:   TrackedValueStackSize,
+		CountingMethod: CountingMethodFirstCompletion,
 		RequiredAmount: 5,
 		SyncStatus:     SyncStatusSynced,
 	}
@@ -561,7 +561,7 @@ func TestObjectiveRepository_DeleteObjective(t *testing.T) {
 	repo := &ObjectiveRepositoryImpl{DB: db}
 	event := createTestEvent()
 
-	obj := &Objective{Name: "todelete", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, NumberField: NumberFieldStackSize, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "todelete", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, TrackedValue: TrackedValueStackSize, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
 
 	err := repo.DeleteObjective(obj.Id)
@@ -576,9 +576,9 @@ func TestObjectiveRepository_GetObjectivesByEventIdFlat(t *testing.T) {
 	repo := &ObjectiveRepositoryImpl{DB: db}
 	event := createTestEvent()
 
-	root := &Objective{Name: "root", EventId: event.Id, ObjectiveType: ObjectiveTypeCategory, NumberField: NumberFieldFinishedObjectives, Aggregation: AggregationTypeNone, SyncStatus: SyncStatusDesynced}
+	root := &Objective{Name: "root", EventId: event.Id, ObjectiveType: ObjectiveTypeCategory, TrackedValue: TrackedValueCompletedChildObjectiveCount, CountingMethod: CountingMethodChildResult, SyncStatus: SyncStatusDesynced}
 	db.Create(root)
-	child := &Objective{Name: "child", EventId: event.Id, ParentId: &root.Id, ObjectiveType: ObjectiveTypeItem, NumberField: NumberFieldStackSize, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	child := &Objective{Name: "child", EventId: event.Id, ParentId: &root.Id, ObjectiveType: ObjectiveTypeItem, TrackedValue: TrackedValueStackSize, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(child)
 
 	objectives, err := repo.GetObjectivesByEventIdFlat(event.Id)
@@ -591,10 +591,10 @@ func TestObjectiveRepository_GetObjectivesByEventId_Tree(t *testing.T) {
 	repo := &ObjectiveRepositoryImpl{DB: db}
 	event := createTestEvent()
 
-	root := &Objective{Name: "root", EventId: event.Id, ObjectiveType: ObjectiveTypeCategory, NumberField: NumberFieldFinishedObjectives, Aggregation: AggregationTypeNone, SyncStatus: SyncStatusDesynced}
+	root := &Objective{Name: "root", EventId: event.Id, ObjectiveType: ObjectiveTypeCategory, TrackedValue: TrackedValueCompletedChildObjectiveCount, CountingMethod: CountingMethodChildResult, SyncStatus: SyncStatusDesynced}
 	db.Create(root)
-	child1 := &Objective{Name: "child1", EventId: event.Id, ParentId: &root.Id, ObjectiveType: ObjectiveTypeItem, NumberField: NumberFieldStackSize, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
-	child2 := &Objective{Name: "child2", EventId: event.Id, ParentId: &root.Id, ObjectiveType: ObjectiveTypePlayer, NumberField: NumberFieldPlayerLevel, Aggregation: AggregationTypeLatest, SyncStatus: SyncStatusDesynced}
+	child1 := &Objective{Name: "child1", EventId: event.Id, ParentId: &root.Id, ObjectiveType: ObjectiveTypeItem, TrackedValue: TrackedValueStackSize, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
+	child2 := &Objective{Name: "child2", EventId: event.Id, ParentId: &root.Id, ObjectiveType: ObjectiveTypePlayer, TrackedValue: TrackedValueCharacterLevel, CountingMethod: CountingMethodLatestValue, SyncStatus: SyncStatusDesynced}
 	db.Create(child1)
 	db.Create(child2)
 
@@ -609,7 +609,7 @@ func TestObjectiveRepository_SyncStatusLifecycle(t *testing.T) {
 	repo := &ObjectiveRepositoryImpl{DB: db}
 	event := createTestEvent()
 
-	obj := &Objective{Name: "synctest", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, NumberField: NumberFieldStackSize, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "synctest", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, TrackedValue: TrackedValueStackSize, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
 
 	err := repo.StartSync([]int{obj.Id})
@@ -623,31 +623,31 @@ func TestObjectiveRepository_SyncStatusLifecycle(t *testing.T) {
 	assert.Equal(t, SyncStatusSynced, found.SyncStatus)
 }
 
-func TestObjectiveRepository_AssociateScoringPresets(t *testing.T) {
+func TestObjectiveRepository_AssociateScoringRules(t *testing.T) {
 	defer tearDown()
 	repo := &ObjectiveRepositoryImpl{DB: db}
 	event := createTestEvent()
 
-	obj := &Objective{Name: "obj", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, NumberField: NumberFieldStackSize, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "obj", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, TrackedValue: TrackedValueStackSize, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
-	preset1 := &ScoringPreset{EventId: event.Id, Name: "p1", Description: "d1", Points: ExtendingNumberSlice{10}, ScoringMethod: PRESENCE}
-	preset2 := &ScoringPreset{EventId: event.Id, Name: "p2", Description: "d2", Points: ExtendingNumberSlice{5}, ScoringMethod: RANKED_TIME}
+	preset1 := &ScoringRule{EventId: event.Id, Name: "p1", Description: "d1", Points: ExtendingNumberSlice{10}, RuleType: FIXED_POINTS_ON_COMPLETION}
+	preset2 := &ScoringRule{EventId: event.Id, Name: "p2", Description: "d2", Points: ExtendingNumberSlice{5}, RuleType: RANK_BY_COMPLETION_TIME}
 	db.Create(preset1)
 	db.Create(preset2)
 
-	err := repo.AssociateScoringPresets(obj.Id, []int{preset1.Id, preset2.Id})
+	err := repo.AssociateScoringRules(obj.Id, []int{preset1.Id, preset2.Id})
 	require.NoError(t, err)
 
-	found, err := repo.GetObjectiveById(obj.Id, "ScoringPresets")
+	found, err := repo.GetObjectiveById(obj.Id, "ScoringRules")
 	require.NoError(t, err)
-	assert.Len(t, found.ScoringPresets, 2)
+	assert.Len(t, found.ScoringRules, 2)
 
 	// Re-associate with only one preset
-	err = repo.AssociateScoringPresets(obj.Id, []int{preset1.Id})
+	err = repo.AssociateScoringRules(obj.Id, []int{preset1.Id})
 	require.NoError(t, err)
-	found, err = repo.GetObjectiveById(obj.Id, "ScoringPresets")
+	found, err = repo.GetObjectiveById(obj.Id, "ScoringRules")
 	require.NoError(t, err)
-	assert.Len(t, found.ScoringPresets, 1)
+	assert.Len(t, found.ScoringRules, 1)
 }
 
 func TestObjective_FlatMap(t *testing.T) {
@@ -797,7 +797,7 @@ func TestSubmissionRepository_SaveAndGet(t *testing.T) {
 	repo := &SubmissionRepositoryImpl{DB: db}
 	event := createTestEvent()
 	teams, users := createTestTeamsWithUsers(event)
-	obj := &Objective{Name: "subobj", EventId: event.Id, ObjectiveType: ObjectiveTypeSubmission, NumberField: NumberFieldSubmissionValue, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "subobj", EventId: event.Id, ObjectiveType: ObjectiveTypeSubmission, TrackedValue: TrackedValueSubmittedValue, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
 
 	sub := &Submission{
@@ -827,7 +827,7 @@ func TestSubmissionRepository_GetSubmissionsForEvent(t *testing.T) {
 	event := createTestEvent()
 	teams, users := createTestTeamsWithUsers(event)
 	event.Teams = teams // Must be set for TeamIds() to work
-	obj := &Objective{Name: "subobj", EventId: event.Id, ObjectiveType: ObjectiveTypeSubmission, NumberField: NumberFieldSubmissionValue, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "subobj", EventId: event.Id, ObjectiveType: ObjectiveTypeSubmission, TrackedValue: TrackedValueSubmittedValue, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
 
 	for i := 0; i < 3; i++ {
@@ -853,7 +853,7 @@ func TestSubmissionRepository_DeleteSubmission(t *testing.T) {
 	repo := &SubmissionRepositoryImpl{DB: db}
 	event := createTestEvent()
 	teams, users := createTestTeamsWithUsers(event)
-	obj := &Objective{Name: "subobj", EventId: event.Id, ObjectiveType: ObjectiveTypeSubmission, NumberField: NumberFieldSubmissionValue, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "subobj", EventId: event.Id, ObjectiveType: ObjectiveTypeSubmission, TrackedValue: TrackedValueSubmittedValue, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
 
 	sub := &Submission{ObjectiveId: obj.Id, Timestamp: time.Now(), Number: 1, UserId: users[0].Id, TeamId: teams[0].Id, Proof: "p", Comment: "c", ApprovalStatus: PENDING}
@@ -881,25 +881,25 @@ func TestSubmission_ToObjectiveMatch(t *testing.T) {
 	assert.Equal(t, 20, *match.UserId)
 }
 
-// ==================== ScoringPresetRepository Tests ====================
+// ==================== ScoringRuleRepository Tests ====================
 
-func TestScoringPresetRepository_SaveAndGet(t *testing.T) {
+func TestScoringRuleRepository_SaveAndGet(t *testing.T) {
 	defer tearDown()
-	repo := &ScoringPresetRepositoryImpl{DB: db}
+	repo := &ScoringRuleRepositoryImpl{DB: db}
 	event := createTestEvent()
 
-	preset := &ScoringPreset{
-		EventId:       event.Id,
-		Name:          "test-preset",
-		Description:   "A test preset",
-		Points:        ExtendingNumberSlice{10, 5, 3},
-		ScoringMethod: RANKED_TIME,
+	preset := &ScoringRule{
+		EventId:     event.Id,
+		Name:        "test-preset",
+		Description: "A test preset",
+		Points:      ExtendingNumberSlice{10, 5, 3},
+		RuleType:    RANK_BY_COMPLETION_TIME,
 	}
-	saved, err := repo.SavePreset(preset)
+	saved, err := repo.SaveRule(preset)
 	require.NoError(t, err)
 	assert.NotZero(t, saved.Id)
 
-	presets, err := repo.GetPresetsForEvent(event.Id)
+	presets, err := repo.GetRulesForEvent(event.Id)
 	require.NoError(t, err)
 	assert.Len(t, presets, 1)
 	assert.Equal(t, "test-preset", presets[0].Name)
@@ -907,18 +907,18 @@ func TestScoringPresetRepository_SaveAndGet(t *testing.T) {
 	assert.Equal(t, float64(5), presets[0].Points[1])
 }
 
-func TestScoringPresetRepository_DeletePreset(t *testing.T) {
+func TestScoringRuleRepository_DeleteRule(t *testing.T) {
 	defer tearDown()
-	repo := &ScoringPresetRepositoryImpl{DB: db}
+	repo := &ScoringRuleRepositoryImpl{DB: db}
 	event := createTestEvent()
 
-	preset := &ScoringPreset{EventId: event.Id, Name: "del", Description: "d", Points: ExtendingNumberSlice{1}, ScoringMethod: PRESENCE}
+	preset := &ScoringRule{EventId: event.Id, Name: "del", Description: "d", Points: ExtendingNumberSlice{1}, RuleType: FIXED_POINTS_ON_COMPLETION}
 	db.Create(preset)
 
-	err := repo.DeletePreset(preset.Id)
+	err := repo.DeleteRule(preset.Id)
 	require.NoError(t, err)
 
-	presets, err := repo.GetPresetsForEvent(event.Id)
+	presets, err := repo.GetRulesForEvent(event.Id)
 	require.NoError(t, err)
 	assert.Len(t, presets, 0)
 }
@@ -941,7 +941,7 @@ func TestObjectiveMatchRepository_SaveAndDeleteMatches(t *testing.T) {
 	repo := &ObjectiveMatchRepositoryImpl{DB: db}
 	event := createTestEvent()
 	teams, users := createTestTeamsWithUsers(event)
-	obj := &Objective{Name: "matchobj", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, NumberField: NumberFieldStackSize, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "matchobj", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, TrackedValue: TrackedValueStackSize, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
 
 	matches := []*ObjectiveMatch{
@@ -967,7 +967,7 @@ func TestObjectiveMatchRepository_OverwriteMatches(t *testing.T) {
 	repo := &ObjectiveMatchRepositoryImpl{DB: db}
 	event := createTestEvent()
 	teams, users := createTestTeamsWithUsers(event)
-	obj := &Objective{Name: "overwrite", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, NumberField: NumberFieldStackSize, Aggregation: AggregationTypeEarliest, SyncStatus: SyncStatusDesynced}
+	obj := &Objective{Name: "overwrite", EventId: event.Id, ObjectiveType: ObjectiveTypeItem, TrackedValue: TrackedValueStackSize, CountingMethod: CountingMethodFirstCompletion, SyncStatus: SyncStatusDesynced}
 	db.Create(obj)
 
 	// Save initial matches

@@ -6,6 +6,7 @@ docs_dir="docs"
 package_names=$(find . -name "*.go" -exec grep -h "^package " {} \; | awk '{print $2}' | sort | uniq)
 
 for file in "$docs_dir"/*; do
+    [ -f "$file" ] || continue
     for package in $package_names; do
         # Use portable sed for Linux and macOS
         if sed --version >/dev/null 2>&1; then

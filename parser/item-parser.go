@@ -855,8 +855,8 @@ func NewStashTabChecker(objectives []*dbModel.Objective, ignoreTime bool) (*Stas
 		if objective.ObjectiveType != dbModel.ObjectiveTypeStashTab {
 			continue
 		}
-		if objective.NumberField != dbModel.NumberFieldFossilFuel {
-			return nil, fmt.Errorf("invalid number field for stash tab objective %d: %s", objective.Id, objective.NumberField)
+		if objective.TrackedValue != dbModel.TrackedValueFossilFuel {
+			return nil, fmt.Errorf("invalid number field for stash tab objective %d: %s", objective.Id, objective.TrackedValue)
 		}
 		checkers = append(checkers, &StashTabObjectiveChecker{
 			Objective: objective,
@@ -986,8 +986,8 @@ func getNumber(item *clientModel.Item, objective *dbModel.Objective) int {
 }
 
 func getMultiplier(objective *dbModel.Objective) int {
-	switch objective.NumberField {
-	case dbModel.NumberFieldStackSize:
+	switch objective.TrackedValue {
+	case dbModel.TrackedValueStackSize:
 		return 1
 	default:
 		return 1

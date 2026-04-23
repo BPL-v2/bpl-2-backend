@@ -176,22 +176,22 @@ func calculateOldPO(p *Player) int {
 }
 
 func poChecker() (PlayerObjectiveChecker, error) {
-	levelFunc, err := parserForNumberField(repository.NumberFieldPlayerLevel)
-	ascendancyFunc, err := parserForNumberField(repository.NumberFieldAscendancy)
+	levelFunc, err := parserForTrackedValue(repository.TrackedValueCharacterLevel)
+	ascendancyFunc, err := parserForTrackedValue(repository.TrackedValueAscendancyPoints)
 
-	armourFunc, err := parserForNumberField(repository.NumberFieldArmour)
-	evasionFunc, err := parserForNumberField(repository.NumberFieldEvasion)
-	movementSpeedFunc, err := parserForNumberField(repository.NumberFieldIncMovementSpeed)
-	esFunc, err := parserForNumberField(repository.NumberFieldEnergyShield)
-	hpFunc, err := parserForNumberField(repository.NumberFieldHP)
-	manaFunc, err := parserForNumberField(repository.NumberFieldMana)
-	dpsFunc, err := parserForNumberField(repository.NumberFieldFullDPS)
-	ehpFunc, err := parserForNumberField(repository.NumberFieldEHP)
-	blockFunc, err := parserForNumberField(repository.NumberFieldAttackBlock)
-	maxResFunc, err := parserForNumberField(repository.NumberFieldEleMaxRes)
-	eleMaxHitFunc, err := parserForNumberField(repository.NumberFieldEleMaxHit)
-	physMaxHitFunc, err := parserForNumberField(repository.NumberFieldPhysMaxHit)
-	voidStonesFunc, err := parserForNumberField(repository.NumberFieldVoidStones)
+	armourFunc, err := parserForTrackedValue(repository.TrackedValueArmour)
+	evasionFunc, err := parserForTrackedValue(repository.TrackedValueEvasion)
+	movementSpeedFunc, err := parserForTrackedValue(repository.TrackedValueMovementSpeedBonus)
+	esFunc, err := parserForTrackedValue(repository.TrackedValueEnergyShield)
+	hpFunc, err := parserForTrackedValue(repository.TrackedValueHP)
+	manaFunc, err := parserForTrackedValue(repository.TrackedValueMana)
+	dpsFunc, err := parserForTrackedValue(repository.TrackedValueFullDPS)
+	ehpFunc, err := parserForTrackedValue(repository.TrackedValueEHP)
+	blockFunc, err := parserForTrackedValue(repository.TrackedValueAttackBlockChance)
+	maxResFunc, err := parserForTrackedValue(repository.TrackedValueLowestElementalResistance)
+	eleMaxHitFunc, err := parserForTrackedValue(repository.TrackedValueElementalMaxHit)
+	physMaxHitFunc, err := parserForTrackedValue(repository.TrackedValuePhysicalMaxHit)
+	voidStonesFunc, err := parserForTrackedValue(repository.TrackedValueVoidStoneCount)
 	if err != nil {
 		return nil, err
 	}
@@ -355,26 +355,26 @@ func poChecker() (PlayerObjectiveChecker, error) {
 	}, nil
 }
 
-func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveChecker, error) {
+func parserForTrackedValue(numberField repository.TrackedValue) (PlayerObjectiveChecker, error) {
 	switch numberField {
-	case repository.NumberFieldPlayerLevel:
+	case repository.TrackedValueCharacterLevel:
 		return func(p *Player) int {
 			if p.Character == nil {
 				return 0
 			}
 			return p.Character.Level
 		}, nil
-	case repository.NumberFieldDelveDepth:
+	case repository.TrackedValueDelveDepth:
 		return func(p *Player) int {
 			return p.DelveDepth
 		}, nil
-	case repository.NumberFieldDelveDepthPast100:
+	case repository.TrackedValueDelveDepthAfter100:
 		return func(p *Player) int {
 			return max(p.DelveDepth-100, 0)
 		}, nil
-	case repository.NumberFieldProgressiveDelveDepth:
+	case repository.TrackedValueWeightedDelveDepth:
 		return progressiveDelveDepth, nil
-	case repository.NumberFieldPantheon:
+	case repository.TrackedValueTeamPlayersWithPantheonUnlocked:
 		return func(p *Player) int {
 			count := 0
 			if p.Character == nil {
@@ -388,35 +388,35 @@ func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveCh
 			}
 			return count
 		}, nil
-	case repository.NumberFieldAscendancy:
+	case repository.TrackedValueAscendancyPoints:
 		return func(p *Player) int {
 			if p.Character == nil {
 				return 0
 			}
 			return p.Character.GetAscendancyPoints()
 		}, nil
-	case repository.NumberFieldFullyAscended:
+	case repository.TrackedValueTeamPlayersWithAllLabsCompleted:
 		return func(p *Player) int {
 			if p.Character == nil || p.Character.GetAscendancyPoints() < 8 {
 				return 0
 			}
 			return 1
 		}, nil
-	case repository.NumberFieldPlayerScore:
+	case repository.TrackedValuePersonalObjectiveScore:
 		return poChecker()
-	case repository.NumberFieldInfluenceEquipped:
+	case repository.TrackedValueInfluencedItemCount:
 		return func(p *Player) int {
 			return itemCount(p.Character, func(item client.Item) bool {
 				return item.Influences != nil && len(*item.Influences) > 0
 			})
 		}, nil
-	case repository.NumberFieldFoulbornEquipped:
+	case repository.TrackedValueFoulbornItemCount:
 		return func(p *Player) int {
 			return itemCount(p.Character, func(item client.Item) bool {
 				return item.Mutated != nil
 			})
 		}, nil
-	case repository.NumberFieldGemsEquipped:
+	case repository.TrackedValueSocketedGemCount:
 		return func(p *Player) int {
 			if p.Character == nil || p.Character.Equipment == nil {
 				return 0
@@ -433,19 +433,19 @@ func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveCh
 			}
 			return count
 		}, nil
-	case repository.NumberFieldCorruptedItemsEquipped:
+	case repository.TrackedValueCorruptedItemCount:
 		return func(p *Player) int {
 			return itemCount(p.Character, func(item client.Item) bool {
 				return item.Corrupted != nil
 			})
 		}, nil
-	case repository.NumberFieldJewelsWithImplicitsEquipped:
+	case repository.TrackedValueJewelsWithImplicitsCount:
 		return func(p *Player) int {
 			return itemCount(p.Character, func(item client.Item) bool {
 				return strings.HasSuffix(item.BaseType, "Jewel") && item.ImplicitMods != nil && len(*item.ImplicitMods) > 0
 			})
 		}, nil
-	case repository.NumberFieldAtlasPoints:
+	case repository.TrackedValueAtlasPoints:
 		return func(p *Player) int {
 			total := 0
 			for _, tree := range p.AtlasPassiveTrees {
@@ -457,19 +457,19 @@ func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveCh
 			}
 			return total
 		}, nil
-	case repository.NumberFieldArmourQuality:
+	case repository.TrackedValueArmourQuality:
 		return func(p *Player) int {
 			return quality(p.Character, "Armour")
 		}, nil
-	case repository.NumberFieldWeaponQuality:
+	case repository.TrackedValueWeaponQuality:
 		return func(p *Player) int {
 			return quality(p.Character, "Weapon")
 		}, nil
-	case repository.NumberFieldFlaskQuality:
+	case repository.TrackedValueFlaskQuality:
 		return func(p *Player) int {
 			return quality(p.Character, "Flask")
 		}, nil
-	case repository.NumberFieldEnchantedItemsEquipped:
+	case repository.TrackedValueEnchantedItemCount:
 		return func(p *Player) int {
 			sum := 0
 			if p.Character == nil {
@@ -482,35 +482,35 @@ func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveCh
 			}
 			return sum
 		}, nil
-	case repository.NumberFieldEvasion:
+	case repository.TrackedValueEvasion:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.Evasion)
 		}, nil
-	case repository.NumberFieldArmour:
+	case repository.TrackedValueArmour:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.Armour)
 		}, nil
-	case repository.NumberFieldEnergyShield:
+	case repository.TrackedValueEnergyShield:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.ES)
 		}, nil
-	case repository.NumberFieldMana:
+	case repository.TrackedValueMana:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.Mana)
 		}, nil
-	case repository.NumberFieldHP:
+	case repository.TrackedValueHP:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
@@ -518,59 +518,59 @@ func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveCh
 			return int(p.PoB.HP)
 		}, nil
 
-	case repository.NumberFieldEHP:
+	case repository.TrackedValueEHP:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.EHP)
 		}, nil
-	case repository.NumberFieldPhysMaxHit:
+	case repository.TrackedValuePhysicalMaxHit:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.PhysMaxHit)
 		}, nil
-	case repository.NumberFieldEleMaxHit:
+	case repository.TrackedValueElementalMaxHit:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.EleMaxHit)
 		}, nil
-	case repository.NumberFieldAttackBlock:
+	case repository.TrackedValueAttackBlockChance:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.AttackBlock)
 		}, nil
-	case repository.NumberFieldSpellBlock:
+	case repository.TrackedValueSpellBlockChance:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.SpellBlock)
 		}, nil
-	case repository.NumberFieldEleMaxRes:
+	case repository.TrackedValueLowestElementalResistance:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.LowestEleRes)
 		}, nil
-	case repository.NumberFieldVoidStones:
+	case repository.TrackedValueVoidStoneCount:
 		return func(p *Player) int {
 			return len(p.VoidStones)
 		}, nil
-	case repository.NumberFieldHighIlvlFlasks:
+	case repository.TrackedValueHighItemLevelFlaskCount:
 		return func(p *Player) int {
 			return itemCount(p.Character, func(item client.Item) bool {
 				return strings.Contains(item.BaseType, "Flask") && item.Ilvl >= 84
 			})
 		}, nil
-	case repository.NumberFieldIncMovementSpeed:
+	case repository.TrackedValueMovementSpeedBonus:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
@@ -578,28 +578,28 @@ func parserForNumberField(numberField repository.NumberField) (PlayerObjectiveCh
 
 			return int(p.PoB.MovementSpeed) - 100
 		}, nil
-	case repository.NumberFieldFullDPS:
+	case repository.TrackedValueFullDPS:
 		return func(p *Player) int {
 			if p.PoB == nil {
 				return 0
 			}
 			return int(p.PoB.DPS)
 		}, nil
-	case repository.NumberFieldHasRareAscendancyPast90:
+	case repository.TrackedValueHasRareAscendancyPast90:
 		return func(p *Player) int {
 			if p.Character == nil || p.Character.Level < 90 || !slices.Contains(rareAscendancies, p.Character.Class) {
 				return 0
 			}
 			return 1
 		}, nil
-	case repository.NumberFieldBloodlineAscendancyPoints:
+	case repository.TrackedValueBloodlineAscendancyPoints:
 		return func(p *Player) int {
 			if p.Character == nil {
 				return 0
 			}
 			return p.Character.GetBloodlinePoints()
 		}, nil
-	case repository.NumberFieldBloodlineAscendancy:
+	case repository.TrackedValueBloodlineAscendancyUnlocked:
 		return func(p *Player) int {
 			if p.Character == nil || p.Character.Passives.AlternateAscendancy == nil {
 				return 0
@@ -615,7 +615,7 @@ func GetPlayerChecker(objective *repository.Objective) (PlayerObjectiveChecker, 
 	if (objective.ObjectiveType != repository.ObjectiveTypePlayer) && (objective.ObjectiveType != repository.ObjectiveTypeTeam) {
 		return nil, fmt.Errorf("not a player objective")
 	}
-	return parserForNumberField(objective.NumberField)
+	return parserForTrackedValue(objective.TrackedValue)
 }
 
 func quality(character *client.Character, superclass string) int {

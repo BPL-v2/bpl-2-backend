@@ -239,7 +239,7 @@ func (s *ScoreServiceImpl) calcScores(eventId int) (score []*scoring.Score, err 
 	if err != nil {
 		return nil, err
 	}
-	rootObjective, err := s.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringPresets")
+	rootObjective, err := s.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringRules")
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (s *ScoreServiceImpl) calcScores(eventId int) (score []*scoring.Score, err 
 		teamScores[team.Id] = make(map[int]*scoring.Score)
 		for _, obj := range rootObjective.FlatMap() {
 			presetCompletions := make(map[int]*scoring.PresetCompletion)
-			for _, preset := range obj.ScoringPresets {
+			for _, preset := range obj.ScoringRules {
 				presetCompletions[preset.Id] = &scoring.PresetCompletion{
 					ObjectiveId: obj.Id,
 				}

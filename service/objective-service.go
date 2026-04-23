@@ -16,28 +16,28 @@ type ObjectiveService interface {
 	GetObjectiveTreeForEvent(eventId int, preloads ...string) (*repository.Objective, error)
 	GetObjectivesForEvent(eventId int, preloads ...string) ([]*repository.Objective, error)
 	GetAllObjectives(preloads ...string) ([]*repository.Objective, error)
-	DuplicateObjectives(oldEventId int, newEventId int, presetMap map[int]*repository.ScoringPreset) error
+	DuplicateObjectives(oldEventId int, newEventId int, ruleMap map[int]*repository.ScoringRule) error
 }
 
 type ObjectiveServiceImpl struct {
-	objectiveRepository     repository.ObjectiveRepository
-	scoringPresetRepository repository.ScoringPresetRepository
+	objectiveRepository   repository.ObjectiveRepository
+	scoringRuleRepository repository.ScoringRuleRepository
 }
 
 func NewObjectiveService() ObjectiveService {
 	return &ObjectiveServiceImpl{
-		objectiveRepository:     repository.NewObjectiveRepository(),
-		scoringPresetRepository: repository.NewScoringPresetRepository(),
+		objectiveRepository:   repository.NewObjectiveRepository(),
+		scoringRuleRepository: repository.NewScoringRuleRepository(),
 	}
 }
 
-func (e *ObjectiveServiceImpl) CreateObjective(objective *repository.Objective, presetIds []int) (*repository.Objective, error) {
+func (e *ObjectiveServiceImpl) CreateObjective(objective *repository.Objective, ruleIds []int) (*repository.Objective, error) {
 	var err error
 	objective, err = e.objectiveRepository.SaveObjective(objective)
 	if err != nil {
 		return nil, err
 	}
-	err = e.objectiveRepository.AssociateScoringPresets(objective.Id, presetIds)
+	err = e.objectiveRepository.AssociateScoringRules(objective.Id, ruleIds)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (e *ObjectiveServiceImpl) GetObjectiveById(objectiveId int, preloads ...str
 }
 
 func (e *ObjectiveServiceImpl) GetParser(eventId int, ignoreTime bool) (*parser.ItemChecker, error) {
-	objectives, err := e.GetObjectivesForEvent(eventId, "ScoringPresets")
+	objectives, err := e.GetObjectivesForEvent(eventId, "ScoringRules")
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +80,8 @@ func (e *ObjectiveServiceImpl) GetAllObjectives(preloads ...string) ([]*reposito
 	return e.objectiveRepository.GetAllObjectives(preloads...)
 }
 
-func (e *ObjectiveServiceImpl) DuplicateObjectives(oldEventId int, newEventId int, presetMap map[int]*repository.ScoringPreset) error {
-	objectives, err := e.objectiveRepository.GetObjectivesByEventIdFlat(oldEventId, "ScoringPresets")
+func (e *ObjectiveServiceImpl) DuplicateObjectives(oldEventId int, newEventId int, ruleMap map[int]*repository.ScoringRule) error {
+	objectives, err := e.objectiveRepository.GetObjectivesByEventIdFlat(oldEventId, "ScoringRules")
 	if err != nil {
 		return err
 	}
@@ -92,13 +92,13 @@ func (e *ObjectiveServiceImpl) DuplicateObjectives(oldEventId int, newEventId in
 		newObjective.Id = 0
 		newObjective.EventId = newEventId
 
-		newPresets := utils.Filter(utils.Map(objective.ScoringPresets, func(preset *repository.ScoringPreset) *repository.ScoringPreset {
-			if newPreset, ok := presetMap[preset.Id]; ok {
-				return newPreset
+		newRules := utils.Filter(utils.Map(objective.ScoringRules, func(rule *repository.ScoringRule) *repository.ScoringRule {
+			if newRule, ok := ruleMap[rule.Id]; ok {
+				return newRule
 			}
 			return nil
-		}), func(preset *repository.ScoringPreset) bool { return preset != nil })
-		newObjective.ScoringPresets = newPresets
+		}), func(rule *repository.ScoringRule) bool { return rule != nil })
+		newObjective.ScoringRules = newRules
 
 		newObjectiveMap[oldId] = &newObjective
 	}
