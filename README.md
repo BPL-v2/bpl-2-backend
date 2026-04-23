@@ -17,6 +17,10 @@ For oauth / requests against poe api you'll need to also set some secret values
 
 You can set up your own discord server/bot for testing by following the instructions over at https://github.com/BPL-v2/bpl-2-discord-bot
 
+## How the scoring pipeline works:
+
+[scoring-pipeline.md](scoring-pipeline.md)
+
 ## Running additional go tools
 
 Install tools
