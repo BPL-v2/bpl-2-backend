@@ -64,7 +64,6 @@ func (m *MatchingService) getItemMatches(
 	userMap map[string]*repository.TeamUserWithPoEToken,
 	teamMap map[string]string,
 	itemChecker *parser.ItemChecker,
-	stashtabChecker *parser.StashTabChecker,
 	desyncedObjectiveIds []int,
 ) []*repository.ObjectiveMatch {
 	matches := make([]*repository.ObjectiveMatch, 0)
@@ -97,11 +96,6 @@ func (m *MatchingService) getItemMatches(
 		if stash.Items != nil {
 			if err := m.uniqueItemTrackingService.TrackUniqueItems(stash.Items, teamId, userId, m.event.Id, stashChange.Source, stashChange.Timestamp); err != nil {
 				log.Printf("Failed to track unique items for stash %s: %v", stash.Id, err)
-			}
-			for _, result := range stashtabChecker.Check(&stash.Items) {
-				if syncFinished || slices.Contains(desyncedObjectiveIds, result.ObjectiveId) {
-					completions[result.ObjectiveId] += result.Number
-				}
 			}
 			for _, item := range stash.Items {
 				for _, result := range itemChecker.CheckForCompletions(&item) {
@@ -154,7 +148,7 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 
 }
 
-func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, stashtabChecker *parser.StashTabChecker, objectives []*repository.Objective) {
+func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, objectives []*repository.Objective) {
 	users, err := m.userService.GetUsersForEvent(m.event.Id)
 	if err != nil {
 		log.Printf("Failed to get users for event %d: %v", m.event.Id, err)
@@ -222,7 +216,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, s
 				syncing = false
 			}
 
-			matches = append(matches, m.getItemMatches(stashChange, userMap, teamMap, itemChecker, stashtabChecker, desyncedObjectiveIds)...)
+			matches = append(matches, m.getItemMatches(stashChange, userMap, teamMap, itemChecker, desyncedObjectiveIds)...)
 			if !syncing {
 				err = m.objectiveMatchService.SaveMatches(matches, desyncedObjectiveIds)
 				if err != nil {
@@ -252,11 +246,7 @@ func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event
 	if err != nil {
 		return err
 	}
-	stashtabChecker, err := parser.NewStashTabChecker(objectives, false)
-	if err != nil {
-		return err
-	}
 	fmt.Println("Item checker initialized with", len(objectives), "objectives")
-	go m.ProcessStashChanges(itemChecker, stashtabChecker, objectives)
+	go m.ProcessStashChanges(itemChecker, objectives)
 	return nil
 }

@@ -3242,7 +3242,8 @@ const docTemplate = `{
             "TrackedValue": {
                 "enum": [
                     "STACK_SIZE",
-                    "FOSSIL_FUEL",
+                    "FOSSIL_FUEL_HIGH",
+                    "FOSSIL_FUEL_MID",
                     "CHARACTER_LEVEL",
                     "DELVE_DEPTH",
                     "DELVE_DEPTH_AFTER_100",
@@ -3285,7 +3286,8 @@ const docTemplate = `{
                 "type": "string",
                 "x-enum-varnames": [
                     "TrackedValueStackSize",
-                    "TrackedValueFossilFuel",
+                    "TrackedValueFossilFuelHigh",
+                    "TrackedValueFossilFuelMid",
                     "TrackedValueCharacterLevel",
                     "TrackedValueDelveDepth",
                     "TrackedValueDelveDepthAfter100",
