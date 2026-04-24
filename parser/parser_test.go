@@ -462,16 +462,16 @@ func TestBoolComparator(t *testing.T) {
 	t.Run("EQ corrupted true", func(t *testing.T) {
 		checker, err := BoolComparator(makeCondition(dbModel.IS_CORRUPTED, dbModel.EQ, "true"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withCorrupted(true))))
-		assert.False(t, checker(makeItem(withCorrupted(false))))
-		assert.False(t, checker(makeItem()))
+		assert.NotZero(t, checker(makeItem(withCorrupted(true))))
+		assert.Zero(t, checker(makeItem(withCorrupted(false))))
+		assert.Zero(t, checker(makeItem()))
 	})
 
 	t.Run("NEQ corrupted true", func(t *testing.T) {
 		checker, err := BoolComparator(makeCondition(dbModel.IS_CORRUPTED, dbModel.NEQ, "true"))
 		require.NoError(t, err)
-		assert.False(t, checker(makeItem(withCorrupted(true))))
-		assert.True(t, checker(makeItem(withCorrupted(false))))
+		assert.Zero(t, checker(makeItem(withCorrupted(true))))
+		assert.NotZero(t, checker(makeItem(withCorrupted(false))))
 	})
 
 	t.Run("invalid operator", func(t *testing.T) {
@@ -489,44 +489,44 @@ func TestIntComparator(t *testing.T) {
 	t.Run("EQ", func(t *testing.T) {
 		checker, err := IntComparator(makeCondition(dbModel.ILVL, dbModel.EQ, "83"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withIlvl(83))))
-		assert.False(t, checker(makeItem(withIlvl(82))))
+		assert.NotZero(t, checker(makeItem(withIlvl(83))))
+		assert.Zero(t, checker(makeItem(withIlvl(82))))
 	})
 
 	t.Run("NEQ", func(t *testing.T) {
 		checker, err := IntComparator(makeCondition(dbModel.ILVL, dbModel.NEQ, "83"))
 		require.NoError(t, err)
-		assert.False(t, checker(makeItem(withIlvl(83))))
-		assert.True(t, checker(makeItem(withIlvl(82))))
+		assert.Zero(t, checker(makeItem(withIlvl(83))))
+		assert.NotZero(t, checker(makeItem(withIlvl(82))))
 	})
 
 	t.Run("GT", func(t *testing.T) {
 		checker, err := IntComparator(makeCondition(dbModel.ILVL, dbModel.GT, "80"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withIlvl(83))))
-		assert.False(t, checker(makeItem(withIlvl(80))))
-		assert.False(t, checker(makeItem(withIlvl(79))))
+		assert.NotZero(t, checker(makeItem(withIlvl(83))))
+		assert.Zero(t, checker(makeItem(withIlvl(80))))
+		assert.Zero(t, checker(makeItem(withIlvl(79))))
 	})
 
 	t.Run("LT", func(t *testing.T) {
 		checker, err := IntComparator(makeCondition(dbModel.ILVL, dbModel.LT, "80"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withIlvl(79))))
-		assert.False(t, checker(makeItem(withIlvl(80))))
+		assert.NotZero(t, checker(makeItem(withIlvl(79))))
+		assert.Zero(t, checker(makeItem(withIlvl(80))))
 	})
 
 	t.Run("IN", func(t *testing.T) {
 		checker, err := IntComparator(makeCondition(dbModel.ILVL, dbModel.IN, "80,83,86"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withIlvl(83))))
-		assert.False(t, checker(makeItem(withIlvl(82))))
+		assert.NotZero(t, checker(makeItem(withIlvl(83))))
+		assert.Zero(t, checker(makeItem(withIlvl(82))))
 	})
 
 	t.Run("NOT_IN", func(t *testing.T) {
 		checker, err := IntComparator(makeCondition(dbModel.ILVL, dbModel.NOT_IN, "80,83"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withIlvl(82))))
-		assert.False(t, checker(makeItem(withIlvl(83))))
+		assert.NotZero(t, checker(makeItem(withIlvl(82))))
+		assert.Zero(t, checker(makeItem(withIlvl(83))))
 	})
 
 	t.Run("invalid value", func(t *testing.T) {
@@ -544,72 +544,72 @@ func TestStringComparator(t *testing.T) {
 	t.Run("EQ", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.EQ, "Chaos Orb"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.False(t, checker(makeItem(withBaseType("Exalted Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Exalted Orb"))))
 	})
 
 	t.Run("NEQ", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.NEQ, "Chaos Orb"))
 		require.NoError(t, err)
-		assert.False(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.True(t, checker(makeItem(withBaseType("Exalted Orb"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Exalted Orb"))))
 	})
 
 	t.Run("IN", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.IN, "Chaos Orb,Exalted Orb"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.True(t, checker(makeItem(withBaseType("Exalted Orb"))))
-		assert.False(t, checker(makeItem(withBaseType("Mirror of Kalandra"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Exalted Orb"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Mirror of Kalandra"))))
 	})
 
 	t.Run("NOT_IN", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.NOT_IN, "Chaos Orb,Exalted Orb"))
 		require.NoError(t, err)
-		assert.False(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.True(t, checker(makeItem(withBaseType("Mirror of Kalandra"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Mirror of Kalandra"))))
 	})
 
 	t.Run("CONTAINS", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.CONTAINS, "Orb"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.False(t, checker(makeItem(withBaseType("Mirror of Kalandra"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Mirror of Kalandra"))))
 	})
 
 	t.Run("MATCHES regex", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.MATCHES, "^Chaos.*"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.False(t, checker(makeItem(withBaseType("Exalted Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Exalted Orb"))))
 	})
 
 	t.Run("DOES_NOT_MATCH regex", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.BASE_TYPE, dbModel.DOES_NOT_MATCH, "^Chaos.*"))
 		require.NoError(t, err)
-		assert.False(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.True(t, checker(makeItem(withBaseType("Exalted Orb"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Exalted Orb"))))
 	})
 
 	t.Run("LENGTH_EQ", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.NAME, dbModel.LENGTH_EQ, "5"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withName("Abcde"))))
-		assert.False(t, checker(makeItem(withName("Abcd"))))
+		assert.NotZero(t, checker(makeItem(withName("Abcde"))))
+		assert.Zero(t, checker(makeItem(withName("Abcd"))))
 	})
 
 	t.Run("LENGTH_GT", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.NAME, dbModel.LENGTH_GT, "3"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withName("Abcd"))))
-		assert.False(t, checker(makeItem(withName("Abc"))))
+		assert.NotZero(t, checker(makeItem(withName("Abcd"))))
+		assert.Zero(t, checker(makeItem(withName("Abc"))))
 	})
 
 	t.Run("LENGTH_LT", func(t *testing.T) {
 		checker, err := StringComparator(makeCondition(dbModel.NAME, dbModel.LENGTH_LT, "3"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withName("Ab"))))
-		assert.False(t, checker(makeItem(withName("Abc"))))
+		assert.NotZero(t, checker(makeItem(withName("Ab"))))
+		assert.Zero(t, checker(makeItem(withName("Abc"))))
 	})
 
 	t.Run("invalid regex", func(t *testing.T) {
@@ -622,50 +622,50 @@ func TestStringArrayComparator(t *testing.T) {
 	t.Run("CONTAINS", func(t *testing.T) {
 		checker, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.CONTAINS, "fire"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("Adds 10 fire damage", "Adds 5 cold damage"))))
-		assert.False(t, checker(makeItem(withExplicitMods("Adds 5 cold damage"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("Adds 10 fire damage", "Adds 5 cold damage"))))
+		assert.Zero(t, checker(makeItem(withExplicitMods("Adds 5 cold damage"))))
 	})
 
 	t.Run("CONTAINS_ALL", func(t *testing.T) {
 		checker, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.CONTAINS_ALL, "fire,cold"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("Adds fire damage", "Adds cold damage"))))
-		assert.False(t, checker(makeItem(withExplicitMods("Adds fire damage"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("Adds fire damage", "Adds cold damage"))))
+		assert.Zero(t, checker(makeItem(withExplicitMods("Adds fire damage"))))
 	})
 
 	t.Run("CONTAINS_MATCH regex", func(t *testing.T) {
 		checker, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.CONTAINS_MATCH, "\\d+ to maximum"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("+50 to maximum Life"))))
-		assert.False(t, checker(makeItem(withExplicitMods("Adds fire damage"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("+50 to maximum Life"))))
+		assert.Zero(t, checker(makeItem(withExplicitMods("Adds fire damage"))))
 	})
 
 	t.Run("LENGTH_EQ", func(t *testing.T) {
 		checker, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.LENGTH_EQ, "2"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("mod1", "mod2"))))
-		assert.False(t, checker(makeItem(withExplicitMods("mod1"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("mod1", "mod2"))))
+		assert.Zero(t, checker(makeItem(withExplicitMods("mod1"))))
 	})
 
 	t.Run("LENGTH_GT", func(t *testing.T) {
 		checker, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.LENGTH_GT, "1"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("mod1", "mod2"))))
-		assert.False(t, checker(makeItem(withExplicitMods("mod1"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("mod1", "mod2"))))
+		assert.Zero(t, checker(makeItem(withExplicitMods("mod1"))))
 	})
 
 	t.Run("LENGTH_LT", func(t *testing.T) {
 		checker, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.LENGTH_LT, "2"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("mod1"))))
-		assert.False(t, checker(makeItem(withExplicitMods("mod1", "mod2"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("mod1"))))
+		assert.Zero(t, checker(makeItem(withExplicitMods("mod1", "mod2"))))
 	})
 
 	t.Run("DOES_NOT_MATCH", func(t *testing.T) {
 		checker, err := StringArrayComparator(makeCondition(dbModel.EXPLICITS, dbModel.DOES_NOT_MATCH, "fire"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("cold damage"))))
-		assert.False(t, checker(makeItem(withExplicitMods("fire damage"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("cold damage"))))
+		assert.Zero(t, checker(makeItem(withExplicitMods("fire damage"))))
 	})
 
 	t.Run("invalid operator", func(t *testing.T) {
@@ -680,25 +680,25 @@ func TestComparator(t *testing.T) {
 	t.Run("routes to bool comparator", func(t *testing.T) {
 		checker, err := Comparator(makeCondition(dbModel.IS_CORRUPTED, dbModel.EQ, "true"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withCorrupted(true))))
+		assert.NotZero(t, checker(makeItem(withCorrupted(true))))
 	})
 
 	t.Run("routes to string comparator", func(t *testing.T) {
 		checker, err := Comparator(makeCondition(dbModel.BASE_TYPE, dbModel.EQ, "Chaos Orb"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Chaos Orb"))))
 	})
 
 	t.Run("routes to int comparator", func(t *testing.T) {
 		checker, err := Comparator(makeCondition(dbModel.ILVL, dbModel.GT, "80"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withIlvl(85))))
+		assert.NotZero(t, checker(makeItem(withIlvl(85))))
 	})
 
 	t.Run("routes to string array comparator", func(t *testing.T) {
 		checker, err := Comparator(makeCondition(dbModel.EXPLICITS, dbModel.CONTAINS, "fire"))
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withExplicitMods("fire damage"))))
+		assert.NotZero(t, checker(makeItem(withExplicitMods("fire damage"))))
 	})
 
 	t.Run("invalid field type", func(t *testing.T) {
@@ -713,7 +713,7 @@ func TestComperatorFromConditions(t *testing.T) {
 	t.Run("empty conditions matches all", func(t *testing.T) {
 		checker, err := ComperatorFromConditions(nil)
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem()))
+		assert.NotZero(t, checker(makeItem()))
 	})
 
 	t.Run("single condition", func(t *testing.T) {
@@ -722,8 +722,8 @@ func TestComperatorFromConditions(t *testing.T) {
 		}
 		checker, err := ComperatorFromConditions(conditions)
 		require.NoError(t, err)
-		assert.True(t, checker(makeItem(withBaseType("Chaos Orb"))))
-		assert.False(t, checker(makeItem(withBaseType("Exalted Orb"))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Chaos Orb"))))
+		assert.Zero(t, checker(makeItem(withBaseType("Exalted Orb"))))
 	})
 
 	t.Run("multiple conditions ANDed", func(t *testing.T) {
@@ -735,9 +735,9 @@ func TestComperatorFromConditions(t *testing.T) {
 		checker, err := ComperatorFromConditions(conditions)
 		require.NoError(t, err)
 		// all match
-		assert.True(t, checker(makeItem(withBaseType("Leather Belt"), withCorrupted(true), withIlvl(85))))
+		assert.NotZero(t, checker(makeItem(withBaseType("Leather Belt"), withCorrupted(true), withIlvl(85))))
 		// one fails
-		assert.False(t, checker(makeItem(withBaseType("Leather Belt"), withCorrupted(false), withIlvl(85))))
+		assert.Zero(t, checker(makeItem(withBaseType("Leather Belt"), withCorrupted(false), withIlvl(85))))
 	})
 }
 
