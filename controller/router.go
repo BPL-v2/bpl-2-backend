@@ -137,7 +137,7 @@ func AuthenticationMiddleware() gin.HandlerFunc {
 
 func UserSelfMiddleware() gin.HandlerFunc {
 	return func(r *gin.Context) {
-		userId, ok := getUserId(r)
+		userIdFromToken, ok := getUserId(r)
 		if !ok {
 			r.AbortWithStatus(401)
 			return
@@ -147,12 +147,12 @@ func UserSelfMiddleware() gin.HandlerFunc {
 			r.Next()
 			return
 		}
-		userId, err := strconv.Atoi(userIdParam)
+		userIdFromParam, err := strconv.Atoi(userIdParam)
 		if err != nil {
 			r.AbortWithStatus(400)
 			return
 		}
-		if userId != userId && slices.Contains(getUserRoles(r), repository.PermissionAdmin) {
+		if userIdFromToken != userIdFromParam && !slices.Contains(getUserRoles(r), repository.PermissionAdmin) {
 			r.AbortWithStatus(403)
 			return
 		}
