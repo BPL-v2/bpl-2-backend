@@ -1,0 +1,3 @@
+[build]
+    bind = "./tmp/main.exe"
+    cmd = "go build -o /tmp/main.exe ."
