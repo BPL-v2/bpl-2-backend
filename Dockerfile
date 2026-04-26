@@ -32,4 +32,4 @@ COPY --from=builder /app/docs ./docs
 EXPOSE 8000
 
 ENV GIN_MODE=release
-CMD ["sh", "-c", "goose -dir migrations postgres \"host=$DATABASE_HOST port=$DATABASE_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$DATABASE_NAME sslmode=disable search_path=bpl2\" up && ./server"]
+CMD ["sh", "-c", "goose -dir migrations postgres \"host=$DATABASE_HOST port=$DATABASE_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$DATABASE_NAME sslmode=disable search_path=bpl2,public\" up && ./server"]

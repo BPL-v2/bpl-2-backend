@@ -1,4 +1,6 @@
 -- +goose Up
+CREATE SCHEMA IF NOT EXISTS bpl2;
+
 CREATE TABLE character_stats (
 	"time" timestamptz NOT NULL,
 	event_id int8 NOT NULL,

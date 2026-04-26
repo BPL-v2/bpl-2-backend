@@ -21,7 +21,7 @@ GOLINT=golangci-lint
 
 # Database related
 DB_CONTAINER=db-local
-GOOSE=goose -dir migrations postgres "host=$(DATABASE_HOST) port=$(DATABASE_PORT) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) dbname=$(DATABASE_NAME) sslmode=disable search_path=bpl2"
+GOOSE=goose -dir migrations postgres "host=$(DATABASE_HOST) port=$(DATABASE_PORT) user=$(POSTGRES_USER) password=$(POSTGRES_PASSWORD) dbname=$(DATABASE_NAME) sslmode=disable search_path=bpl2,public"
 
 # Default target
 .PHONY: all
