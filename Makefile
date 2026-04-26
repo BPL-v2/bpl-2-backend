@@ -217,7 +217,7 @@ infra-logs:
 .PHONY: install-tools
 install-tools:
 	@echo "Installing development tools..."
-	$(GOCMD) install github.com/swaggo/swag/cmd/swag@latest
+	$(GOCMD) install github.com/swaggo/swag/v2/cmd/swag@latest
 	$(GOCMD) install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	$(GOCMD) install github.com/air-verse/air@latest
 	$(GOCMD) install golang.org/x/vuln/cmd/govulncheck@latest
