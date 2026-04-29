@@ -8,6 +8,7 @@ import (
 	"bpl/utils"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -321,14 +322,19 @@ type AttributionOverwrites = map[int]TeamAttributionOverwrite
 func (s *ScoreServiceImpl) GetPlayerAttributionsFromGuildstash(event *repository.Event, objectiveTree *repository.Objective) (AttributionOverwrites, error) {
 	overwrites := make(AttributionOverwrites)
 	objectiveNameMap := make(map[int]string)
-	// we can only definitively identify objectives that have their name or base type as their only condition
 	for _, objective := range objectiveTree.FlatMap() {
-		if len(objective.Conditions) == 1 {
-			cond := objective.Conditions[0]
-			if cond.Operator == repository.EQ &&
-				(cond.Field == repository.BASE_TYPE || cond.Field == repository.NAME || cond.Field == repository.TYPE_LINE) {
-				objectiveNameMap[objective.Id] = cond.Value
-			}
+		// Skip objectives that require multiple completions or have value-based scoring, as we can't attribute those to a single player
+		if len(objective.Conditions) != 1 ||
+			objective.RequiredAmount > 1 ||
+			slices.ContainsFunc(objective.ScoringRules, func(rule *repository.ScoringRule) bool { return rule.RuleType == repository.POINTS_BY_VALUE }) {
+			continue
+		}
+
+		cond := objective.Conditions[0]
+		// we can only definitively identify objectives that have their name, base type, or type line as their only condition
+		if cond.Operator == repository.EQ &&
+			(cond.Field == repository.BASE_TYPE || cond.Field == repository.NAME || cond.Field == repository.TYPE_LINE) {
+			objectiveNameMap[objective.Id] = cond.Value
 		}
 	}
 	deposits, err := s.guildStashService.GetEarliestDeposits(event)

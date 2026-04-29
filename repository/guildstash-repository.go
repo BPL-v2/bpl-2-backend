@@ -360,12 +360,12 @@ func (r *GuildStashRepositoryImpl) GetEarliestDeposits(event *Event) ([]*PlayerC
 			FROM guild_stash_changelogs gsc 
 			JOIN guilds g ON g.id = gsc.guild_id 
 			JOIN oauths o ON o."name" = gsc.account_name
-			WHERE gsc.action = 1 AND gsc.number = 1 and g.team_id in ?
+			WHERE gsc.action = 1 AND gsc.number = 1 AND g.team_id IN ? AND gsc.timestamp >= ? AND gsc.timestamp <= ?
 		) ranked
 		WHERE rn = 1
 		ORDER BY timestamp;
 		`
-	err := r.db.Raw(query, event.TeamIds()).Scan(&results).Error
+	err := r.db.Raw(query, event.TeamIds(), event.EventStartTime, event.EventEndTime).Scan(&results).Error
 	if err != nil {
 		return nil, err
 	}
