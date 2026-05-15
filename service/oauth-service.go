@@ -390,7 +390,8 @@ func (e *OauthServiceImpl) GetToken(provider repository.Provider) (token string,
 func (e *OauthServiceImpl) RefreshOnePoEToken() error {
 	oauth, err := e.oauthRepository.GetOauthForTokenRefresh(repository.ProviderPoE)
 	if err != nil {
-		return err
+		// no token to refresh, this is not an error
+		return nil
 	}
 	oauthConfig := e.Config[repository.ProviderPoE]
 	poeClient := client.NewPoEClient(1, false, 10)

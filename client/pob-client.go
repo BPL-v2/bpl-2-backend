@@ -26,7 +26,11 @@ func GetPoBExport(characterData *Character) (*PathOfBuilding, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	request, err := http.NewRequest("POST", config.Env().POBServerURL, bytes.NewReader(jsonData))
+	gameVersion := "poe1"
+	if characterData.Realm == PoE2 {
+		gameVersion = "poe2"
+	}
+	request, err := http.NewRequest("POST", config.Env().POBServerURL+"/"+gameVersion+"/import-character", bytes.NewReader(jsonData))
 	if err != nil {
 		return nil, "", err
 	}
@@ -49,7 +53,8 @@ func GetPoBExport(characterData *Character) (*PathOfBuilding, string, error) {
 
 func UpdatePoBExport(pobString string) (string, error) {
 	// send text to pob server and get updated export
-	request, err := http.NewRequest("POST", config.Env().POBServerURL+"/update-config", bytes.NewReader([]byte(pobString)))
+	gameVersion := "poe1"
+	request, err := http.NewRequest("POST", config.Env().POBServerURL+"/"+gameVersion+"/update-config", bytes.NewReader([]byte(pobString)))
 	if err != nil {
 		return "", err
 	}
