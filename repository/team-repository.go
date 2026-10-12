@@ -19,7 +19,15 @@ type Team struct {
 	EventId        int            `gorm:"not null;references events(id)"`
 	Color          string         `gorm:"not null"`
 	DiscordRoleId  *string        `gorm:"null"`
+	IconMimeType   *string        `gorm:"null"`
+	IconUpdatedAt  *time.Time     `gorm:"null"`
 	Users          []*User        `gorm:"many2many:team_users"`
+}
+
+type TeamIcon struct {
+	TeamId   int    `gorm:"primaryKey;references teams(id)"`
+	Icon     []byte `gorm:"type:bytea;not null"`
+	MimeType string `gorm:"not null"`
 }
 
 type TeamUser struct {
@@ -34,6 +42,9 @@ type TeamRepository interface {
 	GetTeamsForEvent(eventId int) ([]*Team, error)
 	Save(team *Team) (*Team, error)
 	Delete(teamId int) error
+	SaveIcon(teamId int, icon []byte, mimeType string) error
+	GetIcon(teamId int) (*TeamIcon, error)
+	DeleteIcon(teamId int) error
 	GetTeamUsersForEvent(eventId int) ([]*TeamUser, error)
 	GetTeamUsersForTeam(teamId int) ([]*TeamUser, error)
 	GetTeamLeadsForEvent(eventId int) ([]*TeamUser, error)
@@ -73,17 +84,52 @@ func (r *TeamRepositoryImpl) GetTeamsForEvent(eventId int) ([]*Team, error) {
 }
 
 func (r *TeamRepositoryImpl) Save(team *Team) (*Team, error) {
-	result := r.DB.Save(team)
+	result := r.DB.Omit("IconMimeType", "IconUpdatedAt").Save(team)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return team, nil
 }
 
+func (r *TeamRepositoryImpl) SaveIcon(teamId int, icon []byte, mimeType string) error {
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&TeamIcon{TeamId: teamId, Icon: icon, MimeType: mimeType}).Error; err != nil {
+			return err
+		}
+		return tx.Model(&Team{}).Where("id = ?", teamId).Updates(map[string]any{
+			"icon_mime_type":  mimeType,
+			"icon_updated_at": time.Now(),
+		}).Error
+	})
+}
+
+func (r *TeamRepositoryImpl) GetIcon(teamId int) (*TeamIcon, error) {
+	var icon TeamIcon
+	if err := r.DB.First(&icon, "team_id = ?", teamId).Error; err != nil {
+		return nil, err
+	}
+	return &icon, nil
+}
+
+func (r *TeamRepositoryImpl) DeleteIcon(teamId int) error {
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(&TeamIcon{}, "team_id = ?", teamId).Error; err != nil {
+			return err
+		}
+		return tx.Model(&Team{}).Where("id = ?", teamId).Updates(map[string]any{
+			"icon_mime_type":  nil,
+			"icon_updated_at": nil,
+		}).Error
+	})
+}
+
 func (r *TeamRepositoryImpl) Delete(teamId int) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		err := r.DB.Delete(&TeamUser{}, "team_id = ?", teamId).Error
 		if err != nil {
+			return err
+		}
+		if err := r.DB.Delete(&TeamIcon{}, "team_id = ?", teamId).Error; err != nil {
 			return err
 		}
 		return r.DB.Delete(Team{Id: teamId}).Error

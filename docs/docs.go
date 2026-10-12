@@ -4087,6 +4087,9 @@ const docTemplate = `{
                     "event_id": {
                         "type": "integer"
                     },
+                    "icon_url": {
+                        "type": "string"
+                    },
                     "id": {
                         "type": "integer"
                     },
@@ -7285,6 +7288,138 @@ const docTemplate = `{
                         "description": "OK"
                     }
                 },
+                "tags": [
+                    "team"
+                ]
+            }
+        },
+        "/events/{event_id}/teams/{team_id}/icon": {
+            "delete": {
+                "description": "Removes the icon of a team",
+                "operationId": "DeleteTeamIcon",
+                "parameters": [
+                    {
+                        "description": "Event Id",
+                        "in": "path",
+                        "name": "event_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Team Id",
+                        "in": "path",
+                        "name": "team_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "team"
+                ]
+            },
+            "get": {
+                "description": "Fetches the icon of a team",
+                "operationId": "GetTeamIcon",
+                "parameters": [
+                    {
+                        "description": "Event Id",
+                        "in": "path",
+                        "name": "event_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Team Id",
+                        "in": "path",
+                        "name": "team_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "image/*": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "tags": [
+                    "team"
+                ]
+            },
+            "put": {
+                "description": "Uploads an icon for a team",
+                "operationId": "UploadTeamIcon",
+                "parameters": [
+                    {
+                        "description": "Event Id",
+                        "in": "path",
+                        "name": "event_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Team Id",
+                        "in": "path",
+                        "name": "team_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "title": "icon",
+                                "type": "file"
+                            }
+                        },
+                        "multipart/form-data": {
+                            "schema": {
+                                "type": "object"
+                            }
+                        }
+                    },
+                    "description": "Icon file",
+                    "required": true
+                },
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "tags": [
                     "team"
                 ]

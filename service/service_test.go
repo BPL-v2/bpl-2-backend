@@ -83,6 +83,17 @@ func (m *mockTeamService) GetTeamById(teamId int) (*repository.Team, error) {
 func (m *mockTeamService) DeleteTeam(teamId int) error {
 	return m.Called(teamId).Error(0)
 }
+func (m *mockTeamService) UploadIcon(teamId int, icon []byte, mimeType string) error {
+	return m.Called(teamId, icon, mimeType).Error(0)
+}
+func (m *mockTeamService) GetIcon(teamId int) (*repository.TeamIcon, error) {
+	args := m.Called(teamId)
+	icon, _ := args.Get(0).(*repository.TeamIcon)
+	return icon, args.Error(1)
+}
+func (m *mockTeamService) DeleteIcon(teamId int) error {
+	return m.Called(teamId).Error(0)
+}
 func (m *mockTeamService) AddUsersToTeams(teamUsers []*repository.TeamUser, event *repository.Event) error {
 	return m.Called(teamUsers, event).Error(0)
 }
@@ -141,6 +152,17 @@ func (m *mockTeamRepo) GetTeamById(teamId int) (*repository.Team, error) {
 	return args.Get(0).(*repository.Team), args.Error(1)
 }
 func (m *mockTeamRepo) Delete(teamId int) error {
+	return m.Called(teamId).Error(0)
+}
+func (m *mockTeamRepo) SaveIcon(teamId int, icon []byte, mimeType string) error {
+	return m.Called(teamId, icon, mimeType).Error(0)
+}
+func (m *mockTeamRepo) GetIcon(teamId int) (*repository.TeamIcon, error) {
+	args := m.Called(teamId)
+	icon, _ := args.Get(0).(*repository.TeamIcon)
+	return icon, args.Error(1)
+}
+func (m *mockTeamRepo) DeleteIcon(teamId int) error {
 	return m.Called(teamId).Error(0)
 }
 func (m *mockTeamRepo) RemoveTeamUsersForEvent(teamUsers []*repository.TeamUser, event *repository.Event) error {

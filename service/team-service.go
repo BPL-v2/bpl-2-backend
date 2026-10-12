@@ -11,6 +11,9 @@ type TeamService interface {
 	SaveTeam(team *repository.Team) (*repository.Team, error)
 	GetTeamById(teamId int) (*repository.Team, error)
 	DeleteTeam(teamId int) error
+	UploadIcon(teamId int, icon []byte, mimeType string) error
+	GetIcon(teamId int) (*repository.TeamIcon, error)
+	DeleteIcon(teamId int) error
 	AddUsersToTeams(teamUsers []*repository.TeamUser, event *repository.Event) error
 	GetTeamUsersForEvent(eventId int) ([]*repository.TeamUser, error)
 	GetTeamUserMapForEvent(event *repository.Event) (*map[int]int, error)
@@ -168,4 +171,19 @@ func (e *TeamServiceImpl) GetSortedUsersForEvent(eventId int) ([]*SortedUser, er
 		}
 	}
 	return sortedUsers, nil
+}
+
+func (e *TeamServiceImpl) UploadIcon(teamId int, icon []byte, mimeType string) error {
+	if _, err := e.teamRepository.GetTeamById(teamId); err != nil {
+		return err
+	}
+	return e.teamRepository.SaveIcon(teamId, icon, mimeType)
+}
+
+func (e *TeamServiceImpl) GetIcon(teamId int) (*repository.TeamIcon, error) {
+	return e.teamRepository.GetIcon(teamId)
+}
+
+func (e *TeamServiceImpl) DeleteIcon(teamId int) error {
+	return e.teamRepository.DeleteIcon(teamId)
 }

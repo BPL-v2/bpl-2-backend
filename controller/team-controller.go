@@ -5,12 +5,16 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"io"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+const maxTeamIconSize = 2 << 20
 
 type TeamController struct {
 	teamService  service.TeamService
@@ -25,7 +29,16 @@ func NewTeamController() *TeamController {
 }
 
 func toTeamResponse(team *repository.Team) *Team {
+	iconUrl := ""
+	if team.IconMimeType != nil {
+		iconUrl = "/events/" + strconv.Itoa(team.EventId) + "/teams/" + strconv.Itoa(team.Id) + "/icon"
+		if team.IconUpdatedAt != nil {
+			// version the URL so a re-upload bypasses the browser cache
+			iconUrl += "?v=" + strconv.FormatInt(team.IconUpdatedAt.UnixMilli(), 10)
+		}
+	}
 	return &Team{
+		IconUrl:        iconUrl,
 		Id:             team.Id,
 		Name:           team.Name,
 		Abbreviation:   team.Abbreviation,
@@ -45,6 +58,9 @@ func setupTeamController() []RouteInfo {
 		{Method: "GET", Path: "/users", HandlerFunc: e.getSortedUsersHandler(), Authenticated: true},
 		{Method: "PUT", Path: "/users", HandlerFunc: e.addUsersToTeamsHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionManager}},
 		{Method: "GET", Path: "/:team_id", HandlerFunc: e.getTeamHandler()},
+		{Method: "PUT", Path: "/:team_id/icon", HandlerFunc: e.uploadIconHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
+		{Method: "GET", Path: "/:team_id/icon", HandlerFunc: e.getIconHandler()},
+		{Method: "DELETE", Path: "/:team_id/icon", HandlerFunc: e.deleteIconHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin, repository.PermissionObjectiveDesigner}},
 		{Method: "DELETE", Path: "/:team_id", HandlerFunc: e.deleteTeamHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
@@ -138,6 +154,108 @@ func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, toTeamResponse(team))
+	}
+}
+
+// @id UploadTeamIcon
+// @Description Uploads an icon for a team
+// @Security BearerAuth
+// @Tags team
+// @Accept multipart/form-data
+// @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
+// @Param icon formData file true "Icon file"
+// @Success 204
+// @Router /events/{event_id}/teams/{team_id}/icon [put]
+func (e *TeamController) uploadIconHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		teamId, err := strconv.Atoi(c.Param("team_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		file, header, err := c.Request.FormFile("icon")
+		if err != nil {
+			c.JSON(400, gin.H{"error": "icon file required"})
+			return
+		}
+		defer file.Close()
+		data, err := io.ReadAll(io.LimitReader(file, maxTeamIconSize+1))
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		if len(data) > maxTeamIconSize {
+			c.JSON(400, gin.H{"error": "icon too large"})
+			return
+		}
+		mimeType := header.Header.Get("Content-Type")
+		if !strings.HasPrefix(mimeType, "image/") {
+			c.JSON(400, gin.H{"error": "icon must be an image"})
+			return
+		}
+		if err := e.teamService.UploadIcon(teamId, data, mimeType); err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(404, gin.H{"error": "Team not found"})
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
+			return
+		}
+		c.Status(204)
+	}
+}
+
+// @id GetTeamIcon
+// @Description Fetches the icon of a team
+// @Tags team
+// @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
+// @Produce image/*
+// @Success 200
+// @Router /events/{event_id}/teams/{team_id}/icon [get]
+func (e *TeamController) getIconHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		teamId, err := strconv.Atoi(c.Param("team_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		icon, err := e.teamService.GetIcon(teamId)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				c.Header("Cache-Control", "no-store")
+				c.Status(404)
+			} else {
+				c.JSON(500, gin.H{"error": err.Error()})
+			}
+			return
+		}
+		c.Header("Cache-Control", "public, max-age=86400")
+		c.Data(200, icon.MimeType, icon.Icon)
+	}
+}
+
+// @id DeleteTeamIcon
+// @Description Removes the icon of a team
+// @Security BearerAuth
+// @Tags team
+// @Param event_id path int true "Event Id"
+// @Param team_id path int true "Team Id"
+// @Success 204
+// @Router /events/{event_id}/teams/{team_id}/icon [delete]
+func (e *TeamController) deleteIconHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		teamId, err := strconv.Atoi(c.Param("team_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		if err := e.teamService.DeleteIcon(teamId); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(204)
 	}
 }
 
@@ -253,6 +371,7 @@ type Team struct {
 	EventId        int      `json:"event_id" binding:"required"`
 	Color          string   `json:"color"`
 	DiscordRoleId  *string  `json:"discord_role_id,omitempty"`
+	IconUrl        string   `json:"icon_url,omitempty"`
 }
 
 func teamUserCreateToModel(teamUserCreate TeamUserCreate) *repository.TeamUser {
