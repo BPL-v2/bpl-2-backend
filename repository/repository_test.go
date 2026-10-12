@@ -61,6 +61,7 @@ func TestMain(m *testing.M) {
 			&Objective{},
 			&Condition{},
 			&Team{},
+			&TeamIcon{},
 			&User{},
 			&TeamUser{},
 			&StashChange{},
@@ -104,6 +105,7 @@ func tearDown() {
 	db.Exec("DELETE FROM bpl2.character_pobs")
 	db.Exec("DELETE FROM bpl2.characters")
 	db.Exec("DELETE FROM bpl2.team_users")
+	db.Exec("DELETE FROM bpl2.team_icons")
 	db.Exec("DELETE FROM bpl2.teams")
 	db.Exec("DELETE FROM bpl2.oauths")
 	db.Exec("DELETE FROM bpl2.users")
