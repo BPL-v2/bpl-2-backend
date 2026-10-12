@@ -14,8 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const maxTeamIconSize = 2 << 20
-
 type TeamController struct {
 	teamService  service.TeamService
 	eventService service.EventService
@@ -180,13 +178,9 @@ func (e *TeamController) uploadIconHandler() gin.HandlerFunc {
 			return
 		}
 		defer file.Close()
-		data, err := io.ReadAll(io.LimitReader(file, maxTeamIconSize+1))
+		data, err := io.ReadAll(file)
 		if err != nil {
 			c.JSON(500, gin.H{"error": err.Error()})
-			return
-		}
-		if len(data) > maxTeamIconSize {
-			c.JSON(400, gin.H{"error": "icon too large"})
 			return
 		}
 		mimeType := header.Header.Get("Content-Type")
