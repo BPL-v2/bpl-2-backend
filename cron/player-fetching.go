@@ -690,6 +690,10 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			for _, player := range players {
 				player.Mu.Lock()
 				player.Old = player.New
+				// Clone so in-place updates to New.Character (e.g. UpdateLadder
+				// writing Experience) don't also change Old.Character.
+				oldCharacter := *player.New.Character
+				player.Old.Character = &oldCharacter
 				player.Mu.Unlock()
 			}
 			players = service.UpdatePlayerTokens(players, event)
