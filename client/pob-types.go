@@ -139,13 +139,32 @@ func (current *PathOfBuilding) SwappedWeaponsAndLostDps(previous *PathOfBuilding
 }
 
 func (p *PathOfBuilding) GetMainSkill() string {
-	if p.Skills.ActiveSkillSet == 0 || len(p.Skills.SkillSets) == 0 || len(p.Skills.SkillSets[0].Skills) < p.Skills.ActiveSkillSet {
+	if p.Skills.ActiveSkillSet == 0 || len(p.Skills.SkillSets) == 0 {
 		return ""
 	}
-	for _, gem := range p.Skills.SkillSets[0].Skills[p.Build.MainSocketGroup-1].Gems {
-		return gem.NameSpec
+	groups := p.Skills.SkillSets[0].Skills
+	if p.Build.MainSocketGroup < 1 || p.Build.MainSocketGroup > len(groups) {
+		return ""
 	}
-	return ""
+	group := groups[p.Build.MainSocketGroup-1]
+	var actives []Gem
+	for _, gem := range group.Gems {
+		if !gem.IsSupport() {
+			actives = append(actives, gem)
+		}
+	}
+	if len(actives) == 0 {
+		return ""
+	}
+	// mainActiveSkill is the 1-based index among the group's active (non-support) gems
+	if idx, err := strconv.Atoi(group.MainActiveSkill); err == nil && idx >= 1 && idx <= len(actives) {
+		return actives[idx-1].NameSpec
+	}
+	return actives[0].NameSpec
+}
+
+func (g Gem) IsSupport() bool {
+	return strings.HasPrefix(g.SkillID, "Support") || strings.Contains(g.GemID, "SupportGem")
 }
 
 func (p *PathOfBuilding) GetPassives() []int {
