@@ -62,7 +62,7 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 		}
 		ladder, err := c.ladderService.GetLadderForEvent(event.Id)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		hours_after_event_start := ctx.Query("hours_after_event_start")
@@ -78,22 +78,22 @@ func (c *LadderController) getLadderHandler() gin.HandlerFunc {
 		}
 		characters, err := c.characterService.GetCharactersForEvent(event.Id)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		usersWithTeam, err := c.userService.GetUsersWithTeamForEvent(event.Id)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		characterStats, err := c.characterService.GetCharacterStatsForEvent(event.Id, cutoff)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		lastActivities, err := c.activityService.GetLatestActiveTimestampsForEvent(event.Id)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(200, toLadderResponse(usersWithTeam, ladder, characters, characterStats, lastActivities, isHistorical))
@@ -115,7 +115,7 @@ func (c *LadderController) GetCharactersForEvent() gin.HandlerFunc {
 		}
 		characters, err := c.characterService.GetCharactersForEvent(event.Id)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 
@@ -145,7 +145,7 @@ func (c *LadderController) getAtlasesForEvent() gin.HandlerFunc {
 		}
 		atlases, err := c.characterService.GetTeamAtlasesForEvent(event.Id, teamId)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 
@@ -225,12 +225,12 @@ func (c *LadderController) getDelveProgressionHandler() gin.HandlerFunc {
 		}
 		progressions, err := c.characterService.GetDelveDepthProgressionForEvent(event.Id, fromDepth, toDepth)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		characters, err := c.characterService.GetCharactersForEvent(event.Id)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		characterMap := make(map[string]*repository.Character, len(characters))

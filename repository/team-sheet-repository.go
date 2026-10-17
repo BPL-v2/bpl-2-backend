@@ -57,7 +57,7 @@ func (r *TeamSheetRepositoryImpl) GetEntryForUser(eventId int, userId int) (*Tea
 	entry := &TeamSheetEntry{}
 	result := r.DB.First(entry, TeamSheetEntry{EventId: eventId, UserId: userId})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrTeamSheetEntryNotFound)
 	}
 	return entry, nil
 }

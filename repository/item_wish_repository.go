@@ -83,7 +83,7 @@ func (r *ItemWishRepositoryImpl) GetItemWishById(id int) (*ItemWish, error) {
 	var itemWish ItemWish
 	err := r.DB.First(&itemWish, id).Error
 	if err != nil {
-		return nil, err
+		return nil, translate(err, ErrItemWishNotFound)
 	}
 	return &itemWish, nil
 }

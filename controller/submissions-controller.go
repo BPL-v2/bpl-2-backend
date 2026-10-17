@@ -72,13 +72,13 @@ func (e *SubmissionController) setBulkSubmissionForAdmin() gin.HandlerFunc {
 		}
 		teamLeads, err := e.teamService.GetTeamLeadsForEvent(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		submissions, err := e.submissionService.SaveBulkSubmissions(submissionCreate.toModels(user.Id, teamLeads))
 		if err != nil {
 			fmt.Println(err)
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, utils.Map(submissions, func(submission *repository.Submission) *Submission {
@@ -104,7 +104,7 @@ func (e *SubmissionController) getSubmissionsHandler() gin.HandlerFunc {
 		}
 		submissions, err := e.submissionService.GetSubmissions(event.Id)
 		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(submissions, func(submission *repository.Submission) *Submission {
@@ -148,7 +148,7 @@ func (e *SubmissionController) submitBountyHandler() gin.HandlerFunc {
 		submission.TeamId = team.TeamId
 		submission, err = e.submissionService.SaveSubmission(submission, user)
 		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, toSubmissionResponse(submission))
@@ -178,7 +178,7 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 		}
 		submission, err := e.submissionService.GetSubmissionById(submissionId)
 		if err != nil {
-			c.JSON(404, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		if submission.UserId != user.Id && !slices.Contains(user.Permissions, repository.PermissionSubmissionJudge) {
@@ -187,7 +187,7 @@ func (e *SubmissionController) deleteSubmissionHandler() gin.HandlerFunc {
 		}
 		err = e.submissionService.DeleteSubmission(submission, user)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(204, nil)
@@ -230,7 +230,7 @@ func (e *SubmissionController) reviewSubmissionHandler() gin.HandlerFunc {
 		model := submissionReview.toModel()
 		submission, err := e.submissionService.ReviewSubmission(submissionId, model, user)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toSubmissionResponse(submission))

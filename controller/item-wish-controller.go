@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -54,7 +53,7 @@ func (e *ItemWishController) getItemWishesForTeamHandler() gin.HandlerFunc {
 		}
 		itemWishes, err := e.itemWishService.GetItemWishesForTeam(teamId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to get item wishes"})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(itemWishes, toItemWishModel))
@@ -104,7 +103,7 @@ func (e *ItemWishController) creatItemWishHandler() gin.HandlerFunc {
 
 		savedItemWish, err := e.itemWishService.CreateItemWish(itemWish, teamId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to save item wish"})
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, toItemWishModel(savedItemWish))
@@ -136,7 +135,7 @@ func (e *ItemWishController) changeItemWishHandler() gin.HandlerFunc {
 		}
 		itemWish, err := e.itemWishService.GetItemWishById(wishId)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Failed to get item wish"})
+			respondError(c, err)
 			return
 		}
 		teamUser, _, err := e.userService.GetTeamForUser(c, getEvent(c))
@@ -155,7 +154,7 @@ func (e *ItemWishController) changeItemWishHandler() gin.HandlerFunc {
 
 		updatedItemWish, err := e.itemWishService.UpdateItemWish(itemWish, teamUser.TeamId, itemWishReq.Fulfilled, itemWishReq.BuildEnabling, itemWishReq.Priority, itemWishReq.Quantity)
 		if err != nil {
-			c.JSON(500, gin.H{"error": fmt.Sprintf("Failed to update item wish %v", err)})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toItemWishModel(updatedItemWish))
@@ -184,7 +183,7 @@ func (e *ItemWishController) deleteItemWishHandler() gin.HandlerFunc {
 		}
 		itemWish, err := e.itemWishService.GetItemWishById(wishId)
 		if err != nil {
-			c.JSON(404, gin.H{"error": "Failed to get item wish"})
+			respondError(c, err)
 			return
 		}
 		if itemWish.UserID != user.Id {
@@ -193,7 +192,7 @@ func (e *ItemWishController) deleteItemWishHandler() gin.HandlerFunc {
 		}
 		err = e.itemWishService.DeleteItemWish(wishId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": "Failed to delete item wish"})
+			respondError(c, err)
 			return
 		}
 		c.Status(204)

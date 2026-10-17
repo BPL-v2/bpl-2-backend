@@ -50,7 +50,7 @@ func (e *StreamController) getStreamsHandler() gin.HandlerFunc {
 		}
 		streams, err := e.streamService.GetStreamsForEvent(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, streams)

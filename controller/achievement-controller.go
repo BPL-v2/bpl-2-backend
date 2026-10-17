@@ -51,7 +51,7 @@ func (c *AchievementController) getAchievements() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		achievements, err := c.achievementService.GetAllAchievements()
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(200, toAchievementResponses(achievements))
@@ -76,7 +76,7 @@ func (c *AchievementController) createAchievement() gin.HandlerFunc {
 		}
 		achievement, err := c.achievementService.CreateAchievement(body.Name, body.Description, body.EventId)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(201, toAchievementResponse(achievement))
@@ -107,7 +107,7 @@ func (c *AchievementController) updateAchievement() gin.HandlerFunc {
 		}
 		achievement, err := c.achievementService.UpdateAchievement(id, body.Name, body.Description, body.EventId)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(200, toAchievementResponse(achievement))
@@ -129,7 +129,7 @@ func (c *AchievementController) deleteAchievement() gin.HandlerFunc {
 			return
 		}
 		if err := c.achievementService.DeleteAchievement(id); err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.Status(204)
@@ -156,7 +156,7 @@ func (c *AchievementController) getUserAchievements() gin.HandlerFunc {
 		}
 		grants, err := c.achievementService.GetAllUserAchievements(userId)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(200, toUserAchievementResponses(grants))
@@ -181,7 +181,7 @@ func (c *AchievementController) grantAchievement() gin.HandlerFunc {
 		}
 		grantedBy, _ := getUserId(ctx)
 		if err := c.achievementService.GrantAchievement(body.UserId, body.AchievementId, &grantedBy); err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.Status(201)
@@ -209,7 +209,7 @@ func (c *AchievementController) revokeAchievement() gin.HandlerFunc {
 			return
 		}
 		if err := c.achievementService.RevokeAchievement(userId, achievementId); err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.Status(204)
@@ -240,12 +240,12 @@ func (c *AchievementController) uploadIcon() gin.HandlerFunc {
 		defer file.Close()
 		data := make([]byte, header.Size)
 		if _, err := file.Read(data); err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		mimeType := header.Header.Get("Content-Type")
 		if err := c.achievementService.UploadIcon(id, data, mimeType); err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.Status(204)
@@ -289,7 +289,7 @@ func (c *AchievementController) getIcon() gin.HandlerFunc {
 func (c *AchievementController) syncAchievements() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := c.achievementService.SyncAchievements(); err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.Status(204)

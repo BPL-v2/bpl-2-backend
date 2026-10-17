@@ -1,17 +1,18 @@
 package controller
 
 import (
+	"bpl/apperr"
 	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"errors"
 	"io"
 	"log"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type TeamController struct {
@@ -82,7 +83,7 @@ func (e *TeamController) getTeamsHandler() gin.HandlerFunc {
 		}
 		teams, err := e.teamService.GetTeamsForEvent(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 
@@ -120,7 +121,7 @@ func (e *TeamController) createTeamHandler() gin.HandlerFunc {
 		teamModel.EventId = event.Id
 		dbteam, err := e.teamService.SaveTeam(teamModel)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, toTeamResponse(dbteam))
@@ -144,11 +145,7 @@ func (e *TeamController) getTeamHandler() gin.HandlerFunc {
 		}
 		team, err := e.teamService.GetTeamById(teamId)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Team not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toTeamResponse(team))
@@ -180,7 +177,7 @@ func (e *TeamController) uploadIconHandler() gin.HandlerFunc {
 		defer file.Close()
 		data, err := io.ReadAll(file)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		mimeType := header.Header.Get("Content-Type")
@@ -189,11 +186,7 @@ func (e *TeamController) uploadIconHandler() gin.HandlerFunc {
 			return
 		}
 		if err := e.teamService.UploadIcon(teamId, data, mimeType); err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Team not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.Status(204)
@@ -217,11 +210,11 @@ func (e *TeamController) getIconHandler() gin.HandlerFunc {
 		}
 		icon, err := e.teamService.GetIcon(teamId)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
+			if errors.Is(err, apperr.ErrNotFound) {
 				c.Header("Cache-Control", "no-store")
 				c.Status(404)
 			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
+				respondError(c, err)
 			}
 			return
 		}
@@ -246,7 +239,7 @@ func (e *TeamController) deleteIconHandler() gin.HandlerFunc {
 			return
 		}
 		if err := e.teamService.DeleteIcon(teamId); err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.Status(204)
@@ -271,11 +264,7 @@ func (e *TeamController) deleteTeamHandler() gin.HandlerFunc {
 		}
 		err = e.teamService.DeleteTeam(teamId)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Team not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.Status(204)
@@ -297,7 +286,7 @@ func (e *TeamController) getSortedUsersHandler() gin.HandlerFunc {
 		}
 		users, err := e.teamService.GetSortedUsersForEvent(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, users)
@@ -329,7 +318,7 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 		teamUsersModel := utils.Map(teamUsers, teamUserCreateToModel)
 		err := e.teamService.AddUsersToTeams(teamUsersModel, event)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		func() {

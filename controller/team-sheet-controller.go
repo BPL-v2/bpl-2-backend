@@ -4,10 +4,10 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type TeamSheetController struct {
@@ -55,7 +55,7 @@ func (e *TeamSheetController) getTeamSheetHandler() gin.HandlerFunc {
 		}
 		entries, err := e.teamSheetService.GetEntriesForTeam(event.Id, teamId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(entries, toTeamSheetEntryResponse))
@@ -90,11 +90,11 @@ func (e *TeamSheetController) saveMyTeamSheetEntryHandler() gin.HandlerFunc {
 			return
 		}
 		entry, err := e.teamSheetService.GetEntryForUser(event.Id, userId)
-		if err != nil && err != gorm.ErrRecordNotFound {
-			c.JSON(500, gin.H{"error": err.Error()})
+		if err != nil && !errors.Is(err, repository.ErrTeamSheetEntryNotFound) {
+			respondError(c, err)
 			return
 		}
-		if err == gorm.ErrRecordNotFound {
+		if err != nil {
 			entry = &repository.TeamSheetEntry{EventId: event.Id, UserId: userId}
 		}
 		entry.CharacterName = update.CharacterName
@@ -115,7 +115,7 @@ func (e *TeamSheetController) saveMyTeamSheetEntryHandler() gin.HandlerFunc {
 
 		saved, err := e.teamSheetService.SaveEntry(entry)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toTeamSheetEntryResponse(saved))

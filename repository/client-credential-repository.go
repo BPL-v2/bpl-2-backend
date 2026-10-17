@@ -34,7 +34,7 @@ func (r *ClientCredentialsRepositoryImpl) GetClientCredentialsByName(provider Pr
 	var clientCredentials ClientCredentials
 	result := r.DB.First(&clientCredentials, ClientCredentials{Name: provider})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrClientCredentialsNotFound)
 	}
 	return &clientCredentials, nil
 }

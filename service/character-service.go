@@ -125,14 +125,14 @@ func (c *CharacterServiceImpl) UpdateCharacter(characterId string) (*client.Char
 		return nil, err
 	}
 	if character.UserId == nil {
-		return nil, fmt.Errorf("character has no user")
+		return nil, ErrCharacterHasNoUser
 	}
 	user, err := c.userRepository.GetUserById(*character.UserId, "OauthAccounts")
 	if err != nil {
 		return nil, err
 	}
 	if user.GetPoEToken() == "" {
-		return nil, fmt.Errorf("user has no poe token")
+		return nil, ErrNoPoEToken
 	}
 	event, err := c.eventRepository.GetEventById(character.EventId)
 	if err != nil {
@@ -140,7 +140,7 @@ func (c *CharacterServiceImpl) UpdateCharacter(characterId string) (*client.Char
 	}
 	response, clientErr := c.poeClient.GetCharacter(user.GetPoEToken(), character.Name, event.GetRealm())
 	if clientErr != nil {
-		return nil, fmt.Errorf("%s", clientErr.Description)
+		return nil, upstreamError("failed to fetch character", clientErr)
 	}
 	if response.Character == nil {
 		return nil, fmt.Errorf("empty character response for %s", character.Name)
@@ -192,7 +192,7 @@ func (ci *CharacterInfo) ToPlayerUpdate() (*parser.PlayerUpdate, error) {
 			}, nil
 		}
 	}
-	return nil, fmt.Errorf("no valid PoE oauth token found for user")
+	return nil, ErrNoPoEToken
 }
 
 func (c *CharacterServiceImpl) GetInfoForCharacter(characterId string) (*CharacterInfo, error) {
@@ -201,7 +201,7 @@ func (c *CharacterServiceImpl) GetInfoForCharacter(characterId string) (*Charact
 		return nil, err
 	}
 	if character.UserId == nil {
-		return nil, fmt.Errorf("character has no associtated user")
+		return nil, ErrCharacterHasNoUser
 	}
 	user, err := c.userRepository.GetUserById(*character.UserId, "OauthAccounts")
 	if err != nil {

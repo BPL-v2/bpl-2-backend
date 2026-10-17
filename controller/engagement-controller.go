@@ -49,7 +49,7 @@ func (e *EngagementController) addEngagementHandler() gin.HandlerFunc {
 		}
 		err := e.engagementService.AddEngagement(engagementAdd.Name)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(204, nil)

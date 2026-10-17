@@ -1,10 +1,10 @@
 package controller
 
 import (
+	"bpl/apperr"
 	"bpl/client"
 	"bpl/cron"
 	"bpl/repository"
-	"fmt"
 	"slices"
 	"time"
 
@@ -25,13 +25,13 @@ type JobCreate struct {
 
 func (j *JobCreate) toJob() (*cron.RecurringJob, error) {
 	if !slices.Contains(jobList, j.JobType) {
-		return nil, fmt.Errorf("job type does not exist")
+		return nil, apperr.New(apperr.ErrInvalid, "job type does not exist")
 	}
 	if j.DurationInSeconds != nil && j.EndDate != nil {
-		return nil, fmt.Errorf("cannot specify both duration and end date")
+		return nil, apperr.New(apperr.ErrInvalid, "cannot specify both duration and end date")
 	}
 	if j.DurationInSeconds == nil && j.EndDate == nil {
-		return nil, fmt.Errorf("must specify either duration or end date")
+		return nil, apperr.New(apperr.ErrInvalid, "must specify either duration or end date")
 	}
 	if j.DurationInSeconds != nil {
 		endDate := time.Now().Add(time.Duration(*j.DurationInSeconds) * time.Second)
@@ -111,12 +111,12 @@ func (c *RecurringJobsController) startJobHandler() gin.HandlerFunc {
 
 		job, err := jobCreate.toJob()
 		if err != nil {
-			ctx.JSON(400, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		err = c.service.StartJob(job)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(201, job)

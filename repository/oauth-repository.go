@@ -50,7 +50,7 @@ func (r *OauthRepositoryImpl) GetOauthByProviderAndAccountId(provider Provider, 
 	var oauth Oauth
 	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, Oauth{Provider: provider, AccountId: accountId})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrOauthNotFound)
 	}
 	return &oauth, nil
 }
@@ -59,7 +59,7 @@ func (r *OauthRepositoryImpl) GetOauthByProviderAndAccountName(provider Provider
 	var oauth Oauth
 	result := r.DB.Preload("User").Preload("User.OauthAccounts").First(&oauth, Oauth{Provider: provider, Name: accountName})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrOauthNotFound)
 	}
 	return &oauth, nil
 }
@@ -92,7 +92,7 @@ func (r *OauthRepositoryImpl) GetOauthForTokenRefresh(provider Provider) (*Oauth
 		ABS(EXTRACT(EPOCH FROM (refresh_expiry - expiry))) > 1
 	`, provider).Order("expiry ASC").First(&oauth)
 	if result.Error != nil {
-		return nil, fmt.Errorf("failed to get user for token refresh: %v", result.Error)
+		return nil, fmt.Errorf("failed to get user for token refresh: %w", translate(result.Error, ErrOauthNotFound))
 	}
 	return oauth, nil
 }
@@ -100,7 +100,7 @@ func (r *OauthRepositoryImpl) GetOauthForTokenRefresh(provider Provider) (*Oauth
 func (r *OauthRepositoryImpl) SaveOauth(oauth *Oauth) (*Oauth, error) {
 	result := r.DB.Save(oauth)
 	if result.Error != nil {
-		return nil, fmt.Errorf("failed to save oauth: %v", result.Error)
+		return nil, fmt.Errorf("failed to save oauth: %w", translate(result.Error, nil))
 	}
 	return oauth, nil
 }

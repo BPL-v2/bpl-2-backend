@@ -4,6 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -44,7 +45,11 @@ func (e *TeamSuggestionController) GetTeamUser(c *gin.Context, requiresTeamLead 
 	}
 	teamUser, _, err := e.userService.GetTeamForUser(c, event)
 	if err != nil {
-		c.JSON(403, gin.H{"error": err.Error()})
+		if errors.Is(err, repository.ErrTeamUserNotFound) {
+			c.JSON(403, gin.H{"error": "You are not part of a team"})
+		} else {
+			respondError(c, err)
+		}
 		return nil
 	}
 	if requiresTeamLead && !teamUser.IsTeamLead {
@@ -72,7 +77,7 @@ func (e *TeamSuggestionController) getTeamSuggestionsHandler() gin.HandlerFunc {
 		}
 		suggestions, err := e.teamSuggestionService.GetSuggestionsForTeam(teamId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toSuggestionResponse(suggestions))
@@ -110,7 +115,7 @@ func (e *TeamSuggestionController) createTeamSuggestionHandler() gin.HandlerFunc
 		}
 		err = e.teamSuggestionService.SaveSuggestion(objectiveId, teamId, suggestion.Extra)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, gin.H{"message": "Suggestion created successfully"})
@@ -141,7 +146,7 @@ func (e *TeamSuggestionController) deleteTeamSuggestionHandler() gin.HandlerFunc
 		}
 		err = e.teamSuggestionService.DeleteSuggestion(objectiveId, teamId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(204, nil)

@@ -52,7 +52,7 @@ func (r *SignupRepositoryImpl) GetSignupForUser(userId int, eventId int) (*Signu
 	signup := Signup{}
 	result := r.DB.First(&signup, &Signup{UserId: userId, EventId: eventId})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrSignupNotFound)
 	}
 	return &signup, nil
 }

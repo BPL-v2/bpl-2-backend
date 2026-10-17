@@ -2,7 +2,6 @@ package service
 
 import (
 	"bpl/repository"
-	"fmt"
 )
 
 type SubmissionService interface {
@@ -53,7 +52,7 @@ func (e *SubmissionServiceImpl) SaveSubmission(submission *repository.Submission
 			return nil, err
 		}
 		if existingSubmission.UserId != submitter.Id {
-			return nil, fmt.Errorf("you are not allowed to edit this submission")
+			return nil, ErrSubmissionNotOwned
 		}
 		err = e.submissionRepository.RemoveMatchFromSubmission(existingSubmission)
 		if err != nil {

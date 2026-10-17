@@ -57,7 +57,7 @@ func (e *ActivityController) getEventActivitiesHandler() gin.HandlerFunc {
 		}
 		activities, err := e.activityService.CalculateActiveTimesForEvent(event, time.Duration(thresholdSeconds)*time.Second)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, activities)
@@ -93,7 +93,7 @@ func (e *ActivityController) getEventActivitiesForUserHandler() gin.HandlerFunc 
 		}
 		activity, err := e.activityService.CalculateActiveTime(userId, event, time.Duration(thresholdSeconds)*time.Second)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, activity.Milliseconds())

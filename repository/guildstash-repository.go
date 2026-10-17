@@ -196,7 +196,7 @@ func (r *GuildStashRepositoryImpl) GetById(stashId string, eventId int) (tab *Gu
 		}
 	}
 	if tab == nil {
-		return nil, gorm.ErrRecordNotFound
+		return nil, ErrGuildStashTabNotFound
 	}
 	tab.Children = children
 	return tab, err
@@ -376,7 +376,7 @@ func (r *GuildStashRepositoryImpl) GetGuildById(guildId int, eventId int) (*Guil
 	var guild Guild
 	err := r.db.Where("id = ? AND event_id = ?", guildId, eventId).First(&guild).Error
 	if err != nil {
-		return nil, err
+		return nil, translate(err, ErrGuildNotFound)
 	}
 	return &guild, nil
 }

@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
+	"bpl/apperr"
 	"github.com/lib/pq"
 	"github.com/segmentio/kafka-go"
-	"gorm.io/gorm"
 )
 
 var (
@@ -483,7 +483,7 @@ func processPoBResult(character *client.Character, export string, queuedAt time.
 	pobEntity.UpdateStats(pob)
 
 	oldPob, err := characterRepo.GetLatestCharacterPoB(character.Id)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err != nil && !errors.Is(err, apperr.ErrNotFound) {
 		log.Printf("Error loading latest PoB for character %s (%s): %v", character.Name, character.Id, err)
 	}
 	if skip := pobSkipReason(pob, pobEntity, oldPob); skip != "" {

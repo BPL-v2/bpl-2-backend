@@ -72,7 +72,10 @@ func (r *AchievementRepositoryImpl) GetAllAchievements() ([]*Achievement, error)
 func (r *AchievementRepositoryImpl) GetAchievementById(id int) (*Achievement, error) {
 	var achievement Achievement
 	err := r.DB.First(&achievement, id).Error
-	return &achievement, err
+	if err != nil {
+		return nil, translate(err, ErrAchievementNotFound)
+	}
+	return &achievement, nil
 }
 
 func (r *AchievementRepositoryImpl) SaveAchievement(achievement *Achievement) (*Achievement, error) {

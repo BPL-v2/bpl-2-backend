@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type ObjectiveController struct {
@@ -119,7 +118,7 @@ func (e *ObjectiveController) getObjectiveValidationsHandler() gin.HandlerFunc {
 		}
 		validations, err := e.objectiveMatchService.GetValidationsByEventId(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(validations, toObjectiveValidationResponse))
@@ -141,11 +140,7 @@ func (e *ObjectiveController) GetObjectiveTreeForEventHandler() gin.HandlerFunc 
 		}
 		rootObjective, err := e.objectiveService.GetObjectiveTreeForEvent(event.Id, "ScoringRules")
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Objectives not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		if rootObjective == nil {
@@ -189,11 +184,7 @@ func (e *ObjectiveController) createObjectiveHandler() gin.HandlerFunc {
 		model.EventId = event.Id
 		objective, err := e.objectiveService.CreateObjective(model, objectiveCreate.ScoringRuleIds)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Category not found"})
-			} else {
-				c.JSON(400, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, toObjectiveResponse(objective, false, event.EventEndTime))
@@ -227,11 +218,7 @@ func (e *ObjectiveController) deleteObjectiveHandler() gin.HandlerFunc {
 
 		err = e.objectiveService.DeleteObjective(id)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Objective not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.JSON(204, nil)
@@ -260,11 +247,7 @@ func (e *ObjectiveController) getObjectiveByIdHandler() gin.HandlerFunc {
 		}
 		objective, err := e.objectiveService.GetObjectiveById(id, "ScoringRules")
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Objective not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toObjectiveResponse(objective, false, event.EventEndTime))
@@ -308,7 +291,7 @@ func (e *ObjectiveController) copyObjectiveHandler() gin.HandlerFunc {
 		}
 		copied, err := e.objectiveService.CopyObjectiveSubtree(id, req.TargetParentId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, toObjectiveResponse(copied, false, event.EventEndTime))
@@ -323,7 +306,7 @@ func (e *ObjectiveController) getObjectiveParserHandler() gin.HandlerFunc {
 		}
 		parser, err := e.objectiveService.GetParser(event.Id, true)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 

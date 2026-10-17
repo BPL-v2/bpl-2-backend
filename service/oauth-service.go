@@ -274,7 +274,7 @@ func (e *OauthServiceImpl) fetchToken(oauthConfig oauth2.Config, state string, c
 	authState, ok := e.stateMap[state]
 	e.mu.Unlock()
 	if !ok {
-		return nil, nil, fmt.Errorf("state is unknown")
+		return nil, nil, ErrUnknownOauthState
 	}
 
 	token, err := oauthConfig.Exchange(context.Background(), code, oauth2.SetAuthURLParam("code_verifier", authState.Verifier))
@@ -355,12 +355,12 @@ func (e *OauthServiceImpl) VerifyPoE(state string, code string, referrer *string
 	authState, ok := e.stateMap[state]
 	e.mu.Unlock()
 	if !ok {
-		return nil, fmt.Errorf("state is unknown")
+		return nil, ErrUnknownOauthState
 	}
 	resp, clientError := client.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, oauthConfig.RedirectURL)
 	if clientError != nil {
 		fmt.Printf("Failed to get access token: %v\n", clientError)
-		return nil, fmt.Errorf("failed to get access token: %v", clientError)
+		return nil, upstreamError("failed to get access token", clientError)
 	}
 	token := &oauth2.Token{
 		AccessToken:  resp.AccessToken,
@@ -371,7 +371,7 @@ func (e *OauthServiceImpl) VerifyPoE(state string, code string, referrer *string
 	profile, clientError := client.GetAccountProfile(token.AccessToken)
 	if clientError != nil {
 		fmt.Printf("Failed to get profile: %v\n", clientError)
-		return nil, fmt.Errorf("failed to get profile: %v", clientError)
+		return nil, upstreamError("failed to get profile", clientError)
 	}
 	return e.addAccountToUser(&authState, referrer, profile.Uuid, profile.Name, token, repository.ProviderPoE)
 }
@@ -403,7 +403,7 @@ func (e *OauthServiceImpl) GetToken(provider repository.Provider) (token string,
 		poeClient := client.NewPoEClient(1, false, 10)
 		tokenResponse, hhtpErr := poeClient.GetClientCredentials(config.Env().POEClientID, config.Env().POEClientSecret)
 		if hhtpErr != nil {
-			return "", nil, fmt.Errorf("failed to get PoE token: %s", hhtpErr.Description)
+			return "", nil, upstreamError("failed to get PoE token", hhtpErr)
 		}
 		var expiry *time.Time = nil
 		if tokenResponse.ExpiresIn != nil {
@@ -415,7 +415,7 @@ func (e *OauthServiceImpl) GetToken(provider repository.Provider) (token string,
 
 	config, ok := e.clientConfig[provider]
 	if !ok {
-		return "", nil, fmt.Errorf("provider not found")
+		return "", nil, ErrUnknownProvider
 	}
 	if config.ClientID == "" || config.ClientSecret == "" {
 		return "", nil, fmt.Errorf("client ID or secret not set")
@@ -439,7 +439,7 @@ func (e *OauthServiceImpl) RefreshOnePoEToken() error {
 	if clientError != nil {
 		oauth.RefreshToken = ""
 		_, _ = e.oauthRepository.SaveOauth(oauth)
-		return fmt.Errorf("failed to refresh access token: %v", clientError)
+		return upstreamError("failed to refresh access token", clientError)
 	}
 	oauth.AccessToken = resp.AccessToken
 	oauth.RefreshToken = resp.RefreshToken

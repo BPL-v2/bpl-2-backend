@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type EventController struct {
@@ -60,7 +59,7 @@ func (e *EventController) getEventsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		events, err := e.eventService.GetAllEvents("Teams")
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(events, toEventResponse))
@@ -83,11 +82,7 @@ func (e *EventController) getEvent() gin.HandlerFunc {
 		}
 		event, err := e.eventService.GetEventById(ev.Id, "Teams")
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Event not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		roles := getUserRoles(c)
@@ -117,11 +112,7 @@ func (e *EventController) createEventHandler() gin.HandlerFunc {
 		}
 		dbevent, err := e.eventService.CreateEvent(eventCreate.toModel())
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Event not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, toEventResponse(dbevent))
@@ -147,7 +138,7 @@ func (e *EventController) deleteEventHandler() gin.HandlerFunc {
 		}
 		err := e.eventService.DeleteEvent(event)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(204, nil)
@@ -171,7 +162,7 @@ func (e *EventController) getEventStatus() gin.HandlerFunc {
 		user, _ := e.userService.GetUserFromAuthHeader(c)
 		response, err := e.eventService.GetEventStatus(event, user)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, response)
@@ -203,17 +194,17 @@ func (e *EventController) duplicateEventHandler() gin.HandlerFunc {
 		event := eventCreate.toModel()
 		event, err := e.eventService.CreateEventWithoutCategory(event)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		ruleIdMap, err := e.scoringRuleService.DuplicateRules(oldEvent.Id, event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		err = e.objectiveService.DuplicateObjectives(oldEvent.Id, event.Id, ruleIdMap)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 

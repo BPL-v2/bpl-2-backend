@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type UserController struct {
@@ -58,7 +57,7 @@ func (e *UserController) getAllUsersHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		users, err := e.userService.GetAllUsers("OauthAccounts")
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(users, toUserResponse))
@@ -89,7 +88,7 @@ func (e *UserController) changePermissionsHandler() gin.HandlerFunc {
 		}
 		user, err := e.userService.ChangePermissions(userId, permissions)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toUserResponse(user))
@@ -136,7 +135,7 @@ func (e *UserController) removeAuthHandler() gin.HandlerFunc {
 		}
 		user, err = e.userService.RemoveProvider(user, provider)
 		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toUserResponse(user))
@@ -159,11 +158,7 @@ func (e *UserController) getUsersForEventHandler() gin.HandlerFunc {
 		// loading event again to have preloads
 		event, err := e.eventService.GetEventById(event.Id, "Teams.Users.OauthAccounts")
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Event not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		teamUsers := make(map[int][]*MinimalUser)
@@ -193,11 +188,7 @@ func (e *UserController) getUserByIdHandler() gin.HandlerFunc {
 		}
 		user, err := e.userService.GetUserById(userId, "OauthAccounts")
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "User not found"})
-			} else {
-				c.JSON(500, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toMinimalUserResponse(user))
@@ -228,7 +219,7 @@ func (e *UserController) updateUserHandler() gin.HandlerFunc {
 		user.DisplayName = userUpdate.DisplayName
 		user, err = e.userService.SaveUser(user)
 		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toUserResponse(user))
@@ -256,7 +247,7 @@ func (e *UserController) getAtlasProgressionHandler() gin.HandlerFunc {
 		}
 		atlasProgression, err := e.atlasService.GetAtlasesForEventAndUser(userId, event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(atlasProgression, toAtlasProgression))

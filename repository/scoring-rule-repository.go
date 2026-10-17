@@ -132,7 +132,13 @@ func (r *ScoringRuleRepositoryImpl) GetRulesForEvent(eventId int) ([]*ScoringRul
 
 func (r *ScoringRuleRepositoryImpl) DeleteRule(ruleId int) error {
 	result := r.DB.Delete(&ScoringRule{}, &ScoringRule{Id: ruleId})
-	return result.Error
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrScoringRuleNotFound
+	}
+	return nil
 }
 
 func (r *ScoringRuleRepositoryImpl) DeleteRulesForEvent(eventId int) error {

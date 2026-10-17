@@ -82,7 +82,7 @@ func (r *EventRepositoryImpl) GetCurrentEvent(preloads ...string) (*Event, error
 
 	result := query.Where(Event{IsCurrent: true}).First(&event)
 	if result.Error != nil {
-		return nil, fmt.Errorf("no current event found: %v", result.Error)
+		return nil, fmt.Errorf("no current event found: %w", translate(result.Error, ErrEventNotFound))
 	}
 	if len(preloads) > 0 && slices.Contains(preloads, "Teams.Users") {
 		err := LoadUsersIntoEvent(r.DB, event)
@@ -104,7 +104,7 @@ func (r *EventRepositoryImpl) GetEventById(eventId int, preloads ...string) (*Ev
 
 	result := query.First(&event, eventId)
 	if result.Error != nil {
-		return nil, fmt.Errorf("failed to find event: %v", result.Error)
+		return nil, fmt.Errorf("failed to find event %d: %w", eventId, translate(result.Error, ErrEventNotFound))
 	}
 	if len(preloads) > 0 && slices.Contains(preloads, "Teams.Users") {
 		err := LoadUsersIntoEvent(r.DB, event)

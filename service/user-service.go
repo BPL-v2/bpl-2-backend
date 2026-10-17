@@ -3,13 +3,13 @@ package service
 import (
 	"bpl/auth"
 	"bpl/repository"
+	"errors"
 	"fmt"
 	"math/rand/v2"
 	"slices"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserService interface {
@@ -96,7 +96,7 @@ func (s *UserServiceImpl) GetUserById(id int, preloads ...string) (*repository.U
 func (s *UserServiceImpl) GetUserFromAuthHeader(c *gin.Context) (*repository.User, error) {
 	authHeader := c.Request.Header.Get("Authorization")
 	if len(authHeader) < 7 || authHeader[:7] != "Bearer " {
-		return nil, fmt.Errorf("authorization header is invalid")
+		return nil, ErrInvalidAuthHeader
 	}
 	return s.GetUserFromToken(authHeader[7:])
 }
@@ -104,18 +104,23 @@ func (s *UserServiceImpl) GetUserFromAuthHeader(c *gin.Context) (*repository.Use
 func (s *UserServiceImpl) GetUserFromToken(tokenString string) (*repository.User, error) {
 	token, err := auth.ParseToken(tokenString)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
 	}
 
 	claims := &auth.Claims{}
 	if token.Valid {
 		claims.FromJWTClaims(token.Claims)
 		if err := claims.Valid(); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
 		}
-		return s.GetUserById(claims.UserId, "OauthAccounts")
+		user, err := s.GetUserById(claims.UserId, "OauthAccounts")
+		if errors.Is(err, repository.ErrUserNotFound) {
+			// a valid token for a deleted user is an authentication problem, not a 404
+			return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
+		}
+		return user, err
 	}
-	return nil, jwt.ErrInvalidKey
+	return nil, ErrInvalidToken
 }
 
 func (s *UserServiceImpl) ChangePermissions(userId int, permissions []repository.Permission) (*repository.User, error) {
@@ -130,7 +135,7 @@ func (s *UserServiceImpl) ChangePermissions(userId int, permissions []repository
 func (s *UserServiceImpl) RemoveProvider(user *repository.User, provider repository.Provider) (*repository.User, error) {
 
 	if len(user.OauthAccounts) < 2 {
-		return nil, fmt.Errorf("cannot remove last provider")
+		return nil, ErrLastProvider
 	}
 
 	err := s.oauthRepository.DeleteOauthsByUserIdAndProvider(user.Id, provider)

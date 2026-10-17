@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type SignupController struct {
@@ -72,11 +71,7 @@ func (e *SignupController) getPersonalSignupHandler() gin.HandlerFunc {
 		}
 		signup, err := e.signupService.GetSignupForUser(user.Id, event.Id)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "Not signed up"})
-			} else {
-				c.JSON(400, gin.H{"error": err.Error()})
-			}
+			respondError(c, err)
 			return
 		}
 		signup.User = user
@@ -153,7 +148,7 @@ func (e *SignupController) createSignupHandler() gin.HandlerFunc {
 		signup.Extra = signupCreate.Extra
 		signup, err = e.signupService.SaveSignup(signup)
 		if err != nil {
-			c.JSON(400, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		resp := toSignupResponse(signup)
@@ -184,7 +179,7 @@ func (e *SignupController) deleteSignupHandler() gin.HandlerFunc {
 		}
 		err = e.signupService.RemoveSignupForUser(userId, event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, gin.H{})
@@ -207,7 +202,7 @@ func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 		}
 		events, err := e.eventService.GetAllEvents()
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		eventDurations := make(map[int]float64)
@@ -216,13 +211,13 @@ func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 		}
 		signups, userEventActivityCount, highestCharacterLevels, err := e.signupService.GetExtendedSignupsForEvent(event)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		signups = signups[:min(event.MaxSize, len(signups))]
 		teamUsers, err := e.teamService.GetTeamUsersForEvent(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		teamUsersMap := make(map[int]*repository.TeamUser, 0)
@@ -232,7 +227,7 @@ func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 		signupsWithUsers := make([]*ExtendedSignup, 0)
 		groupKeys, err := e.groupService.GetGroupKeysForEvent(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		for _, signup := range signups {
@@ -341,17 +336,6 @@ func (e *SignupController) attachGroup(resp *Signup, signup *repository.Signup, 
 	resp.Group = group
 }
 
-func groupErrorStatus(err error) int {
-	switch err {
-	case repository.ErrGroupNotFound:
-		return 404
-	case repository.ErrGroupFull, repository.ErrGroupLocked, repository.ErrAlreadyInGroup, repository.ErrNotInGroup:
-		return 400
-	default:
-		return 500
-	}
-}
-
 // groupContext resolves the event and user for group endpoints and makes sure the user has a signup.
 func (e *SignupController) groupContext(c *gin.Context) (*repository.Event, *repository.User, *repository.Signup) {
 	event := getEvent(c)
@@ -395,7 +379,7 @@ func (e *SignupController) createGroupHandler() gin.HandlerFunc {
 			return
 		}
 		if _, err := e.groupService.CreateGroup(event.Id, user.Id, event.MaxGroupSize); err != nil {
-			c.JSON(groupErrorStatus(err), gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		resp := toSignupResponse(signup)
@@ -426,7 +410,7 @@ func (e *SignupController) joinGroupHandler() gin.HandlerFunc {
 			return
 		}
 		if err := e.groupService.JoinGroup(event.Id, user.Id, strings.TrimSpace(body.GroupKey), event.MaxGroupSize); err != nil {
-			c.JSON(groupErrorStatus(err), gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		resp := toSignupResponse(signup)
@@ -450,7 +434,7 @@ func (e *SignupController) leaveGroupHandler() gin.HandlerFunc {
 			return
 		}
 		if err := e.groupService.LeaveGroup(event.Id, user.Id); err != nil {
-			c.JSON(groupErrorStatus(err), gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toSignupResponse(signup))

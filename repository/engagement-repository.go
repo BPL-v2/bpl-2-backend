@@ -37,7 +37,7 @@ func (r *EngagementRepositoryImpl) GetEngagementByName(name string) (*Engagement
 	engagement := &Engagement{}
 	err := r.DB.Where("name = ?", name).First(&engagement).Error
 	if err != nil {
-		return nil, err
+		return nil, translate(err, ErrEngagementNotFound)
 	}
 	return engagement, nil
 }

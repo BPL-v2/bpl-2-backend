@@ -38,7 +38,7 @@ func (e *ItemController) getItemMapHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		items, err := e.itemService.GetItemMap()
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, items)

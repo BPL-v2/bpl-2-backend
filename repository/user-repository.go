@@ -131,7 +131,7 @@ func (r *UserRepositoryImpl) GetUserById(userId int, preloads ...string) (*User,
 	}
 	result := query.First(&user, userId)
 	if result.Error != nil {
-		return nil, fmt.Errorf("user with id %d not found", userId)
+		return nil, fmt.Errorf("user with id %d: %w", userId, translate(result.Error, ErrUserNotFound))
 	}
 	return &user, nil
 }

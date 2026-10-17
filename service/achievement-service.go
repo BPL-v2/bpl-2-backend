@@ -4,7 +4,6 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"context"
-	"errors"
 	"fmt"
 	"time"
 )
@@ -65,7 +64,7 @@ func (s *AchievementServiceImpl) UpdateAchievement(id int, name, description str
 		return nil, err
 	}
 	if !achievement.IsCustom {
-		return nil, errors.New("cannot modify system achievements")
+		return nil, ErrSystemAchievementEdit
 	}
 	achievement.Name = name
 	achievement.Description = description
@@ -79,7 +78,7 @@ func (s *AchievementServiceImpl) DeleteAchievement(id int) error {
 		return err
 	}
 	if !achievement.IsCustom {
-		return errors.New("cannot delete system achievements")
+		return ErrSystemAchievementDelete
 	}
 	return s.achievementRepository.DeleteAchievement(id)
 }

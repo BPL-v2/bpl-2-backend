@@ -43,7 +43,7 @@ func (r *CachedDataRepositoryImpl) GetLatestScore(eventId int) ([]byte, error) {
 	var data CachedData
 	result := r.db.First(&data, CachedData{Key: Score, EventId: eventId})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrCachedDataNotFound)
 	}
 	return data.Data, nil
 }
@@ -52,7 +52,7 @@ func (r *CachedDataRepositoryImpl) GetLatestLadder(eventId int) ([]byte, error) 
 	var data CachedData
 	result := r.db.First(&data, CachedData{Key: Ladder, EventId: eventId})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrCachedDataNotFound)
 	}
 	return data.Data, nil
 }
@@ -61,7 +61,7 @@ func (r *CachedDataRepositoryImpl) GetLatestLadderUnMarshalled(eventId int) (*cl
 	var data CachedData
 	result := r.db.First(&data, CachedData{Key: Ladder, EventId: eventId})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrCachedDataNotFound)
 
 	}
 	var ladder client.Ladder

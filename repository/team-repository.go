@@ -69,7 +69,7 @@ func (r *TeamRepositoryImpl) GetTeamById(teamId int) (*Team, error) {
 	var team Team
 	result := r.DB.First(&team, teamId)
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrTeamNotFound)
 	}
 	return &team, nil
 }
@@ -106,7 +106,7 @@ func (r *TeamRepositoryImpl) SaveIcon(teamId int, icon []byte, mimeType string) 
 func (r *TeamRepositoryImpl) GetIcon(teamId int) (*TeamIcon, error) {
 	var icon TeamIcon
 	if err := r.DB.First(&icon, "team_id = ?", teamId).Error; err != nil {
-		return nil, err
+		return nil, translate(err, ErrTeamIconNotFound)
 	}
 	return &icon, nil
 }
@@ -132,7 +132,14 @@ func (r *TeamRepositoryImpl) Delete(teamId int) error {
 		if err := r.DB.Delete(&TeamIcon{}, "team_id = ?", teamId).Error; err != nil {
 			return err
 		}
-		return r.DB.Delete(Team{Id: teamId}).Error
+		result := r.DB.Delete(Team{Id: teamId})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return ErrTeamNotFound
+		}
+		return nil
 	})
 }
 
@@ -233,7 +240,7 @@ func (r *TeamRepositoryImpl) GetTeamForUser(eventId int, userId int) (*TeamUser,
 	`
 	err := r.DB.Raw(query, userId, eventId).First(&team).Error
 	if err != nil {
-		return nil, err
+		return nil, translate(err, ErrTeamUserNotFound)
 	}
 	return team, nil
 }

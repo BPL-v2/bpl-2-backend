@@ -249,7 +249,7 @@ func (r *CharacterRepositoryImpl) GetPobByCharacterIdBeforeTimestamp(characterId
 	err := r.DB.Where("character_id = ? AND created_at < ?", characterId, timestamp).
 		Order("created_at DESC").First(characterPob).Error
 	if err != nil {
-		return nil, err
+		return nil, translate(err, ErrPobNotFound)
 	}
 	return characterPob, nil
 }
@@ -316,7 +316,7 @@ func (r *CharacterRepositoryImpl) GetCharacterById(characterId string) (*Charact
 	character := &Character{}
 	err := r.DB.Where("id = ?", characterId).First(character).Error
 	if err != nil {
-		return nil, err
+		return nil, translate(err, ErrCharacterNotFound)
 	}
 	return character, nil
 }
@@ -341,7 +341,7 @@ func (r *CharacterRepositoryImpl) GetLatestCharacterPoB(characterId string) (*Ch
 	charData := &CharacterPob{}
 	err := r.DB.Where("character_id = ?", characterId).Order("created_at DESC").First(charData).Error
 	if err != nil {
-		return nil, fmt.Errorf("error getting latest character stats for character %s: %w", characterId, err)
+		return nil, fmt.Errorf("error getting latest character stats for character %s: %w", characterId, translate(err, ErrPobNotFound))
 	}
 	return charData, nil
 }
@@ -544,7 +544,7 @@ func (r *CharacterRepositoryImpl) GetPoBById(pobId int) (*CharacterPob, error) {
 	charData := &CharacterPob{}
 	err := r.DB.Where("id = ?", pobId).First(charData).Error
 	if err != nil {
-		return nil, fmt.Errorf("error getting PoB with id %d: %w", pobId, err)
+		return nil, fmt.Errorf("error getting PoB with id %d: %w", pobId, translate(err, ErrPobNotFound))
 	}
 	return charData, nil
 }

@@ -1,12 +1,15 @@
 package controller
 
 import (
+	"bpl/apperr"
 	"bpl/auth"
 	"bpl/client"
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
+	"errors"
 	"fmt"
+	"log"
 	"slices"
 	"strconv"
 	"time"
@@ -109,6 +112,45 @@ func LoadEventMiddleware() gin.HandlerFunc {
 		r.Set("event", event)
 		r.Next()
 	}
+}
+
+// errorOverride makes a handler answer specific errors with a status other than
+// the default for their kind, e.g. a missing user while updating a character is
+// not a 404 for that character.
+type errorOverride struct {
+	status int
+	errs   []error
+}
+
+func withStatus(status int, errs ...error) errorOverride {
+	return errorOverride{status: status, errs: errs}
+}
+
+// respondError writes the response for an error coming out of the service layer.
+// Overrides are checked first; otherwise the status is derived from the error
+// kind (see apperr). Errors without a kind, and overrides of 500 or above, are
+// logged and answered with a generic 500 so internals are not leaked.
+func respondError(c *gin.Context, err error, overrides ...errorOverride) {
+	for _, o := range overrides {
+		for _, target := range o.errs {
+			if !errors.Is(err, target) {
+				continue
+			}
+			if o.status < 500 {
+				c.JSON(o.status, gin.H{"error": err.Error()})
+				return
+			}
+			log.Printf("internal error on %s %s: %v", c.Request.Method, c.FullPath(), err)
+			c.JSON(o.status, gin.H{"error": "internal server error"})
+			return
+		}
+	}
+	if apperr.IsKnown(err) {
+		c.JSON(apperr.Status(err), gin.H{"error": err.Error()})
+		return
+	}
+	log.Printf("internal error on %s %s: %v", c.Request.Method, c.FullPath(), err)
+	c.JSON(500, gin.H{"error": "internal server error"})
 }
 
 func getEvent(c *gin.Context) *repository.Event {

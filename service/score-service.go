@@ -7,7 +7,6 @@ import (
 	"bpl/scoring"
 	"bpl/utils"
 	"encoding/json"
-	"fmt"
 	"slices"
 	"sync"
 	"time"
@@ -217,7 +216,7 @@ func (s *ScoreServiceImpl) GetNewDiff(eventId int) (ScoreMap, error) {
 
 	if len(diff) == 0 {
 		// Send empty result to notify waiting goroutines
-		return nil, fmt.Errorf("no changes in scores")
+		return nil, ErrNoScoreChanges
 	}
 
 	byteData, err := json.Marshal(newScoreMap)

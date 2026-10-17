@@ -39,7 +39,8 @@ func InitDB(host string, port string, user string, password string, dbname strin
 				TablePrefix:   "bpl2.",
 				SingularTable: false,
 			},
-			Logger: logger.Default.LogMode(logger.Silent),
+			TranslateError: true,
+			Logger:         logger.Default.LogMode(logger.Silent),
 			// Logger: logger.Default.LogMode(logger.Info),
 		})
 		if err != nil {

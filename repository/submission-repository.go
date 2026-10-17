@@ -114,7 +114,7 @@ func (r *SubmissionRepositoryImpl) GetSubmissionById(id int) (*Submission, error
 	var submission Submission
 	result := r.DB.Preload("Objective").First(&submission, Submission{Id: id})
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrSubmissionNotFound)
 	}
 	return &submission, nil
 }

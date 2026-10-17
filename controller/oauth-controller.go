@@ -122,7 +122,7 @@ func (e *OauthController) callbackHandler() gin.HandlerFunc {
 		verifier, err := e.oauthService.Verify(body.State, body.Code, body.Referrer, provider, config)
 		if err != nil {
 			fmt.Printf("Failed to verify oauth: %v\n", err)
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		authToken, _ := auth.CreateToken(verifier.User)

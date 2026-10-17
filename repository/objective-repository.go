@@ -243,14 +243,20 @@ func (r *ObjectiveRepositoryImpl) GetObjectiveById(objectiveId int, preloads ...
 	}
 	result := query.First(&objective, "id = ?", objectiveId)
 	if result.Error != nil {
-		return nil, result.Error
+		return nil, translate(result.Error, ErrObjectiveNotFound)
 	}
 	return &objective, nil
 }
 
 func (r *ObjectiveRepositoryImpl) DeleteObjective(objectiveId int) error {
 	result := r.DB.Delete(&Objective{Id: objectiveId})
-	return result.Error
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrObjectiveNotFound
+	}
+	return nil
 }
 
 func (r *ObjectiveRepositoryImpl) DeleteObjectivesByEventId(eventId int) error {

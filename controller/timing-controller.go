@@ -80,7 +80,7 @@ func (c *TimingController) setTimings() gin.HandlerFunc {
 
 		err := c.TimingService.SaveTimings(repoTimings)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": "Failed to save timings"})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(204, nil)

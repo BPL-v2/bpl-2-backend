@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 )
 
 // ==================== Mock Implementations ====================
@@ -553,7 +552,7 @@ func TestGetEventStatus_Applied(t *testing.T) {
 		{UserId: 2, User: &repository.User{Id: 2}},
 		{UserId: 5, User: &repository.User{Id: 5}},
 	}, nil)
-	mockTeam.On("GetTeamForUser", 1, 5).Return(nil, gorm.ErrRecordNotFound)
+	mockTeam.On("GetTeamForUser", 1, 5).Return(nil, repository.ErrTeamUserNotFound)
 
 	svc := &EventServiceImpl{signupService: mockSignup, teamService: mockTeam}
 	status, err := svc.GetEventStatus(event, user)
@@ -574,7 +573,7 @@ func TestGetEventStatus_Waitlisted(t *testing.T) {
 		{UserId: 2, User: &repository.User{Id: 2}},
 		{UserId: 5, User: &repository.User{Id: 5}}, // 3rd signup, beyond MaxSize=2
 	}, nil)
-	mockTeam.On("GetTeamForUser", 1, 5).Return(nil, gorm.ErrRecordNotFound)
+	mockTeam.On("GetTeamForUser", 1, 5).Return(nil, repository.ErrTeamUserNotFound)
 
 	svc := &EventServiceImpl{signupService: mockSignup, teamService: mockTeam}
 	status, err := svc.GetEventStatus(event, user)
@@ -749,7 +748,7 @@ func TestRemoveProvider_LastProvider(t *testing.T) {
 
 	_, err := svc.RemoveProvider(user, repository.ProviderPoE)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "cannot remove last provider")
+	assert.ErrorIs(t, err, ErrLastProvider)
 }
 
 func TestRemoveProvider_Success(t *testing.T) {
@@ -1003,8 +1002,7 @@ func TestCharacterInfo_ToPlayerUpdate_ExpiredToken(t *testing.T) {
 	}
 
 	_, err := ci.ToPlayerUpdate()
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no valid PoE oauth token")
+	assert.ErrorIs(t, err, ErrNoPoEToken)
 }
 
 func TestCharacterInfo_ToPlayerUpdate_NoPoEAccount(t *testing.T) {

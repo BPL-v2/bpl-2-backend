@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"bpl/apperr"
 	"bpl/config"
 	"errors"
 	"time"
@@ -11,12 +12,12 @@ import (
 )
 
 var (
-	ErrGroupNotFound  = errors.New("group does not exist")
-	ErrGroupFull      = errors.New("group is full")
-	ErrGroupsDisabled = errors.New("group signups are not enabled for this event")
-	ErrGroupLocked    = errors.New("group is locked because players were already sorted into teams")
-	ErrAlreadyInGroup = errors.New("already in a group")
-	ErrNotInGroup     = errors.New("not in a group")
+	ErrGroupNotFound  = apperr.New(apperr.ErrNotFound, "group does not exist")
+	ErrGroupFull      = apperr.New(apperr.ErrConflict, "group is full")
+	ErrGroupsDisabled = apperr.New(apperr.ErrInvalid, "group signups are not enabled for this event")
+	ErrGroupLocked    = apperr.New(apperr.ErrConflict, "group is locked because players were already sorted into teams")
+	ErrAlreadyInGroup = apperr.New(apperr.ErrConflict, "already in a group")
+	ErrNotInGroup     = apperr.New(apperr.ErrInvalid, "not in a group")
 )
 
 type SignupGroupMember struct {

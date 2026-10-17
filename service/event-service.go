@@ -2,8 +2,7 @@ package service
 
 import (
 	"bpl/repository"
-
-	"gorm.io/gorm"
+	"errors"
 )
 
 type ApplicationStatus string
@@ -117,7 +116,7 @@ func (e *EventServiceImpl) GetEventStatus(event *repository.Event, user *reposit
 		return eventStatus, nil
 	}
 	team, err := e.teamService.GetTeamForUser(event.Id, user.Id)
-	if err != nil && err != gorm.ErrRecordNotFound {
+	if err != nil && !errors.Is(err, repository.ErrTeamUserNotFound) {
 		return eventStatus, err
 	}
 	count := 0

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type CharacterController struct {
@@ -87,7 +86,8 @@ func (e *CharacterController) updateCharacterHandler() gin.HandlerFunc {
 		characterId := c.Param("character_id")
 		characterInfo, err := e.characterService.GetInfoForCharacter(characterId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			// only a missing character is a 404; the rest is data the character refers to
+			respondError(c, err, withStatus(500, repository.ErrUserNotFound, repository.ErrTeamUserNotFound, repository.ErrEventNotFound))
 			return
 		}
 		var playerUpdate *parser.PlayerUpdate
@@ -101,14 +101,14 @@ func (e *CharacterController) updateCharacterHandler() gin.HandlerFunc {
 		if playerUpdate == nil {
 			playerUpdate, err = characterInfo.ToPlayerUpdate()
 			if err != nil {
-				c.JSON(500, gin.H{"error": err.Error()})
+				respondError(c, err)
 				return
 			}
 			fetchingService = e.playerFetchingService
 		}
 		character, err := fetchingService.UpdateCharacter(playerUpdate, characterInfo.Event)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, character)
@@ -127,11 +127,7 @@ func (e *CharacterController) getPoBExportHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		pobs, err := e.characterService.GetPobs(c.Param("character_id"))
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.String(404, "PoB export not found for character")
-				return
-			}
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(pobs, toPoBResponse))
@@ -154,16 +150,12 @@ func (e *CharacterController) getUserCharactersHandler() gin.HandlerFunc {
 		}
 		user, err := e.userService.GetUserById(userId, "OauthAccounts")
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.String(404, "User not found")
-				return
-			}
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		characters, err := e.characterService.GetCharactersForUser(user)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(characters, toCharacterResponse))
@@ -183,7 +175,7 @@ func (c *CharacterController) getCharacterHistoryHandler() gin.HandlerFunc {
 		characterId := ctx.Param("character_id")
 		stats, err := c.characterService.GetCharacterHistory(characterId)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.JSON(200, utils.Map(stats, toCharacterStatResponse))
@@ -202,7 +194,7 @@ func (e *CharacterController) getDelveHistoryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		history, err := e.characterService.GetDelveHistory(c.Param("character_id"))
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(history, toDelveHistoryResponse))
@@ -241,7 +233,7 @@ func (c *CharacterController) deletePoBExportHandler() gin.HandlerFunc {
 		}
 		err = c.characterService.DeletePoB(pobId)
 		if err != nil {
-			ctx.JSON(500, gin.H{"error": err.Error()})
+			respondError(ctx, err)
 			return
 		}
 		ctx.Status(204)

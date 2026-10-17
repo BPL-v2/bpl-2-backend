@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type ScoringRuleController struct {
@@ -48,7 +47,7 @@ func (e *ScoringRuleController) getScoringRulesForEventHandler() gin.HandlerFunc
 		}
 		rules, err := e.ruleService.GetRulesForEvent(event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(rules, toScoringRuleResponse))
@@ -84,7 +83,7 @@ func (e *ScoringRuleController) createScoringRuleHandler() gin.HandlerFunc {
 		rule.EventId = event.Id
 		rule, err := e.ruleService.SaveRule(rule)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toScoringRuleResponse(rule))
@@ -118,11 +117,7 @@ func (e *ScoringRuleController) deleteScoringRuleHandler() gin.HandlerFunc {
 
 		err = e.ruleService.DeleteRule(id)
 		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				c.JSON(404, gin.H{"error": "rule not found"})
-				return
-			}
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, gin.H{})

@@ -73,7 +73,7 @@ func (e *GuildStashController) getGuilds() gin.HandlerFunc {
 		}
 		guilds, err := e.guildStashService.GetGuildsForEvent(event)
 		if err != nil {
-			c.JSON(404, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(guilds, toGuild))
@@ -120,7 +120,7 @@ func (e *GuildStashController) saveGuild() gin.HandlerFunc {
 		guild.EventId = event.Id
 		model := guild.toModel()
 		if err := e.guildStashService.SaveGuild(model); err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, toGuild(model))
@@ -180,7 +180,7 @@ func (e *GuildStashController) addHistory() gin.HandlerFunc {
 		}
 		existingGuild, err := e.guildStashService.GetGuildById(guildId, event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		var body GuildStashChangeResponse
@@ -196,14 +196,14 @@ func (e *GuildStashController) addHistory() gin.HandlerFunc {
 		events, err := e.eventService.GetAllEvents()
 		if err != nil {
 			fmt.Println("Error fetching events:", err)
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		logEntries := body.toLogEntries(events, guildId)
 		err = e.guildStashService.SaveGuildstashLogs(logEntries)
 		if err != nil {
 			fmt.Println("Error saving guild stash logs:", err)
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(201, AddGuildStashHistoryResponse{NumberOfAddedEntries: len(logEntries)})
@@ -237,7 +237,7 @@ func (e *GuildStashController) getLogEntriesForGuild() gin.HandlerFunc {
 		}
 		existingGuild, err := e.guildStashService.GetGuildById(guildId, event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		teamUser, _, err := e.userService.GetTeamForUser(c, event)
@@ -260,7 +260,7 @@ func (e *GuildStashController) getLogEntriesForGuild() gin.HandlerFunc {
 		stashname := getStringQueryParam(c, "stashname")
 		logEntries, err := e.guildStashService.GetLogs(event.Id, guildId, limit, offset, username, stashname, itemname)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(logEntries, toChangeLog))
@@ -302,7 +302,7 @@ func (e *GuildStashController) getGuildStashForUser() gin.HandlerFunc {
 		}
 		tabs, err := e.guildStashService.GetGuildStashesForTeam(teamId)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.JSON(200, utils.Map(tabs, toModel))
@@ -328,14 +328,14 @@ func (e *GuildStashController) updateStashTab() gin.HandlerFunc {
 		stashId := c.Param("stash_id")
 		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 		defer cancel()
 		err = cron.NewFetchingService(ctx, event, e.poeClient).FetchGuildStashTab(tab)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.Status(204)
@@ -374,7 +374,7 @@ func (e *GuildStashController) switchStashFetch() gin.HandlerFunc {
 
 		err = e.guildStashService.SwitchStashFetch(stashId, teamId, req.FetchEnabled, req.PriorityFetch)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 		c.Status(204)
@@ -406,7 +406,7 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 		}
 		parser, err := e.objectiveService.GetParser(event.Id, false)
 		if err != nil {
-			c.JSON(500, gin.H{"error": err.Error()})
+			respondError(c, err)
 			return
 		}
 
