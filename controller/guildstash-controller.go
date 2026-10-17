@@ -9,7 +9,7 @@ import (
 	"bpl/utils"
 	"context"
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"regexp"
 	"strconv"
 	"time"
@@ -111,7 +111,7 @@ func (e *GuildStashController) saveGuild() gin.HandlerFunc {
 
 		var guild Guild
 		if err := c.ShouldBindJSON(&guild); err != nil {
-			fmt.Println("Error binding JSON:", err)
+			slog.Warn("failed to bind guild stash request JSON", "error", err)
 			c.JSON(400, gin.H{"error": "invalid request"})
 			return
 		}
@@ -195,14 +195,14 @@ func (e *GuildStashController) addHistory() gin.HandlerFunc {
 		}
 		events, err := e.eventService.GetAllEvents()
 		if err != nil {
-			fmt.Println("Error fetching events:", err)
+			slog.Error("failed to fetch events", "error", err)
 			respondError(c, err)
 			return
 		}
 		logEntries := body.toLogEntries(events, guildId)
 		err = e.guildStashService.SaveGuildstashLogs(logEntries)
 		if err != nil {
-			fmt.Println("Error saving guild stash logs:", err)
+			slog.Error("failed to save guild stash logs", "error", err)
 			respondError(c, err)
 			return
 		}
@@ -400,7 +400,7 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 		stashId := c.Param("stash_id")
 		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id)
 		if err != nil || tab.Raw == "" || tab.Raw == "{}" {
-			fmt.Printf("Error fetching guild stash tab: %v\n", err)
+			slog.Error("failed to fetch guild stash tab", "error", err)
 			c.JSON(404, gin.H{"error": "stash tab not found"})
 			return
 		}

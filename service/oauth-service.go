@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"sync"
@@ -196,7 +197,7 @@ func sanitizeLastUrl(lastUrl string) string {
 	if config.IsApprovedOrigin(parsed.Scheme + "://" + parsed.Host) {
 		return lastUrl
 	}
-	fmt.Printf("Rejected oauth last_url with unapproved origin: %s\n", parsed.Scheme+"://"+parsed.Host)
+	slog.Warn("rejected oauth last_url with unapproved origin", "origin", parsed.Scheme+"://"+parsed.Host)
 	return "/"
 }
 
@@ -226,10 +227,10 @@ func (e *OauthServiceImpl) Verify(state string, code string, referrer *string, p
 func (e *OauthServiceImpl) addAccountToUser(authState *OauthState, referrer *string, accountId string, accountName string, token *oauth2.Token, provider repository.Provider) (*OauthState, error) {
 	user, err := e.userService.GetUserByOauthProviderAndAccountId(provider, accountId)
 	if err == nil {
-		fmt.Printf("Updating %s account %s for user %s\n", provider, accountName, user.DisplayName)
+		slog.Info("updating oauth account", "provider", provider, "account", accountName, "user", user.DisplayName)
 		authState.User = user
 	} else if authState.User == nil {
-		fmt.Printf("Creating new user for %s account %s\n", provider, accountName)
+		slog.Info("creating new user for oauth account", "provider", provider, "account", accountName)
 		authState.User = &repository.User{
 			Permissions:   []repository.Permission{},
 			DisplayName:   accountName,
@@ -237,7 +238,7 @@ func (e *OauthServiceImpl) addAccountToUser(authState *OauthState, referrer *str
 			Referrer:      referrer,
 		}
 	} else {
-		fmt.Printf("Adding %s account %s to user %s\n", provider, accountName, authState.User.DisplayName)
+		slog.Info("adding oauth account to user", "provider", provider, "account", accountName, "user", authState.User.DisplayName)
 	}
 	newAccount := &repository.Oauth{
 		UserId:        authState.User.Id,
@@ -261,11 +262,11 @@ func (e *OauthServiceImpl) addAccountToUser(authState *OauthState, referrer *str
 	)
 	err = e.oauthRepository.DeleteOauthsByUserIdAndProvider(authState.User.Id, provider)
 	if err != nil {
-		fmt.Printf("Failed to delete old oauth accounts: %v\n", err)
+		slog.Error("failed to delete old oauth accounts", "error", err)
 	}
 	_, err = e.userService.SaveUser(authState.User)
 	if err != nil {
-		fmt.Printf("Failed to save user: %v\n", err)
+		slog.Error("failed to save user", "error", err)
 	}
 	return authState, err
 }
@@ -293,14 +294,14 @@ func (e *OauthServiceImpl) VerifyDiscord(state string, code string, referrer *st
 	client := oauthConfig.Client(context.Background(), token)
 	response, err := client.Get("https://discord.com/api/users/@me")
 	if err != nil {
-		fmt.Printf("Failed to get discord user: %v\n", err)
+		slog.Error("failed to get discord user", "error", err)
 		return nil, err
 	}
 	defer utils.Closer(response.Body)()
 	discordUser := &DiscordUserResponse{}
 	err = json.NewDecoder(response.Body).Decode(discordUser)
 	if err != nil {
-		fmt.Printf("Failed to decode discord user response: %v\n", err)
+		slog.Error("failed to decode discord user response", "error", err)
 		return nil, fmt.Errorf("failed to decode discord user response: %v", err)
 	}
 	return e.addAccountToUser(authState, referrer, discordUser.Id, discordUser.Username, token, repository.ProviderDiscord)
@@ -359,7 +360,7 @@ func (e *OauthServiceImpl) VerifyPoE(state string, code string, referrer *string
 	}
 	resp, clientError := client.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, oauthConfig.RedirectURL)
 	if clientError != nil {
-		fmt.Printf("Failed to get access token: %v\n", clientError)
+		slog.Error("failed to get access token", "error", clientError)
 		return nil, upstreamError("failed to get access token", clientError)
 	}
 	token := &oauth2.Token{
@@ -370,7 +371,7 @@ func (e *OauthServiceImpl) VerifyPoE(state string, code string, referrer *string
 	}
 	profile, clientError := client.GetAccountProfile(token.AccessToken)
 	if clientError != nil {
-		fmt.Printf("Failed to get profile: %v\n", clientError)
+		slog.Error("failed to get profile", "error", clientError)
 		return nil, upstreamError("failed to get profile", clientError)
 	}
 	return e.addAccountToUser(&authState, referrer, profile.Uuid, profile.Name, token, repository.ProviderPoE)
@@ -453,7 +454,7 @@ func (e *OauthServiceImpl) RefreshOnePoEToken() error {
 	}
 	_, err = e.oauthRepository.SaveOauth(oauth)
 	if err == nil {
-		fmt.Printf("Refreshed PoE token for user %s\n", oauth.Name)
+		slog.Info("refreshed PoE token", "user", oauth.Name)
 	}
 	return err
 }
@@ -468,7 +469,7 @@ func (e *OauthServiceImpl) RefreshPoETokensLoop(ctx context.Context, sleepDurati
 		case <-ticker.C:
 			err := e.RefreshOnePoEToken()
 			if err != nil {
-				fmt.Printf("Failed to refresh PoE token: %v\n", err)
+				slog.Error("failed to refresh PoE token", "error", err)
 			}
 		}
 	}

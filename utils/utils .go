@@ -3,7 +3,7 @@ package utils
 import (
 	"bpl/metrics"
 	"fmt"
-	"log"
+	"log/slog"
 	"runtime/debug"
 	"strings"
 
@@ -122,7 +122,7 @@ func Go(name string, fn func()) {
 		defer func() {
 			if r := recover(); r != nil {
 				metrics.PanicsRecoveredCounter.WithLabelValues(name).Inc()
-				log.Printf("panic recovered in goroutine %q: %v\n%s", name, r, debug.Stack())
+				slog.Error("panic recovered in goroutine", "goroutine", name, "panic", r, "stack", string(debug.Stack()))
 			}
 		}()
 		fn()
@@ -293,7 +293,7 @@ type Closable interface {
 func Closer(c Closable) func() {
 	return func() {
 		if err := c.Close(); err != nil {
-			log.Printf("Error closing resource: %v\n", err)
+			slog.Warn("failed to close resource", "error", err)
 		}
 	}
 }

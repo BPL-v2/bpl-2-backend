@@ -4,7 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"fmt"
+	"log/slog"
 	"slices"
 	"strconv"
 	"time"
@@ -77,7 +77,7 @@ func (e *SubmissionController) setBulkSubmissionForAdmin() gin.HandlerFunc {
 		}
 		submissions, err := e.submissionService.SaveBulkSubmissions(submissionCreate.toModels(user.Id, teamLeads))
 		if err != nil {
-			fmt.Println(err)
+			slog.Error("failed to save bulk submissions", "error", err)
 			respondError(c, err)
 			return
 		}

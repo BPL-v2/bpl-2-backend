@@ -8,7 +8,7 @@ import (
 	"bpl/utils"
 	"errors"
 	"io"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -324,7 +324,7 @@ func (e *TeamController) addUsersToTeamsHandler() gin.HandlerFunc {
 		func() {
 			_, err := client.NewLocalDiscordClient().AssignRoles()
 			if err != nil {
-				log.Printf("Failed to assign roles in Discord: %v", err)
+				slog.Error("failed to assign roles in Discord", "error", err)
 			}
 		}()
 		c.Status(204)

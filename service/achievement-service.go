@@ -4,7 +4,7 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"context"
-	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -127,7 +127,7 @@ func (s *AchievementServiceImpl) SyncAchievements() error {
 		}
 		check, ok := achievementChecks[*achievement.AutoCheckKey]
 		if !ok {
-			fmt.Printf("Unknown achievement auto_check_key %q for achievement %d\n", *achievement.AutoCheckKey, achievement.Id)
+			slog.Warn("unknown achievement auto_check_key", "key", *achievement.AutoCheckKey, "achievement_id", achievement.Id)
 			continue
 		}
 		userIds, err := check(s, achievement.EventId, characterMap)
@@ -152,9 +152,9 @@ func (s *AchievementServiceImpl) SyncAchievementsLoop(ctx context.Context, sleep
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			fmt.Println("Syncing achievements...")
+			slog.Info("syncing achievements")
 			if err := s.SyncAchievements(); err != nil {
-				fmt.Printf("Failed to sync achievements: %v\n", err)
+				slog.Error("failed to sync achievements", "error", err)
 			}
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	dbModel "bpl/repository"
 	"bpl/utils"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"slices"
 	"strconv"
@@ -394,7 +395,7 @@ func propertyValue(item *clientModel.Item, propertyName string, cutOuts ...strin
 				}
 				value, err := strconv.Atoi(name)
 				if err != nil {
-					fmt.Printf("Error parsing property %s: %s\n", propertyName, err)
+					slog.Warn("failed to parse property", "property", propertyName, "error", err)
 					return 0
 				}
 				return value
@@ -876,7 +877,7 @@ func NewItemChecker(objectives []*dbModel.Objective, ignoreTime bool) (*ItemChec
 			discriminators, remainingConditions := GetDiscriminators(objective.Conditions)
 			conditionFn, err := ComperatorFromConditions(remainingConditions)
 			if err != nil {
-				fmt.Printf("Error getting comparator for objective %d: %s\n", objective.Id, err)
+				slog.Warn("failed to get comparator for objective", "objective_id", objective.Id, "error", err)
 				continue
 			}
 			multiplier := 1

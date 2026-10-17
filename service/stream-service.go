@@ -4,7 +4,7 @@ import (
 	"bpl/client"
 	"bpl/repository"
 	"bpl/utils"
-	"log"
+	"log/slog"
 )
 
 type StreamService interface {
@@ -31,7 +31,7 @@ func NewStreamService() StreamService {
 	}
 	token, err := oauthService.GetApplicationToken(repository.ProviderTwitch)
 	if err != nil {
-		log.Printf("Failed to get twitch token: %v", err)
+		slog.Error("failed to get twitch token", "error", err)
 		return s
 	}
 	s.twitchClient = client.NewTwitchClient(token)

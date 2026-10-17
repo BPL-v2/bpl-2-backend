@@ -7,8 +7,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"encoding/json"
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -169,7 +168,7 @@ func (e *ScoreController) StartScoreUpdater() {
 	go func() {
 		events, err := e.eventService.GetAllEvents()
 		if err != nil {
-			fmt.Println("Error fetching events for score updater:", err)
+			slog.Error("failed to fetch events for score updater", "error", err)
 			return
 		}
 		eventMap := make(map[int]*repository.Event)
@@ -196,7 +195,7 @@ func (e *ScoreController) StartScoreUpdater() {
 				}
 				simpleScore, err := json.Marshal(e.scoreService.GetLatestScores(eventId).GetSimpleScore())
 				if err != nil {
-					fmt.Printf("Failed to marshal simple score: %v", err)
+					slog.Error("failed to marshal simple score", "error", err)
 					continue
 				}
 
@@ -204,13 +203,13 @@ func (e *ScoreController) StartScoreUpdater() {
 				for conn, teamId := range e.connections[eventId] {
 					serializedDiff, err := json.Marshal(toScoreMapResponse(diff, teamId, event.EventEndTime.Before(time.Now())))
 					if err != nil {
-						fmt.Printf("Failed to marshal score diff: %v", err)
+						slog.Error("failed to marshal score diff", "error", err)
 						continue
 					}
 					if err := conn.WriteMessage(websocket.TextMessage, serializedDiff); err != nil {
 						err := conn.Close()
 						if err != nil {
-							log.Printf("Error closing websocket connection: %v", err)
+							slog.Warn("failed to close websocket connection", "error", err)
 						}
 						delete(e.connections[eventId], conn)
 					}
@@ -219,7 +218,7 @@ func (e *ScoreController) StartScoreUpdater() {
 					if err := conn.WriteMessage(websocket.TextMessage, simpleScore); err != nil {
 						err := conn.Close()
 						if err != nil {
-							log.Printf("Error closing websocket connection: %v", err)
+							slog.Warn("failed to close websocket connection", "error", err)
 						}
 						delete(e.simpleConnections[eventId], conn)
 					}

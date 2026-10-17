@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -86,7 +86,7 @@ func publishPoBRequest(character *client.Character) {
 	}
 	charJSON, err := json.Marshal(character)
 	if err != nil {
-		log.Printf("failed to marshal character %s for PoB request: %v", character.Id, err)
+		slog.Error("failed to marshal character for PoB request", "character_id", character.Id, "error", err)
 		return
 	}
 	msg := pobRequestMessage{
@@ -97,7 +97,7 @@ func publishPoBRequest(character *client.Character) {
 	}
 	msgJSON, err := json.Marshal(msg)
 	if err != nil {
-		log.Printf("failed to marshal PoB request for character %s: %v", character.Id, err)
+		slog.Error("failed to marshal PoB request", "character_id", character.Id, "error", err)
 		return
 	}
 	publishCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -106,7 +106,7 @@ func publishPoBRequest(character *client.Character) {
 		Key:   []byte(character.Id),
 		Value: msgJSON,
 	}); err != nil {
-		log.Printf("failed to publish PoB request for character %s: %v", character.Id, err)
+		slog.Error("failed to publish PoB request", "character_id", character.Id, "error", err)
 	}
 }
 
@@ -184,7 +184,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 			player.TokenExpiry = time.Now()
 			return
 		}
-		log.Printf("Error fetching characters for player %d: %v", player.UserId, err)
+		slog.Error("failed to fetch characters", "player_id", player.UserId, "error", err)
 		return
 	}
 	player.SuccessiveErrors = 0
@@ -199,7 +199,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 }
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) (*client.Character, error) {
-	fmt.Println("Updating character", player.New.Character.Name)
+	slog.Debug("updating character", "player_id", player.UserId, "character", player.New.Character.Name)
 	characterResponse, clientError := s.poeClient.GetCharacter(player.Token, player.New.Character.Name, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
@@ -218,7 +218,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	}
 	err := s.itemWishService.UpdateItemWishFulfillment(player.TeamId, player.UserId, characterResponse.Character)
 	if err != nil {
-		log.Printf("Error updating item wish fulfillment for player %d: %v", player.UserId, err)
+		slog.Error("failed to update item wish fulfillment", "player_id", player.UserId, "error", err)
 	}
 	if characterResponse.Character == nil {
 		player.SuccessiveErrors++
@@ -247,7 +247,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	// Publish the PoB request only after the character row exists, otherwise the
 	// resulting character_pobs insert can fail the character_id foreign key.
 	if !player.New.Character.HasSameEquipment(player.Old.Character) {
-		log.Printf("Character equipment changed for player %d, queuing for PoB processing", player.UserId)
+		slog.Info("character equipment changed, queuing for PoB processing", "player_id", player.UserId)
 		publishPoBRequest(characterResponse.Character)
 		player.LastUpdateTimes.PoB = time.Now()
 	}
@@ -265,11 +265,11 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate,
 	if err != nil {
 		player.SuccessiveErrors++
 		if err.StatusCode == 401 || err.StatusCode == 403 {
-			fmt.Printf("Error fetching league account for player %d: %d", player.UserId, err.StatusCode)
+			slog.Warn("failed to fetch league account", "player_id", player.UserId, "status", err.StatusCode)
 			player.TokenExpiry = time.Now()
 			return
 		}
-		log.Print(err)
+		slog.Error("failed to fetch league account", "player_id", player.UserId, "error", err)
 		return
 	}
 	player.SuccessiveErrors = 0
@@ -277,7 +277,7 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate,
 	if len(player.New.AtlasPassiveTrees) > 0 {
 		err := s.atlasService.SaveAtlasTrees(player.UserId, event.Id, player.New.AtlasPassiveTrees)
 		if err != nil {
-			fmt.Printf("Error saving atlas trees %d: %v\n", player.UserId, err)
+			slog.Error("failed to save atlas trees", "player_id", player.UserId, "error", err)
 		}
 	}
 
@@ -293,13 +293,13 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate, eve
 
 	token, err := s.oauthService.GetApplicationToken(repository.ProviderPoE)
 	if err != nil {
-		log.Printf("Error fetching application token: %v", err)
+		slog.Error("failed to fetch application token", "error", err)
 		return
 	}
 
 	resp, clientError = s.poeClient.GetFullLadder(token, event.Name, event.GetRealm())
 	if clientError != nil {
-		log.Printf("Error fetching ladder: %v", clientError)
+		slog.Error("failed to fetch ladder", "event_id", event.Id, "error", clientError)
 		return
 	}
 
@@ -337,11 +337,11 @@ func (s *PlayerFetchingService) UpdateLadder(players []*parser.PlayerUpdate, eve
 	}
 	err = s.ladderService.UpsertLadder(entriesToPersist, event.Id, charToUserId)
 	if err != nil {
-		log.Print(clientError)
+		slog.Error("failed to upsert ladder", "event_id", event.Id, "error", err)
 	}
 	err = s.characterService.SaveDelveHistoryEntries(delveHistoryEntries)
 	if err != nil {
-		log.Printf("Error saving delve history entries: %v", err)
+		slog.Error("failed to save delve history entries", "error", err)
 	}
 }
 
@@ -436,7 +436,7 @@ func (service *PlayerFetchingService) UpdatePlayerTokens(players []*parser.Playe
 	users, err := service.userRepository.GetUsersForEvent(event.Id)
 	usermap := make(map[int]*repository.TeamUserWithPoEToken, len(users))
 	if err != nil {
-		fmt.Printf("Error fetching users for event %d: %v", event.Id, err)
+		slog.Error("failed to fetch users for event", "event_id", event.Id, "error", err)
 		return players
 	}
 	for _, player := range players {
@@ -456,18 +456,18 @@ func processPoBResult(character *client.Character, export string, queuedAt time.
 	pob, err := client.DecodePoBExport(export)
 	if err != nil {
 		metrics.PobsCalculatedErrorCounter.Inc()
-		log.Printf("Error decoding PoB export for character %s (%s): %v", character.Name, character.Id, err)
+		slog.Error("failed to decode PoB export", "character", character.Name, "character_id", character.Id, "error", err)
 		return
 	}
 	metrics.PobsCalculatedCounter.Inc()
 	p := repository.PoBExport{}
 	if err = p.FromString(export); err != nil {
-		log.Printf("Error parsing PoB export for character %s (%s): %v", character.Name, character.Id, err)
+		slog.Error("failed to parse PoB export", "character", character.Name, "character_id", character.Id, "error", err)
 		return
 	}
 	itemIds, err := itemService.GetItemIds(character)
 	if err != nil {
-		log.Printf("Error getting item ids for character %s (%s): %v", character.Name, character.Id, err)
+		slog.Error("failed to get item ids", "character", character.Name, "character_id", character.Id, "error", err)
 	}
 	pobEntity := &repository.CharacterPob{
 		CreatedAt:        queuedAt,
@@ -484,7 +484,7 @@ func processPoBResult(character *client.Character, export string, queuedAt time.
 
 	oldPob, err := characterRepo.GetLatestCharacterPoB(character.Id)
 	if err != nil && !errors.Is(err, apperr.ErrNotFound) {
-		log.Printf("Error loading latest PoB for character %s (%s): %v", character.Name, character.Id, err)
+		slog.Error("failed to load latest PoB", "character", character.Name, "character_id", character.Id, "error", err)
 	}
 	if skip := pobSkipReason(pob, pobEntity, oldPob); skip != "" {
 		metrics.PobsSkippedCounter.WithLabelValues(skip).Inc()
@@ -492,14 +492,14 @@ func processPoBResult(character *client.Character, export string, queuedAt time.
 		if oldPob != nil {
 			oldId, oldAt = oldPob.Id, oldPob.CreatedAt
 		}
-		log.Printf("Not persisting PoB for character %s (%s): %s (dps: %d, ehp: %d; baseline pob %d from %s)",
-			character.Name, character.Id, skip, pobEntity.DPS, pobEntity.EHP, oldId, oldAt.Format(time.RFC3339))
+		slog.Info("not persisting PoB", "character", character.Name, "character_id", character.Id, "reason", skip,
+			"dps", pobEntity.DPS, "ehp", pobEntity.EHP, "baseline_pob_id", oldId, "baseline_created_at", oldAt.Format(time.RFC3339))
 		return
 	}
 
 	if err = characterRepo.SavePoB(pobEntity); err != nil {
 		metrics.PobsSaveErrorCounter.Inc()
-		log.Printf("Error saving PoB for character %s (%s): %v", character.Name, character.Id, err)
+		slog.Error("failed to save PoB", "character", character.Name, "character_id", character.Id, "error", err)
 		return
 	}
 	metrics.PobsSavedCounter.Inc()
@@ -537,14 +537,14 @@ func PlayerStatsLoop(ctx context.Context) {
 	reader := config.GetPoBResultReader()
 	defer reader.Close()
 
-	log.Print("PoB result consumer started")
+	slog.Info("PoB result consumer started")
 	for {
 		msg, err := reader.FetchMessage(ctx)
 		if err != nil {
 			if ctx.Err() != nil {
 				return
 			}
-			log.Printf("PoB result consumer fetch error: %v", err)
+			slog.Error("PoB result consumer fetch error", "error", err)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -552,19 +552,19 @@ func PlayerStatsLoop(ctx context.Context) {
 
 		var result pobResultMessage
 		if err := json.Unmarshal(msg.Value, &result); err != nil {
-			log.Printf("Failed to unmarshal PoB result: %v", err)
+			slog.Error("failed to unmarshal PoB result", "error", err)
 			reader.CommitMessages(ctx, msg)
 			continue
 		}
 		if result.Error != "" {
 			metrics.PobsCalculatedErrorCounter.Inc()
-			log.Printf("PoB error for character %s: %s", result.CharacterID, result.Error)
+			slog.Error("PoB error for character", "character_id", result.CharacterID, "error", result.Error)
 			reader.CommitMessages(ctx, msg)
 			continue
 		}
 		character, err := decodePoBResultCharacter(result.Character)
 		if err != nil {
-			log.Printf("Failed to unmarshal character from PoB result %s: %v", result.CharacterID, err)
+			slog.Error("failed to unmarshal character from PoB result", "character_id", result.CharacterID, "error", err)
 			reader.CommitMessages(ctx, msg)
 			continue
 		}
@@ -588,40 +588,40 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 	service := NewPlayerFetchingService(poeClient)
 	players, err := service.initPlayerUpdates(event)
 	if err != nil {
-		log.Print(err)
+		slog.Error("failed to init player updates", "event_id", event.Id, "error", err)
 		return
 	}
 	objectives, err := service.objectiveService.GetObjectivesForEvent(event.Id)
 	if err != nil {
-		log.Print(err)
+		slog.Error("failed to get objectives for event", "event_id", event.Id, "error", err)
 		return
 	}
 	playerChecker, err := parser.NewPlayerChecker(objectives)
 	if err != nil {
-		log.Print(err)
+		slog.Error("failed to create player checker", "event_id", event.Id, "error", err)
 		return
 	}
 	teamChecker, err := parser.NewTeamChecker(objectives)
 	if err != nil {
-		log.Print(err)
+		slog.Error("failed to create team checker", "event_id", event.Id, "error", err)
 		return
 	}
 	activeServices.Store(event.Id, service)
 	defer activeServices.Delete(event.Id)
-	fmt.Printf("Starting PlayerFetchLoop for event: %s with %d players\n", event.Name, len(players))
+	slog.Info("starting PlayerFetchLoop", "event", event.Name, "players", len(players))
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
 			if time.Now().Before(event.EventStartTime.Add(5 * time.Minute)) {
-				fmt.Printf("Event %s has not started yet, waiting...\n", event.Name)
+				slog.Debug("event has not started yet, waiting", "event", event.Name)
 				time.Sleep(10 * time.Second)
 				continue
 			}
 			err := service.ReloadTimings()
 			if err != nil {
-				log.Print(err)
+				slog.Error("failed to reload timings", "event_id", event.Id, "error", err)
 				return
 			}
 
@@ -636,7 +636,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 					wg.Go(func() {
 						_, err := service.UpdateCharacter(player, event)
 						if err != nil {
-							fmt.Printf("Error updating character for player %d: %v\n", player.UserId, err)
+							slog.Error("failed to update character", "player_id", player.UserId, "error", err)
 						}
 					})
 				}
@@ -667,7 +667,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 						EventId: event.Id,
 					})
 					if err != nil {
-						fmt.Printf("Error saving activity for player %d: %v\n", player.UserId, err)
+						slog.Error("failed to save activity", "player_id", player.UserId, "error", err)
 					}
 				}
 				player.Mu.Unlock()
@@ -685,7 +685,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 			}
 			err = service.objectiveMatchService.SaveMatches(matches, []int{})
 			if err != nil {
-				log.Print(err)
+				slog.Error("failed to save matches", "event_id", event.Id, "error", err)
 			}
 			for _, player := range players {
 				player.Mu.Lock()

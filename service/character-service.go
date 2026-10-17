@@ -7,6 +7,7 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -69,7 +70,7 @@ func (c *CharacterServiceImpl) TrackActivity(eventId int, update *parser.PlayerU
 			EventId: eventId,
 		})
 		if err != nil {
-			fmt.Println("Error saving activity")
+			slog.Error("failed to save activity")
 		}
 	}
 
@@ -241,9 +242,9 @@ func (c *CharacterServiceImpl) UpdatePoB(pob *repository.CharacterPob) error {
 	pobDecoded, err := pob.Export.Decode()
 	if err == nil {
 		pob.UpdateStats(pobDecoded)
-		fmt.Printf("Updated PoB for character %s\n", pob.CharacterId)
+		slog.Info("updated PoB", "character_id", pob.CharacterId)
 	} else {
-		fmt.Printf("Error decoding updated PoB for character %s: %v\n", pob.CharacterId, err)
+		slog.Error("failed to decode updated PoB", "character_id", pob.CharacterId, "error", err)
 	}
 	return c.characterRepository.SavePoB(pob)
 }
@@ -266,11 +267,11 @@ func (c *CharacterServiceImpl) UpdateLatestPoBs() error {
 	// }
 
 	for {
-		fmt.Printf("Fetching PoBs starting from ID %d\n", startId)
+		slog.Info("fetching PoBs", "start_id", startId)
 		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 100)
 
 		if err != nil {
-			fmt.Printf("Error getting PoBs from id %d: %v\n", startId, err)
+			slog.Error("failed to get PoBs", "start_id", startId, "error", err)
 			return err
 		}
 		if len(pobs) == 0 {
@@ -284,7 +285,7 @@ func (c *CharacterServiceImpl) UpdateLatestPoBs() error {
 			if characterPob.EHP < 2147483647 {
 				continue
 			}
-			fmt.Printf("Processing PoB ID %d\n", characterPob.Id)
+			slog.Debug("processing PoB", "pob_id", characterPob.Id)
 
 			if characterPob.UpdatedAt.After(updateStart) {
 				continue
@@ -294,7 +295,7 @@ func (c *CharacterServiceImpl) UpdateLatestPoBs() error {
 				defer func() { <-semaphore }() // Release the slot when done
 				err := c.UpdatePoB(characterPob)
 				if err != nil {
-					fmt.Printf("Error updating PoB for character %s: %v\n", characterPob.CharacterId, err)
+					slog.Error("failed to update PoB", "character_id", characterPob.CharacterId, "error", err)
 				}
 			}(characterPob)
 		}
@@ -313,7 +314,7 @@ func (c *CharacterServiceImpl) UpdatePoBStats() error {
 		pobs, err := c.characterRepository.GetPobsFromIdWithLimit(startId+1, 1000)
 
 		if err != nil {
-			fmt.Printf("Error getting PoBs from id %d: %v\n", startId, err)
+			slog.Error("failed to get PoBs", "start_id", startId, "error", err)
 			return err
 		}
 		if len(pobs) == 0 {
@@ -323,7 +324,7 @@ func (c *CharacterServiceImpl) UpdatePoBStats() error {
 			startId = characterPob.Id
 			pob, err := characterPob.Export.Decode()
 			if err != nil {
-				fmt.Printf("Error decoding PoB for character %s: %v\n", characterPob.CharacterId, err)
+				slog.Error("failed to decode PoB", "character_id", characterPob.CharacterId, "error", err)
 				continue
 			}
 			itemIndexes := make(map[int]bool)
@@ -331,7 +332,7 @@ func (c *CharacterServiceImpl) UpdatePoBStats() error {
 				if item.Rarity == "UNIQUE" {
 					itemId, err := c.itemService.GetOrCreateId(item.Name, repository.ItemTypeUnique)
 					if err != nil {
-						fmt.Printf("Error getting unique item id %s: %v\n", item.Name, err)
+						slog.Error("failed to get unique item id", "item", item.Name, "error", err)
 						continue
 					}
 					itemIndexes[itemId] = true
@@ -346,7 +347,7 @@ func (c *CharacterServiceImpl) UpdatePoBStats() error {
 						}
 						itemId, err := c.itemService.GetOrCreateId(name, repository.ItemTypeGem)
 						if err != nil {
-							fmt.Printf("Error getting gem item id %s: %v\n", name, err)
+							slog.Error("failed to get gem item id", "gem", name, "error", err)
 							continue
 						}
 						itemIndexes[itemId] = true
@@ -364,9 +365,9 @@ func (c *CharacterServiceImpl) UpdatePoBStats() error {
 		}
 		err = c.characterRepository.SavePoBs(pobs)
 		if err != nil {
-			fmt.Printf("Error saving PoBs: %v\n", err)
+			slog.Error("failed to save PoBs", "error", err)
 		}
-		fmt.Printf("Updated PoBs up to ID %d\n", startId)
+		slog.Info("updated PoBs", "up_to_id", startId)
 	}
 	return nil
 }
@@ -404,7 +405,7 @@ func (c *CharacterServiceImpl) DeletePoB(pobId int) error {
 // same character (duplicate), has fewer equipped items than the previous
 // snapshot, or swapped weapons and lost dps.
 func (c *CharacterServiceImpl) FixPoBs() error {
-	fmt.Println("Starting to fix PoBs...")
+	slog.Info("starting to fix PoBs")
 	offset := 0
 	limit := 1000
 	lastEquipmentCount := make(map[string]int)
@@ -435,7 +436,7 @@ func (c *CharacterServiceImpl) FixPoBs() error {
 
 			pob, err := characterPob.Export.Decode()
 			if err != nil {
-				fmt.Printf("Error decoding PoB %d for character %s: %v\n", characterPob.Id, characterPob.CharacterId, err)
+				slog.Error("failed to decode PoB", "pob_id", characterPob.Id, "character_id", characterPob.CharacterId, "error", err)
 				continue
 			}
 			count := pob.NumEquipmentPieces()
@@ -449,7 +450,7 @@ func (c *CharacterServiceImpl) FixPoBs() error {
 			}
 			lastPoB[characterPob.CharacterId] = pob
 		}
-		fmt.Printf("Scanned PoBs up to offset %d, %d flagged for deletion\n", offset, len(deleteIds))
+		slog.Info("scanned PoBs", "offset", offset, "flagged_for_deletion", len(deleteIds))
 	}
 
 	idsToDelete := make([]int, 0, len(deleteIds))
@@ -457,9 +458,9 @@ func (c *CharacterServiceImpl) FixPoBs() error {
 		idsToDelete = append(idsToDelete, id)
 	}
 	if err := c.characterRepository.DeletePoBs(idsToDelete); err != nil {
-		fmt.Printf("Error deleting invalid PoBs: %v\n", err)
+		slog.Error("failed to delete invalid PoBs", "error", err)
 		return err
 	}
-	fmt.Printf("Done fixing PoBs, deleted %d\n", len(idsToDelete))
+	slog.Info("done fixing PoBs", "deleted", len(idsToDelete))
 	return nil
 }

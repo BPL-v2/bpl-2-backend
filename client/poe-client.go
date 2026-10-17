@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math"
 	"net/http"
 	"net/url"
@@ -84,8 +84,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 	}
 
 	if response.StatusCode >= 400 {
-		fmt.Printf("Error at path %s with params %v\n", args.Path, args.PathParams)
-		log.Print(string(respBody))
+		slog.Warn("poe api request failed", "path", args.Path, "path_params", args.PathParams, "status", response.StatusCode, "response_body", string(respBody))
 		errorBody := &ErrorResponse{}
 		err = json.Unmarshal(respBody, errorBody)
 		if err != nil {
@@ -109,8 +108,7 @@ func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) 
 	result := new(T)
 	err = json.Unmarshal(respBody, result)
 	if err != nil {
-		fmt.Printf("Failed to call %s with response:\n", args.Path)
-		fmt.Println(string(respBody))
+		slog.Error("failed to decode poe api response", "path", args.Path, "response_body", string(respBody), "error", err)
 		return nil, &ClientError{
 			StatusCode:      response.StatusCode,
 			Error:           "bpl2_client_response_body_parse_error",
@@ -615,5 +613,18 @@ func (c *PoEClient) RefreshAccessToken(clientId string, clientSecret string, ref
 			},
 			IgnoreBaseURL: true,
 		},
+	)
+}
+
+// LogValue implements slog.LogValuer so a *ClientError logs as a structured group.
+func (e *ClientError) LogValue() slog.Value {
+	if e == nil {
+		return slog.Value{}
+	}
+	return slog.GroupValue(
+		slog.Int("status", e.StatusCode),
+		slog.Any("error", e.Error),
+		slog.String("description", e.Description),
+		slog.String("path", e.Path),
 	)
 }

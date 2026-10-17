@@ -5,7 +5,7 @@ import (
 	"bpl/utils"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -79,7 +79,7 @@ func (s *StashChangeServiceImpl) GetInitialChangeId(event *repository.Event) (st
 	if err == nil {
 		return stashChange, nil
 	}
-	log.Print("Initial change id not found, fetching from poe.ninja")
+	slog.Info("initial change id not found, fetching from poe.ninja")
 	return GetNinjaChangeId()
 }
 

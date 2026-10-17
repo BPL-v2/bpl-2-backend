@@ -10,8 +10,7 @@ import (
 	"bpl/utils"
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
+	"log/slog"
 	"slices"
 	"time"
 
@@ -88,7 +87,7 @@ func (m *MatchingService) getItemMatches(
 			continue
 		}
 
-		fmt.Printf("Processing stash %s for team %d\n", stash.StashChange.Id, teamId)
+		slog.Debug("processing stash", "stash_id", stash.StashChange.Id, "team_id", teamId)
 		completions := make(map[int]int)
 		if stash.StashChange.Items != nil {
 			for _, item := range stash.StashChange.Items {
@@ -134,7 +133,7 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 		consumer.GroupId += 1
 		err = m.objectiveMatchService.SaveKafkaConsumerId(consumer)
 		if err != nil {
-			log.Print(err)
+			slog.Error("failed to save kafka consumer id", "error", err)
 		}
 	}
 
@@ -145,7 +144,7 @@ func (m *MatchingService) GetReader(desyncedObjectiveIds []int) (*kafka.Reader, 
 func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, objectives []*repository.Objective) {
 	users, err := m.userService.GetUsersForEvent(m.event.Id)
 	if err != nil {
-		log.Printf("Failed to get users for event %d: %v", m.event.Id, err)
+		slog.Error("failed to get users", "event_id", m.event.Id, "error", err)
 		return
 	}
 	userMap := make(map[string]*repository.TeamUserWithPoEToken)
@@ -167,7 +166,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	}
 	reader, err := m.GetReader(desyncedObjectiveIds)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to get kafka reader", "error", err)
 		return
 	}
 	defer utils.Closer(reader)()
@@ -177,16 +176,16 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 	if syncing {
 		err = m.objectiveService.StartSync(desyncedObjectiveIds)
 		if err != nil {
-			log.Printf("Failed to start sync for desynced objectives: %v", err)
+			slog.Error("failed to start sync for desynced objectives", "error", err)
 			return
 		}
 	}
 	if m.lastTimestamp == nil {
-		log.Println("No last change id found")
+		slog.Warn("no last change id found")
 		// this means we dont have any earlier changes, so we assume there are no desynced objectives
 		err = m.objectiveService.SetSynced(desyncedObjectiveIds)
 		if err != nil {
-			log.Printf("Failed to set synced for desynced objectives: %v", err)
+			slog.Error("failed to set synced for desynced objectives", "error", err)
 		}
 		desyncedObjectiveIds = make([]int, 0)
 	}
@@ -197,15 +196,15 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 		default:
 			stashChange, err := m.GetStashChange(reader)
 			if err != nil {
-				fmt.Printf("Failed to get stash change: %v", err)
+				slog.Error("failed to get stash change", "error", err)
 				continue
 			}
 			if m.lastTimestamp != nil && stashChange.Timestamp.Truncate(time.Millisecond).Equal(m.lastTimestamp.Truncate(time.Millisecond)) {
-				log.Println("Sync finished")
+				slog.Info("sync finished")
 				// once we reach the starting change id the sync is finished
 				err = m.objectiveService.SetSynced(desyncedObjectiveIds)
 				if err != nil {
-					log.Print(err)
+					slog.Error("failed to set synced for desynced objectives", "error", err)
 				}
 				syncing = false
 			}
@@ -214,7 +213,7 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 			if !syncing {
 				err = m.objectiveMatchService.SaveMatches(matches, desyncedObjectiveIds)
 				if err != nil {
-					fmt.Printf("Failed to save matches: %v", err)
+					slog.Error("failed to save matches", "error", err)
 					continue
 				}
 				desyncedObjectiveIds = make([]int, 0)
@@ -226,10 +225,10 @@ func (m *MatchingService) ProcessStashChanges(itemChecker *parser.ItemChecker, o
 }
 
 func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event *repository.Event) error {
-	fmt.Println("Starting stash evaluation loop for event", event.Name)
+	slog.Info("starting stash evaluation loop", "event", event.Name)
 	m, err := NewMatchingService(ctx, poeClient, event)
 	if err != nil {
-		log.Fatal("Failed to create matching service:", err)
+		slog.Error("failed to create matching service", "error", err)
 		return err
 	}
 	objectives, err := m.objectiveService.GetObjectivesForEvent(event.Id)
@@ -240,7 +239,7 @@ func StashEvaluationLoop(ctx context.Context, poeClient *client.PoEClient, event
 	if err != nil {
 		return err
 	}
-	fmt.Println("Item checker initialized with", len(objectives), "objectives")
+	slog.Info("item checker initialized", "objectives", len(objectives))
 	utils.Go("process-stash-changes", func() { m.ProcessStashChanges(itemChecker, objectives) })
 	return nil
 }

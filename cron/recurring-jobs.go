@@ -8,7 +8,8 @@ import (
 	"bpl/utils"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 	"time"
 )
 
@@ -45,7 +46,8 @@ func NewRecurringJobService(poeClient *client.PoEClient) *RecurringJobService {
 
 	jobs, err := s.InitializeJobs()
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to initialize recurring jobs", "error", err)
+		os.Exit(1)
 	}
 	s.StartLongRunningJobs()
 	s.Jobs = jobs
@@ -84,7 +86,7 @@ func (s *RecurringJobService) InitializeJobs() (map[repository.JobType]*Recurrin
 		}
 		err := s.StartJob(serviceJob)
 		if err != nil {
-			fmt.Println(err)
+			slog.Error("failed to start job", "error", err)
 			if serviceJob.Cancel != nil {
 				serviceJob.Cancel()
 			}

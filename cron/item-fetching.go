@@ -11,7 +11,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"sync"
 	"time"
@@ -62,16 +62,16 @@ func (f *FetchingService) GetTimings() (map[repository.TimingKey]time.Duration, 
 }
 
 func (f *FetchingService) FetchStashChanges() error {
-	fmt.Println("Starting stash change fetch loop")
+	slog.Info("starting stash change fetch loop")
 	token, err := f.oauthService.GetApplicationToken(repository.ProviderPoE)
 	if err != nil {
-		log.Printf("Failed to get PoE token: %v", err)
+		slog.Error("failed to get PoE token", "error", err)
 		return fmt.Errorf("failed to get PoE token: %w", err)
 	}
 	initialStashChange, err := f.stashChangeService.GetInitialChangeId(f.event)
-	fmt.Printf("Initial stash change ID: %s\n", initialStashChange)
+	slog.Info("initial stash change id", "change_id", initialStashChange)
 	if err != nil {
-		log.Print(err)
+		slog.Error("failed to get initial stash change id", "error", err)
 		return nil
 	}
 
@@ -87,18 +87,18 @@ func (f *FetchingService) FetchStashChanges() error {
 			if clientErr != nil {
 				consecutiveErrors++
 				if consecutiveErrors > 5 {
-					log.Print("Too many consecutive errors, exiting")
+					slog.Error("too many consecutive errors, exiting")
 					return fmt.Errorf("too many consecutive errors")
 				}
 				if clientErr.StatusCode == 429 {
-					log.Print(clientErr.ResponseHeaders)
+					slog.Warn("rate limited", "headers", clientErr.ResponseHeaders)
 					retryAfter, err := strconv.Atoi(clientErr.ResponseHeaders.Get("Retry-After"))
 					if err != nil {
 						retryAfter = 60
 					}
 					<-time.After((time.Duration(retryAfter) + 1) * time.Second)
 				} else {
-					log.Print(clientErr)
+					slog.Error("failed to get public stashes", "error", clientErr)
 					<-time.After(60 * time.Second)
 				}
 				continue
@@ -208,13 +208,13 @@ func (f *FetchingService) FilterStashChanges() error {
 							EventId: f.event.Id,
 						})
 						if err != nil {
-							log.Printf("Failed to save activity for user %s: %v", *stash.StashChange.AccountName, err)
+							slog.Error("failed to save activity", "account", *stash.StashChange.AccountName, "error", err)
 						}
 					}
 				}
 			}
 			if len(stashes) > 0 {
-				log.Printf("Found %d stashes for change ID: %s\n", len(stashes), stashChange.ChangeId)
+				slog.Debug("found stashes", "count", len(stashes), "change_id", stashChange.ChangeId)
 			}
 			message := repository.StashChangeMessage{
 				ChangeId:     stashChange.ChangeId,
@@ -232,7 +232,7 @@ func (f *FetchingService) FilterStashChanges() error {
 					)
 				})
 			if err != nil {
-				log.Printf("Failed to save stash changes conditionally: %v", err)
+				slog.Error("failed to save stash changes conditionally", "error", err)
 			}
 		}
 	}
@@ -242,24 +242,24 @@ func (f *FetchingService) FilterStashChanges() error {
 func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, fetchers *GuildStashFetchers, err error) {
 	users, err := f.userRepository.GetUsersForEvent(f.event.Id)
 	if err != nil {
-		log.Printf("Failed to get users for event %d: %v", f.event.Id, err)
+		slog.Error("failed to get users", "event_id", f.event.Id, "error", err)
 		return
 	}
 	// todo: move this redundant db call
 	stashes, err := f.guildStashRepository.GetByEvent(f.event.Id)
 	if err != nil {
-		log.Printf("Failed to get stashes for event %d: %v", f.event.Id, err)
+		slog.Error("failed to get stashes", "event_id", f.event.Id, "error", err)
 		return
 	}
 	fetchers = InitFetchers(users, stashes)
 	err = config.CreateTopic(f.event.Id)
 	if err != nil {
-		log.Print(err)
+		slog.Error("failed to create kafka topic", "event_id", f.event.Id, "error", err)
 		return
 	}
 	kafkaWriter, err = config.GetWriter(f.event.Id)
 	if err != nil {
-		log.Print(err)
+		slog.Error("failed to get kafka writer", "event_id", f.event.Id, "error", err)
 		return nil, nil, fmt.Errorf("failed to get kafka writer: %w", err)
 	}
 	return kafkaWriter, fetchers, nil
@@ -268,21 +268,21 @@ func (f *FetchingService) InitGuildStashFetching() (kafkaWriter *kafka.Writer, f
 func (f *FetchingService) FetchGuildStashTab(tab *repository.GuildStashTab) error {
 	kafkaWriter, fetchers, err := f.InitGuildStashFetching()
 	if err != nil {
-		fmt.Printf("Failed to initialize guild stash fetching: %v\n", err)
+		slog.Error("failed to initialize guild stash fetching", "error", err)
 		return err
 	}
 	wg := sync.WaitGroup{}
 	wg.Go(func() {
 		err := f.updateGuildStash(tab, fetchers, kafkaWriter)
 		if err != nil {
-			fmt.Printf("Failed to fetch stash %s for team %d: %v\n", tab.Id, tab.TeamId, err)
+			slog.Error("failed to fetch stash", "stash_id", tab.Id, "team_id", tab.TeamId, "error", err)
 		}
 	})
 	for _, child := range tab.Children {
 		wg.Go(func() {
 			err := f.updateGuildStash(child, fetchers, kafkaWriter)
 			if err != nil {
-				fmt.Printf("Failed to fetch stash %s for team %d: %v\n", child.Id, child.TeamId, err)
+				slog.Error("failed to fetch stash", "stash_id", child.Id, "team_id", child.TeamId, "error", err)
 			}
 		})
 	}
@@ -298,7 +298,7 @@ func (f *FetchingService) AccessDeterminationLoop() {
 		}
 		err := f.DetermineStashAccess()
 		if err != nil {
-			fmt.Printf("Failed to determine stash access: %v\n", err)
+			slog.Error("failed to determine stash access", "error", err)
 		}
 		select {
 		case <-f.ctx.Done():
@@ -434,11 +434,11 @@ func (f *FetchingService) FetchGuildStashes() error {
 			if !stash.ShouldUpdate(timings) {
 				continue
 			}
-			fmt.Printf("Fetching guild stash %s for team %d\n", stash.Id, stash.TeamId)
+			slog.Debug("fetching guild stash", "stash_id", stash.Id, "team_id", stash.TeamId)
 			wg.Go(func() {
 				err := f.updateGuildStash(stash, fetchers, kafkaWriter)
 				if err != nil {
-					fmt.Println(err.Error())
+					slog.Error("failed to update guild stash", "stash_id", stash.Id, "team_id", stash.TeamId, "error", err)
 					return
 				}
 			})
@@ -460,7 +460,7 @@ func (f *FetchingService) updateGuildStash(stash *repository.GuildStashTab, fetc
 	response, httpError := f.poeClient.GetGuildStash(token, f.event.Name, stash.Id, stash.ParentId)
 	if httpError != nil {
 		if httpError.StatusCode == 404 {
-			fmt.Printf("Stash %s not found (404), deleting from database\n", stash.Id)
+			slog.Warn("stash not found (404), deleting from database", "stash_id", stash.Id)
 			if err := f.guildStashRepository.Delete(stash.Id, stash.EventId); err != nil {
 				return fmt.Errorf("failed to delete stash %s after 404: %w", stash.Id, err)
 			}
@@ -497,7 +497,7 @@ func (f *FetchingService) updateStashItems(stash *repository.GuildStashTab, resp
 			return fmt.Errorf("failed to unmarshal existing stash data for stash %s: %v", stash.Id, err)
 		}
 		if existingStash.GetHash() == response.Stash.GetHash() {
-			fmt.Printf("No changes for stash %s, skipping\n", stash.Id)
+			slog.Debug("no changes for stash, skipping", "stash_id", stash.Id)
 			return nil
 		}
 	}
@@ -545,25 +545,25 @@ func GuildStashFetchLoop(ctx context.Context, event *repository.Event, poeClient
 	utils.Go("fetch-guild-stashes", func() {
 		err := fetchingService.FetchGuildStashes()
 		if err != nil {
-			fmt.Printf("Failed to fetch guild stashes: %v\n", err)
+			slog.Error("failed to fetch guild stashes", "error", err)
 		}
 	})
 	utils.Go("access-determination", fetchingService.AccessDeterminationLoop)
 }
 
 func ItemFetchLoop(ctx context.Context, event *repository.Event, poeClient *client.PoEClient) {
-	fmt.Println("Starting item fetch loop")
+	slog.Info("starting item fetch loop")
 	fetchingService := NewFetchingService(ctx, event, poeClient)
 	utils.Go("fetch-stash-changes", func() {
 		err := fetchingService.FetchStashChanges()
 		if err != nil {
-			fmt.Printf("Failed to fetch stash changes: %v\n", err)
+			slog.Error("failed to fetch stash changes", "error", err)
 		}
 	})
 	utils.Go("filter-stash-changes", func() {
 		err := fetchingService.FilterStashChanges()
 		if err != nil {
-			fmt.Printf("Failed to filter stash changes: %v\n", err)
+			slog.Error("failed to filter stash changes", "error", err)
 		}
 	})
 

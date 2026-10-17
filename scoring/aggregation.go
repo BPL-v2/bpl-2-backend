@@ -5,7 +5,7 @@ import (
 	"bpl/repository"
 	"bpl/utils"
 	"fmt"
-	"log"
+	"log/slog"
 	"sort"
 	"time"
 
@@ -80,7 +80,7 @@ func AggregateMatches(db *gorm.DB, event *repository.Event, objectives []*reposi
 			t := time.Now()
 			matches, err := handler(db, objectivesByAggregation[aggregation], teamIds, event.Id)
 			if err != nil {
-				log.Print(err)
+				slog.Error("aggregation failed", "aggregation", aggregation, "error", err)
 				continue
 			}
 			for _, match := range matches {
@@ -510,7 +510,7 @@ func handleDifferenceBetween(db *gorm.DB, objectives []*repository.Objective, te
 	matches := make([]*Match, 0)
 	for _, objective := range objectives {
 		if objective.ValidFrom == nil || objective.ValidTo == nil {
-			fmt.Printf("VALUE_CHANGE_IN_WINDOW objective %d does not have timestamps set\n", objective.Id)
+			slog.Warn("VALUE_CHANGE_IN_WINDOW objective does not have timestamps set", "objective_id", objective.Id)
 			continue
 		}
 

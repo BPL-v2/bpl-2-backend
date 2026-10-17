@@ -8,8 +8,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"errors"
-	"fmt"
-	"log"
+	"log/slog"
 	"slices"
 	"strconv"
 	"time"
@@ -140,7 +139,7 @@ func respondError(c *gin.Context, err error, overrides ...errorOverride) {
 				c.JSON(o.status, gin.H{"error": err.Error()})
 				return
 			}
-			log.Printf("internal error on %s %s: %v", c.Request.Method, c.FullPath(), err)
+			slog.Error("internal error", "method", c.Request.Method, "route", c.FullPath(), "error", err)
 			c.JSON(o.status, gin.H{"error": "internal server error"})
 			return
 		}
@@ -149,7 +148,7 @@ func respondError(c *gin.Context, err error, overrides ...errorOverride) {
 		c.JSON(apperr.Status(err), gin.H{"error": err.Error()})
 		return
 	}
-	log.Printf("internal error on %s %s: %v", c.Request.Method, c.FullPath(), err)
+	slog.Error("internal error", "method", c.Request.Method, "route", c.FullPath(), "error", err)
 	c.JSON(500, gin.H{"error": "internal server error"})
 }
 
@@ -222,13 +221,13 @@ func TeamSelfMiddleware() gin.HandlerFunc {
 		}
 		teamId, err := strconv.Atoi(teamIdParam)
 		if err != nil {
-			fmt.Println("Error parsing team ID:", err)
+			slog.Warn("failed to parse team id", "error", err)
 			r.AbortWithStatus(400)
 			return
 		}
 		event := getEvent(r)
 		if event == nil {
-			fmt.Println("Event not found in context")
+			slog.Error("event not found in context")
 			r.AbortWithStatus(400)
 			return
 		}
@@ -256,7 +255,7 @@ func TeamLeaderMiddleware() gin.HandlerFunc {
 		}
 		event := getEvent(r)
 		if event == nil {
-			fmt.Println("Event not found in context")
+			slog.Error("event not found in context")
 			r.AbortWithStatus(400)
 			return
 		}

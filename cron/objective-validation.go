@@ -7,8 +7,7 @@ import (
 	"bpl/service"
 	"bpl/utils"
 	"context"
-	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -36,7 +35,7 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 	}
 
 	if err != nil {
-		log.Print("Failed to get objectives for event:", err)
+		slog.Error("failed to get objectives for event", "error", err)
 		return
 	}
 	objectiveMap := make(map[int]*repository.Objective)
@@ -45,18 +44,18 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 	}
 	itemChecker, err := parser.NewItemChecker(objectives, false)
 	if err != nil {
-		log.Print("Failed to create item checker:", err)
+		slog.Error("failed to create item checker", "error", err)
 		return
 	}
 
 	token, err := service.NewOauthService().GetApplicationToken(repository.ProviderPoE)
 	if err != nil {
-		log.Print("Failed to get PoE token:", err)
+		slog.Error("failed to get PoE token", "error", err)
 		return
 	}
 	initialStashChange, err := service.GetNinjaChangeId()
 	if err != nil {
-		log.Print("Failed to get initial stash change ID:", err)
+		slog.Error("failed to get initial stash change id", "error", err)
 		return
 	}
 	changeId := AddToChangeId(initialStashChange, -100000)
@@ -70,18 +69,18 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 			if clientError != nil {
 				consecutiveErrors++
 				if consecutiveErrors > 5 {
-					log.Print("Too many consecutive errors, exiting")
+					slog.Error("too many consecutive errors, exiting")
 					return
 				}
 				if clientError.StatusCode == 429 {
-					log.Print(clientError.ResponseHeaders)
+					slog.Warn("rate limited", "headers", clientError.ResponseHeaders)
 					retryAfter, err := strconv.Atoi(clientError.ResponseHeaders.Get("Retry-After"))
 					if err != nil {
 						retryAfter = 60
 					}
 					<-time.After((time.Duration(retryAfter) + 1) * time.Second)
 				} else {
-					log.Print(clientError)
+					slog.Error("failed to get public stashes", "error", clientError)
 					<-time.After(60 * time.Second)
 				}
 				continue
@@ -91,7 +90,7 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 			for _, stash := range response.Stashes {
 				for _, item := range stash.Items {
 					for _, match := range itemChecker.CheckForCompletions(&item) {
-						fmt.Printf("Item %s validated objective %s\n", item.Name, objectiveMap[match.ObjectiveId].Name)
+						slog.Debug("item validated objective", "item", item.Name, "objective", objectiveMap[match.ObjectiveId].Name)
 						validations[match.ObjectiveId] = &repository.ObjectiveValidation{
 							ObjectiveId: match.ObjectiveId,
 							Timestamp:   time.Now(),
@@ -104,11 +103,11 @@ func ValidationLoop(ctx context.Context, poeClient *client.PoEClient) {
 			if len(validations) > 0 {
 				err := objectiveMatchRepository.SaveValidations(utils.Values(validations))
 				if err != nil {
-					log.Print("Failed to save validations:", err)
+					slog.Error("failed to save validations", "error", err)
 					return
 				}
 			} else {
-				log.Printf("No validations found in batch %s\n", changeId)
+				slog.Debug("no validations found in batch", "change_id", changeId)
 			}
 		}
 	}

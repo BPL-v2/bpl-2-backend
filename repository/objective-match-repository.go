@@ -3,7 +3,7 @@ package repository
 import (
 	"bpl/client"
 	"bpl/config"
-	"log"
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
@@ -87,7 +87,7 @@ func (r *ObjectiveMatchRepositoryImpl) OverwriteMatches(objectiveMatches []*Obje
 		if err != nil {
 			return err
 		}
-		log.Printf("Overwrite took %s", time.Since(t))
+		slog.Debug("overwrite finished", "duration", time.Since(t))
 		return nil
 	})
 }

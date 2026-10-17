@@ -7,7 +7,7 @@ import (
 	"bpl/repository"
 	"bpl/service"
 	"bpl/utils"
-	"log"
+	"log/slog"
 	"slices"
 	"strconv"
 	"time"
@@ -66,7 +66,7 @@ func (e *CharacterController) fixPoBsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		go func() {
 			if err := e.characterService.FixPoBs(); err != nil {
-				log.Printf("FixPoBs failed: %v", err)
+				slog.Error("FixPoBs failed", "error", err)
 			}
 		}()
 		c.Status(202)

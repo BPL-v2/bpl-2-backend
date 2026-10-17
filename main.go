@@ -5,9 +5,9 @@ import (
 	"bpl/controller"
 	_ "bpl/docs"
 	"bpl/metrics"
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"regexp"
 	"runtime/debug"
 	"strings"
@@ -35,6 +35,7 @@ func main() {
 
 	// Load and validate configuration
 	cfg := config.Env()
+	config.InitLogger()
 	db, err := config.InitDB(
 		cfg.DatabaseHost,
 		cfg.DatabasePort,
@@ -43,19 +44,26 @@ func main() {
 		cfg.DatabaseName,
 	)
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		slog.Error("failed to initialize database", "error", err)
+		os.Exit(1)
 	}
 	_ = db
 	// autoMigrate(db)
 	r := gin.New()
 	r.Use(gin.CustomRecovery(func(c *gin.Context, err any) {
 		metrics.PanicsRecoveredCounter.WithLabelValues("http").Inc()
-		log.Printf("panic recovered in %s %s: %v\n%s", c.Request.Method, c.Request.URL.Path, err, debug.Stack())
+		slog.Error("panic recovered",
+			"method", c.Request.Method,
+			"path", c.Request.URL.Path,
+			"panic", err,
+			"stack", string(debug.Stack()),
+		)
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}))
 	err = r.SetTrustedProxies(nil)
 	if err != nil {
-		log.Fatalf("Failed to set trusted proxies: %v", err)
+		slog.Error("failed to set trusted proxies", "error", err)
+		os.Exit(1)
 	}
 	addLogger(r)
 	addMetrics(r)
@@ -64,18 +72,36 @@ func main() {
 	controller.SetRoutes(r)
 	err = r.Run(":8000")
 	if err != nil {
-		fmt.Println("Failed to start server:", err)
+		slog.Error("failed to start server", "error", err)
 	}
 }
 
 func addLogger(r *gin.Engine) {
-	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{
-		SkipPaths: []string{"/api/metrics"},
-		Skip: func(c *gin.Context) bool {
-			return c.Request.URL.Query().Get("token") != ""
-		},
-	}))
-
+	r.Use(func(c *gin.Context) {
+		start := time.Now()
+		c.Next()
+		// Skip metrics scrapes and requests carrying a token in the query string.
+		if c.Request.URL.Path == "/api/metrics" || c.Request.URL.Query().Get("token") != "" {
+			return
+		}
+		status := c.Writer.Status()
+		level := slog.LevelInfo
+		switch {
+		case status >= http.StatusInternalServerError:
+			level = slog.LevelError
+		case status >= http.StatusBadRequest:
+			level = slog.LevelWarn
+		}
+		slog.Log(c.Request.Context(), level, "http request",
+			"method", c.Request.Method,
+			"path", c.Request.URL.Path,
+			"route", c.FullPath(),
+			"status", status,
+			"duration", time.Since(start),
+			"client_ip", c.ClientIP(),
+			"bytes", c.Writer.Size(),
+		)
+	})
 }
 
 func addMetrics(r *gin.Engine) {
