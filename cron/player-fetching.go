@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"bpl/apperr"
+
 	"github.com/lib/pq"
 	"github.com/segmentio/kafka-go"
 )
@@ -247,7 +248,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	// Publish the PoB request only after the character row exists, otherwise the
 	// resulting character_pobs insert can fail the character_id foreign key.
 	if !player.New.Character.HasSameEquipment(player.Old.Character) {
-		slog.Info("character equipment changed, queuing for PoB processing", "player_id", player.UserId)
+		slog.Info("Queuing PoB processing", "player_id", player.UserId, "character", player.New.Character.Name)
 		publishPoBRequest(characterResponse.Character)
 		player.LastUpdateTimes.PoB = time.Now()
 	}
@@ -488,12 +489,6 @@ func processPoBResult(character *client.Character, export string, queuedAt time.
 	}
 	if skip := pobSkipReason(pob, pobEntity, oldPob); skip != "" {
 		metrics.PobsSkippedCounter.WithLabelValues(skip).Inc()
-		oldId, oldAt := 0, time.Time{}
-		if oldPob != nil {
-			oldId, oldAt = oldPob.Id, oldPob.CreatedAt
-		}
-		slog.Info("not persisting PoB", "character", character.Name, "character_id", character.Id, "reason", skip,
-			"dps", pobEntity.DPS, "ehp", pobEntity.EHP, "baseline_pob_id", oldId, "baseline_created_at", oldAt.Format(time.RFC3339))
 		return
 	}
 
