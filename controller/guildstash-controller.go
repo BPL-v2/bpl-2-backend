@@ -399,8 +399,13 @@ func (e *GuildStashController) getGuildStashTab() gin.HandlerFunc {
 		}
 		stashId := c.Param("stash_id")
 		tab, err := e.guildStashService.GetGuildStash(stashId, event.Id)
-		if err != nil || tab.Raw == "" || tab.Raw == "{}" {
-			slog.Error("failed to fetch guild stash tab", "error", err)
+		if err != nil {
+			slog.Error("failed to fetch guild stash tab", "stash_id", stashId, "event_id", event.Id, "error", err)
+			c.JSON(404, gin.H{"error": "stash tab not found"})
+			return
+		}
+		if tab.Raw == "" || tab.Raw == "{}" {
+			slog.Warn("guild stash tab has no content", "stash_id", stashId, "event_id", event.Id, "raw", tab.Raw)
 			c.JSON(404, gin.H{"error": "stash tab not found"})
 			return
 		}

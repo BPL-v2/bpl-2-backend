@@ -116,17 +116,18 @@ func (s *ItemWishServiceImpl) UpdateItemWishFulfillment(teamId int, userId int, 
 		}) {
 			switch itemWish.ItemField {
 			case repository.BASE_TYPE:
-				if item.BaseType == itemWish.Value {
-					itemWish.Fulfilled = true
-					toSave = append(toSave, itemWish)
-				}
+				itemWish.Fulfilled = item.BaseType == itemWish.Value
 			case repository.NAME:
-				if item.Name == itemWish.Value {
-					itemWish.Fulfilled = true
-					toSave = append(toSave, itemWish)
-				}
+				itemWish.Fulfilled = item.Name == itemWish.Value
 			default:
 				continue
+			}
+			// Stop at the first match: appending the same wish once per matching
+			// item (e.g. two rings of the same base) makes the batch upsert hit
+			// the same row twice.
+			if itemWish.Fulfilled {
+				toSave = append(toSave, itemWish)
+				break
 			}
 		}
 	}
