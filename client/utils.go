@@ -210,6 +210,26 @@ func (c *Character) GetNumberOfHighIlvlFlasks() int {
 	return count
 }
 
+func (c *Character) Equals(other *Character) bool {
+	if other == nil {
+		return false
+	}
+	if c.Level != other.Level || c.Class != other.Class {
+		return false
+	}
+	return c.HasSameEquipment(other) && c.HasSameSkillTree(other)
+}
+
+func (c *Character) HasSameSkillTree(other *Character) bool {
+	if other == nil {
+		return false
+	}
+	if c.Passives == nil || other.Passives == nil {
+		return false
+	}
+	return utils.ArrayEqualsUnordered(c.Passives.Hashes, other.Passives.Hashes)
+}
+
 func (c *Character) HasSameEquipment(other *Character) bool {
 	if other == nil {
 		return false

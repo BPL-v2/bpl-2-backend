@@ -245,9 +245,8 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 	if err != nil {
 		return nil, fmt.Errorf("error saving character %s (%s) for user %d: %v", character.Name, character.Id, player.UserId, err)
 	}
-	// Publish the PoB request only after the character row exists, otherwise the
-	// resulting character_pobs insert can fail the character_id foreign key.
-	if !player.New.Character.HasSameEquipment(player.Old.Character) {
+
+	if !player.New.Character.Equals(player.Old.Character) && s.timings[repository.PoBRecalculationDelay] > player.LastUpdateTimes.PoB.Sub(time.Now()) {
 		slog.Info("Queuing PoB processing", "player_id", player.UserId, "character", player.New.Character.Name)
 		publishPoBRequest(characterResponse.Character)
 		player.LastUpdateTimes.PoB = time.Now()
