@@ -175,7 +175,7 @@ func (s *PlayerFetchingService) shouldUpdateLadder(timings map[repository.Timing
 }
 
 func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate, event *repository.Event) {
-	charactersResponse, err := s.poeClient.ListCharacters(player.Token, event.GetRealm())
+	charactersResponse, err := s.poeClient.ListCharacters(player.Token, player.UserId, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.CharacterName = time.Now()
@@ -201,7 +201,7 @@ func (s *PlayerFetchingService) UpdateCharacterName(player *parser.PlayerUpdate,
 
 func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, event *repository.Event) (*client.Character, error) {
 	slog.Debug("updating character", "player_id", player.UserId, "character", player.New.Character.Name)
-	characterResponse, clientError := s.poeClient.GetCharacter(player.Token, player.New.Character.Name, event.GetRealm())
+	characterResponse, clientError := s.poeClient.GetCharacter(player.Token, player.UserId, player.New.Character.Name, event.GetRealm())
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.Character = time.Now()
@@ -258,7 +258,7 @@ func (s *PlayerFetchingService) UpdateLeagueAccount(player *parser.PlayerUpdate,
 	if event.GameVersion == repository.PoE2 {
 		return
 	}
-	leagueAccount, err := s.poeClient.GetLeagueAccount(player.Token, event.Name)
+	leagueAccount, err := s.poeClient.GetLeagueAccount(player.Token, player.UserId, event.Name)
 	player.Mu.Lock()
 	defer player.Mu.Unlock()
 	player.LastUpdateTimes.LeagueAccount = time.Now()

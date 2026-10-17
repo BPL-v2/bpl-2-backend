@@ -134,22 +134,24 @@ type GuildStashFetchers struct {
 	mu       sync.Mutex
 }
 
-func (f *GuildStashFetchers) GetToken(stash *repository.GuildStashTab) (string, error) {
+func (f *GuildStashFetchers) GetToken(stash *repository.GuildStashTab) (string, int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	expiryThreshold := time.Now().Add(1 * time.Minute)
 	chosenFetcher := (*GuildStashFetcher)(nil)
+	chosenUserId := 0
 	for _, userId := range stash.UserIds {
 		fetcher, exists := f.Fetchers[int(userId)]
 		if exists && fetcher.TokenExpiry.After(expiryThreshold) && (chosenFetcher == nil || fetcher.LastUse.Before(chosenFetcher.LastUse)) {
 			chosenFetcher = fetcher
+			chosenUserId = int(userId)
 		}
 	}
 	if chosenFetcher == nil {
-		return "", fmt.Errorf("no valid fetcher found for stash %s", stash.Id)
+		return "", 0, fmt.Errorf("no valid fetcher found for stash %s", stash.Id)
 	}
 	chosenFetcher.LastUse = time.Now()
-	return chosenFetcher.Token, nil
+	return chosenFetcher.Token, chosenUserId, nil
 }
 
 func InitFetchers(users []*repository.TeamUserWithPoEToken, stashes []*repository.GuildStashTab) *GuildStashFetchers {
@@ -402,7 +404,7 @@ func (f *FetchingService) GetAvailableStashes(user *repository.TeamUserWithPoETo
 	if user.TokenExpiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token expired")
 	}
-	response, err := f.poeClient.ListGuildStashes(user.Token, f.event.Name)
+	response, err := f.poeClient.ListGuildStashes(user.Token, user.UserId, f.event.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list guild stashes for user %d: %v", user.UserId, err)
 	}
@@ -453,11 +455,11 @@ func (f *FetchingService) FetchGuildStashes() error {
 }
 
 func (f *FetchingService) updateGuildStash(stash *repository.GuildStashTab, fetchers *GuildStashFetchers, kafkaWriter *kafka.Writer) error {
-	token, err := fetchers.GetToken(stash)
+	token, tokenUserId, err := fetchers.GetToken(stash)
 	if err != nil {
 		return fmt.Errorf("no token found for team %d: %w", stash.TeamId, err)
 	}
-	response, httpError := f.poeClient.GetGuildStash(token, f.event.Name, stash.Id, stash.ParentId)
+	response, httpError := f.poeClient.GetGuildStash(token, tokenUserId, f.event.Name, stash.Id, stash.ParentId)
 	if httpError != nil {
 		if httpError.StatusCode == 404 {
 			slog.Warn("stash not found (404), deleting from database", "stash_id", stash.Id)

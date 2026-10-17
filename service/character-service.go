@@ -139,7 +139,7 @@ func (c *CharacterServiceImpl) UpdateCharacter(characterId string) (*client.Char
 	if err != nil {
 		return nil, err
 	}
-	response, clientErr := c.poeClient.GetCharacter(user.GetPoEToken(), character.Name, event.GetRealm())
+	response, clientErr := c.poeClient.GetCharacter(user.GetPoEToken(), user.Id, character.Name, event.GetRealm())
 	if clientErr != nil {
 		return nil, upstreamError("failed to fetch character", clientErr)
 	}

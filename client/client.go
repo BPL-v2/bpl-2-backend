@@ -97,8 +97,10 @@ func NewAsyncHttpClient(baseURL *url.URL, userAgent string, maxRequestsPerSecond
 }
 
 type RequestArgs struct {
-	Path          string
-	Token         string
+	Path  string
+	Token string
+	// UserId identifies the owner of Token for logging; 0 if not user-specific.
+	UserId        int
 	Method        string
 	PathParams    []string
 	QueryParams   map[string]string

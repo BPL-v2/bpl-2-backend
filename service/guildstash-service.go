@@ -57,7 +57,7 @@ func (s *GuildStashServiceImpl) UpdateGuildStash(user *repository.User, teamId i
 	if !found || token.AccessToken == "" || token.Expiry.Before(time.Now()) {
 		return nil, ErrNoPoEToken
 	}
-	resp, httpError := s.PoEClient.ListGuildStashes(token.AccessToken, event.Name)
+	resp, httpError := s.PoEClient.ListGuildStashes(token.AccessToken, user.Id, event.Name)
 	if httpError != nil {
 		return nil, upstreamError("failed to fetch guild stash tabs", httpError)
 	}
