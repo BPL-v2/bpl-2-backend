@@ -63,7 +63,7 @@ func NewCharacterService(poeClient *client.PoEClient) CharacterService {
 }
 
 func (c *CharacterServiceImpl) TrackActivity(eventId int, update *parser.PlayerUpdate) error {
-	if update.New.Character.Experience != update.Old.Character.Experience {
+	if update.Old.Character.Experience != 0 && update.New.Character.Experience != update.Old.Character.Experience {
 		err := c.activityRepository.SaveActivity(&repository.Activity{
 			Time:    time.Now(),
 			UserId:  update.UserId,
