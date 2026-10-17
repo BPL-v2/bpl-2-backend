@@ -69,6 +69,10 @@ func (p *Policy) IsViolated(requestTimes []time.Time) bool {
 	return p.CurrentHits(requestTimes) >= p.MaxHits
 }
 
+// rateLimitPeriodBuffer is added to every policy period to absorb network jitter,
+// since request timestamps are recorded client-side before the server counts them.
+const rateLimitPeriodBuffer = 500 * time.Millisecond
+
 type RequestKey struct {
 	Token    string
 	Endpoint string
@@ -290,7 +294,7 @@ func (c *AsyncHttpClient) parsePolicies(rule string, headers http.Header) map[Po
 		maxHits, _ := strconv.Atoi(limit[0])
 		period, _ := strconv.Atoi(limit[1])
 		currentHits, _ := strconv.Atoi(state[0])
-		policies[Policy{MaxHits: maxHits, Period: time.Duration(float64(period)*1.1) * time.Second}] = currentHits
+		policies[Policy{MaxHits: maxHits, Period: time.Duration(float64(period)*1.1*float64(time.Second)) + rateLimitPeriodBuffer}] = currentHits
 	}
 	return policies
 }
