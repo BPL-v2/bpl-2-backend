@@ -2,8 +2,7 @@ package utils
 
 import (
 	"errors"
-	"log"
-	"os"
+	"log/slog"
 	"sort"
 	"strings"
 	"testing"
@@ -434,10 +433,12 @@ func TestCloser_Error(t *testing.T) {
 	closer := Closer(c)
 	// Capture log output
 	var buf strings.Builder
-	log.SetOutput(&buf)
-	defer log.SetOutput(os.Stderr)
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(prev)
 	closer()
-	assert.Contains(t, buf.String(), "Error closing resource")
+	assert.Contains(t, buf.String(), "failed to close resource")
+	assert.Contains(t, buf.String(), "close error")
 }
 
 // ==================== SplitEscaped ====================
