@@ -12,6 +12,7 @@ type ActivityService interface {
 	RecordActivity(userId int, eventId int, timestamp time.Time) error
 	GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error)
 	CalculateActiveTimesForUsers(userIds []int) (map[int]map[int]time.Duration, error)
+	GetActivityTimestamps(userId int, eventId int) ([]time.Time, error)
 }
 
 type ActivityServiceImpl struct {
@@ -102,4 +103,16 @@ func (s *ActivityServiceImpl) CalculateActiveTimesForUsers(userIds []int) (map[i
 		}
 	}
 	return activeTimes, nil
+}
+
+func (s *ActivityServiceImpl) GetActivityTimestamps(userId int, eventId int) ([]time.Time, error) {
+	activities, err := s.activityRepository.GetActivity(userId, eventId)
+	if err != nil {
+		return nil, err
+	}
+	timestamps := make([]time.Time, len(activities))
+	for i, activity := range activities {
+		timestamps[i] = activity.Time
+	}
+	return timestamps, nil
 }

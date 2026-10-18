@@ -27,6 +27,7 @@ func setupActivityController() []RouteInfo {
 	routes := []RouteInfo{
 		{Method: "GET", Path: "", HandlerFunc: e.getEventActivitiesHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 		{Method: "GET", Path: "/:user_id", HandlerFunc: e.getEventActivitiesForUserHandler(), Authenticated: true, RequiresUserSelf: true},
+		{Method: "GET", Path: "/:user_id/timestamps", HandlerFunc: e.getEventActivityTimestampsForUserHandler(), Authenticated: true, RequiredRoles: []repository.Permission{repository.PermissionAdmin}},
 	}
 	for i, route := range routes {
 		routes[i].Path = baseUrl + route.Path
@@ -97,5 +98,34 @@ func (e *ActivityController) getEventActivitiesForUserHandler() gin.HandlerFunc 
 			return
 		}
 		c.JSON(200, activity.Milliseconds())
+	}
+}
+
+// @id GetEventActivityTimestampsForUser
+// @Security BearerAuth
+// @Description Get the raw activity timestamps of a user in an event
+// @Tags activity
+// @Produce json
+// @Param event_id path int true "Event ID"
+// @Param user_id path int true "User ID"
+// @Success 200 {array} time.Time
+// @Router /events/{event_id}/activity/{user_id}/timestamps [get]
+func (e *ActivityController) getEventActivityTimestampsForUserHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		event := getEvent(c)
+		if event == nil {
+			return
+		}
+		userId, err := strconv.Atoi(c.Param("user_id"))
+		if err != nil {
+			c.JSON(400, gin.H{"error": "Invalid user id"})
+			return
+		}
+		timestamps, err := e.activityService.GetActivityTimestamps(userId, event.Id)
+		if err != nil {
+			respondError(c, err)
+			return
+		}
+		c.JSON(200, timestamps)
 	}
 }
