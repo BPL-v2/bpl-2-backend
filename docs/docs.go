@@ -5570,6 +5570,55 @@ const docTemplate = `{
                 ]
             }
         },
+        "/events/{event_id}/activity/{user_id}/timestamps": {
+            "get": {
+                "description": "Get the raw activity timestamps of a user in an event",
+                "operationId": "GetEventActivityTimestampsForUser",
+                "parameters": [
+                    {
+                        "description": "Event ID",
+                        "in": "path",
+                        "name": "event_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "User ID",
+                        "in": "path",
+                        "name": "user_id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "activity"
+                ]
+            }
+        },
         "/events/{event_id}/characters": {
             "get": {
                 "description": "Get all characters for an event",
