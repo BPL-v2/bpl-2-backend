@@ -9,7 +9,6 @@ import (
 type ActivityService interface {
 	CalculateActiveTime(userId int, event *repository.Event, threshold time.Duration) (time.Duration, error)
 	CalculateActiveTimesForEvent(event *repository.Event, threshold time.Duration) (map[int]int, error)
-	RecordActivity(userId int, eventId int, timestamp time.Time) error
 	GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error)
 	CalculateActiveTimesForUsers(userIds []int) (map[int]map[int]time.Duration, error)
 	GetActivityTimestamps(userId int, eventId int) ([]time.Time, error)
@@ -75,15 +74,6 @@ func (s *ActivityServiceImpl) CalculateActiveTimesForEvent(event *repository.Eve
 		activeTimes[userId] = int(determineActiveTime(activities, threshold).Milliseconds())
 	}
 	return activeTimes, nil
-}
-
-func (s *ActivityServiceImpl) RecordActivity(userId int, eventId int, timestamp time.Time) error {
-	activity := &repository.Activity{
-		Time:    timestamp,
-		UserId:  userId,
-		EventId: eventId,
-	}
-	return s.activityRepository.SaveActivity(activity)
 }
 
 func (s *ActivityServiceImpl) GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error) {

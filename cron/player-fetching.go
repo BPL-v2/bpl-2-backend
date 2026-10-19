@@ -653,9 +653,7 @@ func PlayerFetchLoop(ctx context.Context, event *repository.Event, poeClient *cl
 				if pob, ok := pobMap[player.New.Character.Id]; ok {
 					player.New.PoB = pob
 				}
-				// Old.Experience is 0 until the first loop iteration completes (it is not
-				// persisted), so skip it as a baseline to avoid logging activity on restart.
-				if player.Old.Character.Experience != 0 && player.New.Character.Experience != player.Old.Character.Experience {
+				if player.WasActive() {
 					player.LastActive = time.Now()
 					err = service.activityRepository.SaveActivity(&repository.Activity{
 						Time:    time.Now(),

@@ -41,6 +41,12 @@ type PlayerUpdate struct {
 	}
 }
 
+func (p *PlayerUpdate) WasActive() bool {
+	xpChanged := p.Old.Character != nil && p.New.Character != nil && p.Old.Character.Experience != 0 && p.New.Character.Experience != p.Old.Character.Experience
+	changedGear := p.Old.Character == nil || !p.Old.Character.Equals(p.New.Character)
+	return xpChanged || changedGear
+}
+
 func (p *Player) MaxAtlasTreeNodes() int {
 	return utils.Max(utils.Map(p.AtlasPassiveTrees, func(tree client.LeagueAccountAtlasPassiveTree) int {
 		return len(tree.Hashes)
