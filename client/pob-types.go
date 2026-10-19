@@ -665,16 +665,83 @@ var (
 	pobStatLine = regexp.MustCompile(`(?m)^[ \t]*<(?:PlayerStat|FullDPSSkill|MinionStat) .*\n?`)
 	pobGemLine  = regexp.MustCompile(`<Gem [^>]*>`)
 	pobGemLevel = regexp.MustCompile(` (?:level|quality)="[^"]*"`)
+	pobBraceSet = regexp.MustCompile(`\{[^}]*\}`)
 )
 
-// NormalizePoBXMLIgnoringGemLevels strips everything from a raw PoB XML that
-// may differ between two exports of an otherwise identical build: the
-// calculated stats and the level and quality of every gem. Two exports with
-// equal results describe the same items, tree, config and skills, differing at
-// most in gem levels and quality.
-func NormalizePoBXMLIgnoringGemLevels(xml string) string {
-	xml = pobStatLine.ReplaceAllString(xml, "")
-	return pobGemLine.ReplaceAllStringFunc(xml, func(gem string) string {
+// NormalizePoBXMLIgnoringGemLevels reduces a raw PoB XML to what describes the
+// build itself, so that two exports of the same build compare equal. It drops
+// everything that may differ between such exports:
+//   - the calculated stats, and the level and quality of every gem
+//   - the order of elements, which PoB serializes non-deterministically
+//     (sections, skills, gems, ...), and the order of entries in the tree's
+//     "nodes" and "masteryEffects" lists
+//
+// If the XML can't be parsed, only the text-level stripping of stats and gem
+// level/quality is applied.
+func NormalizePoBXMLIgnoringGemLevels(xmlText string) string {
+	xmlText = pobStatLine.ReplaceAllString(xmlText, "")
+	xmlText = pobGemLine.ReplaceAllStringFunc(xmlText, func(gem string) string {
 		return pobGemLevel.ReplaceAllString(gem, "")
 	})
+	var root pobXMLNode
+	if err := xml.Unmarshal([]byte(xmlText), &root); err != nil {
+		return xmlText
+	}
+	return root.canonical()
+}
+
+// pobXMLNode is a generic XML element.
+type pobXMLNode struct {
+	XMLName  xml.Name
+	Attrs    []xml.Attr   `xml:",any,attr"`
+	Text     string       `xml:",chardata"`
+	Children []pobXMLNode `xml:",any"`
+}
+
+// canonical serializes the element with attributes, list-valued attributes and
+// children in sorted order.
+func (n *pobXMLNode) canonical() string {
+	var sb strings.Builder
+	sb.WriteString("<" + n.XMLName.Local)
+	attrs := make([]string, 0, len(n.Attrs))
+	for _, attr := range n.Attrs {
+		if n.XMLName.Local == "Gem" && (attr.Name.Local == "level" || attr.Name.Local == "quality") {
+			continue
+		}
+		attrs = append(attrs, attr.Name.Local+"="+canonicalAttrValue(attr.Name.Local, attr.Value))
+	}
+	slices.Sort(attrs)
+	for _, attr := range attrs {
+		sb.WriteString(" " + attr)
+	}
+	sb.WriteString(">")
+	sb.WriteString(strings.TrimSpace(n.Text))
+	children := make([]string, 0, len(n.Children))
+	for i := range n.Children {
+		switch n.Children[i].XMLName.Local {
+		case "PlayerStat", "FullDPSSkill", "MinionStat":
+			continue
+		}
+		children = append(children, n.Children[i].canonical())
+	}
+	slices.Sort(children)
+	for _, child := range children {
+		sb.WriteString(child)
+	}
+	sb.WriteString("</" + n.XMLName.Local + ">")
+	return sb.String()
+}
+
+func canonicalAttrValue(name, value string) string {
+	var parts []string
+	switch name {
+	case "nodes":
+		parts = strings.Split(value, ",")
+	case "masteryEffects":
+		parts = pobBraceSet.FindAllString(value, -1)
+	default:
+		return value
+	}
+	slices.Sort(parts)
+	return strings.Join(parts, ",")
 }

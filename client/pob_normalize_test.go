@@ -47,3 +47,22 @@ func TestNormalizePoBXMLIgnoringGemLevels_QualityOnly(t *testing.T) {
 	}
 	assert.Equal(t, NormalizePoBXMLIgnoringGemLevels(gem("0")), NormalizePoBXMLIgnoringGemLevels(gem("20")))
 }
+
+func TestNormalizePoBXMLIgnoringGemLevels_IgnoresElementOrder(t *testing.T) {
+	a := `<PathOfBuilding>
+	<Build level="98"><PlayerStat stat="TotalDPS" value="1"/></Build>
+	<Tree><Spec nodes="3,1,2" masteryEffects="{1,2},{3,4}"><URL>abc</URL></Spec></Tree>
+	<Skills><Skill label="a"><Gem nameSpec="Haste" level="14" quality="0"/><Gem nameSpec="Grace" level="1" quality="0"/></Skill><Skill label="b"/></Skills>
+</PathOfBuilding>`
+	b := `<PathOfBuilding>
+	<Skills><Skill label="b"/><Skill label="a"><Gem nameSpec="Grace" level="20" quality="20"/><Gem nameSpec="Haste" level="15" quality="10"/></Skill></Skills>
+	<Tree><Spec masteryEffects="{3,4},{1,2}" nodes="1,2,3"><URL>abc</URL></Spec></Tree>
+	<Build level="98"><PlayerStat stat="TotalDPS" value="2"/></Build>
+</PathOfBuilding>`
+	assert.Equal(t, NormalizePoBXMLIgnoringGemLevels(a), NormalizePoBXMLIgnoringGemLevels(b))
+
+	changedNode := strings.Replace(b, `nodes="1,2,3"`, `nodes="1,2,4"`, 1)
+	assert.NotEqual(t, NormalizePoBXMLIgnoringGemLevels(a), NormalizePoBXMLIgnoringGemLevels(changedNode))
+	changedGem := strings.Replace(b, `nameSpec="Grace"`, `nameSpec="Haste"`, 1)
+	assert.NotEqual(t, NormalizePoBXMLIgnoringGemLevels(a), NormalizePoBXMLIgnoringGemLevels(changedGem))
+}
