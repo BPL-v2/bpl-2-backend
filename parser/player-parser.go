@@ -47,6 +47,17 @@ func (p *PlayerUpdate) WasActive() bool {
 	return xpChanged || changedGear
 }
 
+func (p *PlayerUpdate) Died() bool {
+	if p.Old.Character == nil || p.New.Character == nil {
+		return false
+	}
+	if p.New.Character.Id == "" || p.Old.Character.Id != p.New.Character.Id || p.Old.Character.Name != p.New.Character.Name {
+		return false
+	}
+	return p.Old.Character.Experience != 0 && p.New.Character.Experience != 0 &&
+		p.New.Character.Experience < p.Old.Character.Experience
+}
+
 func (p *Player) MaxAtlasTreeNodes() int {
 	return utils.Max(utils.Map(p.AtlasPassiveTrees, func(tree client.LeagueAccountAtlasPassiveTree) int {
 		return len(tree.Hashes)

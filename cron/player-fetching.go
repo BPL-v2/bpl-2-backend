@@ -130,6 +130,7 @@ type PlayerFetchingService struct {
 	timingRepository      repository.TimingRepository
 	characterRepository   repository.CharacterRepository
 	activityRepository    repository.ActivityRepository
+	deathRepository       repository.DeathRepository
 	itemWishService       service.ItemWishService
 	timings               map[repository.TimingKey]time.Duration
 
@@ -165,6 +166,7 @@ func NewPlayerFetchingService(poeClient *client.PoEClient) *PlayerFetchingServic
 		timingRepository:      repository.NewTimingRepository(),
 		characterRepository:   repository.NewCharacterRepository(),
 		activityRepository:    repository.NewActivityRepository(),
+		deathRepository:       repository.NewDeathRepository(),
 		lastLadderUpdate:      time.Now().Add(-1 * time.Hour),
 		poeClient:             poeClient,
 	}
