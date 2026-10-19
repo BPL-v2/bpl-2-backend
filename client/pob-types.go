@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -658,4 +659,22 @@ func DecodePoBExport(input string) (*PathOfBuilding, error) {
 		return nil, fmt.Errorf("xml decode error: %w", err)
 	}
 	return &pob, nil
+}
+
+var (
+	pobStatLine = regexp.MustCompile(`(?m)^[ \t]*<(?:PlayerStat|FullDPSSkill|MinionStat) .*\n?`)
+	pobGemLine  = regexp.MustCompile(`<Gem [^>]*>`)
+	pobGemLevel = regexp.MustCompile(` (?:level|quality)="[^"]*"`)
+)
+
+// NormalizePoBXMLIgnoringGemLevels strips everything from a raw PoB XML that
+// may differ between two exports of an otherwise identical build: the
+// calculated stats and the level and quality of every gem. Two exports with
+// equal results describe the same items, tree, config and skills, differing at
+// most in gem levels and quality.
+func NormalizePoBXMLIgnoringGemLevels(xml string) string {
+	xml = pobStatLine.ReplaceAllString(xml, "")
+	return pobGemLine.ReplaceAllStringFunc(xml, func(gem string) string {
+		return pobGemLevel.ReplaceAllString(gem, "")
+	})
 }

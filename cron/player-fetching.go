@@ -246,7 +246,7 @@ func (s *PlayerFetchingService) UpdateCharacter(player *parser.PlayerUpdate, eve
 		return nil, fmt.Errorf("error saving character %s (%s) for user %d: %v", character.Name, character.Id, player.UserId, err)
 	}
 
-	if !player.New.Character.Equals(player.Old.Character) && s.timings[repository.PoBRecalculationDelay] > player.LastUpdateTimes.PoB.Sub(time.Now()) {
+	if !player.New.Character.Equals(player.Old.Character) && time.Since(player.LastUpdateTimes.PoB) > s.timings[repository.PoBRecalculationDelay] {
 		slog.Info("Queuing PoB processing", "player_id", player.UserId, "character", player.New.Character.Name)
 		publishPoBRequest(characterResponse.Character)
 		player.LastUpdateTimes.PoB = time.Now()

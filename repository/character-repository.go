@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -160,6 +161,21 @@ func (c *CharacterPob) HasEqualStats(other *CharacterPob) bool {
 		c.SpellBlock == other.SpellBlock &&
 		c.LowestEleRes == other.LowestEleRes &&
 		c.HighIlevelFlasks == other.HighIlevelFlasks
+}
+
+// BuildSignatureIgnoringGemLevels returns the export's XML with calculated stats
+// and gem level/quality removed, for comparing which build a snapshot describes.
+func (p *PoBExport) BuildSignatureIgnoringGemLevels() (string, error) {
+	z, err := zlib.NewReader(bytes.NewReader(*p))
+	if err != nil {
+		return "", fmt.Errorf("zlib decompress error: %w", err)
+	}
+	defer utils.Closer(z)()
+	raw, err := io.ReadAll(z)
+	if err != nil {
+		return "", fmt.Errorf("zlib read error: %w", err)
+	}
+	return client.NormalizePoBXMLIgnoringGemLevels(string(raw)), nil
 }
 
 func (p *PoBExport) Decode() (*client.PathOfBuilding, error) {

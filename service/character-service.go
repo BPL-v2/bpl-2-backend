@@ -402,7 +402,7 @@ func (c *CharacterServiceImpl) DeletePoB(pobId int) error {
 //
 // Currently it walks all PoB snapshots ordered by character and time, deleting a
 // snapshot whenever it has stats identical to the previous kept snapshot for the
-// same character (duplicate), has fewer equipped items than the previous
+// same character (duplicate), differs from it only by gem levels/quality, has fewer equipped items than the previous
 // snapshot, or swapped weapons and lost dps.
 func (c *CharacterServiceImpl) FixPoBs() error {
 	slog.Info("starting to fix PoBs")
@@ -411,6 +411,7 @@ func (c *CharacterServiceImpl) FixPoBs() error {
 	lastEquipmentCount := make(map[string]int)
 	lastPoB := make(map[string]*client.PathOfBuilding)
 	lastStats := make(map[string]*repository.CharacterPob)
+	lastSignature := make(map[string]string)
 
 	// Collect ids across the whole scan and delete once at the end. Deleting
 	// while paginating would shift not-yet-scanned rows into the offset window
@@ -432,7 +433,21 @@ func (c *CharacterServiceImpl) FixPoBs() error {
 				deleteIds[characterPob.Id] = struct{}{}
 				continue
 			}
+
+			// A snapshot whose build only differs from the previous kept one by
+			// gem levels/quality is noise: it was triggered by something else and
+			// merely picked up the gem progress made in between.
+			signature, sigErr := characterPob.Export.BuildSignatureIgnoringGemLevels()
+			if sigErr != nil {
+				slog.Error("failed to build PoB signature", "pob_id", characterPob.Id, "character_id", characterPob.CharacterId, "error", sigErr)
+			} else if prev, ok := lastStats[characterPob.CharacterId]; ok &&
+				prev.Level == characterPob.Level && prev.HighIlevelFlasks == characterPob.HighIlevelFlasks &&
+				lastSignature[characterPob.CharacterId] == signature {
+				deleteIds[characterPob.Id] = struct{}{}
+				continue
+			}
 			lastStats[characterPob.CharacterId] = characterPob
+			lastSignature[characterPob.CharacterId] = signature
 
 			pob, err := characterPob.Export.Decode()
 			if err != nil {

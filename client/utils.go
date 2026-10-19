@@ -296,7 +296,33 @@ func modsEqual(a, b *[]ItemMod) bool {
 	if (a != nil && b == nil) || (a == nil && b != nil) {
 		return false
 	}
-	return (a == nil && b == nil) || utils.ArrayEqualsUnordered(*a, *b)
+	if a == nil && b == nil {
+		return true
+	}
+	return utils.ArrayEqualsUnordered(modKeys(*a), modKeys(*b))
+}
+
+// modKey is a comparable representation of an ItemMod. ItemMod itself must not
+// be compared directly: its Flags field is a pointer, so two mods parsed from
+// separate responses would never be equal.
+type modKey struct {
+	description                                        string
+	crafted, desecrated, fractured, mutated, vestigial bool
+}
+
+func modKeys(mods []ItemMod) []modKey {
+	keys := make([]modKey, len(mods))
+	for i, mod := range mods {
+		keys[i].description = mod.Description
+		if f := mod.Flags; f != nil {
+			keys[i].crafted = utils.Deref(f.Crafted)
+			keys[i].desecrated = utils.Deref(f.Desecrated)
+			keys[i].fractured = utils.Deref(f.Fractured)
+			keys[i].mutated = utils.Deref(f.Mutated)
+			keys[i].vestigial = utils.Deref(f.Vestigial)
+		}
+	}
+	return keys
 }
 
 // UnmarshalJSON handles the PoE API quirk of sending "flags": [] instead of
