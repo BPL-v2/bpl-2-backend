@@ -27,6 +27,7 @@ type ActivityRepository interface {
 	GetAllActivitiesForEvent(eventId int) ([]*Activity, error)
 	GetLatestActiveTimestampsForEvent(eventId int) (map[int]time.Time, error)
 	GetActivityHistoryForUsers(userIds []int) (map[int]map[int][]*Activity, error)
+	CountActiveUsersSince(since time.Time) (int, error)
 }
 
 type ActivityRepositoryImpl struct {
@@ -94,4 +95,13 @@ func (r *ActivityRepositoryImpl) GetActivityHistoryForUsers(userIds []int) (map[
 		resultMap[activity.UserId][activity.EventId] = append(resultMap[activity.UserId][activity.EventId], activity)
 	}
 	return resultMap, nil
+}
+
+func (r *ActivityRepositoryImpl) CountActiveUsersSince(since time.Time) (int, error) {
+	var count int64
+	err := r.DB.Model(&Activity{}).Where("time >= ?", since).Distinct("user_id").Count(&count).Error
+	if err != nil {
+		return 0, fmt.Errorf("error counting active users since %s: %w", since, err)
+	}
+	return int(count), nil
 }

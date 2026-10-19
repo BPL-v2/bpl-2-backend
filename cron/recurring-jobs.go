@@ -62,6 +62,7 @@ func (s *RecurringJobService) StartLongRunningJobs() {
 		})
 	}
 	utils.Go("player-stats", func() { PlayerStatsLoop(context.Background()) })
+	utils.Go("active-users-metric", func() { ActiveUsersMetricLoop(context.Background()) })
 	utils.Go("sync-achievements", func() {
 		s.achievementService.SyncAchievementsLoop(context.Background(), time.Hour)
 	})

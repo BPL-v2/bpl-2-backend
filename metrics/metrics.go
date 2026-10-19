@@ -105,3 +105,8 @@ var PanicsRecoveredCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "bpl_panics_recovered_total",
 	Help: "Number of panics recovered in background goroutines, by goroutine name",
 }, []string{"goroutine"})
+
+var ActiveUsersGauge = promauto.NewGauge(prometheus.GaugeOpts{
+	Name: "bpl_active_users",
+	Help: "Number of unique players with activity in the last 15 minutes",
+})
