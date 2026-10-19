@@ -366,7 +366,7 @@ func (r *CharacterRepositoryImpl) GetCharacterStatsForEvent(eventId int, cutoff 
 	timer := prometheus.NewTimer(metrics.QueryDuration.WithLabelValues("GetCharacterStatsForEvent"))
 	defer timer.ObserveDuration()
 	charData := []*CharacterPob{}
-	query := `SELECT DISTINCT ON (character_id) 
+	query := `SELECT
 					p.ascendancy,
 					p.character_id,
 					p.created_at,
@@ -388,12 +388,16 @@ func (r *CharacterRepositoryImpl) GetCharacterStatsForEvent(eventId int, cutoff 
 					p.attack_block,
 					p.spell_block,
 					p.lowest_ele_res
-				FROM character_pobs as p
-				JOIN characters ON p.character_id = characters.id
-				WHERE characters.event_id = ? AND p.created_at < ?
-				ORDER BY character_id, created_at DESC
+				FROM characters
+				CROSS JOIN LATERAL (
+					SELECT * FROM character_pobs
+					WHERE character_pobs.character_id = characters.id AND character_pobs.created_at < ?
+					ORDER BY character_pobs.created_at DESC
+					LIMIT 1
+				) AS p
+				WHERE characters.event_id = ?
 	`
-	err := r.DB.Raw(query, eventId, cutoff).Scan(&charData).Error
+	err := r.DB.Raw(query, cutoff, eventId).Scan(&charData).Error
 	if err != nil {
 		return nil, fmt.Errorf("error getting latest character stats for event %d: %w", eventId, err)
 	}
