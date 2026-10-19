@@ -351,14 +351,14 @@ func (e *OauthServiceImpl) VerifyTwitch(state string, code string, referrer *str
 }
 
 func (e *OauthServiceImpl) VerifyPoE(state string, code string, referrer *string, oauthConfig oauth2.Config) (*OauthState, error) {
-	client := client.NewPoEClient(1, true, 10)
+	poeClient := client.SharedPoEClient()
 	e.mu.Lock()
 	authState, ok := e.stateMap[state]
 	e.mu.Unlock()
 	if !ok {
 		return nil, ErrUnknownOauthState
 	}
-	resp, clientError := client.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, oauthConfig.RedirectURL)
+	resp, clientError := poeClient.GetAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, code, authState.Verifier, oauthConfig.Scopes, oauthConfig.RedirectURL)
 	if clientError != nil {
 		slog.Error("failed to get access token", "error", clientError)
 		return nil, upstreamError("failed to get access token", clientError)
@@ -369,7 +369,7 @@ func (e *OauthServiceImpl) VerifyPoE(state string, code string, referrer *string
 		RefreshToken: resp.RefreshToken,
 		Expiry:       time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second),
 	}
-	profile, clientError := client.GetAccountProfile(token.AccessToken)
+	profile, clientError := poeClient.GetAccountProfile(token.AccessToken)
 	if clientError != nil {
 		slog.Error("failed to get profile", "error", clientError)
 		return nil, upstreamError("failed to get profile", clientError)
@@ -401,7 +401,7 @@ func (e *OauthServiceImpl) GetApplicationToken(provider repository.Provider) (st
 
 func (e *OauthServiceImpl) GetToken(provider repository.Provider) (token string, expiry *time.Time, err error) {
 	if provider == repository.ProviderPoE {
-		poeClient := client.NewPoEClient(1, false, 10)
+		poeClient := client.SharedPoEClient()
 		tokenResponse, hhtpErr := poeClient.GetClientCredentials(config.Env().POEClientID, config.Env().POEClientSecret)
 		if hhtpErr != nil {
 			return "", nil, upstreamError("failed to get PoE token", hhtpErr)
@@ -435,7 +435,7 @@ func (e *OauthServiceImpl) RefreshOnePoEToken() error {
 		return nil
 	}
 	oauthConfig := e.Config[repository.ProviderPoE]
-	poeClient := client.NewPoEClient(1, false, 10)
+	poeClient := client.SharedPoEClient()
 	resp, clientError := poeClient.RefreshAccessToken(oauthConfig.ClientID, oauthConfig.ClientSecret, oauth.RefreshToken)
 	if clientError != nil {
 		oauth.RefreshToken = ""

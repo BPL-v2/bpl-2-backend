@@ -45,6 +45,20 @@ func NewPoEClient(maxRequestsPerSecond float64, raiseForStatus bool, timeOutSeco
 	}
 }
 
+var (
+	sharedPoEClient     *PoEClient
+	sharedPoEClientOnce sync.Once
+)
+
+// SharedPoEClient returns the process-wide PoE API client. All PoE API traffic
+// must go through it so that rate limiting is shared.
+func SharedPoEClient() *PoEClient {
+	sharedPoEClientOnce.Do(func() {
+		sharedPoEClient = NewPoEClient(10, false, 600)
+	})
+	return sharedPoEClient
+}
+
 func sendRequest[T any](client *PoEClient, requestKey string, args RequestArgs) (*T, *ClientError) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(client.TimeOutSeconds)*time.Second)
 	defer cancel()

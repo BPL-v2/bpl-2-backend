@@ -30,7 +30,7 @@ type RouteInfo struct {
 
 func SetRoutes(r *gin.Engine) {
 	cache := persistence.NewInMemoryStore(60 * time.Second)
-	poeClient := client.NewPoEClient(10, false, 600)
+	poeClient := client.SharedPoEClient()
 
 	routes := make([]RouteInfo, 0)
 	group := r.Group("/api")
