@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -1189,4 +1190,89 @@ func TestSubmissionService_DeleteSubmission(t *testing.T) {
 	err := svc.DeleteSubmission(&repository.Submission{Id: 5}, &repository.User{Id: 1})
 	require.NoError(t, err)
 	mockRepo.AssertExpectations(t)
+}
+
+// ==================== AtlasService Tests ====================
+
+type mockAtlasMilestoneRepository struct {
+	repository.AtlasRepository // the other methods are not used
+	withHistory                []int
+	seconds                    map[int][]*repository.AtlasMilestoneActiveTime
+	requested                  []int
+	mu                         sync.Mutex
+}
+
+func (m *mockAtlasMilestoneRepository) GetEventIdsWithAtlasHistory() ([]int, error) {
+	return m.withHistory, nil
+}
+
+func (m *mockAtlasMilestoneRepository) GetActiveSecondsAtAtlasMilestones(
+	eventId int, userIds []int, points []int, sessionGap time.Duration,
+) ([]*repository.AtlasMilestoneActiveTime, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.requested = append(m.requested, eventId)
+	return m.seconds[eventId], nil
+}
+
+func atlasTestEvents() []*repository.Event {
+	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	events := make([]*repository.Event, 0)
+	for i, id := range []int{100, 101, 102, 104, 106, 108} {
+		events = append(events, &repository.Event{Id: id, EventStartTime: base.AddDate(0, i, 0)})
+	}
+	return events
+}
+
+func TestRecentAtlasHistoryEventIds(t *testing.T) {
+	events := atlasTestEvents()
+	current := events[len(events)-1] // 108
+
+	// 100 and 101 have no history, 108 is the current event
+	ids := recentAtlasHistoryEventIds(current, events, []int{102, 104, 106, 108}, 3)
+	assert.Equal(t, []int{106, 104, 102}, ids)
+
+	ids = recentAtlasHistoryEventIds(current, events, []int{102, 104, 106, 108}, 2)
+	assert.Equal(t, []int{106, 104}, ids)
+
+	// events that start after the current one are never used
+	ids = recentAtlasHistoryEventIds(events[3], events, []int{102, 104, 106, 108}, 3)
+	assert.Equal(t, []int{102}, ids)
+
+	assert.Empty(t, recentAtlasHistoryEventIds(current, events, nil, 3))
+}
+
+func TestAtlasService_GetAtlasMilestonesInRecentEvents(t *testing.T) {
+	events := atlasTestEvents()
+	repo := &mockAtlasMilestoneRepository{
+		withHistory: []int{102, 104, 106, 108},
+		seconds: map[int][]*repository.AtlasMilestoneActiveTime{
+			106: {
+				{UserId: 1, Points: 1, ActiveSeconds: 3600},
+				{UserId: 1, Points: 80, ActiveSeconds: 4 * 3600},
+				{UserId: 2, Points: 1, ActiveSeconds: 1800},
+			},
+			104: {{UserId: 1, Points: 1, ActiveSeconds: 7200}},
+		},
+	}
+	svc := &AtlasServiceImpl{atlasRepository: repo}
+
+	milestones, err := svc.GetAtlasMilestonesInRecentEvents(events[len(events)-1], events, []int{1, 2, 3})
+	require.NoError(t, err)
+
+	// the three latest events before the current one are queried, the current event is not
+	assert.ElementsMatch(t, []int{106, 104, 102}, repo.requested)
+
+	user1 := milestones[1]
+	require.NotNil(t, user1[106].FirstPointActiveHours)
+	assert.InDelta(t, 1.0, *user1[106].FirstPointActiveHours, 1e-9)
+	require.NotNil(t, user1[106].EightyPointsActiveHours)
+	assert.InDelta(t, 4.0, *user1[106].EightyPointsActiveHours, 1e-9)
+	assert.InDelta(t, 2.0, *user1[104].FirstPointActiveHours, 1e-9)
+	assert.Nil(t, user1[104].EightyPointsActiveHours, "a milestone that was not reached stays nil")
+
+	assert.InDelta(t, 0.5, *milestones[2][106].FirstPointActiveHours, 1e-9)
+	assert.Nil(t, milestones[2][106].EightyPointsActiveHours)
+
+	assert.Empty(t, milestones[3], "players without any data get no entries")
 }

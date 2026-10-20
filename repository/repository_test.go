@@ -1844,3 +1844,157 @@ func TestCharacterRepository_GetPobByCharacterIdBeforeTimestamp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(1000), pob.DPS)
 }
+
+// ==================== AtlasRepository DB Tests ====================
+
+// createAtlasTreesTable creates the table like the migrations do, as AutoMigrate can not infer the type of the nodes.
+func createAtlasTreesTable(t *testing.T) {
+	t.Helper()
+	require.NoError(t, db.Exec(`CREATE TABLE IF NOT EXISTS bpl2.atlas_trees (
+		event_id int NOT NULL REFERENCES bpl2.events(id) ON DELETE CASCADE,
+		user_id int NOT NULL REFERENCES bpl2.users(id) ON DELETE CASCADE,
+		"index" smallint NOT NULL,
+		nodes smallint[] NOT NULL,
+		"timestamp" timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+	)`).Error)
+}
+
+// nodesWithBonus returns n distinct node hashes, the last one being the node that grants 20 extra points.
+func nodesWithBonus(n int) []int {
+	nodes := make([]int, n)
+	for i := range n - 1 {
+		nodes[i] = i + 1
+	}
+	nodes[n-1] = AtlasBonusNodeHash
+	return nodes
+}
+
+func nodesCount(n int) []int {
+	nodes := make([]int, n)
+	for i := range n {
+		nodes[i] = i + 1
+	}
+	return nodes
+}
+
+func TestAtlasRepository_GetEventIdsWithAtlasHistory(t *testing.T) {
+	defer tearDown()
+	createAtlasTreesTable(t)
+	defer db.Exec("DROP TABLE IF EXISTS bpl2.atlas_trees")
+
+	repo := &AtlasRepositoryImpl{DB: db}
+	withHistory := createTestEvent()
+	onlyFinal := &Event{
+		Name: "final trees only", MaxSize: 10, GameVersion: PoE2,
+		ApplicationStartTime: time.Now(), ApplicationEndTime: time.Now().Add(time.Hour),
+		EventStartTime: time.Now(), EventEndTime: time.Now().Add(24 * time.Hour),
+	}
+	db.Create(onlyFinal)
+	users := createTestUsers(2)
+
+	for i := range 12 { // a snapshot every time the tree changed
+		for _, user := range users {
+			require.NoError(t, db.Create(&AtlasTree{
+				UserID: user.Id, EventID: withHistory.Id, Nodes: nodesCount(i + 1),
+				Timestamp: withHistory.EventStartTime.Add(time.Duration(i) * time.Minute),
+			}).Error)
+		}
+	}
+	for _, user := range users { // one snapshot per player at the end of the event
+		require.NoError(t, db.Create(&AtlasTree{
+			UserID: user.Id, EventID: onlyFinal.Id, Nodes: nodesCount(50), Timestamp: onlyFinal.EventEndTime,
+		}).Error)
+	}
+
+	eventIds, err := repo.GetEventIdsWithAtlasHistory()
+	require.NoError(t, err)
+	assert.Equal(t, []int{withHistory.Id}, eventIds)
+
+	// without any atlas trees the result is an empty slice, never nil
+	require.NoError(t, db.Exec("DELETE FROM bpl2.atlas_trees").Error)
+	eventIds, err = repo.GetEventIdsWithAtlasHistory()
+	require.NoError(t, err)
+	assert.NotNil(t, eventIds)
+	assert.Empty(t, eventIds)
+}
+
+func TestAtlasRepository_GetActiveSecondsAtAtlasMilestones(t *testing.T) {
+	defer tearDown()
+	db.AutoMigrate(&Activity{})
+	defer db.Exec("DROP TABLE IF EXISTS bpl2.activity")
+	createAtlasTreesTable(t)
+	defer db.Exec("DROP TABLE IF EXISTS bpl2.atlas_trees")
+
+	repo := &AtlasRepositoryImpl{DB: db}
+	event := createTestEvent()
+	start := event.EventStartTime.Truncate(time.Microsecond)
+	users := createTestUsers(4)
+	// users[0]: plays an hour, sleeps for five hours, plays another half hour
+	// users[1]: reaches milestones but has no activity at all
+	// users[2]: reaches its first point in the middle of a running session
+	// users[3]: reaches 80 points in a single step
+	activity := func(user *User, offsets ...time.Duration) {
+		for _, offset := range offsets {
+			require.NoError(t, repo.DB.Create(&Activity{UserId: user.Id, EventId: event.Id, Time: start.Add(offset)}).Error)
+		}
+	}
+	for i := range 7 {
+		activity(users[0], time.Duration(i)*10*time.Minute)
+	}
+	for i := range 4 {
+		activity(users[0], 6*time.Hour+time.Duration(i)*10*time.Minute)
+	}
+	for i := range 7 {
+		activity(users[2], time.Duration(i)*10*time.Minute)
+		activity(users[3], time.Duration(i)*10*time.Minute)
+	}
+	snapshot := func(user *User, offset time.Duration, nodes []int) {
+		require.NoError(t, db.Create(&AtlasTree{
+			UserID: user.Id, EventID: event.Id, Nodes: nodes, Timestamp: start.Add(offset),
+		}).Error)
+	}
+	snapshot(users[0], 20*time.Minute, nodesCount(1))
+	snapshot(users[0], 3*time.Hour, nodesWithBonus(85)) // 65 points, the bonus node does not count
+	snapshot(users[0], 7*time.Hour, nodesWithBonus(100))
+	snapshot(users[1], 20*time.Minute, nodesCount(90))
+	snapshot(users[2], 25*time.Minute, nodesCount(1))
+	snapshot(users[3], 40*time.Minute, nodesCount(80))
+
+	ids := []int{users[0].Id, users[1].Id, users[2].Id, users[3].Id}
+	result, err := repo.GetActiveSecondsAtAtlasMilestones(event.Id, ids, []int{1, 80}, 30*time.Minute)
+	require.NoError(t, err)
+
+	got := map[[2]int]float64{}
+	for _, r := range result {
+		got[[2]int{r.UserId, r.Points}] = r.ActiveSeconds
+	}
+	expected := map[[2]int]float64{
+		{users[0].Id, 1}:  20 * 60,       // the two ten minute pairs before the milestone
+		{users[0].Id, 80}: 60*60 + 30*60, // the first hour, none of the sleep, and the half hour before the last snapshot
+		{users[2].Id, 1}:  25 * 60,       // two full pairs and five minutes of the running one
+		{users[3].Id, 1}:  40 * 60,
+		{users[3].Id, 80}: 40 * 60,
+	}
+	assert.Equal(t, expected, got)
+
+	// the result is an empty slice, never nil, with no users, no milestones or nobody matching
+	for name, call := range map[string]func() ([]*AtlasMilestoneActiveTime, error){
+		"no users": func() ([]*AtlasMilestoneActiveTime, error) {
+			return repo.GetActiveSecondsAtAtlasMilestones(event.Id, nil, []int{1}, 30*time.Minute)
+		},
+		"no milestones": func() ([]*AtlasMilestoneActiveTime, error) {
+			return repo.GetActiveSecondsAtAtlasMilestones(event.Id, ids, nil, 30*time.Minute)
+		},
+		"no match": func() ([]*AtlasMilestoneActiveTime, error) {
+			return repo.GetActiveSecondsAtAtlasMilestones(event.Id, ids, []int{5000}, 30*time.Minute)
+		},
+		"other event": func() ([]*AtlasMilestoneActiveTime, error) {
+			return repo.GetActiveSecondsAtAtlasMilestones(event.Id+1, ids, []int{1}, 30*time.Minute)
+		},
+	} {
+		got, err := call()
+		require.NoError(t, err, name)
+		assert.NotNil(t, got, name)
+		assert.Empty(t, got, name)
+	}
+}

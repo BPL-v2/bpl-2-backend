@@ -18,6 +18,7 @@ type SignupController struct {
 	userService   service.UserService
 	teamService   service.TeamService
 	eventService  service.EventService
+	atlasService  service.AtlasService
 	discordClient *client.LocalDiscordClient
 }
 
@@ -28,6 +29,7 @@ func NewSignupController() *SignupController {
 		userService:   service.NewUserService(),
 		teamService:   service.NewTeamService(),
 		eventService:  service.NewEventService(),
+		atlasService:  service.NewAtlasService(),
 	}
 }
 
@@ -224,6 +226,15 @@ func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 		for _, teamUser := range teamUsers {
 			teamUsersMap[teamUser.UserId] = teamUser
 		}
+		signupUserIds := make([]int, 0, len(signups))
+		for _, signup := range signups {
+			signupUserIds = append(signupUserIds, signup.UserId)
+		}
+		// the milestones only refine the team sort, so the signups are still returned without them if this fails
+		atlasMilestones, err := e.atlasService.GetAtlasMilestonesInRecentEvents(event, events, signupUserIds)
+		if err != nil {
+			slog.Error("failed to fetch atlas milestones for signups", "event_id", event.Id, "error", err)
+		}
 		signupsWithUsers := make([]*ExtendedSignup, 0)
 		groupKeys, err := e.groupService.GetGroupKeysForEvent(event.Id)
 		if err != nil {
@@ -244,6 +255,7 @@ func (e *SignupController) getSignupsForEvent() gin.HandlerFunc {
 				Extra:                              signup.Extra,
 				PlaytimesInLastEventsPerDayInHours: playtimes,
 				HighestCharacterLevels:             highestCharacterLevels[signup.UserId],
+				AtlasMilestonesInLastEvents:        toAtlasMilestonesResponse(atlasMilestones[signup.UserId]),
 			}
 			if key, ok := groupKeys[signup.UserId]; ok {
 				resp.GroupKey = &key
@@ -294,6 +306,25 @@ type ExtendedSignup struct {
 
 	PlaytimesInLastEventsPerDayInHours map[int]float64 `json:"playtimes_in_last_events_per_day_in_hours" binding:"required"`
 	HighestCharacterLevels             map[int]int     `json:"highest_character_levels" binding:"required"`
+	// AtlasMilestonesInLastEvents holds, per recent event with atlas history, how many hours the player
+	// was actively playing before reaching 1 and 80 atlas points.
+	AtlasMilestonesInLastEvents map[int]AtlasMilestones `json:"atlas_milestones_in_last_events" binding:"required"`
+}
+
+type AtlasMilestones struct {
+	FirstPointActiveHours   *float64 `json:"first_point_active_hours"`
+	EightyPointsActiveHours *float64 `json:"eighty_points_active_hours"`
+}
+
+func toAtlasMilestonesResponse(milestones map[int]service.AtlasMilestones) map[int]AtlasMilestones {
+	resp := make(map[int]AtlasMilestones, len(milestones))
+	for eventId, m := range milestones {
+		resp[eventId] = AtlasMilestones{
+			FirstPointActiveHours:   m.FirstPointActiveHours,
+			EightyPointsActiveHours: m.EightyPointsActiveHours,
+		}
+	}
+	return resp
 }
 
 type SignupCreate struct {

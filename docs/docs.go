@@ -1894,6 +1894,17 @@ const docTemplate = `{
                 ],
                 "type": "object"
             },
+            "AtlasMilestones": {
+                "properties": {
+                    "eighty_points_active_hours": {
+                        "type": "number"
+                    },
+                    "first_point_active_hours": {
+                        "type": "number"
+                    }
+                },
+                "type": "object"
+            },
             "AtlasProgression": {
                 "properties": {
                     "index": {
@@ -2426,6 +2437,13 @@ const docTemplate = `{
             },
             "ExtendedSignup": {
                 "properties": {
+                    "atlas_milestones_in_last_events": {
+                        "additionalProperties": {
+                            "$ref": "#/components/schemas/AtlasMilestones"
+                        },
+                        "description": "AtlasMilestonesInLastEvents holds, per recent event with atlas history, how many hours the player\nwas actively playing before reaching 1 and 80 atlas points.",
+                        "type": "object"
+                    },
                     "expected_playtime": {
                         "type": "integer"
                     },
@@ -2468,6 +2486,7 @@ const docTemplate = `{
                     }
                 },
                 "required": [
+                    "atlas_milestones_in_last_events",
                     "expected_playtime",
                     "highest_character_levels",
                     "playtimes_in_last_events_per_day_in_hours",
